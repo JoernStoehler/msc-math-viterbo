@@ -1,0 +1,17 @@
+# General
+.DS_Store
+.vscode/
+.idea/
+
+# Julia coverage and artifacts
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+*.cov
+*.lcov
+lcov.info
+
+# Build artifacts (if any future scripts)
+build/
+dist/
+

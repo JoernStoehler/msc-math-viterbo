@@ -1,0 +1,23 @@
+{
+  "name": "msc-math-viterbo",
+  "image": "mcr.microsoft.com/vscode/devcontainers/universal:2",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "mounts": [
+    "source=gh_auth,target=/home/codespace/.config/gh,type=volume",
+    "source=codex_auth,target=/home/codespace/.codex,type=volume",
+    "source=bash_history_data,target=/home/codespace/.bash_history_dir,type=volume",
+    "source=julia_home,target=/home/codespace/.julia,type=volume"
+  ],
+  "postCreateCommand": "/bin/bash .devcontainer/post-create.sh",
+  "postStartCommand": "/bin/bash .devcontainer/post-start.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "julialang.language-julia",
+        "tamasfe.even-better-toml",
+        "redhat.vscode-yaml",
+        "openai.chatgpt"
+      ]
+    }
+  }
+}
