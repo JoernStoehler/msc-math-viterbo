@@ -25,7 +25,7 @@ This project investigates the Viterbo conjecture, which proposes a sharp relatio
 4. Synthesis: write survey with diagrams and a results map; optionally add computational experiments.
 
 Documentation pointers:
-- Math reading list: `docs/math/reading-list.md`
-- Thesis topics and implementation notes: `docs/math/thesis-topics.md`
+- Reading list: `docs/03-reading-list.md`
+- Thesis topics and implementation notes: `docs/04-thesis-topics.md`
 
 Refer to `docs/02-roadmap.md` for concrete milestones and tasks.
