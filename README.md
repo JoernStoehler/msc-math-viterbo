@@ -4,11 +4,14 @@ This repository explores the Viterbo conjecture and related symplectic capacitie
 
 ## Getting Started
 
+Onboarding & conventions: see `AGENTS.md` (single source of truth).
+
 Preferred (via `make`):
 
 - Install deps: `make setup`
 - Run tests: `make test`
-- Format (best-effort): `make format`
+- Format (pinned in CI): `make format`
+- CI mirror (format diff + tests): `make ci`
 
 Fallback (raw Julia commands):
 
@@ -20,14 +23,15 @@ Fallback (raw Julia commands):
 
 - `src/`: Julia source (module `ViterboConjecture`)
 - `test/`: Unit tests (`Test` stdlib) and Aqua quality checks
-- `docs/`: Project goal, roadmap, conventions, environment, Codex notes, and math docs
+- `docs/`: Project goal, roadmap, math/reference notes (onboarding lives in `AGENTS.md`)
 - `.devcontainer/`: Devcontainer config and lifecycle scripts (Local + Codex Cloud)
 - `.github/`: CI (format check, tests, coverage) and issue/PR templates
 
-## Math Docs
+## Docs
 
-- Reading list: `docs/math/reading-list.md`
-- Thesis topics (incl. systolic‑ratio brief): `docs/math/thesis-topics.md`
+- Overview: `docs/README.md`
+- Reading list: `docs/03-reading-list.md`
+- Thesis topics (incl. systolic‑ratio brief): `docs/04-thesis-topics.md`
 
 ## CI
 

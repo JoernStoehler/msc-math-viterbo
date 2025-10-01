@@ -30,7 +30,7 @@ jobs:
 
       - name: Format check (JuliaFormatter)
         run: |
-          julia -e 'using Pkg; Pkg.add("JuliaFormatter"); using JuliaFormatter; format(".")'
+          julia -e 'using Pkg; Pkg.add(PackageSpec(name="JuliaFormatter", version="1.0.59")); using JuliaFormatter; format(".")'
           git diff --exit-code
 
       - name: Run tests (with coverage)
@@ -47,6 +47,4 @@ jobs:
           files: lcov.info
           flags: unittests
           verbose: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
