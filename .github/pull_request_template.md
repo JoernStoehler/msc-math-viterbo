@@ -4,9 +4,10 @@ Changes
 - Affected files/folders: <list>
 
 Checklist
-- [ ] Ran `julia --project=. -e 'using Pkg; Pkg.instantiate()'` (first time only)
-- [ ] Ran `julia --project=. -e 'using Pkg; Pkg.test()'`
-- [ ] Format clean (CI JuliaFormatter diff passes)
+- [ ] Ran `python -m pip install -e .[dev]` (first time only)
+- [ ] Ran `pytest`
+- [ ] Ran `ruff format` + `ruff check`
+- [ ] Ran `pyright`
 - [ ] Added/updated unit tests for any new or changed behavior
 - [ ] No secrets logged; env-only for auth
 

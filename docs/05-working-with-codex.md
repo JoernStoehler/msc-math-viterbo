@@ -1,6 +1,6 @@
 # Working with Codex
 
-This document summarizes practices to help Codex agents work productively in this Julia project.
+This document summarizes practices to help Codex agents work productively in this Python project.
 
 ## Write for Codex
 
@@ -11,7 +11,7 @@ This document summarizes practices to help Codex agents work productively in thi
 ## Structure for Codex
 
 - Keep repository layout conventional and explicit (see `AGENTS.md`).
-- Prefer standard tools (Julia 1.11, Test, JuliaFormatter, Aqua) and well-known CI patterns.
+- Prefer standard tools (Python 3.12+, pytest, Ruff, Pyright) and well-known CI patterns.
 - Provide short, copyable commands in `AGENTS.md`.
 
 ## Ownership & Collaboration

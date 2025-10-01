@@ -1,6 +1,6 @@
 # Roadmap
 
-This roadmap balances literature work with incremental, testable Julia code.
+This roadmap balances literature work with incremental, testable Python code.
 
 ## Phase 1 — Foundations
 - Collect precise definitions and properties of major capacities.
@@ -10,10 +10,10 @@ This roadmap balances literature work with incremental, testable Julia code.
 - Summarize strongest partial results and proof ideas.
 - Identify computationally tractable families for experiments.
 
-## Phase 3 — Julia Implementation & Experiments
+## Phase 3 — Python Implementation & Experiments
 - Implement core helpers for convex bodies and simple capacity proxies/estimates.
 - Add unit tests for helpers, and examples as doctests or literate snippets.
-- Optional: exploratory scripts for volume vs. capacity comparisons.
+- Optional: exploratory notebooks or scripts for volume vs. capacity comparisons.
 
 ## Phase 4 — Synthesis
 - Draft the survey with diagrams and a results map.
