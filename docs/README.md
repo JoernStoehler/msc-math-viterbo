@@ -9,7 +9,7 @@ Numbered docs (lightweight, task‑oriented)
 - `04-thesis-topics.md` — thesis topics and implementation‑adjacent notes
 
 Reference (long‑form, optional reading)
-- `working-with-codex.md` — detailed practices and collaboration notes for agents
+- `05-working-with-codex.md` — detailed practices and collaboration notes for agents
 
 Conventions for new docs
 - Use the filename pattern `<num>-<descriptive-slug>.md` for short/reference notes we expect to keep stable.
