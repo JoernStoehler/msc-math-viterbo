@@ -19,6 +19,7 @@ This file is the single source of truth for onboarding, workflows, and conventio
   - Run `make test`; run `make format`.
 - Local CI Check
   - Run `make ci` to enforce pinned formatting and run tests before opening a PR.
+  - Recommendation: run `make ci` before push/PR to catch issues early.
 - Devcontainer (Codex Cloud)
   - One‑time: `bash .devcontainer/post-create.sh`
   - Every boot: `bash .devcontainer/post-start.sh`
@@ -39,6 +40,7 @@ This file is the single source of truth for onboarding, workflows, and conventio
   - Use explicit types only when they clarify intent or performance.
   - Docstrings for public APIs; examples where practical.
   - Unit tests are required for new or changed behavior; keep tests small and focused.
+  - Emphasize tests for math correctness and type behavior; Julia’s dynamic typing can hide edge cases across numeric types.
 - Project Layout
   - `src/` — module `ViterboConjecture`
   - `test/` — unit tests + Aqua
@@ -47,10 +49,15 @@ This file is the single source of truth for onboarding, workflows, and conventio
   - `.devcontainer/` — container config and lifecycle scripts
   - `.github/` — workflows and templates
 - CI
-  - GitHub Actions on push/PR: checkout, setup Julia 1.11, cache, instantiate, pinned format check, tests with coverage, produce lcov, upload to Codecov without a token (public repo).
+  - GitHub Actions on push/PR (Linux only): checkout, setup Julia 1.11, cache, instantiate, pinned format check, tests with coverage, produce lcov, upload to Codecov without a token (public repo).
   - Concurrency cancels in‑progress runs per ref.
+  - Coverage policy: upload-only; no hard threshold. We monitor and adjust if needed.
+  - No version matrix; keep CI simple and fast for the thesis.
 - Security
   - Never log secrets; environment variables only; avoid `set -x` and echoing env.
+
+**Release**
+- No releases/semver process planned; this is a MSc thesis repository.
 
 **References**
 - Project goal: `docs/01-project-goal.md`

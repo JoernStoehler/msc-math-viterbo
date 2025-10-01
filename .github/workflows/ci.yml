@@ -28,6 +28,9 @@ jobs:
       - name: Instantiate
         run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
 
+      # Formatter rationale: Julia has no general "dev group" in a single Project.toml.
+      # We pin JuliaFormatter here (and in Makefile) to keep KISS: one project env,
+      # reproducible formatter, no separate .format environment.
       - name: Format check (JuliaFormatter)
         run: |
           julia -e 'using Pkg; Pkg.add(PackageSpec(name="JuliaFormatter", version="1.0.59")); using JuliaFormatter; format(".")'
@@ -41,6 +44,8 @@ jobs:
         with:
           output: lcov.info
 
+      # Coverage policy: upload-only; no hard threshold enforcement. We'll monitor trends
+      # and adjust if needed. Keep CI green during transient Codecov outages.
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
