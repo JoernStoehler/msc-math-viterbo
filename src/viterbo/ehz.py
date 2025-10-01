@@ -33,7 +33,7 @@ class FacetSubset:
     """Container bundling data for a subset of polytope facets."""
 
     indices: tuple[int, ...]
-    beta: Float[np.ndarray, "m"]  # shape: (m,)
+    beta: Float[np.ndarray, " m"]  # shape: (m,)
     symplectic_products: Float[np.ndarray, "m m"]  # shape: (m, m)
 
 
@@ -72,7 +72,7 @@ def standard_symplectic_matrix(dimension: int) -> np.ndarray:
 
 def compute_ehz_capacity(
     B: Float[np.ndarray, "num_facets dimension"],
-    c: Float[np.ndarray, "num_facets"],
+    c: Float[np.ndarray, " num_facets"],
     *,
     tol: float = 1e-10,
 ) -> float:
@@ -160,7 +160,7 @@ def compute_ehz_capacity(
 def _prepare_subset(
     *,
     B: Float[np.ndarray, "num_facets dimension"],
-    c: Float[np.ndarray, "num_facets"],
+    c: Float[np.ndarray, " num_facets"],
     indices: Iterable[int],
     J: np.ndarray,
     tol: float,
