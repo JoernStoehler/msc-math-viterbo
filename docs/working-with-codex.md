@@ -10,7 +10,7 @@ This document summarizes practices to help Codex agents work productively in thi
 
 ## Structure for Codex
 
-- Keep repository layout conventional and explicit (see `docs/03-conventions.md`).
+- Keep repository layout conventional and explicit (see `AGENTS.md`).
 - Prefer standard tools (Julia 1.11, Test, JuliaFormatter, Aqua) and well-known CI patterns.
 - Provide short, copyable commands in `AGENTS.md`.
 
@@ -30,4 +30,3 @@ This document summarizes practices to help Codex agents work productively in thi
 - READ ONLY — investigation/explanation only; no edits
 - IMMEDIATE — act quickly, minimal commands, respond once confident
 - TALK ONLY — reason in chat; avoid opening files/commands
-

@@ -1,55 +1,62 @@
-# AGENTS.md — Project Onboarding (for Codex)
+# AGENTS.md — Onboarding & Conventions (Source of Truth)
 
-This is a Julia-only project centered on the Viterbo conjecture. The environment and conventions are designed to be explicit, predictable, and agent-friendly.
+This file is the single source of truth for onboarding, workflows, and conventions. If anything elsewhere contradicts this file, update those docs to match this.
 
-## Read Me First
+**Quick Commands**
+- `make setup` — install deps (instantiate)
+- `make test` — run tests (incl. Aqua)
+- `make format` — run pinned JuliaFormatter
+- `make ci` — CI mirror: pinned format diff + tests
 
+**Workflows**
+- Setup
+  - Open in the devcontainer (VS Code) or run `make setup` locally.
+  - Devcontainer installs Julia via Juliaup, symlinks to `~/.local/bin`, then precompiles.
+- Daily Dev
+  - Implement small, composable, mostly‑pure functions. Keep side effects explicit.
+  - Add/adjust unit tests for any new or changed behavior.
+  - Add docstrings for public APIs; include brief examples when helpful.
+  - Run `make test`; run `make format`.
+- Local CI Check
+  - Run `make ci` to enforce pinned formatting and run tests before opening a PR.
+- Devcontainer (Codex Cloud)
+  - One‑time: `bash .devcontainer/post-create.sh`
+  - Every boot: `bash .devcontainer/post-start.sh`
+  - Mounts are intentionally hardcoded to `/home/codespace/...` (see comments in `.devcontainer/devcontainer.json`).
+- Before PR
+  - Ensure tests cover changes and public APIs have docstrings.
+  - Keep diffs minimal and scoped.
+  - No secrets in logs; env‑only auth.
+
+**Conventions**
+- Tech Stack
+  - Julia 1.11; Linux‑only assumption; single project with committed `Manifest.toml`.
+  - Testing via `Test`; Aqua runs with the test target.
+  - Formatting via JuliaFormatter with `indent = 2` (pinned in CI).
+  - Devcontainer: base image `mcr.microsoft.com/vscode/devcontainers/universal:2`; Julia installed via Juliaup; symlinks to `~/.local/bin`; no rc‑file edits.
+- Coding
+  - Prefer small, composable, pure functions for math core.
+  - Use explicit types only when they clarify intent or performance.
+  - Docstrings for public APIs; examples where practical.
+  - Unit tests are required for new or changed behavior; keep tests small and focused.
+- Project Layout
+  - `src/` — module `ViterboConjecture`
+  - `test/` — unit tests + Aqua
+  - `docs/` — goal/roadmap/math notes; may be minimal wrappers to avoid duplication with this file
+  - `.devcontainer/` — container config and lifecycle scripts
+  - `.github/` — workflows and templates
+- CI
+  - GitHub Actions on push/PR: checkout, setup Julia 1.11, cache, instantiate, pinned format check, tests with coverage, produce lcov, upload to Codecov without a token (public repo).
+  - Concurrency cancels in‑progress runs per ref.
+- Security
+  - Never log secrets; environment variables only; avoid `set -x` and echoing env.
+
+**References**
 - Project goal: `docs/01-goal.md`
 - Roadmap: `docs/02-roadmap.md`
-- Conventions: `docs/03-conventions.md`
-- Environment: `docs/04-environment.md`
-- Working with Codex: `docs/working-with-codex.md`
+- Docs overview: `docs/README.md`
+- Reading list: `docs/03-reading-list.md`
+- Thesis topics: `docs/04-thesis-topics.md`
 
-## Quick Commands
-
-Preferred (via `make`):
-
-```bash
-make setup    # Install deps
-make test     # Run tests (incl. Aqua)
-make format   # Format (best-effort; CI enforces via diff)
-```
-
-Fallback (raw Julia commands):
-
-```bash
-julia --project=. -e 'using Pkg; Pkg.instantiate()'
-julia --project=. -e 'using Pkg; Pkg.test()'
-julia -e 'using Pkg; Pkg.add("JuliaFormatter"); using JuliaFormatter; format(".")'
-```
-
-## Environments
-
-- Local devcontainer: open the folder and let VS Code set up the container.
-- Codex Cloud: set entrypoints in the Codex UI to call our `.devcontainer` scripts:
-  - Setup (one-time): `bash .devcontainer/post-create.sh`
-  - Start (every boot): `bash .devcontainer/post-start.sh`
-
-## Security
-
-- Never log secrets. Env only. Do not echo env or use shell `-x`.
-
-## Notes
-
-- `Manifest.toml` is committed for reproducibility. If it drifts, regenerate in the devcontainer and commit.
-- Conventions and “agent theory” are adapted from a modern Node/TS project but tailored to Julia.
-
-## Project Preferences
-
-- Formatting: JuliaFormatter with `indent = 2` (see `.JuliaFormatter.toml`).
-- Manifest: Commit `Manifest.toml` and keep it in sync.
-- Docs: Markdown only; no Documenter.jl site.
-- CI/README: No badges in `README.md`.
-- Analysis: Do not use JET in CI (too slow for our workflow).
-- Contributing: No `CONTRIBUTING.md` (use this `AGENTS.md`).
-- Platform: Linux-only support assumptions.
+**Continuous Improvement**
+- If you encounter ambiguity or friction, file an issue with a concrete change proposal. When you fix a discrepancy between this file and another doc, prefer aligning the other doc to this file.
