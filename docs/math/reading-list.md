@@ -67,16 +67,25 @@
   **⏱ 5u (reference).**
 
 - **Code — Krupp et al.**  
-  GitHub note in papers; see Springer article footnotes and thesis: <https://link.springer.com/articl
-[... omitted 0 of 168 lines ...]
+  Links are referenced in the journal article footnotes and in the dissertation; see for example: <https://link.springer.com/article/10.1007/s10711-022-00717-3>. If repo links are unavailable, use the dissertation’s algorithmic descriptions as a guide.
 
-  **What:** Foundational multiplicity and stability results for closed characteristics on convex hypersurfaces; background for **why** \(A_{\min}\) exists and how indices behave.  
-  **⏱ 4–5u (selective read).**
+---
+
+## C) Background — capacities and Reeb dynamics on convex hypersurfaces
+
+- **Ekeland, Hofer (1989/90). Symplectic topology and Hamiltonian dynamics.**  
+  What: Survey and foundational material around the Ekeland–Hofer capacity and action functionals; useful background for capacity definitions/normalizations.  
+  ⏱ 2–3u (selective).
+
+- **Long, Zhu (2002). Multiplicity results for closed characteristics on convex hypersurfaces.**  
+  Annals: <https://annals.math.princeton.edu/2002/155-2/p01> (arXiv: <https://arxiv.org/abs/math/0109116>)  
+  What: Foundational multiplicity and stability results for closed characteristics; background for why \(A_{\min}\) exists and how indices behave.  
+  ⏱ 4–5u (selective read).
 
 - **Wang (2009→2014). Stability/ellipticity results for closed characteristics.**  
-  Survey link (EMS 2009 PDF): <https://ems.press/content/serial-article-files/31673> and J. Diff. Eq. (2014) example: <https://www.sciencedirect.com/science/article/pii/S0022123614002134>  
-  **What:** Elliptic/irrationally elliptic cases and lower bounds on counts; helpful when analyzing the structure of action‑minimizing orbits on smoothed polytopes.  
-  **⏱ 2u.**
+  Survey (EMS 2009): <https://ems.press/content/serial-article-files/31673> and example JDE 2014: <https://www.sciencedirect.com/science/article/pii/S0022123614002134>  
+  What: Elliptic/irrationally elliptic cases and lower bounds on counts; helpful when analyzing the structure of action‑minimizing orbits on smoothed polytopes.  
+  ⏱ 2u.
 
 ---
 
