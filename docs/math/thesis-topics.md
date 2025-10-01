@@ -5,6 +5,7 @@ This file tracks the single thesis topic for this repository. The official descr
 ---
 
 Official MSc thesis description (verbatim)
+Source: K. Cieliebak (departmental thesis topics)
 
 ## 2) Probing Viterbo’s conjecture
 

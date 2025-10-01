@@ -25,6 +25,12 @@ fi
 
 echo "[post-create] Julia installed and on PATH."
 
+# Make julia and juliaup available via a common PATH directory without rc or container env tweaks
+mkdir -p "$HOME/.local/bin"
+ln -sf "$JULIAUP_HOME/bin/julia" "$HOME/.local/bin/julia"
+ln -sf "$JULIAUP_HOME/bin/juliaup" "$HOME/.local/bin/juliaup"
+echo "[post-create] Symlinked julia and juliaup into $HOME/.local/bin"
+
 # Minimal developer ergonomics: install ripgrep (best-effort)
 # Keep it simple and fast; skip if already present. Use sudo if available.
 if ! command -v rg >/dev/null 2>&1; then
