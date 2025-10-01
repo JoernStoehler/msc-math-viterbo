@@ -1,0 +1,137 @@
+\section{The smooth-combinatorial correspondence}
+\label{sec:correspondence}
+
+We now prove Theorems~\ref{thm:combtosmooth} and \ref{thm:smoothtocomb}.
+
+\subsection{From combinatorial to smooth Reeb orbits}
+\label{sec:combtosmooth}
+
+We first prove Theorem~\ref{thm:combtosmooth}. In fact we will prove a slightly more precise statement in Lemma~\ref{lem:combtosmooth} below.
+
+ Let $X$ be a symplectic polytope in $\R^4$ and let $\gamma=(L_1,\ldots,L_k)$ be a Type 1 combinatorial Reeb orbit. This means that there are $3$-faces $E_1,\ldots,E_k$ and $2$-faces $F_1,\ldots,F_k$ such that $F_i$ is adjacent to $E_{i-1}$ and $E_i$, and $L_i$ is an oriented line segment in $E_i$ from a point in $F_i$ to a point in $F_{i+1}$ which is parallel to the Reeb vector field on $E_i$. Here the subscripts $i-1$ and $i+1$ are understood to be mod $k$. Below we will regard $\gamma$ as a piecewise smooth parametrized loop $\gamma:\R/T\Z\to X$, where $T=\mc{A}_{\op{comb}}(\gamma)$, which traverses the successive line segments $L_i$ as Reeb trajectories.
+
+\begin{lemma}
+\label{lem:combtosmooth}
+Let $X$ be a symplectic polytope in $\R^4$, and let $\gamma=(L_1,\ldots,L_k)$ be a nondegenerate Type 1 combinatorial Reeb orbit. Then there exists $\delta>0$ such that for all $\epsilon>0$ sufficiently small:
+\begin{itemize}
+\item[\emph{(a)}]
+There is a unique Reeb orbit $\gamma_\epsilon$ on the smoothed boundary $Y_\epsilon$ such that
+\[
+|\gamma_\epsilon - \gamma|_{C^0} < \delta.
+\]
+\item[\emph{(b)}]
+$\gamma_\epsilon$ converges in $C^0$ to $\gamma$ as $\epsilon\to 0$.
+\item[\emph{(c)}]
+$\gamma_\epsilon$ does not intersect $F_\epsilon$ where $F$ is a $0$-face or $1$-face.
+\item[\emph{(d)}]
+$\gamma_\epsilon$ is linearizable, i.e. has a well-defined linearized return map.
+\item[\emph{(e)}]
+$\mc{A}(\gamma_\epsilon) - \mc{A}_{\op{comb}}(\gamma) = O(\epsilon)$.
+\item[\emph{(f)}]
+$\gamma_\epsilon$ is nondegenerate, $\rho(\gamma_\epsilon)=\rho_{\op{comb}}(\gamma)$, and $\op{CZ}(\gamma_\epsilon)=\op{CZ}_{\op{comb}}(\gamma)$.
+\end{itemize}
+\end{lemma}
+
+\begin{proof}
+{\em Setup.\/} For $i=1,\ldots,k$, let $p_i$ denote the initial point of the segment $L_i$. Using the notation $E_i$, $F_i$ above, let $D_i$ denote the set of points $y\in F_i$ such that Reeb flow along $E_i$ starting at $y$ reaches a point in $F_{i+1}$, which we denote by $\phi_i(y)$. Thus we have a well-defined affine linear map
+\[
+\phi_i:D_i\longrightarrow F_{i+1}.
+\]
+and by definition $\phi_i(p_i) = p_{i+1}$. In particular, the composition
+\[
+\phi_k\circ\cdots\circ \phi_1: F_1 \longrightarrow F_1
+\]
+is an affine linear map defined in a neighborhood of $p_1$ sending $p_1$ to itself. For $V\in TF_1$ small, this composition sends
+\[
+p_1 + V \longmapsto p_1 + AV,
+\]
+where $A$ is a linear map $TF_1\to TF_1$. Since the combinatorial Reeb orbit $\gamma$ is assumed nondegenerate, the linear map $A$ does not have $1$ as an eigenvalue.
+
+By Lemma~\ref{lem:stf}(a), the Reeb flow along the smoothed $2$-face $(F_i)_{\epsilon}$ induces a well-defined map
+\begin{equation}
+\label{eqn:stf}
+\phi_{F_i,\epsilon}: U_{F_i,\epsilon} \longrightarrow F_i
+\end{equation}
+which is translation by a vector $V_{F_i,\epsilon}$.
+
+{\em Proof of (a).\/} If $\epsilon>0$ is sufficiently small, then $p_i$ is in the domain $U_{F_i,\epsilon}$ for each $i$, and Reeb orbits on $Y_\epsilon$ that are $C^0$ close to $\gamma$ correspond to fixed points of the composition
+\begin{equation}
+\label{eqn:2kcomp}
+\phi_{F_1,\epsilon} \circ \phi_k \circ \cdots \circ \phi_2 \circ \phi_{F_2,\epsilon} \circ \phi_1 : F_1 \longrightarrow F_1.
+\end{equation}
+It follows from the above that for $V\in TF_1$ small, the composition \eqref{eqn:2kcomp} sends
+\begin{equation}
+\label{eqn:p1V}
+p_1 + V \longmapsto p_1 + AV + W_\epsilon
+\end{equation}
+where $W_\epsilon\in TF_1$ has length $O(\epsilon)$. Since the linear map $A-1$ is invertible, the affine linear map \eqref{eqn:p1V} has a unique fixed point $p_1+V$ for some $V\in TF_1$. If $\epsilon$ is sufficiently small, this fixed point will also be in the domain of the composition \eqref{eqn:2kcomp}, and thus will correspond to the desired Reeb orbit $\gamma_\epsilon$.
+
+{\em Proof of (b).\/} This holds because for the above fixed point, $V$ has length $O(\epsilon)$.
+
+{\em Proof of (c).\/} The Reeb orbit $\gamma_\epsilon$ does not intersect $F_\epsilon$ where $F$ is a $0$-face or $1$-face, by the definition of the domain of the map \eqref{eqn:stf}.
+
+{\em Proof of (d).\/} This follows from Lemma~\ref{lem:plrm}(c).
+
+{\em Proof of (e).\/} The symplectic action of the Reeb orbit $\gamma_\epsilon$ is the sum of its flow times over the smoothed $2$-faces $(F_i)_\epsilon$, plus the sum of its flow times over the smoothed $3$-faces $(E_i)_\epsilon$. The former sum is $O(\epsilon)$ as explained in the proof of Lemma~\ref{lem:stf}(b). The latter sum is $(1+O(\epsilon))$ times the sum of the corresponding flow times over the $3$-faces $E_i$, and the latter differs from $\mc{A}_{\op{comb}}(\gamma)$ by $O(\epsilon)$, because the fixed point of \eqref{eqn:p1V} has distance $O(\epsilon)$ from $p_1$.
+
+{\em Proof of (f).\/} Let $T_\epsilon$ denote the period of $\gamma_\epsilon$, and let $y_\epsilon$ be a point on the image of $\gamma_\epsilon$ in $E_k$. If $F$ is a $2$-face, let $\widetilde{\psi}_F\in\widetilde{\op{Sp}}(2)$ denote the lift of the transition matrix $\psi_F$ in Definition~\ref{def:transitionmatrix} with rotation number in the interval $(0,1/2)$. By Lemmas~\ref{lem:smoothed3face}(b) and \ref{lem:stf}(c), the lifted return map $\widetilde{\phi}(y_\epsilon,T_\epsilon)$ is given by
+\begin{equation}
+\label{eqn:liftedreturnmap}
+\widetilde{\phi}(y_\epsilon,T_\epsilon) = \widetilde{\psi}_{F_k}\circ \cdots \circ \widetilde{\psi}_{F_1}.
+\end{equation}
+Nondegeneracy of the combinatorial Reeb orbit $\gamma$ means that the projection
+\[
+\phi(y_\epsilon,T_\epsilon) = \psi_{F_k}\circ \cdots \circ \psi_{F_1} \in \op{Sp}(2)
+\]
+does not have $1$ as an eigenvalue, so $\gamma_\epsilon$ is nondegenerate. Moreover, it follows from \eqref{eqn:liftedreturnmap} and the definition of combinatorial rotation number in Definition~\ref{def:crn} that $\rho_{\op{comb}}(\gamma) = \rho(\gamma_\epsilon)$. This implies that $\op{CZ}_{\op{comb}}(\gamma) = \op{CZ}(\gamma_\epsilon)$.
+\end{proof}
+
+\subsection{From smooth to combinatorial Reeb orbits}
+\label{sec:smoothtocomb}
+
+\begin{proof}[Proof of Theorem~\ref{thm:smoothtocomb}.]
+We proceed in four steps.
+
+{\em Step 1.\/}
+We claim that for each $i$, the Reeb orbit $\gamma_i$ can be expressed as a concatenation of a finite number, $k_i$, of arcs such that:
+\begin{itemize}
+\item[(a)]
+Each endpoint of an arc maps to the boundary of $E_{\epsilon_i}$ where $E$ is a $3$-face. 
+\item[(b)]
+For each arc, either:
+\begin{itemize}
+\item[(i)] There is a $3$-face $E$ such that the interior of the arc maps to $E_{\epsilon_i}$, or
+\item[(ii)] No point in the interior of the arc maps to $E_{\epsilon_i}$ where $E$ is a $3$-face.
+\end{itemize}
+\end{itemize}
+
+The above decomposition follows from parts (a) and (b)(i) of Lemma~\ref{lem:nsrt}, because the boundary of $E_{\epsilon_i}$ where $E$ is a $3$-face is contained in the singular set $\Sigma$. (Note that the decomposition into arcs in Lemma~\ref{lem:nsrt} is a subdivision of the above decomposition into arcs. Moreover, if $k_i>1$, then $k_i$ is even and the arcs alternate between types (i) and (ii).)
+
+{\em Step 2.\/}
+We claim now that there is a constant $C>0$, not depending on $i$, such that if $\gamma:[a.b]\to Y_{\epsilon_i}$ is an arc of type (ii) above, then if we write $\gamma(t)=y(t)+\epsilon_iv(t)$ for $y(t)\in\partial X$ and $v(t)\in N_{y(t)}^+X$ a unit vector, then we have
+\begin{equation}
+\label{eqn:annint}
+\int_a^b|v'(s)ds|\ge C.
+\end{equation}
+
+To see this, note that by (a) above, there are 3-faces $E$ and $E'$ such that $\gamma(a)\in\overline{E_{\epsilon_i}}$ and $\gamma(b)\in\overline{E'_{\epsilon_i}}$. Then $v(a)=\vu_E$, where $\nu_E$ denotes the outward unit normal vector to $E$, and likewise $v(b)=\nu_{E'}$. If $E\neq E'$, then the integral in \eqref{eqn:annint} is bounded from below by the distance in $S^3$ between $\nu_E$ and $\nu_{E'}$, and this distance has a uniform positive lower bound because $X$ has only finitely many $3$-faces, each with distinct outward unit normal vectors.
+
+We now consider the case where $E=E'$. The proof of Lemma~\ref{lem:rnlb2} shows that there is a neighborhood $U$ of $\nu_E$ in $S^3$, and a constant $C>0$, such that for any point $y+\epsilon_i v\in Y_{\epsilon_i}\setminus E_{\epsilon_i}$ with $v\in U$, with respect to the decomposition \eqref{eqn:vtn}, we have $|({\mathbf i}v)_N|^2\ge C$. By shrinking the the neighborhood $U$, we can replace this last inequalty with $\langle ({\mathbf i}v)_N,\nu_E\rangle > 0$. Since $v'(t)$ is a positive multiple of $({\mathbf i}v(t))_N$, it follows that the path $[a,b]\to S^3$ sending $t\mapsto v(t)$ must initially exit the neighborhood $U$ before returning to $\nu_E$. So in this case, we can take the constant $C$ in \eqref{eqn:annint} to be twice the distance in $S^3$ from $\nu_E$ to $\partial U$.
+
+{\em Step 3.\/} We now show that we can pass to a subsequence so that the sequence of Reeb orbits $\gamma_i$ on $Y_{\epsilon_i}$ converges in $C^0$ to a Type 1 or Type 2 combinatorial Reeb orbit $\gamma$ for $X$.
+
+By Lemma~\ref{lem:rnlb1} and our hypothesis that $\rho(\gamma_i)<R$, we must have $k_i>1$ when $i$ is sufficiently large. Then, by Lemma~\ref{lem:rnlb2} and Step 2, there is an $i$-independent upper bound on $k_i$. We can then pass to a subsequence such that $k_i$ is equal to an even constant $k$.
+
+By compactness, we can pass to a further subsequence such that the endpoints of the $k$ arcs from Step 1 for $\gamma_i$ converge to $k$ points in the $2$-skeleton of $X$. By Lemma~\ref{lem:smoothed3face}, the $k/2$ arcs of type (i) converge to Reeb trajectories on $3$-faces of $X$. On the other hand, by Lemma~\ref{lem:rnlb1}, for each arc of type (ii), the length of its parametrizing interval converges to $0$. A compactness argument also shows that there is an upper bound on the length of the Reeb vector field on $Y_{\epsilon_i}$. It follows that each arc of type (ii) is converging in $C^0$ to a point. Then $\gamma_i$ converges in $C^0$ to a Type 1 or Type 2 combinatorial Reeb orbit consisting of the line segments on $3$-faces given by the limits of the $k/2$ arcs of type (i).
+
+{\em Step 4.\/} To complete the proof, we now prove that the subsequence and limiting orbit constructed above satisfy all of the requirements (i)-(v) of the theorem.
+
+We have proved assertions (i) and (iii). Assertion (ii) follows from the proof of Lemma~\ref{lem:combtosmooth}(e). Assertion (iv) follows from the proof of Lemma~\ref{lem:combtosmooth}(d),(f). Assertion (v) follows from Lemma~\ref{lem:rnlb2} and Step 2. (To get explicit constants $C_F$, one only needs to consider the case $E\neq E'$ in Step 2.)
+\end{proof}
+
+
+
+
+
+
+
