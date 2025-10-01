@@ -42,7 +42,8 @@ This file is the single source of truth for onboarding, workflows, and conventio
 - Project Layout
   - `src/` — module `ViterboConjecture`
   - `test/` — unit tests + Aqua
-  - `docs/` — goal/roadmap/math notes; may be minimal wrappers to avoid duplication with this file
+  - `docs/` — overview + numbered references (project, math, tooling). Onboarding lives in this file.
+  - `tmp/` — ignored scratch area for copied papers/notes you intend to incorporate later; do not commit raw notes.
   - `.devcontainer/` — container config and lifecycle scripts
   - `.github/` — workflows and templates
 - CI
@@ -52,11 +53,12 @@ This file is the single source of truth for onboarding, workflows, and conventio
   - Never log secrets; environment variables only; avoid `set -x` and echoing env.
 
 **References**
-- Project goal: `docs/01-goal.md`
-- Roadmap: `docs/02-roadmap.md`
+- Project goal: `docs/01-project-goal.md`
+- Roadmap: `docs/02-project-roadmap.md`
 - Docs overview: `docs/README.md`
-- Reading list: `docs/03-reading-list.md`
-- Thesis topics: `docs/04-thesis-topics.md`
+- Reading list: `docs/12-math-reading-list.md`
+- Thesis topics: `docs/11-math-thesis-topics.md`
+- Working with Codex: `docs/21-tool-working-with-codex-agents.md`
 
 **Continuous Improvement**
 - If you encounter ambiguity or friction, file an issue with a concrete change proposal. When you fix a discrepancy between this file and another doc, prefer aligning the other doc to this file.

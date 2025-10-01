@@ -30,8 +30,8 @@ Fallback (raw Julia commands):
 ## Docs
 
 - Overview: `docs/README.md`
-- Reading list: `docs/03-reading-list.md`
-- Thesis topics (incl. systolic‑ratio brief): `docs/04-thesis-topics.md`
+- Reading list: `docs/12-math-reading-list.md`
+- Thesis topics (incl. systolic‑ratio brief): `docs/11-math-thesis-topics.md`
 
 ## CI
 
