@@ -1,12 +1,8 @@
 {
-  // NOTE: devcontainer uses JSON with comments (JSONC). Comments here document
-  // why mounts are hardcoded to the default Codespaces user paths.
-  // If you change the base image or user, ensure these paths remain valid.
+  // Devcontainer configuration for the Python tooling stack.
   "name": "msc-math-viterbo",
   "image": "mcr.microsoft.com/vscode/devcontainers/universal:2",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-  // Hardcoded mounts by intention: these targets are stable for the universal image
-  // and the default Codespaces user. Do not change unless you know the user path.
   "mounts": [
     // GitHub CLI auth/config persistence
     "source=gh_auth,target=/home/codespace/.config/gh,type=volume",
@@ -14,15 +10,17 @@
     "source=codex_auth,target=/home/codespace/.codex,type=volume",
     // Persistent bash history across container restarts
     "source=bash_history_data,target=/home/codespace/.bash_history_dir,type=volume",
-    // Persist Julia depot to speed up builds and precompilation
-    "source=julia_home,target=/home/codespace/.julia,type=volume"
+    // Persist pip cache to speed up installs
+    "source=pip_cache,target=/home/codespace/.cache/pip,type=volume"
   ],
   "postCreateCommand": "/bin/bash .devcontainer/post-create.sh",
   "postStartCommand": "/bin/bash .devcontainer/post-start.sh",
   "customizations": {
     "vscode": {
       "extensions": [
-        "julialang.language-julia",
+        "ms-python.python",
+        "ms-pyright.pyright",
+        "charliermarsh.ruff",
         "tamasfe.even-better-toml",
         "redhat.vscode-yaml",
         "openai.chatgpt"

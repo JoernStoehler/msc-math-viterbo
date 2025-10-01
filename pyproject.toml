@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "viterbo"
+version = "0.1.0"
+description = "Numerical experiments around the Viterbo conjecture"
+readme = "README.md"
+authors = [{ name = "MSc Viterbo Team" }]
+license = { file = "LICENSE" }
+requires-python = ">=3.12"
+dependencies = [
+    "jaxtyping>=0.2.29",
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pyright>=1.1.375",
+    "pytest>=8.1",
+    "ruff>=0.4.8",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.format]
+indent-style = "space"
+line-ending = "lf"
+quote-style = "double"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "D", "B", "NPY"]
+ignore = [
+    "D100",  # module docstring requirement is redundant with README documentation
+    "D104",  # package docstring not necessary for __init__.py aggregator
+    "D203",  # let formatter manage blank lines before class definitions
+    "D212",  # allow summary on second line for multi-line docstrings
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = ["D"]
+
+[tool.pyright]
+pythonVersion = "3.12"
+include = ["src"]
+ignore = ["tests"]
+reportMissingImports = "warning"

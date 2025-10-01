@@ -5,15 +5,21 @@
 tmp/*
 !tmp/.gitkeep
 
-# Julia coverage and artifacts
-*.jl.cov
-*.jl.*.cov
-*.jl.mem
-*.cov
-*.lcov
-lcov.info
-
-# Build artifacts (if any future scripts)
+# Python build & tooling artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
 build/
 dist/
+.python-version
+.venv/
+.uv/
+.pytest_cache/
+.mypy_cache/
+ruff_cache/
+.pyright/
 
+# Coverage reports
+htmlcov/
+.coverage*
+*.lcov

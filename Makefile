@@ -1,19 +1,36 @@
-.PHONY: setup test format ci
+UV ?= uv
 
-# Install/instantiate all deps for the single project environment
+.PHONY: help setup format lint typecheck test ci clean
+
+help:
+@echo "Common development commands:"
+@echo "  make setup     # install the package with development dependencies"
+@echo "  make format    # format code with ruff"
+@echo "  make lint      # lint code with ruff"
+@echo "  make typecheck # run pyright static analysis"
+@echo "  make test      # run pytest test suite"
+@echo "  make ci        # run the CI command set"
+
 setup:
-	julia --project=. -e 'using Pkg; Pkg.instantiate()'
+$(UV) pip install --system -e .[dev]
+
+format:
+ruff format .
+
+lint:
+ruff check .
+
+typecheck:
+pyright
 
 test:
-	julia --project=. -e 'using Pkg; Pkg.test()'
-
-# KISS: pin JuliaFormatter directly instead of a separate .format env.
-# Julia lacks generic dev groups; we keep one env and a reproducible formatter.
-format:
-	julia -e 'using Pkg; Pkg.add(PackageSpec(name="JuliaFormatter", version="1.0.59")); using JuliaFormatter; format(".")'
+pytest
 
 ci:
-	# Mirror CI locally: pinned format diff + tests (no separate env)
-	julia -e 'using Pkg; Pkg.add(PackageSpec(name="JuliaFormatter", version="1.0.59")); using JuliaFormatter; format(".")'
-	git diff --exit-code
-	julia --project=. -e 'using Pkg; Pkg.instantiate(); Pkg.test()'
+ruff format --check .
+ruff check .
+pyright
+pytest
+
+clean:
+rm -rf .pytest_cache .ruff_cache .pyright .pyright_cache build dist *.egg-info

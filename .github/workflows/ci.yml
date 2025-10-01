@@ -2,54 +2,37 @@ name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main]
   pull_request:
-    branches: [ main, master ]
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
-  julia:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Julia
-        uses: julia-actions/setup-julia@v2
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          version: '1.11'
+          python-version: "3.12"
+          cache: pip
 
-      - name: Cache artifacts
-        uses: julia-actions/cache@v2
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
 
-      - name: Instantiate
-        run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
+      - name: Install dependencies
+        run: uv pip install --system -e .[dev]
 
-      # Formatter rationale: Julia has no general "dev group" in a single Project.toml.
-      # We pin JuliaFormatter here (and in Makefile) to keep KISS: one project env,
-      # reproducible formatter, no separate .format environment.
-      - name: Format check (JuliaFormatter)
-        run: |
-          julia -e 'using Pkg; Pkg.add(PackageSpec(name="JuliaFormatter", version="1.0.59")); using JuliaFormatter; format(".")'
-          git diff --exit-code
+      - name: Ruff format check
+        run: ruff format --check .
 
-      - name: Run tests (with coverage)
-        run: julia --project=. -e 'using Pkg; Pkg.test(coverage=true)'
+      - name: Ruff lint
+        run: ruff check .
 
-      - name: Process coverage
-        uses: julia-actions/julia-processcoverage@v1
-        with:
-          output: lcov.info
+      - name: Pyright
+        run: pyright
 
-      # Coverage policy: upload-only; no hard threshold enforcement. We'll monitor trends
-      # and adjust if needed. Keep CI green during transient Codecov outages.
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: lcov.info
-          flags: unittests
-          verbose: true
-          fail_ci_if_error: false
+      - name: Pytest
+        run: pytest

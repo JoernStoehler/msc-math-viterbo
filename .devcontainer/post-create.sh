@@ -1,53 +1,46 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "[post-create] Installing Julia via Juliaup (official)"
+# Purpose: make the devcontainer ready for daily Python development.
+# 1. Ensure modern Python tooling (uv, pip) is available.
+# 2. Install project dependencies in editable mode.
+# 3. Install aux tools (ripgrep, Codex CLI) that help collaborators.
 
-# Keep it simple: one cache at ~/.julia, ensure ownership, install via juliaup with -p and --add-to-path
-JULIA_DIR="$HOME/.julia"
-JULIAUP_HOME="$JULIA_DIR/juliaup"
+echo "[post-create] Preparing Python tooling stack"
 
-mkdir -p "$JULIA_DIR"
-chown -R "$(id -u):$(id -g)" "$JULIA_DIR" || true
+PYTHON=${PYTHON:-python3}
 
-# Do not pre-create $JULIAUP_HOME; let the installer create it. Do not delete caches automatically.
-curl -fsSL https://install.julialang.org | sh -s -- -y --add-to-path=true -p "$JULIAUP_HOME" || true
+"$PYTHON" -m pip install --upgrade pip >/dev/null
 
-if [ -x "$JULIAUP_HOME/bin/juliaup" ]; then
-  "$JULIAUP_HOME/bin/juliaup" add 1.11 || true
-  "$JULIAUP_HOME/bin/juliaup" default 1.11 || true
-else
-  echo "[post-create] ERROR: juliaup not found at $JULIAUP_HOME/bin/juliaup." >&2
-  echo "[post-create] Hints: ensure $JULIA_DIR is writable (chown once), and that $JULIAUP_HOME does not already exist as a non-install." >&2
-  echo "[post-create] If a stale $JULIAUP_HOME exists from a failed run, remove it once and rebuild." >&2
+# Install uv (fast Python package manager) and bail if it cannot be installed.
+if ! command -v uv >/dev/null 2>&1; then
+  echo "[post-create] Installing uv (https://github.com/astral-sh/uv)"
+  curl -LsSf https://astral.sh/uv/install.sh | sh >/dev/null 2>&1 || true
+  export PATH="$HOME/.local/bin:$PATH"
+fi
+
+if ! command -v uv >/dev/null 2>&1; then
+  echo "[post-create] ERROR: uv not available after installation attempt." >&2
+  echo "[post-create] The project assumes uv is present; rerun the installer or install manually." >&2
   exit 1
 fi
 
-echo "[post-create] Julia installed and on PATH."
+echo "[post-create] Installing project dependencies with uv"
+uv pip install --system -e .[dev] >/dev/null
 
-# Make julia and juliaup available via a common PATH directory without rc or container env tweaks
-mkdir -p "$HOME/.local/bin"
-ln -sf "$JULIAUP_HOME/bin/julia" "$HOME/.local/bin/julia"
-ln -sf "$JULIAUP_HOME/bin/juliaup" "$HOME/.local/bin/juliaup"
-echo "[post-create] Symlinked julia and juliaup into $HOME/.local/bin"
-
-# Minimal developer ergonomics: install ripgrep (best-effort)
-# Keep it simple and fast; skip if already present. Use sudo if available.
-if ! command -v rg >/dev/null 2>&1; then
-  if command -v apt-get >/dev/null 2>&1; then
-    echo "[post-create] Installing ripgrep via apt"
-    export DEBIAN_FRONTEND=noninteractive
-    if command -v sudo >/dev/null 2>&1; then SUDO=sudo; else SUDO=""; fi
-    $SUDO apt-get update -y || true
-    $SUDO apt-get install -y ripgrep || true
-    if ! command -v rg >/dev/null 2>&1; then
-      echo "[post-create] WARN: ripgrep not found after apt install; may require new shell or manual install" >&2
-    fi
-  fi
+# Install ripgrep (best-effort) because many workflows rely on it for search.
+echo "[post-create] Ensuring ripgrep is installed"
+if ! command -v rg >/dev/null 2>&1 && command -v apt-get >/dev/null 2>&1; then
+  export DEBIAN_FRONTEND=noninteractive
+  if command -v sudo >/dev/null 2>&1; then SUDO=sudo; else SUDO=""; fi
+  $SUDO apt-get update -y >/dev/null || true
+  $SUDO apt-get install -y ripgrep >/dev/null || true
 fi
 
-# Codex CLI (best-effort if Node/npm present)
+# Install the Codex CLI if Node/npm is present so collaborators can use familiar tooling.
 if command -v npm >/dev/null 2>&1; then
   echo "[post-create] Installing Codex CLI (@openai/codex)"
   npm i -g @openai/codex >/dev/null 2>&1 || true
 fi
+
+echo "[post-create] Post-create steps complete"
