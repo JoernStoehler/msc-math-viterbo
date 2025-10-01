@@ -41,6 +41,7 @@ quote-style = "double"
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "D", "B", "NPY"]
 ignore = [
+    "F722",  # jaxtyping annotations intentionally use string literals for shapes
     "D100",  # module docstring requirement is redundant with README documentation
     "D104",  # package docstring not necessary for __init__.py aggregator
     "D203",  # let formatter manage blank lines before class definitions
