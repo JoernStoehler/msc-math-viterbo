@@ -5,7 +5,7 @@
 - Language: Julia 1.11 (via juliaup)
 - Testing: `Test` stdlib, Aqua.jl for quality checks (no JET in CI)
 - Formatting: JuliaFormatter.jl (enforced in CI) with `indent = 2`
-- Documentation: Markdown in `docs/` (markdown-only; no Documenter site)
+- Documentation: Markdown in `docs/` and `docs/math/` (markdown-only; no Documenter site)
 - CI: GitHub Actions (format, test, coverage)
 - Dev Environments: Local devcontainer, Codex Cloud entrypoints (Linux-only assumption)
 
@@ -14,6 +14,7 @@
 - `README.md`: Human-facing overview
 - `AGENTS.md`: Codex onboarding with quick commands and environment notes
 - `docs/`: Goal, roadmap, conventions, environment, working-with-codex
+- `docs/math/`: Math-focused notes (reading list, topic briefs)
 - `src/`: Julia source (module `ViterboConjecture`)
 - `test/`: Unit tests + Aqua quality checks
 - `.devcontainer/`: Devcontainer config and lifecycle scripts

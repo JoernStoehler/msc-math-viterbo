@@ -24,5 +24,8 @@ This project investigates the Viterbo conjecture, which proposes a sharp relatio
 3. Examples: compute/bound capacities for standard convex bodies.
 4. Synthesis: write survey with diagrams and a results map; optionally add computational experiments.
 
-Refer to `docs/02-roadmap.md` for concrete milestones and tasks.
+Documentation pointers:
+- Math reading list: `docs/math/reading-list.md`
+- Thesis topics and implementation notes: `docs/math/thesis-topics.md`
 
+Refer to `docs/02-roadmap.md` for concrete milestones and tasks.
