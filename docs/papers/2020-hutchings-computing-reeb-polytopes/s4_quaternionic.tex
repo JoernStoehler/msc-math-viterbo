@@ -1,0 +1,170 @@
+\section{The quaternionic trivialization}
+\label{sec:quaternionic}
+
+In this section let $Y\subset\R^4$ be a smooth star-shaped hypersurface with the contact form $\lambda = \lambda_0|_Y$ and contact structure $\xi=\Ker(\lambda)$. We now define a special trivialization $\tau$ of the contact structure $\xi$, and we prove a key property of this trivialization.
+
+\subsection{Definition of the quaternionic trivialization}
+
+The following definition is a smooth analogue of Definition~\ref{def:qtfg}.
+
+\begin{definition}
+Define the {\bf quaternionic trivialization}
+\begin{equation}
+\label{eqn:qt}
+\tau: \xi \stackrel{\simeq}{\longrightarrow} Y\times \R^2
+\end{equation}
+as follows. If $y\in Y$ and $V\in T_yY$, let $\nu$ denote the outward unit normal to $Y$ at $y$, and define
+\[
+\tau(V) = \left(y,\langle V,{\mathbf j}\nu\rangle, \langle V,{\mathbf k}\nu\rangle\right).
+\]
+By abuse of notation, for fixed $y\in Y$ we write $\tau:\xi_y\stackrel{\simeq}{\longrightarrow} \R^2$ to denote the restriction of \eqref{eqn:qt} to $\xi_y$ followed by projection to $\R^2$.
+\end{definition}
+
+From now on we always use the quaternionic trivialization $\tau$ for smooth star-shaped hypersurfaces in $\R^4$.
+
+\begin{lemma}
+The quaternionic trivialization $\tau$ is a symplectic trivialization of $\xi$.
+\end{lemma}
+
+\begin{proof}
+Same calculation as the proof of Lemma~\ref{lem:qtfg}(a).
+\end{proof}
+
+\begin{remark}
+The inverse
+\[
+\tau^{-1}: Y\times \R^2\stackrel{\simeq}{\longrightarrow} \xi
+\]
+is described as follows. Recall from \eqref{eqn:Reebinu} that the Reeb vector field at $y$ is a positive multiple of ${\mathbf i}\nu$. Then $\tau^{-1}(y,(1,0))$ is obtained by projecting ${\mathbf j}\nu$ to $\xi_y$ along the Reeb vector field, while $\tau^{-1}(y,(0,1))$ is obtained by projecting ${\mathbf k}\nu$ to $\xi_y$ along the Reeb vector field. 
+\end{remark}
+
+\subsection{Linearized Reeb flow}
+
+We now make some definitions which we will need in order to bound the rotation numbers of Reeb orbits and Reeb trajectories.
+
+\begin{definition}
+\label{def:linearized}
+If $y\in Y$ and $t\ge 0$, define the {\bf linearized Reeb flow\/} $\phi(y,t)\in\op{Sp}(2)$ to be the composition
+\begin{equation}
+\label{eqn:lrf}
+\R^2 \stackrel{\tau^{-1}}{\longrightarrow} \xi_y \stackrel{d\Phi_t}{\longrightarrow} \xi_{\Phi_t(y)} \stackrel{\tau}{\longrightarrow} \R^2
+\end{equation}
+where $\Phi_t:Y\to Y$ denotes the time $t$ flow of the Reeb vector field, and $\tau$ is the quaternionic trivialization. Define the {\bf lifted linearized Reeb flow\/} $\widetilde{\phi}(y,t)\in\widetilde{\op{Sp}}(2)$ to be the arc
+\begin{equation}
+\label{eqn:llrf}
+\widetilde{\phi}(y,t) = 
+\{\phi(y,s)\}_{s\in [0,t]}.
+\end{equation}
+\end{definition}
+
+Note that we have the composition property
+\[
+\widetilde{\phi}(y,t_2+t_1) = \widetilde{\phi}(\phi_{t_1}(y),t_2) \circ \widetilde{\phi}(y,t_1).
+\]
+
+Next, let ${\mathbb P}\xi$ denote the ``projectivized'' contact structure
+\[
+{\mathbb P}\xi = (\xi\setminus Z)/\sim
+\]
+where $Z$ denotes the zero section, and two vectors are declared equivalent if they differ by multiplication by a positive scalar. Thus ${\mathbb P}\xi$ is an $S^1$-bundle over $Y$. The Reeb vector field $R$ on $Y$ canonically lifts, via the linearized Reeb flow, to a vector field $\widetilde{R}$ on ${\mathbb P}\xi$.
+
+The quaternionic trivialization $\tau$ defines a diffeomorphism
+\[
+\overline{\tau}: {\mathbb P}\xi \stackrel{\simeq}{\longrightarrow} Y\times S^1.
+\]
+Let
+\[
+\sigma: {\mathbb P}\xi\longrightarrow S^1
+\]
+denote the composition of $\overline{\tau}$ with the projection $Y\times S^1\to S^1$.
+
+\begin{definition}
+Define the {\bf rotation rate\/}
+\[
+r: {\mathbb P}\xi\longrightarrow \R
+\]
+to be the derivative of $\sigma$ with respect to the lifted linearized Reeb flow,
+\[
+r=\widetilde{R}\sigma.
+\]
+Define the {\bf minimum rotation rate\/}
+\[
+r_{\op{min}}:Y\longrightarrow \R
+\]
+by
+\[
+r_{\op{min}}(y) = \min_{\widetilde{y}\in{\mathbb P}\xi_y}r(\widetilde{y}).
+\]
+\end{definition}
+
+It follows from \eqref{eqn:rminbound} and \eqref{eqn:rhor} that we have the following lower bound on the rotation number of the lifted linearized flow of a Reeb trajectory.
+
+\begin{lemma}
+\label{lem:minrot}
+Let $y$ be a smooth star-shaped hypersurface in $\R^4$, let $y\in Y$, and let $t\ge 0$. Then
+\[
+\rho(\widetilde{\phi}(y,t)) \ge \int_0^tr_{\op{min}}(\Phi_s(y))ds.
+\]
+\end{lemma}
+
+\subsection{The curvature identity}
+
+We now prove a key identity which relates the linearized Reeb flow, with respect to the quaternionic trivialization $\tau$, to the curvature of $Y$. This identity (in different notation) is due to U.\ Hryniewicz and P.\ Salom\~ao \cite{umberto}. Below, let $S:TY\tensor TY\to\R$ denote the second fundamental form defined by
+\[
+S(u,w) = \langle \nabla_u\nu,w\rangle,
+\]
+where $\nu$ denotes the outward unit normal vector to $Y$, and $\nabla$ denotes the trivial connection on the restriction of $T\R^4$ to $Y$. Also write $S(u)=S(u,u)$.
+
+\begin{proposition}
+\label{prop:uj}
+Let $Y$ be a smooth star-shaped hypersurface in $\R^4$, let $y\in Y$, let $\theta\in\R/2\pi\Z$, and write $\sigma = \theta/2\pi\in\R/\Z$. Then at the point $\overline{\tau}^{-1}(y,\sigma)\in{\mathbb P}\xi$, we have
+\begin{equation}
+\label{eqn:curvatureidentity}
+\widetilde{R}\sigma = \frac{1}{\pi\langle\nu,y\rangle}\left(S({\mathbf i}\nu) + S(\cos(\theta){\mathbf j}\nu + \sin(\theta){\mathbf k}\nu)\right).
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+It follows from the definitions that
+\begin{equation}
+\label{eqn:ffd}
+\begin{split}
+2\pi\widetilde{R}\sigma =& \left\langle \mc{L}_R((\cos\theta){\mathbf j}\nu + (\sin\theta){\mathbf k}\nu), (\sin\theta){\mathbf j}\nu - (\cos\theta){\mathbf k}\nu\right\rangle\\
+=& -(\cos^2\theta)\langle \mc{L}_R{\mathbf j}\nu,{\mathbf k}\nu\rangle + (\sin^2\theta)\langle \mc{L}_R{\mathbf k}\nu,{\mathbf j}\nu\rangle\\
+& +(\sin\theta\cos\theta)(\langle \mc{L}_R{\mathbf j}\nu,{\mathbf j}\nu\rangle - \langle \mc{L}_R{\mathbf k}\nu,{\mathbf k}\nu\rangle).
+\end{split}
+\end{equation}
+We compute
+\begin{align}
+\nonumber
+\langle \mc{L}_R{\mathbf j}\nu,{\mathbf k}\nu\rangle &= \langle \nabla_R{\mathbf j}\nu - \nabla_{{\mathbf j}\nu}R, {\mathbf k}\nu\rangle\\
+\nonumber
+&= \frac{2}{\langle \nu,y\rangle}\left(\langle \nabla_{{\mathbf i}\nu}{\mathbf j}\nu,{\mathbf k}\nu\rangle - \langle\nabla_{{\mathbf j}\nu}{\mathbf i}\nu, {\mathbf k}\nu\rangle\right)\\
+\nonumber
+&= \frac{2}{\langle \nu,y\rangle}\left(-\langle \nabla_{{\mathbf i}\nu}\nu,{\mathbf i}\nu\rangle -\langle \nabla_{{\mathbf j}\nu}\nu,{\mathbf j}\nu\rangle\right)\\
+\label{eqn:Ljk}
+&= \frac{2}{\langle \nu,y\rangle}\left(-S({\mathbf i}\nu) - S({\mathbf j}\nu)\right).
+\end{align}
+Here in the second to third lines we have used the fact that multiplication on the left by a constant unit quaternion is an isometry. Similar calculations show that
+\begin{align}
+\label{eqn:Lkj}
+\langle \mc{L}_R{\mathbf k}\nu,{\mathbf j}\nu\rangle &= \frac{2}{\langle \nu,y\rangle}\left(S({\mathbf i}\nu) + S({\mathbf k}\nu)\right),\\
+\label{eqn:Ljj}
+\langle \mc{L}_R{\mathbf j}\nu,{\mathbf j}\nu\rangle = - \langle \mc{L}_R{\mathbf k}\nu,{\mathbf k}\nu\rangle &= \frac{2}{\langle\nu,y\rangle} S({\mathbf j}\nu,{\mathbf k}\nu).
+\end{align}
+Plugging \eqref{eqn:Ljk}, \eqref{eqn:Lkj} and \eqref{eqn:Ljj} into \eqref{eqn:ffd} proves the curvature identity \eqref{eqn:ffd}.
+\end{proof}
+
+\begin{remark}
+Since the second fundamental form is positive definite when $Y$ is strictly convex, and positive semidefinite when $Y$ is convex, by Lemma~\ref{lem:minrot} we obtain the following corollary:
+{\em If $Y$ is a convex star-shaped hypersurface in $\R^4$ then $\widetilde{R}\sigma\ge 0$ everywhere, so $\widetilde{\phi}(y,t)$ has nonnegative rotation number for all $y\in Y$ and $t\ge 0$.
+If $Y$ is a strictly convex star-shaped hypersurface in $\R^4$ then $\widetilde{R}\sigma >0$ everywhere, so $\widetilde{\phi}(y,t)$ has positive rotation number for all $y\in Y$ and $t>0$.\/}
+\end{remark}
+
+
+
+
+
+
+
+

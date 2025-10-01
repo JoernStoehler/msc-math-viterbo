@@ -1,0 +1,306 @@
+\section{Reeb dynamics on symplectic polytopes}
+\label{sec:rdsp} 
+
+The goal of this section is to prove Proposition~\ref{prop:well-posed} and  Lemma~\ref{lem:Reebcone}, describing the Reeb dynamics on the boundary of a symplectic polytope in $\R^4$.
+
+\subsection{Preliminaries on tangent and normal cones}
+
+We now prove some lemmas about tangent and normal cones which we will need; see \S\ref{sec:cro} for the definitions.
+
+Recall that if $C$ is a cone in $\R^m$, its {\bf polar dual\/} is defined by
+\[
+C^o=\{y\in\R^m\mid \langle x,y\rangle \le 0 \;\forall x\in C\}.
+\]
+
+\begin{lemma}
+\label{lem:ntd}
+Let $X$ be a convex set in $\R^m$ and let $y\in\partial X$. Then
+\[
+N_y^+X = (T_y^+X)^o, \quad\quad T_y^+X = (N_y^+X)^o.
+\]
+\end{lemma}
+
+\begin{proof}
+If $C$ is a closed cone then $(C^o)^o = C$, so it suffices to prove that $N_y^+X = (T_y^+X)^o$.
+
+To show that $N_y^+X\subset (T_y^+X)^\circ$, let $v\in N_y^+X$ and $w\in T_y^+X$; we need to show that $\langle v,w\rangle \le 0$. By the definition of $T_y^+X$, there exist a sequence of vectors $\{w_i\}$ and a sequence of positive real numbers $\{\epsilon_i\}$ such that $y+\epsilon_iw_i\in X$ for each $i$ and $\lim_{i\to\infty}w_i=w$. By the definition of $N_y^+X$ we have $\langle v,w_i\rangle \le 0$, and so $\langle v,w\rangle \le 0$.
+
+To prove the reverse inclusion, if $v\in (T_x^+X)^o$, then for any $x\in X$ we have $x-y\in T_y^+X$, so $\langle v,x-y\rangle \le 0$. It follows that $v\in N_y^+X$.
+\end{proof}
+
+If $X$ is a convex polytope in $\R^m$ and if $E$ is an $(m-1)$-face of $X$, let $\nu_E$ denote the outward unit normal vector to $E$.
+
+\begin{lemma}
+\label{lem:ncn}
+Let $X$ be a convex polytope in $\R^m$ and let $F$ be a face of $X$. Let $E_1,\ldots, E_k$ denote the $(m-1)$-faces whose closures contain $F$. Then
+\begin{align}
+\label{eqn:TFcone}
+T_F^+X &= \left\{w\in \R^m \mid \langle w,\nu_{E_i}\rangle \le 0 \;\; \forall i=1,\ldots,k \right\},
+\\
+\label{eqn:NFcone}
+N_F^+X & = \op{Cone}
+	\left(
+			\nu_{E_1},\ldots, \nu_{E_k}
+	\right).
+\end{align}
+\end{lemma}
+
+\begin{proof}
+Let $y\in F$, and let $B$ be a small ball around $y$. Then $B\cap X=\cap_i(B\cap H_i)$ where $\{H_i\}$ is the set of all defining half-spaces for $X$ whose boundaries contain $F$. The boundaries of the half-spaces $H_i$ are the hyperplanes that contain the $(m-1)$-faces $E_1,\ldots, E_k$. It follows that $B\cap X$  is the set of $x\in B$ such that $\langle x-y,\nu_{E_i}\rangle \le 0$ for each $i=1,\ldots, k$. Equation \eqref{eqn:TFcone} follows. Taking polar duals and using Lemma~\ref{lem:ntd} then proves \eqref{eqn:NFcone}.
+\end{proof}
+
+\begin{lemma}
+\label{lem:pp1}
+Let $X$ be a convex polytope in $\R^m$ and let $F$ be a face of $X$. Let $v\in N_F^+X\setminus\{0\}$ and let $w\in T_F^+X\setminus\{0\}$. Then $\langle v,w\rangle = 0$ if and only if there is a face $E$ of $X$ with $F\subset \overline{E}$ such that $v\in N_E^+X$ and $w\in T_F^+\overline{E}$.
+\end{lemma}
+
+Here if $E\neq F$ then $T_F^+\overline{E}$ denotes the tangent cone of the polytope $\overline{E}$ at the face $F$ of $\overline{E}$; if $E=F$, then we interpret $T_F^+\overline{E}=TF$.
+
+\begin{proof}[Proof of Lemma~\ref{lem:pp1}.]
+As in Lemma~\ref{lem:ncn}, let $E_1,\ldots, E_k$ denote the $(m-1)$-faces adjacent to $F$.
+
+$(\Rightarrow)$
+By the definitions of $N_F^+X$ and $T_F^+X$, if $v\in N_F^+X$ and $w\in T_F^+X$ then $\langle v,w\rangle \le 0$. Assume also that $v$ and $w$ are both nonzero and $\langle v,w\rangle = 0$. Then we must have $v\in\partial N_F^+X$ and $w\in\partial T_F^+X$; otherwise we could perturb $v$ or $w$ to make the inner product positive, which would be a contradiction.
+
+Since $w\in\partial T_F^+X$, it follows from \eqref{eqn:TFcone} that $\langle w,\vu_{E_i}\rangle = 0$ for some $i$. By renumbering we can arrange that $\langle w,\nu_{E_i}\rangle = 0$ if and only if $i\le l$ where $1\le l\le k$. Let $E=\cap_{i=1}^l E_i$. Then $E$ is a face of $X$ adjacent to $F$, and $w\in T_F^+\overline{E}$.
+
+We now want to show that $v\in N_E^+X$. By \eqref{eqn:NFcone}, we can write $v = \sum_{i=1}^k a_i\nu_{E_i}$ with $a_i\ge 0$. Since $\langle v,w\rangle = 0$ and $\langle w,\vu_{E_i}\rangle = 0$ for $i\le l$ and $\langle w,\nu_{E_i}\rangle < 0$ for $i>l$, we must have $a_i=0$ for $i>l$. Thus $v\in\op{Cone}(\vu_{E_1},\ldots,\nu_{E_l})$, so by \eqref{eqn:NFcone} again, $v\in N_F^+X$. 
+
+$(\Leftarrow)$ Assume that there is a face $E$ adjacent to $X$ such that $v\in N_E^+X$ and $w\in T_F^+\overline{E}$. We can renumber so that $E=\cap_{i=1}^l E_i$ where $1\le l \le k$. Then $v\in\op{Cone}(\nu_{E_1},\ldots,\nu_{E_l})$, and $\langle w,\nu_{E_i}\rangle = 0$ for $i\le l$, so $\langle v,w\rangle = 0$.
+\end{proof}
+
+\subsection{The combinatorial Reeb flow is locally well-posed}
+\label{sec:wp}
+
+We now prove Proposition~\ref{prop:well-posed}, asserting that the ``combinatorial Reeb flow'' on the boundary of a symplectic polytope in $\R^4$ is locally well-posed. This is a consequence of the following two lemmas:
+
+\begin{lemma}
+\label{lem:wp1}
+Let $X$ be a convex polytope in $\R^4$, and let $F$ be a face of $X$. Then the Reeb cone
+\[
+R_F^+X = {\mathbf i}N_F^+X\cap T_F^+X
+\]
+has dimension at least $1$.
+\end{lemma}
+
+Note that there is no need to assume that $0\in\op{int}(X)$ in the above lemma, because the Reeb cone is invariant under translation of $X$.
+
+\begin{lemma}
+\label{lem:wp2}
+Let $X$ be a symplectic polytope in $\R^4$ and let $F$ be a face of $X$. Then the Reeb cone $R_F^+X$ has dimension at most $1$.
+\end{lemma}
+
+\begin{proof}[Proof of Lemma~\ref{lem:wp1}.] The proof has four steps.
+
+{\em Step 1.\/} We need to show that there exists a unit vector in $R_F^+X$. We first rephrase this statement in a way that can be studied topologically.
+
+Define
+\[
+B = \left\{(v,w)\in N_F^+X\times T_F^+X \;\big|\; \|v\|=\|w\|=1,\; \langle v,w\rangle = 0\right\}.
+\]
+Define a fiber bundle $\pi:Z\to B$ with fiber $S^2$ by setting
+\[
+Z_{(v,w)}=\left\{u\in\R^4 \;\big|\; \|u\|=1, \; \langle u,v\rangle = 0 \right\}.
+\]
+Define two sections
+\[
+s_0,s_1: B \longrightarrow Z
+\]
+by
+\[
+\begin{split}
+s_0(v,w) &= {\mathbf i}v,\\
+s_1(v,w) &= w.
+\end{split}
+\]
+To show that there exists a unit vector in $R_F^+X$, we need to show that there exists a point $(v,w)\in B$ with $s_0(v,w) = s_1(v,w)$.
+
+{\em Step 2.\/} 
+Let
+\[
+B_0 = \left\{w\in\partial T_F^+X \; \big| \; \|w\|=1\right\}.
+\]
+The space $B_0$ is the set of unit vectors on the boundary of a nondegenerate cone, and thus is homeomorphic to $S^2$. Recall from the proof of Lemma~\ref{lem:pp1} that if $(v,w)\in B$ then $w\in B_0$. We now show that the projection $B\to B_0$ sending $(v,w)\mapsto w$ is a homotopy equivalence.
+
+To do so, observe that by Lemma~\ref{lem:pp1}, we have
+\begin{equation}
+\label{eqn:Bunion}
+B = \bigcup_{F\subset E} \left\{v\in N_E^+X\;\big|\; \|v\|=1\right\} \times \left\{w\in T_F^+\overline{E} \;\big|\; \|w\|=1\right\}.
+\end{equation}
+
+If $F$ is a $3$-face, then in the union \eqref{eqn:Bunion}, we only have $E=F$; there is a unique unit vector $v\in N_E^+X$, and so the projection $B\to B_0$ is a homeomorphism.
+
+If $F$ is a $2$-face, then in \eqref{eqn:Bunion}, $E$ can be either $F$ itself, or one of the two three-faces adjacent to $F$, call them $E_1$ and $E_2$. The contribution from $E=F$ is a cylinder, while the contributions from $E=E_1$ and $E_2$ are disks which are glued to the cylinder along its boundary. The projection $B\to B_0$ collapses the cylinder to a circle, which again is a homotopy equivalence.
+
+If $F$ is a $1$-face, with $k$ adjacent $3$-faces, then the contribution to \eqref{eqn:Bunion} from $E=F$ consists of two disjoint closed $k$-gons. Each $2$-face $E$ adjacent to $F$ contributes a square with opposite edges glued to one edge of each $k$-gon. Each $3$-face $E$ adjacent to $F$ contributes a bigon filling in the gap between two consecutive squares. The projection $B\to B_0$ collapses each $k$-gon to a point and each bigon to an interval, which again is a homotopy equivalence.
+
+Finally, suppose that $F$ is a $0$-face. Then $E=F$ makes no contribution to \eqref{eqn:Bunion}, since $TF=\{0\}$ contains no unit vectors. Now $B_0$ has a cell decomposition consisting of a $k$-cell for each $(k+1)$-face adjacent to $F$. The space $B$ is obtained from $B_0$ by thickening each $0$-cell to a closed polygon, and thickening each $1$-cell to a square. Again, this is a homotopy equivalence.
+
+{\em Step 3.\/} The $S^2$-bundle $Z\to B$ is trivial. To see this, observe that $Z$ is the pullback of a bundle over $N_F^+X\setminus\{0\}$, whose fiber over $v$ is the set of unit vectors orthogonal to $v$. Since $N_F^+X\setminus\{0\}$ is contractible, the latter bundle is trivial, and thus so is $Z$. In particular, the bundle $Z$ has two homotopy classes of trivialization, which differ only in the orientation of the fiber. We now show that, using a trivialization to regard $s_0$ and $s_1$ as maps $B\to S^2$, the mod $2$ degrees of these maps are given by $\op{deg}(s_0)=0$ and $\op{deg}(s_1)=1$.
+
+It follows from the triviality of the bundle $Z$ that $\op{deg}(s_0)=0$.
+
+To prove that $\op{deg}(s_1)=1$, we need to pick an explicit trivialization of $Z$. To do so, fix a vector $v_0\in\op{int}(T_F^+X)$. Let $S$ denote the set of unit vectors in the orthogonal complement $v_0^\perp$. Let $P:\R^4\to v_0^\perp$ denote the orthogonal projection. We then have a trivialization
+\[
+Z \stackrel{\simeq}{\longrightarrow} B\times S
+\]
+sending
+\[
+((v,w),u) \longmapsto ((v,w),Pu/\|Pu\|).
+\]
+Note here that for every $(v,w)\in B$, the restriction of $P$ to $v^\perp$ is an isomorphism, because otherwise $v$ would be orthogonal to $v_0$, but in fact we have $\langle v,v_0\rangle < 0$.
+
+With respect to this trivialization, the section $s_1$ is a map $B\to S$ which is the composition of the projection $B\to B_0$ with the map $B_0\to S$ sending
+\[
+w \longmapsto Pw/\|Pw\|.
+\]
+The former map is a homotopy equivalence by Step 2, and the latter map is a homeomorphism because $v_0$ is not parallel to any vector in $\partial T_F^+X$.  Thus $\op{deg}(s_1)=1$.
+
+{\em Step 4.\/} We now complete the proof of the lemma. Suppose to get a contradiction that there does not exist a point $p\in B$ with $s_0(p)=s_1(p)$. It follows, using a trivialization of $Z$ to regard $s_0$ and $s_1$ as maps $B\to S^2$, that $s_1$ is homotopic to the composition of $s_0$ with the antipodal map. Then $\op{deg}(s_1)=-\op{deg}(s_0)$. This contradicts Step 3.
+\end{proof}
+
+\begin{remark}
+It might be possible to generalize Lemma~\ref{lem:wp1} to show that if $X$ is any convex set in $\R^{2n}$ with nonempty interior and if $z\in\partial X$, then the Reeb cone $R_z^+X$ is at least one dimensional.
+\end{remark}
+
+We now prepare for the proof of Lemma~\ref{lem:wp2}.
+
+\begin{lemma} \label{lem:weak_well_posedness_for_polytopes} Let $X$ be a convex polytope in $\R^{2n}$. Then for every face $F$ of $X$, there exists a face $E$ with $F\subset\overline{E}$ such that
+\[
+R_F^+X \subset T^+_F\bar{E}.
+\]
+\end{lemma}
+
+\noindent
+{\em Proof.\/}
+Let $\{E_i\}_{i=1}^N$ denote the set of faces whose closures contain $F$. By Lemma~\ref{lem:pp1}, we have
+\begin{equation}
+\label{eqn:wwp}
+R_F^+X \subset \bigcup_{i=1}^N T_F^+\bar{E}_i.
+\end{equation}
+
+Let $V$ denote the subspace of $\R^{2n}$ spanned by $R^+_FX$. Note that since the latter set is a cone, it has a nonempty interior in $V$. We claim now that $V\subset TE_i$ for some $i$. If not, then $V\cap TE_i$ is a proper subspace of $V$ for each $i$. But by \eqref{eqn:wwp}, we have
+\[
+R^+_FX = \left(\cup_i T^+_F\bar{E}_i\right) \cap R^+_FX \subset \left(\cup_i TE_i\right) \cap V.
+\]
+This is a contradiction, since the left hand side has a nonempty interior in $V$, while the right hand side is a union of proper subspaces of $V$.
+
+Since $V \subset TE_i$, it follows that $R^+_FX \subset T^+_F\bar{E}_i$, because by \eqref{eqn:wwp} again,
+\[
+R^+_FX = R^+_FX \cap V = R^+_FX \cap TE_i
+\]
+\[
+\hspace{1.8in}
+\subset  TE_i \cap \bigg(\bigcup_j T^+_F\bar{E}_j\bigg) = T_F\bar{E}_i, \hspace{1.8in}\Box
+\]
+
+\begin{lemma}
+\label{lem:wwp2}
+Let $X$ be a convex polytope in $\R^{2n}$, and let $F$ be a face of $X$. Let $v\in R_F^+X$. Suppose that $v\in\op{int}(T_F^+\overline{E})$ for some $(2n-1)$-face $E$ whose closure contains $F$. Then $v$ is a positive multiple of ${\mathbf i}\nu_E$.
+\end{lemma}
+
+\begin{proof}
+Let $E=E_1,\ldots,E_N$ denote the $(2n-1)$-faces whose closures contain $F$, and let $\nu_i$ denote the outward unit normal vector to $E$. Since $v\in\op{int}(T_F^+\overline{E})$, we have $\langle v,\nu_1\rangle=0$ and $\langle v,\nu_i\rangle < 0$ for $i>1$. Since $-{\mathbf i}v\in N_F^+X$, it follows from Lemma~\ref{lem:ncn} that we can write
+\[
+-{\mathbf i}v = \sum_{i=1}^Na_i\nu_i
+\]
+with $a_i\ge 0$. Since $\langle v,{\mathbf i}v\rangle = 0$, we conclude that $a_i=0$ for $i>1$. Thus $-{\mathbf i}v=a_1\nu_1$, and $a_1>0$.
+\end{proof}
+
+\begin{proof}[Proof of Lemma~\ref{lem:wp2}.]
+Suppose $v_0,v_1$ are distinct unit vectors in $R_F^+X$. By Lemma~\ref{lem:weak_well_posedness_for_polytopes}, there is a $3$-face $E$ such that $v_0$ and $v_1$ are both in $T_F^+\bar{E}$. In particular, $v_1$ and $v_2$ are linearly independent.
+
+Since $v_0$ and $v_1$ are both in the cone $R_F^+X$, it follows that if $t\in[0,1]$ then the affine linear combination $(1-t)v_0+tv_1$ is also in this cone. Since $v_0$ and $v_1$ are linearly independent, these affine linear combinations cannot be in the interior of $T_F^+\overline{E}$, or else this would contradict the projective uniqueness in Lemma~\ref{lem:wwp2}. Consequently $v_0$ and $v_1$ are both contained in $T_F^+\overline{E'}$ for some $2$-face $E'$ on the boundary of $\overline{E}$.
+
+We now have
+\[
+\omega(v_0,v_1) = \langle v_0,-{\mathbf i}v_1\rangle \le 0,
+\]
+where the inequality holds since $v_0\in T_F^+X$ and $-{\mathbf i}v_1\in N_F^+X$. By a symmetric calculation, $\omega(v_1,v_0)\le 0$. It follows that $\omega(v_0,v_1)=0$. Since $v_0$ and $v_1$ are linearly independent vectors in $TE'$, this contradicts the hypothesis that $\omega|_{TE'}$ is nondegenerate.
+\end{proof}
+
+\subsection{Description of the Reeb cone}
+\label{sec:drc}
+
+We now prove Lemma~\ref{lem:Reebcone}, describing the possibilities for the Reeb cone of a face of a symplectic polytope in $\R^4$.
+
+\begin{lemma}
+\label{lem:EinEout}
+Let $X$ be a convex polytope in $\R^4$ and let $F$ be a $2$-face of $X$. Let $E_1$ and $E_2$ denote the $3$-faces adjacent to $F$, and let $\nu_i$ denote the outward unit normal vector to $E_i$.
+\begin{itemize}
+	\item[\emph{(a)}] If $\langle {\mathbf i}\nu_{1},\nu_{2}\rangle < 0$, then every nonzero vector $w$ in the Reeb cone $R_{E_1}^+$ points into $E_1$ from $F$, that is $w\in \op{int}(T_F^+\overline{E_1})$.
+	\item[\emph{(b)}] If $\langle {\mathbf i}\nu_{1},\nu_{2}\rangle > 0$, then every nonzero vector $w$ in the Reeb cone $R_{E_1}^+$ points out of $E_1$ from $F$, that is $w\in \op{int}(-T_F^+\overline{E_1})$.
+	\item[\emph{(c)}] If $\langle {\mathbf i}\nu_{1},\nu_{2}\rangle = 0$, then $F$ is Lagrangian.
+\end{itemize}
+\end{lemma}
+
+\begin{proof}
+Let $\eta$ denote the unit normal vector to $F$ in $T\overline{E_1}$ pointing into $E_1$. The vector $\eta$ must be a linear combination of $\nu_1$ and $\nu_2$ (since it is normal to $F$), it must be orthogonal to $\nu_1$ (since it is tangent to $E_1$), and it must have negative inner product with $\nu_2$ (since it points into $E_1$). It follows that
+\begin{equation}
+\label{eqn:eta}
+\eta = \frac{-\nu_2 + \langle\nu_1,\nu_2\rangle\nu_1}{\|-\nu_2 + \langle\nu_1,\nu_2\rangle\nu_1\|}.
+\end{equation}
+
+The vector $w$ points into $E_1$ if and only if $\langle \eta,w\rangle >0$, and the vector $w$ points out of $E_1$ if and only if $\langle \eta,w\rangle < 0$. For $w$ in the Reeb cone of $E_1$, we know that $w$ is a positive multiple of ${\mathbf i}\nu_1$. By equation \eqref{eqn:eta}, we have
+\[
+\langle \eta,{\mathbf i}\nu_1\rangle = \frac{-\langle{\mathbf i}\nu_1,\nu_2\rangle}{\|-\nu_2 + \langle\nu_1,\nu_2\rangle\nu_1\|}.
+\]
+Thus if $\langle {\mathbf i}\nu_1,\nu_2\rangle$ is nonzero, then it has opposite sign from $\langle \eta,w\rangle$. This proves (a) and (b).
+
+If $\langle {\mathbf i}\nu_1,\nu_2\rangle = 0$, then $\omega({\mathbf i}\nu_1,{\mathbf i}\nu_2) = 0$, but ${\mathbf i}\nu_1$ and ${\mathbf i}\nu_2$ are linearly independent tangent vectors to $F$, so $F$ is Lagrangian. This proves (c).
+\end{proof}
+
+\begin{lemma}
+\label{lem:la}
+Let $X$ be a convex polytope in $\R^4$ and let $F$ be a 2-face of $X$. If $TF\cap R_F^+X\neq\{0\}$, then $F$ is Lagrangian.
+\end{lemma}
+
+\begin{proof}
+If $w\in TF\cap R_F^+X$, then for any other vector $u\in TF$, we have
+\[
+\omega(w,u) = \langle {\mathbf i}w,u\rangle = 0
+\]
+since $-{\mathbf i}w\in N_F^+X$. If we also have $w\neq 0$, then it follows that $F$ is Lagrangian.
+\end{proof}
+
+\begin{proof}[Proof of Lemma~\ref{lem:Reebcone}.]
+If $F$ is a $3$-face, then by the definition of the Reeb cone, $R_F^+X$ consists of all nonnegative multiples of ${\mathbf i}\nu_F$; and ${\mathbf i}\nu_F$ is a positive multiple of the Reeb vector field on $F$ by equation \eqref{eqn:Reebinu}.
+
+Suppose now that $F$ is a $k$-face with $k<3$, and that $w$ is a nonzero vector in the Reeb cone $R_F^+X$. Applying Lemma~\ref{lem:pp1} to $v=-{\mathbf i}w$ and $w$, we deduce that there is a face $E$ of $X$ with $F\subset \overline{E}$ such that $-{\mathbf i}w\in N_E^+X$ and $w\in T_F^+\overline{E}$. In particular,
+\begin{equation}
+\label{eqn:terex}
+w\in TE\cap R_E^+X.
+\end{equation}
+
+By Lemma~\ref{lem:la} and our hypothesis that $X$ is a symplectic polytope, $E$ is not a $2$-face.
+
+If $F$ is a $2$-face, we conclude that $w$ is in the Reeb cone $R_E^+X$ for one of the $3$-faces $E$ adjacent to $F$. By Lemma~\ref{lem:EinEout}, $w$ must point into $E$.
+
+If $F$ is a $1$-face, then $E$ is either a $3$-face adjacent to $F$, or $F$ itself. In the case when $E=F$, the vector $w$ cannot be in the Reeb cone of any $3$-face $F_3$ adjacent to $F$. The reason is that if $F_2$ is one of the two $2$-faces with $F \subset \overline{F_2} \subset \overline{F_3}$, then by Lemma~\ref{lem:EinEout}, the Reeb cone of $F_3$ is not tangent to $F_2$, so it certainly cannot be tangent to $F$.
+
+If $F$ is a $0$-face, then $E$ is adjacent to $F$ and is either a $3$-face or a $1$-face. If $E$ is a $1$-face, then it is a bad $1$-face by \eqref{eqn:terex}.
+\end{proof}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
