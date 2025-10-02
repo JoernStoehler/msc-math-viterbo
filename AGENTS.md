@@ -27,6 +27,7 @@ update those docs to match this.
 - Local CI Check
   - Run `make ci` to mirror the GitHub Actions workflow (ruff check/format, pyright, pytest).
   - Resolve all lint and typecheck warnings; treat warnings as errors.
+  - Pyright covers both `src/` and `tests/`; keep the full suite type-clean, including fixtures and benchmarks.
 - Devcontainer (Codex Cloud)
   - One-time: `bash .devcontainer/post-create.sh`
   - Every boot: `bash .devcontainer/post-start.sh`

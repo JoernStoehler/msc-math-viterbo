@@ -66,6 +66,5 @@ ignore = [
 
 [tool.pyright]
 pythonVersion = "3.12"
-include = ["src"]
-ignore = ["tests"]
+include = ["src", "tests"]
 reportMissingImports = "warning"
