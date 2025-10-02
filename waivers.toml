@@ -1,0 +1,14 @@
+# Central list of policy waivers. CI fails on expired waivers.
+# Format: repeated [[waiver]] tables. Dates use ISO YYYY-MM-DD.
+
+# Example (remove after copying and editing):
+# [[waiver]]
+# id = "docstring-rollout-symplectic"
+# summary = "Allow non-Google docstrings while converting symplectic module"
+# owner = "@maintainer"
+# scope = "src/viterbo/symplectic/"
+# created = "2025-10-02"
+# expires = "2025-10-16"
+# justification = "Incremental conversion to Google style to keep PRs small"
+# removal_plan = "Convert remaining docstrings; remove waiver when Ruff passes"
+

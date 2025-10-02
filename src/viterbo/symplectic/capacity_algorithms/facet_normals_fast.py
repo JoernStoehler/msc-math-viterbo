@@ -1,8 +1,9 @@
-"""Optimised facet-normal EHZ capacity computation."""
+"""Optimized facet-normal EHZ capacity computation (Google style)."""
 
 from __future__ import annotations
 
 from itertools import combinations
+from typing import Final
 
 import numpy as np
 from jaxtyping import Float
@@ -10,45 +11,33 @@ from jaxtyping import Float
 from ..core import standard_symplectic_matrix
 from .facet_normals_reference import FacetSubset, _prepare_subset
 
+_DIMENSION_AXIS: Final[str] = "dimension"
+_FACET_AXIS: Final[str] = "num_facets"
+
 
 def compute_ehz_capacity_fast(
-    B: Float[np.ndarray, "num_facets dimension"],
-    c: Float[np.ndarray, " num_facets"],
+    B: Float[np.ndarray, f"{_FACET_AXIS} {_DIMENSION_AXIS}"],
+    c: Float[np.ndarray, _FACET_AXIS],
     *,
     tol: float = 1e-10,
 ) -> float:
     r"""
-    Compute the EHZ capacity using a dynamic-programming search over facet orders.
+    Compute EHZ capacity via a dynamic-programming search over facet orders.
 
-    The outer structure of the algorithm mirrors
-    :func:`viterbo.symplectic.capacity_algorithms.facet_normals_reference.compute_ehz_capacity_reference`
-    but replaces the exhaustive permutation search within each facet subset by a
-    dynamic program. The DP exploits the antisymmetry of the Haim–Kislev
-    bilinear form to reduce the ``m!`` search over orders of ``m = 2n + 1`` facets
-    to ``O(m^2 2^m)`` states. For the small values of ``m`` relevant to symplectic
-    polytopes (``m <= 9`` in our experiments) this yields a pronounced speed-up
-    while staying in pure NumPy.
+    Mirrors the reference subset enumeration but replaces the inner permutation
+    search by a DP that exploits antisymmetry of the Haim–Kislev form, reducing
+    ``m!`` to ``O(m^2 2^m)`` for ``m = 2n + 1``.
 
-    Parameters
-    ----------
-    B:
-        Outward pointing facet normals describing the polytope ``P = {x : Bx <= c}``.
-        The dimension of the ambient space equals ``2n`` with ``n >= 1``.
-    c:
-        Facet offsets for the inequality representation.
-    tol:
-        Numerical tolerance for feasibility checks and zero weights.
+    Args:
+      B: Outward facet normals for ``P = {x : Bx <= c}``, dimension ``2n``.
+      c: Facet offsets ``c``.
+      tol: Tolerance for feasibility and zero weights.
 
-    Returns
-    -------
-    float
-        The EHZ capacity of the polytope under the standard symplectic form.
+    Returns:
+      The EHZ capacity under the standard symplectic form.
 
-    Raises
-    ------
-    ValueError
-        If no admissible facet subset satisfies the non-negativity constraints in
-        the Reeb measure relations.
+    Raises:
+      ValueError: If no admissible facet subset satisfies Reeb-measure constraints.
 
     """
     B = np.asarray(B, dtype=float)
@@ -109,18 +98,14 @@ def _subset_capacity_candidate_fast(subset: FacetSubset, *, tol: float) -> float
 
 def _maximum_antisymmetric_order_value(weights: np.ndarray) -> float:
     r"""
-    Return the maximum order value for an antisymmetric weight matrix.
+    Return maximum order value for an antisymmetric weight matrix.
 
-    Parameters
-    ----------
-    weights:
-        Square matrix ``W`` with ``W[i, j] = -W[j, i]`` encoding the bilinear form
-        contributions between active facets after weighting by the Reeb measure.
+    Args:
+      weights: Square matrix ``W`` with ``W[i, j] = -W[j, i]`` after weighting
+        by Reeb measures.
 
-    Returns
-    -------
-    float
-        The maximal order value obtained by summing row prefixes.
+    Returns:
+      Maximal order value obtained by summing row prefixes.
 
     """
     m = weights.shape[0]

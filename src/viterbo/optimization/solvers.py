@@ -17,7 +17,6 @@ __all__ = [
     "LinearProgramSolution",
     "LinearProgramBackend",
     "ScipyLinearProgramBackend",
-    "CvxpyLinearProgramBackend",
     "solve_linear_program",
 ]
 
@@ -141,52 +140,8 @@ class ScipyLinearProgramBackend:
         return solution
 
 
-class CvxpyLinearProgramBackend:
-    """Linear program backend powered by :mod:`cvxpy`."""
-
-    def solve(
-        self,
-        problem: LinearProgram,
-        *,
-        options: Mapping[str, Any] | None = None,
-    ) -> LinearProgramSolution:
-        """Solve ``problem`` using a :mod:`cvxpy` backend."""
-        try:
-            import cvxpy as cp  # pyright: ignore[reportMissingImports]
-        except ModuleNotFoundError as exc:  # pragma: no cover - exercised when cvxpy is absent.
-            msg = "cvxpy is not installed; install it separately (e.g. `uv pip install cvxpy`)."
-            raise ModuleNotFoundError(msg) from exc
-
-        x = cp.Variable(problem.dimension)
-        constraints: list[Any] = []
-
-        if problem.lhs_ineq is not None and problem.rhs_ineq is not None:
-            constraints.append(cp.matmul(problem.lhs_ineq, x) <= problem.rhs_ineq)
-
-        if problem.lhs_eq is not None and problem.rhs_eq is not None:
-            constraints.append(cp.matmul(problem.lhs_eq, x) == problem.rhs_eq)
-
-        if problem.bounds is not None:
-            for index, (lower, upper) in enumerate(problem.bounds):
-                if lower is not None:
-                    constraints.append(x[index] >= lower)
-                if upper is not None:
-                    constraints.append(x[index] <= upper)
-
-        objective = cp.Minimize(problem.objective @ x)
-        optimisation = cp.Problem(objective, constraints)
-        optimisation.solve(**({} if options is None else dict(options)))
-
-        if x.value is None:
-            msg = f"cvxpy solver failed with status {optimisation.status}."
-            raise RuntimeError(msg)
-
-        solution = LinearProgramSolution(
-            x=np.asarray(x.value, dtype=float).reshape(problem.dimension),
-            objective_value=float(optimisation.value),
-            status=str(optimisation.status),
-        )
-        return solution
+## Golden-path only: we intentionally omit alternative MILP backends to avoid optional stacks.
+## Golden-path only: we intentionally omit alternative MILP backends to avoid optional stacks.
 
 
 def solve_linear_program(

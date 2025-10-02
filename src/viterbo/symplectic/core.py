@@ -1,4 +1,8 @@
-"""Numerical building blocks for experimenting with the Viterbo conjecture."""
+"""
+Numerical building blocks for experimenting with the Viterbo conjecture.
+
+This module follows Google docstring style and explicit jaxtyping shapes.
+"""
 
 from __future__ import annotations
 
@@ -13,24 +17,18 @@ ZERO_TOLERANCE: Final[float] = 1e-12
 
 def standard_symplectic_matrix(dimension: int) -> Float[np.ndarray, " d d"]:
     r"""
-    Return the matrix of the standard symplectic form on ``\mathbb{R}^d``.
+    Return the standard symplectic matrix on R^d.
 
-    Parameters
-    ----------
-    dimension:
-        An even integer at least two. The resulting matrix encodes the bilinear
-        form ``\omega(x, y) = x^{\mathsf{T}} J y`` with the block structure
-        ``J = [[0, I_n], [-I_n, 0]]`` for ``n = d / 2``.
+    Args:
+      dimension: Even integer >= 2. The resulting matrix encodes the bilinear
+        form ``ω(x, y) = x^T J y`` with block structure ``J = [[0, I_n], [-I_n, 0]]``
+        for ``n = d / 2``.
 
-    Returns
-    -------
-    numpy.ndarray
-        The ``d \times d`` symplectic matrix ``J``.
+    Returns:
+      The ``d × d`` symplectic matrix ``J``.
 
-    Raises
-    ------
-    ValueError
-        If ``dimension`` is not an even integer greater or equal to two.
+    Raises:
+      ValueError: If ``dimension`` is odd or smaller than 2.
 
     """
     if dimension % 2 != 0 or dimension < 2:
@@ -53,24 +51,18 @@ def symplectic_product(
     r"""
     Evaluate the symplectic form of two vectors.
 
-    Parameters
-    ----------
-    first, second:
-        Vectors in ``\mathbb{R}^{2n}``.
-    matrix:
-        Optional symplectic matrix ``J``. When omitted, the standard form is
-        used with ``dimension = len(first)``.
+    Args:
+      first: Vector in ``R^{2n}``.
+      second: Vector in ``R^{2n}``.
+      matrix: Optional symplectic matrix ``J``. Defaults to the standard form
+        for ``dimension = len(first)``.
 
-    Returns
-    -------
-    float
-        The value ``first^{\mathsf{T}} J second``.
+    Returns:
+      The scalar ``first^T J second``.
 
-    Raises
-    ------
-    ValueError
-        If the vectors have incompatible shapes or if ``matrix`` does not
-        define a square symplectic matrix of matching dimension.
+    Raises:
+      ValueError: If inputs are not one-dimensional, dimensions differ, or
+        ``matrix`` does not match the vector dimension.
 
     """
     first = np.asarray(first, dtype=float)
@@ -102,30 +94,22 @@ def support_function(
     direction: Vector,
 ) -> float:
     r"""
-    Evaluate the support function of a convex body given by its vertices.
+    Evaluate the support function of a convex body from its vertices.
 
-    The support function of a convex body ``K`` in direction ``u`` is defined
-    by ``h_K(u) = \sup_{x \in K} \langle u, x \rangle``. When ``K`` is
-    described by a finite vertex set, the supremum is attained and equals the
-    maximum dot product between the direction and the vertices.
+    The support function of ``K`` in direction ``u`` is
+    ``h_K(u) = sup_{x in K} <u, x>``. For a finite vertex set the supremum
+    is attained by a vertex.
 
-    Parameters
-    ----------
-    vertices:
-        Array of vertex coordinates with shape ``(m, d)``.
-    direction:
-        Direction vector in ``\mathbb{R}^d`` along which the support function
-        is evaluated.
+    Args:
+      vertices: Vertex coordinates, shape ``(num_vertices, dimension)``.
+      direction: Direction vector in ``R^d``.
 
-    Returns
-    -------
-    float
-        The support value ``h_K(direction)``.
+    Returns:
+      Support value ``h_K(direction)``.
 
-    Raises
-    ------
-    ValueError
-        If no vertices are provided or if the dimensionalities do not match.
+    Raises:
+      ValueError: If vertices are empty, or dimensions do not match, or
+        direction is not one-dimensional.
 
     """
     vertices = np.asarray(vertices, dtype=float)
@@ -152,27 +136,18 @@ def minkowski_sum(
     second_vertices: Float[np.ndarray, " n d"],
 ) -> Float[np.ndarray, " mn d"]:
     r"""
-    Return vertices of the Minkowski sum ``A + B`` for finite vertex sets.
+    Return vertices of the Minkowski sum ``A + B``.
 
-    The Minkowski sum is formed by pairwise addition of the input vertex sets.
-    The output is not deduplicated; downstream callers can apply convex hull
-    or vertex pruning routines when necessary.
+    Args:
+      first_vertices: Vertex array for polytope ``A``, shape ``(m, d)``.
+      second_vertices: Vertex array for polytope ``B``, shape ``(n, d)``.
 
-    Parameters
-    ----------
-    first_vertices, second_vertices:
-        Arrays of shape ``(m, d)`` and ``(n, d)`` describing the vertex sets of
-        two polytopes ``A`` and ``B``.
+    Returns:
+      Array of shape ``(m * n, d)`` with all pairwise sums. No deduplication
+      is performed; callers may prune or convexify later.
 
-    Returns
-    -------
-    numpy.ndarray
-        Array of shape ``(m * n, d)`` containing all pairwise sums.
-
-    Raises
-    ------
-    ValueError
-        If either vertex array is empty or if their dimensions do not match.
+    Raises:
+      ValueError: If an input is empty or dimensions differ.
 
     """
     first_vertices = np.asarray(first_vertices, dtype=float)
@@ -197,30 +172,24 @@ def minkowski_sum(
 
 def normalize_vector(vector: Vector) -> Vector:
     r"""
-    Return a unit vector pointing in the same direction as ``vector``.
+    Return a unit vector pointing in the same direction.
 
-    Parameters
-    ----------
-    vector:
-        Array-like object representing the vector to normalize. One-dimensional
-        input is required; nested arrays raise ``ValueError``.
+    Args:
+      vector: One-dimensional vector to normalize.
+    Args:
+      vector: One-dimensional vector to normalize.
 
-    Returns
-    -------
-    numpy.ndarray
-        A unit vector pointing in the same direction as ``vector``.
+    Returns:
+      A unit vector with the same direction as ``vector``.
 
-    Raises
-    ------
-    ValueError
-        If ``vector`` is (numerically) the zero vector.
+    Raises:
+      ValueError: If ``vector`` has near-zero magnitude.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from viterbo import normalize_vector
-    >>> normalize_vector(np.array([3.0, 4.0]))
-    array([0.6, 0.8])
+    Examples:
+      >>> import numpy as np
+      >>> from viterbo import normalize_vector
+      >>> normalize_vector(np.array([3.0, 4.0]))
+      array([0.6, 0.8])
 
     """
     vector = np.asarray(vector, dtype=float)

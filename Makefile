@@ -15,7 +15,7 @@ help:
 	@echo "  make ci        # run the CI command set"
 
 setup:
-	$(UV) pip install --system -e .[dev]
+	$(UV) sync --extra dev --system
 
 format:
 	ruff format .

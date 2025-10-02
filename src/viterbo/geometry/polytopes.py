@@ -10,15 +10,11 @@ from typing import Final, Sequence
 
 import numpy as np
 from jaxtyping import Float
+from scipy.spatial import ConvexHull
 
 from viterbo.symplectic.core import standard_symplectic_matrix
 
 from .halfspaces import enumerate_vertices, remove_redundant_facets
-
-try:  # Optional dependency used only when available.
-    from scipy.spatial import ConvexHull
-except ModuleNotFoundError:  # pragma: no cover - exercised in environments without SciPy.
-    ConvexHull = None
 
 _DIMENSION_AXIS: Final[str] = "dimension"
 _FACET_AXIS: Final[str] = "num_facets"
@@ -136,10 +132,6 @@ def halfspaces_from_vertices(
     Float[np.ndarray, _FACET_AXIS],
 ]:
     """Return a half-space description from a vertex set using Qhull."""
-    if ConvexHull is None:  # pragma: no cover - SciPy is an optional dependency.
-        msg = "scipy is required to convert vertices to half-space form."
-        raise ModuleNotFoundError(msg)
-
     hull = ConvexHull(np.asarray(vertices, dtype=float), qhull_options=qhull_options)
     # Qhull stores inequalities as <normal, offset> with normal pointing outward
     # and the inequality ``normal @ x + offset <= 0``. We flip the sign so that

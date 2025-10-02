@@ -56,7 +56,7 @@ line-ending = "lf"
 quote-style = "double"
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "D", "B", "NPY"]
+select = ["E", "F", "W", "I", "D", "B", "NPY", "TID"]
 ignore = [
     "F722",  # jaxtyping annotations intentionally use string literals for shapes
     "D100",  # module docstring requirement is redundant with README documentation
@@ -67,6 +67,12 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
 
 [tool.pyright]
 pythonVersion = "3.12"

@@ -1,4 +1,8 @@
-"""Utility helpers for polytopes represented as half-space intersections."""
+"""
+Utility helpers for polytopes represented as half-space intersections.
+
+Docstrings follow Google style; shapes use the AGENTS.md vocabulary.
+"""
 
 from __future__ import annotations
 
@@ -25,7 +29,20 @@ def _validate_halfspace_data(
     Float[np.ndarray, _FACET_MATRIX_AXES],
     Float[np.ndarray, _FACET_AXIS],
 ]:
-    """Return normalized ``(B, c)`` arrays and validate basic shape constraints."""
+    """
+    Validate and normalize half-space inputs.
+
+    Args:
+      B: Facet-normal matrix with shape ``(num_facets, dimension)``.
+      c: Offsets with shape ``(num_facets,)``.
+
+    Returns:
+      Normalized ``(B, c)`` arrays of matching shapes.
+
+    Raises:
+      ValueError: If dimensionalities are inconsistent.
+
+    """
     matrix = np.asarray(B, dtype=float)
     offsets = np.asarray(c, dtype=float)
 
@@ -45,7 +62,17 @@ def _unique_rows(
     *,
     atol: float,
 ) -> Float[np.ndarray, _UNIQUE_POINT_AXES]:
-    """Deduplicate stacked vectors using an infinity-norm tolerance."""
+    """
+    Deduplicate stacked vectors using an infinity-norm tolerance.
+
+    Args:
+      points: Array of row vectors.
+      atol: Infinity-norm tolerance for equality.
+
+    Returns:
+      Subset of ``points`` with near-duplicates removed.
+
+    """
     if points.size == 0:
         return points
 
@@ -72,6 +99,18 @@ def _deduplicate_facets(
     Float[np.ndarray, _UNIQUE_FACET_MATRIX_AXES],
     Float[np.ndarray, _UNIQUE_FACET_AXIS],
 ]:
+    """
+    Remove near-duplicate facet rows with shared offsets.
+
+    Args:
+      matrix: Facet-normal matrix ``B``.
+      offsets: Offsets ``c``.
+      atol: Tolerance for deduplication.
+
+    Returns:
+      Reduced ``(B, c)`` pair with duplicates removed.
+
+    """
     keep: list[int] = []
     for index, row in enumerate(matrix):
         duplicate = False
@@ -94,31 +133,21 @@ def enumerate_vertices(
     atol: float = 1e-9,
 ) -> Float[np.ndarray, _VERTEX_MATRIX_AXES]:
     r"""
-    Enumerate the vertices of a bounded polytope ``{x | Bx \le c}``.
+    Enumerate vertices of a bounded polytope ``{x | Bx ≤ c}``.
 
-    The routine brute-forces all combinations of ``dimension`` facets, making it
-    robust for the low-dimensional polytopes used in the project. Degenerate
-    facet combinations are skipped via rank checks, and feasibility is verified
-    with a uniform tolerance ``atol``.
+    Brute-forces all combinations of ``dimension`` facets, skipping degenerate
+    subsets by rank checks. Feasibility uses a uniform tolerance.
 
-    Parameters
-    ----------
-    B, c:
-        Half-space description of the polytope.
-    atol:
-        Numerical tolerance used when checking feasibility and deduplicating
-        vertices.
+    Args:
+      B: Facet-normal matrix ``B``.
+      c: Offsets ``c``.
+      atol: Tolerance for feasibility and deduplication.
 
-    Returns
-    -------
-    numpy.ndarray
-        Array of shape ``(num_vertices, dimension)`` listing the unique
-        vertices.
+    Returns:
+      Array of shape ``(num_vertices, dimension)`` listing unique vertices.
 
-    Raises
-    ------
-    ValueError
-        If the input does not describe a bounded, full-dimensional polytope.
+    Raises:
+      ValueError: If the input does not describe a bounded, full-dimensional polytope.
 
     """
     matrix, offsets = _validate_halfspace_data(B, c)
@@ -161,21 +190,16 @@ def remove_redundant_facets(
     """
     Prune redundant inequalities from a half-space description.
 
-    A facet is considered redundant if it is not active on any vertex of the
-    polytope. Vertex enumeration reuses :func:`enumerate_vertices`, so the same
-    assumptions (bounded, full-dimensional polytope) apply.
+    A facet is redundant if it is not active on any vertex. We re-use
+    :func:`enumerate_vertices`, so the same assumptions apply.
 
-    Parameters
-    ----------
-    B, c:
-        Half-space description.
-    atol:
-        Numerical tolerance used to detect active facets.
+    Args:
+      B: Facet-normal matrix ``B``.
+      c: Offsets ``c``.
+      atol: Tolerance to detect active facets.
 
-    Returns
-    -------
-    tuple[numpy.ndarray, numpy.ndarray]
-        Reduced ``(B, c)`` pair with redundant facets removed.
+    Returns:
+      Reduced ``(B, c)`` with redundant rows removed.
 
     """
     matrix, offsets = _validate_halfspace_data(B, c)

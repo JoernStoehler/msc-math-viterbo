@@ -1,4 +1,4 @@
-"""Euclidean volume estimators for convex polytopes."""
+"""Euclidean volume estimators for convex polytopes (Google style)."""
 
 from __future__ import annotations
 
@@ -20,7 +20,16 @@ _SIMPLEX_AXES: Final[str] = "num_simplices vertices dimension"
 def _volume_of_simplices(
     simplex_vertices: Float[np.ndarray, _SIMPLEX_AXES],
 ) -> float:
-    """Return the total volume of simplices defined by ``simplex_vertices``."""
+    """
+    Return total volume of simplices.
+
+    Args:
+      simplex_vertices: Array shaped ``(num_simplices, vertices, dimension)``.
+
+    Returns:
+      Sum of simplex volumes.
+
+    """
     base = simplex_vertices[:, 0, :]  # shape: (k, d)
     edges = simplex_vertices[:, 1:, :] - base[:, None, :]
     determinants = np.linalg.det(edges)
@@ -35,11 +44,16 @@ def polytope_volume_reference(
     atol: float = 1e-9,
 ) -> float:
     """
-    Trusted Euclidean volume computed via Qhull (SciPy ``ConvexHull``).
+    Trusted volume via Qhull (SciPy ``ConvexHull``).
 
-    Qhull [Barber1996]_ is a mature computational geometry library that powers
-    SciPy's ``ConvexHull`` implementation. We rely on its volume computation as a
-    correctness oracle and cross-check faster estimators against it.
+    Args:
+      B: Facet-normal matrix.
+      c: Offsets.
+      atol: Vertex enumeration tolerance.
+
+    Returns:
+      Euclidean volume computed from the convex hull of vertices.
+
     """
     vertices = enumerate_vertices(B, c, atol=atol)
     hull = ConvexHull(vertices, qhull_options="QJ")
@@ -52,7 +66,11 @@ def polytope_volume_fast(
     *,
     atol: float = 1e-9,
 ) -> float:
-    """Optimized volume estimator using Delaunay triangulation of vertices."""
+    """
+    Optimized volume via Delaunay triangulation of vertices.
+
+    Falls back to ``ConvexHull`` if triangulation fails.
+    """
     vertices = enumerate_vertices(B, c, atol=atol)
     try:
         triangulation = Delaunay(vertices, qhull_options="QJ")

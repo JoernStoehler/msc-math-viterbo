@@ -1,20 +1,23 @@
-"""Reference facet-normal EHZ capacity computation."""
+"""Reference facet-normal EHZ capacity computation (Google style)."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from itertools import combinations, permutations
-from typing import Iterable
+from typing import Final, Iterable
 
 import numpy as np
 from jaxtyping import Float
 
 from ..core import standard_symplectic_matrix
 
+_DIMENSION_AXIS: Final[str] = "dimension"
+_FACET_AXIS: Final[str] = "num_facets"
+
 
 @dataclass(frozen=True)
 class FacetSubset:
-    """Data container describing a subset of polytope facets."""
+    """Data describing a subset of polytope facets."""
 
     indices: tuple[int, ...]
     beta: Float[np.ndarray, " m"]  # shape: (m,)
@@ -22,55 +25,30 @@ class FacetSubset:
 
 
 def compute_ehz_capacity_reference(
-    B: Float[np.ndarray, "num_facets dimension"],
-    c: Float[np.ndarray, " num_facets"],
+    B: Float[np.ndarray, f"{_FACET_AXIS} {_DIMENSION_AXIS}"],
+    c: Float[np.ndarray, _FACET_AXIS],
     *,
     tol: float = 1e-10,
 ) -> float:
     r"""
-    Compute the Ekeland–Hofer–Zehnder capacity of a non-degenerate polytope.
+    Compute the Ekeland–Hofer–Zehnder capacity of a polytope (reference).
 
-    Parameters
-    ----------
-    B:
-        Matrix whose rows describe outward pointing facet normals of a convex
-        polytope ``P`` via the inequality description ``P = \{x : B x \leq c\}``.
-        The ambient dimension equals ``d = 2n`` with ``n \geq 1``.
-    c:
-        Vector of offsets appearing in the facet inequalities. The i-th
-        inequality is ``\langle b_i, x \rangle \leq c_i``.
-    tol:
-        Numerical tolerance for feasibility checks. Default ``1e-10``.
+    Args:
+      B: Outward facet normals for ``P = {x : Bx <= c}``, dimension ``d = 2n``.
+      c: Offsets ``c``.
+      tol: Tolerance for feasibility checks.
 
-    Returns
-    -------
-    float
-        The Ekeland–Hofer–Zehnder capacity of ``P`` under the standard
-        symplectic structure.
+    Returns:
+      The EHZ capacity of ``P`` under the standard symplectic structure.
 
-    Notes
-    -----
-    The computation implements the facet-based optimisation formula of
-    Haim-Kislev (``arXiv:1905.04769``). For each subset of ``2n+1`` facets we
-    solve the affine system describing Reeb measures. If the resulting
-    weights are non-negative, we evaluate the skew-symmetric quadratic form
-    from Haim-Kislev's theorem across every total order of the chosen facets
-    (Chaidez–Hutchings provide the bridge between Reeb measures and facet
-    orders on polytopes). The reciprocal of the maximal form value—scaled by
-    ``1/2``—gives a candidate action; the minimum over all admissible subsets
-    equals ``c_{\mathrm{EHZ}}``.
+    Notes:
+      Implements the facet-based optimization formula of Haim–Kislev. For each
+      subset of ``2n+1`` facets we solve for Reeb measures and enumerate all
+      orders, taking the minimum over admissible subsets.
 
-    The algorithm is exponential both in the number of facets (due to the
-    subset enumeration) and within each subset (due to permutation
-    enumeration). This mirrors the inherent complexity established by
-    Leipold–Vallentin (2024) and prioritises correctness over performance.
-
-    Raises
-    ------
-    ValueError
-        If the dimension is not even and at least two or if no admissible
-        facet subset satisfies the non-negativity constraints implied by the
-        Reeb measure relations.
+    Raises:
+      ValueError: If ``d`` is not even and >= 2, or no admissible subset passes
+        non-negativity constraints.
 
     """
     B = np.asarray(B, dtype=float)
@@ -110,12 +88,26 @@ def compute_ehz_capacity_reference(
 
 def _prepare_subset(
     *,
-    B: Float[np.ndarray, "num_facets dimension"],
-    c: Float[np.ndarray, " num_facets"],
+    B: Float[np.ndarray, f"{_FACET_AXIS} {_DIMENSION_AXIS}"],
+    c: Float[np.ndarray, _FACET_AXIS],
     indices: Iterable[int],
     J: np.ndarray,
     tol: float,
 ) -> FacetSubset | None:
+    """
+    Solve Reeb-measure system for a facet subset and build cached data.
+
+    Args:
+      B: Facet normals.
+      c: Offsets.
+      indices: Chosen facet indices.
+      J: Symplectic matrix.
+      tol: Numerical tolerance.
+
+    Returns:
+      ``FacetSubset`` if feasible and non-negative, otherwise ``None``.
+
+    """
     selected_tuple = tuple(indices)
     row_indices = np.array(selected_tuple, dtype=int)
     B_subset = B[row_indices, :]

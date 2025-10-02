@@ -25,8 +25,8 @@ if ! command -v uv >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "[post-create] Installing project dependencies with uv"
-uv pip install --system -e .[dev] >/dev/null
+echo "[post-create] Syncing project dependencies with uv (lockfile-driven)"
+uv sync --extra dev --system >/dev/null
 
 # Install ripgrep (best-effort) because many workflows rely on it for search.
 echo "[post-create] Ensuring ripgrep is installed"
