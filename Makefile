@@ -15,34 +15,34 @@ help:
 	@echo "  make ci        # run the CI command set"
 
 setup:
-	$(UV) sync --extra dev --system
+	$(UV) sync --extra dev
 
 format:
-	ruff format .
+	$(UV) run ruff format .
 
 lint:
-	ruff check .
+	$(UV) run ruff check .
 
 typecheck:
-	pyright
+	$(UV) run pyright
 
 test:
-	pytest
+	$(UV) run pytest
 
 bench:
-	pytest tests/performance --benchmark-only --benchmark-autosave --benchmark-storage=.benchmarks
+	$(UV) run pytest tests/performance --benchmark-only --benchmark-autosave --benchmark-storage=.benchmarks
 
 profile:
-	pytest tests/performance --profile
+	$(UV) run pytest tests/performance --profile
 
 profile-line:
-	pytest tests/performance --line-profile viterbo.symplectic.capacity_fast.compute_ehz_capacity_fast
+	$(UV) run pytest tests/performance --line-profile viterbo.symplectic.capacity_fast.compute_ehz_capacity_fast
 
 ci:
-	ruff format --check .
-	ruff check .
-	pyright
-	pytest
+	$(UV) run ruff format --check .
+	$(UV) run ruff check .
+	$(UV) run pyright
+	$(UV) run pytest
 
 clean:
 	rm -rf .pytest_cache .ruff_cache .pyright .pyright_cache build dist *.egg-info
