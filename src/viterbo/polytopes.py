@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
 import math
 from dataclasses import dataclass
 from itertools import combinations, product
 from typing import Final, Sequence
-
-import hashlib
 
 import numpy as np
 from jaxtyping import Float
@@ -64,6 +63,7 @@ class NormalCone:
     normals: Float[np.ndarray, "num_active dimension"]
 
     def __post_init__(self) -> None:
+        """Normalise arrays describing the normal cone."""
         vertex = np.asarray(self.vertex, dtype=float)
         normals = np.asarray(self.normals, dtype=float)
         object.__setattr__(self, "vertex", vertex)
@@ -81,6 +81,7 @@ class PolytopeCombinatorics:
     normal_cones: tuple[NormalCone, ...]
 
     def __post_init__(self) -> None:
+        """Validate cached arrays for combinatorial reuse."""
         vertices = np.asarray(self.vertices, dtype=float)
         adjacency = np.asarray(self.facet_adjacency, dtype=bool)
         object.__setattr__(self, "vertices", vertices)
@@ -96,7 +97,6 @@ def _halfspace_fingerprint(
     decimals: int = 12,
 ) -> str:
     """Return a deterministic hash for a half-space description."""
-
     rounded_matrix = np.round(np.asarray(matrix, dtype=float), decimals=decimals)
     rounded_offsets = np.round(np.asarray(offsets, dtype=float), decimals=decimals)
 
@@ -113,7 +113,6 @@ def _halfspace_fingerprint(
 
 def polytope_fingerprint(polytope: Polytope, *, decimals: int = 12) -> str:
     """Return a hash that uniquely identifies ``polytope`` up to rounding."""
-
     return _halfspace_fingerprint(polytope.B, polytope.c, decimals=decimals)
 
 
@@ -124,7 +123,6 @@ def vertices_from_halfspaces(
     atol: float = 1e-9,
 ) -> Float[np.ndarray, _VERTEX_MATRIX_AXES]:
     """Enumerate the vertices of a polytope described by ``Bx <= c``."""
-
     return enumerate_vertices(B, c, atol=atol)
 
 
@@ -137,7 +135,6 @@ def halfspaces_from_vertices(
     Float[np.ndarray, _FACET_AXIS],
 ]:
     """Return a half-space description from a vertex set using Qhull."""
-
     if ConvexHull is None:  # pragma: no cover - SciPy is an optional dependency.
         msg = "scipy is required to convert vertices to half-space form."
         raise ModuleNotFoundError(msg)
@@ -160,7 +157,6 @@ def polytope_combinatorics(
     use_cache: bool = True,
 ) -> PolytopeCombinatorics:
     """Return cached combinatorial data for ``polytope``."""
-
     key = (polytope_fingerprint(polytope), float(np.round(atol, decimals=12)))
     if use_cache and key in _POLYTOPE_CACHE:
         return _POLYTOPE_CACHE[key]
@@ -811,7 +807,6 @@ def random_transformations(
 
 def catalog() -> tuple[Polytope, ...]:
     """Return a curated tuple of polytopes used for regression and profiling."""
-
     simplex4 = simplex_with_uniform_weights(4, name="simplex-4d")
     truncated = truncated_simplex_four_dim()
     simplex6 = simplex_with_uniform_weights(6, name="simplex-6d")

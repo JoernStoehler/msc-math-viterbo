@@ -48,15 +48,15 @@ Status tags: unmarked items remain in progress; entries labelled ``[done]`` are 
 
 ### 3.1 Facet-normal optimisation (Leipold–Vallentin)
 - **Reference (`facet_normals_reference.py`)**
-  - Solve the quadratic programme via `cvxpy` with explicit equality constraints. Enumerate all facet subsets of size `2n+1` using existing search utilities.
-  - Implement high-precision mode using `fractions.Fraction` or `decimal.Decimal` for small instances to debug degeneracies.
+  - [done] Extract the reference enumeration algorithm into a dedicated module with typed facet-subset containers.
+  - [blocked] Replace the permutation search by the `cvxpy` quadratic-program formulation and investigate rational arithmetic for degeneracy debugging.
 - **Fast (`facet_normals_fast.py`)**
-  - Cache Gram matrices of facet normals and reuse them across subsets.
-  - Use incremental nullspace updates when adding/removing facets (rank-one updates) and adopt `quadprog`/`osqp` for faster QP solves.
-  - Short-circuit infeasible subsets via precomputed cones and symmetry reduction heuristics.
+  - [done] Implement dynamic-programming order search and reuse cached subset data provided by the reference helper.
+  - [blocked] Integrate rank-one nullspace updates and QP backends (`quadprog`/`osqp`).
+  - [blocked] Add cone prefilters and symmetry heuristics to prune infeasible subsets.
 - **Validation**
+  - [done] Cross-check reference and fast algorithms on cubes/cross-polytopes and assert symplectic invariance in regression tests.
   - Compare against the current `viterbo.ehz.compute_ehz_capacity` implementation on 4D samples.
-  - Test invariance under symplectic linear transforms supplied by `viterbo.core`.
 - **Profiling triggers**
   - Benchmark facet counts 8–14 in 4D, inspect time per subset; optimise only if fast version yields >2× improvement.
 

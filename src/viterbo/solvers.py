@@ -34,6 +34,7 @@ class LinearProgram:
     bounds: Sequence[tuple[float | None, float | None]] | None = None
 
     def __post_init__(self) -> None:
+        """Normalise array inputs and validate dimension compatibility."""
         objective = np.asarray(self.objective, dtype=float)
         object.__setattr__(self, "objective", objective)
 
@@ -78,7 +79,6 @@ class LinearProgram:
     @property
     def dimension(self) -> int:
         """Number of optimisation variables."""
-
         return int(self.objective.shape[0])
 
 
@@ -112,6 +112,7 @@ class ScipyLinearProgramBackend:
         *,
         options: Mapping[str, Any] | None = None,
     ) -> LinearProgramSolution:
+        """Solve ``problem`` using :func:`scipy.optimize.linprog`."""
         from scipy.optimize import linprog
 
         result = linprog(
@@ -148,6 +149,7 @@ class CvxpyLinearProgramBackend:
         *,
         options: Mapping[str, Any] | None = None,
     ) -> LinearProgramSolution:
+        """Solve ``problem`` using a :mod:`cvxpy` backend."""
         try:
             import cvxpy as cp
         except ModuleNotFoundError as exc:  # pragma: no cover - exercised when cvxpy is absent.
@@ -193,6 +195,5 @@ def solve_linear_program(
     options: Mapping[str, Any] | None = None,
 ) -> LinearProgramSolution:
     """Solve ``problem`` using ``backend`` or the SciPy fallback."""
-
     solver = backend or ScipyLinearProgramBackend()
     return solver.solve(problem, options=options)

@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from viterbo import compute_ehz_capacity
-from viterbo.ehz_fast import (
+from viterbo.algorithms.facet_normals_fast import (
     _maximum_antisymmetric_order_value,
     compute_ehz_capacity_fast,
 )

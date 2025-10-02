@@ -12,7 +12,8 @@ ZERO_TOLERANCE: Final[float] = 1e-12
 
 
 def standard_symplectic_matrix(dimension: int) -> Float[np.ndarray, " d d"]:
-    r"""Return the matrix of the standard symplectic form on ``\mathbb{R}^d``.
+    r"""
+    Return the matrix of the standard symplectic form on ``\mathbb{R}^d``.
 
     Parameters
     ----------
@@ -30,8 +31,8 @@ def standard_symplectic_matrix(dimension: int) -> Float[np.ndarray, " d d"]:
     ------
     ValueError
         If ``dimension`` is not an even integer greater or equal to two.
-    """
 
+    """
     if dimension % 2 != 0 or dimension < 2:
         msg = "The standard symplectic matrix is defined for even d >= 2."
         raise ValueError(msg)
@@ -49,7 +50,8 @@ def symplectic_product(
     *,
     matrix: Float[np.ndarray, " d d"] | None = None,
 ) -> float:
-    r"""Evaluate the symplectic form of two vectors.
+    r"""
+    Evaluate the symplectic form of two vectors.
 
     Parameters
     ----------
@@ -69,8 +71,8 @@ def symplectic_product(
     ValueError
         If the vectors have incompatible shapes or if ``matrix`` does not
         define a square symplectic matrix of matching dimension.
-    """
 
+    """
     first = np.asarray(first, dtype=float)
     second = np.asarray(second, dtype=float)
 
@@ -99,7 +101,8 @@ def support_function(
     vertices: Float[np.ndarray, " num_vertices d"],
     direction: Vector,
 ) -> float:
-    r"""Evaluate the support function of a convex body given by its vertices.
+    r"""
+    Evaluate the support function of a convex body given by its vertices.
 
     The support function of a convex body ``K`` in direction ``u`` is defined
     by ``h_K(u) = \sup_{x \in K} \langle u, x \rangle``. When ``K`` is
@@ -123,8 +126,8 @@ def support_function(
     ------
     ValueError
         If no vertices are provided or if the dimensionalities do not match.
-    """
 
+    """
     vertices = np.asarray(vertices, dtype=float)
     direction = np.asarray(direction, dtype=float)
 
@@ -148,7 +151,8 @@ def minkowski_sum(
     first_vertices: Float[np.ndarray, " m d"],
     second_vertices: Float[np.ndarray, " n d"],
 ) -> Float[np.ndarray, " mn d"]:
-    r"""Return vertices of the Minkowski sum ``A + B`` for finite vertex sets.
+    r"""
+    Return vertices of the Minkowski sum ``A + B`` for finite vertex sets.
 
     The Minkowski sum is formed by pairwise addition of the input vertex sets.
     The output is not deduplicated; downstream callers can apply convex hull
@@ -169,8 +173,8 @@ def minkowski_sum(
     ------
     ValueError
         If either vertex array is empty or if their dimensions do not match.
-    """
 
+    """
     first_vertices = np.asarray(first_vertices, dtype=float)
     second_vertices = np.asarray(second_vertices, dtype=float)
 
@@ -192,7 +196,7 @@ def minkowski_sum(
 
 
 def normalize_vector(vector: Vector) -> Vector:
-    """
+    r"""
     Return a unit vector pointing in the same direction as ``vector``.
 
     Parameters
