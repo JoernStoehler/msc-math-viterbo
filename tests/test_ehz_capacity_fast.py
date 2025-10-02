@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from viterbo import compute_ehz_capacity
-from viterbo.ehz_fast import (
+from viterbo.algorithms.facet_normals_fast import (
     _maximum_antisymmetric_order_value,
     compute_ehz_capacity_fast,
 )
@@ -35,7 +35,9 @@ def test_dynamic_program_matches_bruteforce() -> None:
     assert np.isclose(dp_value, brute)
 
 
-_POLYTOPE_INSTANCES, _POLYTOPE_IDS = load_polytope_instances()
+_POLYTOPE_DATA = load_polytope_instances()
+_POLYTOPE_INSTANCES = _POLYTOPE_DATA[0]
+_POLYTOPE_IDS = _POLYTOPE_DATA[1]
 
 
 @pytest.mark.parametrize(("B", "c"), _POLYTOPE_INSTANCES, ids=_POLYTOPE_IDS)

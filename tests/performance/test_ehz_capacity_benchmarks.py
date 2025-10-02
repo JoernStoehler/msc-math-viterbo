@@ -21,7 +21,9 @@ from .._polytope_samples import load_polytope_instances
 # in sampling. The helper also carries documentation about why the instances are
 # structured the way they are. We keep line-profiler opt-in via CLI (`make
 # profile-line`) to avoid noisy output during normal pytest runs.
-_POLYTOPE_INSTANCES, _POLYTOPE_IDS = load_polytope_instances()
+_POLYTOPE_DATA = load_polytope_instances()
+_POLYTOPE_INSTANCES = _POLYTOPE_DATA[0]
+_POLYTOPE_IDS = _POLYTOPE_DATA[1]
 
 
 @pytest.mark.benchmark(group="ehz_capacity")
