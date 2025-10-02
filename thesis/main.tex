@@ -1,0 +1,42 @@
+\documentclass[12pt,a4paper]{report}
+
+% Core packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{hyperref}
+\usepackage{cleveref}
+
+% Page layout
+\geometry{margin=1in}
+
+% Metadata
+\title{Working Title}
+\author{Author Name}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\input{frontmatter/abstract}
+
+\include{chapters/introduction}
+
+% \include{chapters/literature-review}
+% \include{chapters/methodology}
+% \include{chapters/results}
+% \include{chapters/conclusion}
+
+\appendix
+% \include{chapters/appendix-a}
+
+\bibliographystyle{alpha}
+\bibliography{references}
+
+\end{document}
