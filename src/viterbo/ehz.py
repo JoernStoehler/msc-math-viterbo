@@ -44,7 +44,7 @@ def standard_symplectic_matrix(dimension: int) -> np.ndarray:
     Parameters
     ----------
     dimension:
-        An even integer at least four. The resulting matrix encodes the
+        An even integer at least two. The resulting matrix encodes the
         bilinear form ``\omega(x, y) = x^{\mathsf{T}} J y`` with the block
         structure ``J = [[0, I_n], [-I_n, 0]]`` for ``n = d/2``.
 
@@ -56,11 +56,11 @@ def standard_symplectic_matrix(dimension: int) -> np.ndarray:
     Raises
     ------
     ValueError
-        If ``dimension`` is not an even integer greater or equal to four.
+        If ``dimension`` is not an even integer greater or equal to two.
 
     """
-    if dimension % 2 != 0 or dimension < 4:
-        msg = "The standard symplectic matrix is defined for even d >= 4."
+    if dimension % 2 != 0 or dimension < 2:
+        msg = "The standard symplectic matrix is defined for even d >= 2."
         raise ValueError(msg)
 
     half = dimension // 2
@@ -84,7 +84,7 @@ def compute_ehz_capacity(
     B:
         Matrix whose rows describe outward pointing facet normals of a convex
         polytope ``P`` via the inequality description ``P = \{x : B x \leq c\}``.
-        The ambient dimension equals ``d = 2n`` with ``n \geq 2``.
+        The ambient dimension equals ``d = 2n`` with ``n \geq 1``.
     c:
         Vector of offsets appearing in the facet inequalities. The i-th
         inequality is ``\langle b_i, x \rangle \leq c_i``.
@@ -117,7 +117,7 @@ def compute_ehz_capacity(
     Raises
     ------
     ValueError
-        If the dimension is not even and at least four or if no admissible
+        If the dimension is not even and at least two or if no admissible
         facet subset satisfies the non-negativity constraints implied by the
         Reeb measure relations.
 
@@ -132,8 +132,8 @@ def compute_ehz_capacity(
         raise ValueError("Vector c must have length equal to the number of facets.")
 
     num_facets, dimension = B.shape
-    if dimension % 2 != 0 or dimension < 4:
-        raise ValueError("The ambient dimension must satisfy 2n with n >= 2.")
+    if dimension % 2 != 0 or dimension < 2:
+        raise ValueError("The ambient dimension must satisfy 2n with n >= 1.")
 
     J = standard_symplectic_matrix(dimension)
     subset_size = dimension + 1
