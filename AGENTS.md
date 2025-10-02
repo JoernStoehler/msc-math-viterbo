@@ -25,8 +25,8 @@ update those docs to match this.
   - Run `make format`, `make lint`, and `make test` locally before committing.
   - Use the performance workflows below whenever you touch optimized kernels.
 - Local CI Check
-  - Run `make ci` to mirror the GitHub Actions workflow (ruff check/format, pyright, pytest).
-  - Resolve all lint and typecheck warnings; treat warnings as errors.
+  - Run `make ci` to mirror the GitHub Actions workflow (ruff check/format, pyright, pytest across `src/` **and** `tests/`).
+  - Resolve all lint and typecheck warnings; treat warnings as errors, including those raised from fixtures and benchmarks.
 - Devcontainer (Codex Cloud)
   - One-time: `bash .devcontainer/post-create.sh`
   - Every boot: `bash .devcontainer/post-start.sh`
@@ -48,6 +48,7 @@ update those docs to match this.
   - Include docstrings for public symbols with examples when practical.
   - Maintain 4-space indentation across Python files.
   - Keep tests deterministic; prefer small, targeted assertions.
+  - Preserve the `py.typed` marker when reorganizing modules so published wheels stay PEP 561-compliant.
 - Project Layout
   - `src/viterbo/` — Python package with functional core helpers.
   - `tests/` — pytest test suite.
@@ -60,6 +61,7 @@ update those docs to match this.
   - `.github/` — workflows and templates.
 - CI
   - GitHub Actions on push/PR (Linux only): checkout, setup Python 3.12, cache pip, install deps, run Ruff format check, Ruff lint, Pyright, pytest.
+  - Scheduled/nightly job runs the benchmark suite via `pytest tests/performance --benchmark-only --benchmark-autosave --benchmark-storage=.benchmarks` and uploads artefacts for regression tracking.
   - Concurrency cancels in-progress runs per ref.
   - Coverage policy: upload-only TBD; currently no coverage upload or threshold.
 
