@@ -52,6 +52,8 @@ update those docs to match this.
   - `tests/` — pytest test suite.
     - `tests/performance/` centralizes benchmarks that reuse the same fixtures as regression tests.
   - `docs/` — overview + numbered references (project, math, tooling). Onboarding lives in this file.
+  - `thesis/` — LaTeX sources for the MSc thesis. Follow `thesis/AGENTS.md` for authoring conventions and file structure.
+  - `progress-reports/` — prompts, templates, and archived drafts for the weekly supervisor mail. See `progress-reports/AGENTS.md`.
   - `tmp/` — ignored scratch area for copied papers/notes you intend to incorporate later; do not commit raw notes.
   - `.devcontainer/` — container config and lifecycle scripts.
   - `.github/` — workflows and templates.

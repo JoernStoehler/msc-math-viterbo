@@ -5,6 +5,7 @@ This folder hosts reference documents. Onboarding and conventions live in `AGENT
 Numbered docs (lightweight, task‑oriented)
 - `01-project-goal.md` — project goal and context
 - `02-project-roadmap.md` — phased roadmap and tracking guidance
+- `06-weekly-mail-workflow.md` — weekly supervisor mail drafting routine
 - `11-math-thesis-topics.md` — thesis topics and implementation‑adjacent notes
 - `12-math-reading-list.md` — curated reading list for the thesis topic
 
