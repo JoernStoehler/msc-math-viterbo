@@ -14,7 +14,9 @@ def test_haim_kislev_action_valid_order_matches_reference_capacity() -> None:
     subset = (0, 1, 2, 3, 4)
     order = (2, 0, 4, 3, 1)
     action = haim_kislev_action(polytope.B, polytope.c, subset=subset, order=order)
-    assert math.isclose(action, polytope.reference_capacity)
+    reference_capacity = polytope.reference_capacity
+    assert reference_capacity is not None
+    assert math.isclose(action, reference_capacity)
 
 
 def test_haim_kislev_action_invalid_order_raises_value_error() -> None:

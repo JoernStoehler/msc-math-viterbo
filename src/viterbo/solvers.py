@@ -101,6 +101,7 @@ class LinearProgramBackend(Protocol):
         options: Mapping[str, Any] | None = None,
     ) -> LinearProgramSolution:
         """Solve ``problem`` and return a :class:`LinearProgramSolution`."""
+        ...
 
 
 class ScipyLinearProgramBackend:
@@ -151,7 +152,7 @@ class CvxpyLinearProgramBackend:
     ) -> LinearProgramSolution:
         """Solve ``problem`` using a :mod:`cvxpy` backend."""
         try:
-            import cvxpy as cp
+            import cvxpy as cp  # pyright: ignore[reportMissingImports]
         except ModuleNotFoundError as exc:  # pragma: no cover - exercised when cvxpy is absent.
             msg = "cvxpy is not installed; install the 'milp' extra to enable this backend."
             raise ModuleNotFoundError(msg) from exc

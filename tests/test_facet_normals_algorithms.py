@@ -12,8 +12,9 @@ from viterbo.algorithms import (
 
 from ._polytope_samples import load_polytope_instances
 
-
-_BASE_INSTANCES, _BASE_IDS = load_polytope_instances(variant_count=0)
+_BASE_DATA = load_polytope_instances(variant_count=0)
+_BASE_INSTANCES = _BASE_DATA[0]
+_BASE_IDS = _BASE_DATA[1]
 
 
 @pytest.mark.parametrize(("B", "c"), _BASE_INSTANCES, ids=_BASE_IDS)
