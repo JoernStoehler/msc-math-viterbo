@@ -71,9 +71,9 @@ update those docs to match this.
 - Benchmarks live in `tests/performance/` and double as correctness checks.
   - `make bench` → run only benchmarked tests with autosaved stats under `.benchmarks/`.
   - `make profile` → wrap the same suite in `cProfile` for call graph exploration (`pytest --profile`).
-  - `make profile-line` → activate `line_profiler` for the fast kernel (`pytest --line-profile viterbo.ehz_fast.compute_ehz_capacity_fast`).
+  - `make profile-line` → activate `line_profiler` for the fast kernel (`pytest --line-profile viterbo.symplectic.capacity_fast.compute_ehz_capacity_fast`).
 - Mark new optimized workloads with `@pytest.mark.benchmark` and (optionally) `@pytest.mark.line_profile("path.to.function")`.
-- Prefer extending `tests/_polytope_samples.py` when adding datasets so benchmarks and regression tests stay aligned.
+- Prefer extending `tests/geometry/_polytope_samples.py` when adding datasets so benchmarks and regression tests stay aligned.
 - For deep dives outside pytest, use the installed standalone tools:
   - `scalene path/to/script.py` for CPU/GPU/memory sampling.
   - `py-spy top --pid <pid>` or `py-spy record -o profile.svg -- python script.py` for low-overhead profiling.

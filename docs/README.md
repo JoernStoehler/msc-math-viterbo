@@ -11,6 +11,7 @@ Numbered docs (lightweight, task‑oriented)
 
 Reference (long‑form, optional reading)
 - `21-tool-working-with-codex-agents.md` — detailed practices and collaboration notes for agents
+- `22-code-structure.md` — overview of the reorganised package and test layout
 
 Conventions for new docs
 - Use the filename pattern `<num>-<descriptive-slug>.md` to keep a manual order independent of slugs.
