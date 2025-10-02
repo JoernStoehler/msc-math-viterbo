@@ -5,57 +5,14 @@ from __future__ import annotations
 from itertools import permutations
 
 import numpy as np
+import pytest
 
 from viterbo import compute_ehz_capacity
 from viterbo.ehz_fast import (
     _maximum_antisymmetric_order_value,
     compute_ehz_capacity_fast,
 )
-
-
-def _simplex_like_polytope_data(dimension: int = 4) -> tuple[np.ndarray, np.ndarray]:
-    B = np.eye(dimension)
-    extra = -np.ones((1, dimension))
-    B = np.vstack((B, extra))
-    c = np.ones(dimension + 1)
-    c[-1] = dimension / 2
-    return B, c
-
-
-def _simplex_with_extra_facet_data() -> tuple[np.ndarray, np.ndarray]:
-    B = np.array(
-        [
-            [1.0, 0.0, 0.0, 0.0],
-            [0.0, 1.0, 0.0, 0.0],
-            [0.0, 0.0, 1.0, 0.0],
-            [0.0, 0.0, 0.0, 1.0],
-            [-1.0, -1.0, -1.0, -1.0],
-            [0.0, 1.0, 0.0, 1.0],
-        ]
-    )
-    c = np.array([1.0, 1.0, 1.0, 1.0, 2.0, 1.2])
-    return B, c
-
-
-def _generate_variants(
-    B: np.ndarray,
-    c: np.ndarray,
-    *,
-    rng: np.random.Generator,
-    count: int,
-) -> list[tuple[np.ndarray, np.ndarray]]:
-    dimension = B.shape[1]
-    results: list[tuple[np.ndarray, np.ndarray]] = []
-    for _ in range(count):
-        random_matrix = rng.normal(size=(dimension, dimension))
-        q, _ = np.linalg.qr(random_matrix)
-        scales = rng.uniform(0.6, 1.4, size=dimension)
-        transform = q @ np.diag(scales)
-        transformed_B = B @ transform
-        translation = rng.normal(scale=0.3, size=dimension)
-        transformed_c = c + transformed_B @ translation
-        results.append((transformed_B, transformed_c))
-    return results
+from viterbo.polytopes import catalog, random_transformations
 
 
 def test_dynamic_program_matches_bruteforce() -> None:
@@ -77,20 +34,36 @@ def test_dynamic_program_matches_bruteforce() -> None:
     assert np.isclose(dp_value, brute)
 
 
-def test_fast_implementation_matches_reference() -> None:
+def _instances() -> tuple[list[tuple[np.ndarray, np.ndarray]], list[str]]:
     rng = np.random.default_rng(2023)
-    base_polytopes = [
-        _simplex_like_polytope_data(),
-        _simplex_with_extra_facet_data(),
-        _simplex_like_polytope_data(6),
-    ]
-
     instances: list[tuple[np.ndarray, np.ndarray]] = []
-    for B, c in base_polytopes:
+    ids: list[str] = []
+    for polytope in catalog():
+        B, c = polytope.halfspace_data()
         instances.append((B, c))
-        instances.extend(_generate_variants(B, c, rng=rng, count=3))
+        ids.append(polytope.name)
 
-    for B, c in instances:
+        variants = random_transformations(polytope, rng=rng, count=3)
+        for index, (variant_B, variant_c) in enumerate(variants):
+            instances.append((variant_B, variant_c))
+            ids.append(f"{polytope.name}-variant-{index}")
+
+    return instances, ids
+
+
+_POLYTOPE_INSTANCES, _POLYTOPE_IDS = _instances()
+
+
+@pytest.mark.parametrize(("B", "c"), _POLYTOPE_INSTANCES, ids=_POLYTOPE_IDS)
+def test_fast_implementation_matches_reference(B: np.ndarray, c: np.ndarray) -> None:
+    """The accelerated implementation matches the reference for diverse polytopes."""
+
+    try:
         reference = compute_ehz_capacity(B, c)
+    except ValueError as error:
+        with pytest.raises(ValueError) as caught:
+            compute_ehz_capacity_fast(B, c)
+        assert str(caught.value) == str(error)
+    else:
         optimized = compute_ehz_capacity_fast(B, c)
         assert np.isclose(reference, optimized, atol=1e-8)
