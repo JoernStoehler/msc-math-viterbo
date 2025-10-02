@@ -48,7 +48,9 @@ update those docs to match this.
   - Do **not** introduce custom NumPy array aliases (e.g., ``FloatMatrix``); annotate arrays directly with jaxtyping types.
   - Include docstrings for public symbols with examples when practical.
   - Maintain 4-space indentation across Python files.
-  - Keep tests deterministic; prefer small, targeted assertions.
+- Keep tests deterministic; prefer small, targeted assertions.
+- Keep the default pytest suite fast (<10 s target); reserve long-running or benchmark-style
+  checks for `tests/performance/` and the dedicated `make bench` target.
   - Preserve the `py.typed` marker when reorganizing modules so published wheels stay PEP 561-compliant.
 - Project Layout
   - `src/viterbo/` — Python package with functional core helpers.

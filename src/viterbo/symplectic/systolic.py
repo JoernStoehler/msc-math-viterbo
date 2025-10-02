@@ -45,6 +45,18 @@ def systolic_ratio(
         B = np.asarray(arg, dtype=float)
         offsets = np.asarray(c, dtype=float)
 
+    if B.ndim != 2:
+        msg = "Facet matrix B must be two-dimensional."
+        raise ValueError(msg)
+
+    if offsets.ndim != 1:
+        msg = "Facet offsets c must be one-dimensional."
+        raise ValueError(msg)
+
+    if B.shape[0] != offsets.shape[0]:
+        msg = "Number of offsets must match the number of facets."
+        raise ValueError(msg)
+
     dimension = B.shape[1]
     if dimension % 2 != 0:
         msg = "Systolic ratio is defined for even-dimensional symplectic spaces."

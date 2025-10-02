@@ -138,10 +138,15 @@ def _prepare_subset(
     if np.any(beta < -tol):
         return None
 
-    if not np.allclose(B_subset.T @ beta, np.zeros(B_subset.shape[1]), atol=1e-8):
+    if not np.allclose(
+        B_subset.T @ beta,
+        np.zeros(B_subset.shape[1]),
+        atol=tol,
+        rtol=0.0,
+    ):
         return None
 
-    if not np.isclose(float(c_subset @ beta), 1.0, atol=1e-8):
+    if not np.isclose(float(c_subset @ beta), 1.0, atol=tol, rtol=0.0):
         return None
 
     symplectic_products = (B_subset @ J) @ B_subset.T
