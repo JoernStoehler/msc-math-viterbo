@@ -1,19 +1,42 @@
-"""Canonical polytope families used across tests, docs, and profiling."""
+"""Canonical polytope families and deterministic transformations."""
 
 from __future__ import annotations
 
 import math
 from dataclasses import dataclass
 from itertools import product
-from typing import Sequence
+from typing import Final, Sequence
 
 import numpy as np
-from numpy.typing import NDArray
+from jaxtyping import Float
 
 from .ehz import standard_symplectic_matrix
+from .halfspaces import remove_redundant_facets
 
-FloatMatrix = NDArray[np.float64]
-FloatVector = NDArray[np.float64]
+_DIMENSION_AXIS: Final[str] = "dimension"
+_FACET_AXIS: Final[str] = "num_facets"
+_FACET_MATRIX_AXES: Final[str] = f"{_FACET_AXIS} {_DIMENSION_AXIS}"
+_SQUARE_MATRIX_AXES: Final[str] = f"{_DIMENSION_AXIS} {_DIMENSION_AXIS}"
+
+__all__ = [
+    "Polytope",
+    "affine_transform",
+    "cartesian_product",
+    "catalog",
+    "cross_polytope",
+    "haim_kislev_action",
+    "hypercube",
+    "mirror_polytope",
+    "random_affine_map",
+    "random_polytope",
+    "random_transformations",
+    "regular_polygon_product",
+    "rotate_polytope",
+    "simplex_with_uniform_weights",
+    "translate_polytope",
+    "truncated_simplex_four_dim",
+    "viterbo_counterexample",
+]
 
 
 @dataclass(frozen=True)
@@ -21,8 +44,8 @@ class Polytope:
     """Immutable container describing a convex polytope via half-space data."""
 
     name: str
-    B: FloatMatrix  # shape: (num_facets, dimension)
-    c: FloatVector  # shape: (num_facets,)
+    B: Float[np.ndarray, _FACET_MATRIX_AXES]  # shape: (num_facets, dimension)
+    c: Float[np.ndarray, _FACET_AXIS]  # shape: (num_facets,)
     description: str = ""
     reference_capacity: float | None = None
 
@@ -55,9 +78,276 @@ class Polytope:
         """Number of facet-defining inequalities."""
         return int(self.B.shape[0])
 
-    def halfspace_data(self) -> tuple[np.ndarray, np.ndarray]:
+    def halfspace_data(
+        self,
+    ) -> tuple[
+        Float[np.ndarray, _FACET_MATRIX_AXES],
+        Float[np.ndarray, _FACET_AXIS],
+    ]:
         """Return copies of ``(B, c)`` suitable for downstream mutation."""
         return np.array(self.B, copy=True), np.array(self.c, copy=True)
+
+    def with_metadata(
+        self, *, name: str | None = None, description: str | None = None
+    ) -> "Polytope":
+        """Return a shallow copy with updated metadata while sharing arrays."""
+        return Polytope(
+            name=name or self.name,
+            B=self.B,
+            c=self.c,
+            description=description or self.description,
+            reference_capacity=self.reference_capacity,
+        )
+
+
+def cartesian_product(
+    first: Polytope,
+    second: Polytope,
+    *,
+    name: str | None = None,
+    description: str | None = None,
+) -> Polytope:
+    r"""
+    Return the Cartesian product of two polytopes.
+
+    The inputs ``(B_1, c_1)`` and ``(B_2, c_2)`` are combined into a block-diagonal
+    system representing the product polytope in ``\mathbb{R}^{d_1 + d_2}``.
+    """
+    B1, c1 = first.halfspace_data()
+    B2, c2 = second.halfspace_data()
+
+    upper = np.hstack((B1, np.zeros((B1.shape[0], B2.shape[1]))))
+    lower = np.hstack((np.zeros((B2.shape[0], B1.shape[1])), B2))
+    B = np.vstack((upper, lower))
+    c = np.concatenate((c1, c2))
+
+    product_name = name or f"{first.name}x{second.name}"
+    product_description = description or (
+        "Cartesian product constructed from "
+        f"{first.name} (dim {first.dimension}) and {second.name} (dim {second.dimension})."
+    )
+    return Polytope(name=product_name, B=B, c=c, description=product_description)
+
+
+def affine_transform(
+    polytope: Polytope,
+    matrix: Float[np.ndarray, _SQUARE_MATRIX_AXES],
+    *,
+    translation: Float[np.ndarray, _DIMENSION_AXIS] | None = None,
+    name: str | None = None,
+    description: str | None = None,
+) -> Polytope:
+    r"""
+    Apply an invertible affine transformation to ``polytope``.
+
+    For ``y = A x + t`` with invertible ``A``, the transformed inequality system is
+    ``B' y \le c'`` where ``B' = B A^{-1}`` and ``c' = c + B' t``.
+    """
+    matrix = np.asarray(matrix, dtype=float)
+    if matrix.shape != (polytope.dimension, polytope.dimension):
+        msg = "Linear transform must match the ambient dimension."
+        raise ValueError(msg)
+
+    try:
+        matrix_inv = np.linalg.inv(matrix)
+    except np.linalg.LinAlgError as exc:
+        msg = "Affine transform requires an invertible matrix."
+        raise ValueError(msg) from exc
+
+    translation_vec = (
+        np.zeros(polytope.dimension)
+        if translation is None
+        else np.asarray(translation, dtype=float)
+    )
+    if translation_vec.shape != (polytope.dimension,):
+        msg = "Translation vector must match the ambient dimension."
+        raise ValueError(msg)
+
+    B_transformed = polytope.B @ matrix_inv
+    c_transformed = polytope.c + B_transformed @ translation_vec
+
+    return Polytope(
+        name=name or f"{polytope.name}-affine",
+        B=B_transformed,
+        c=c_transformed,
+        description=description
+        or (f"Affine image of {polytope.name} via matrix with det {np.linalg.det(matrix):.3f}."),
+        reference_capacity=None,
+    )
+
+
+def translate_polytope(
+    polytope: Polytope,
+    translation: Float[np.ndarray, _DIMENSION_AXIS],
+    *,
+    name: str | None = None,
+    description: str | None = None,
+) -> Polytope:
+    """Return a translated copy of ``polytope``."""
+    translation_vec = np.asarray(translation, dtype=float)
+    if translation_vec.shape != (polytope.dimension,):
+        msg = "Translation vector must match the ambient dimension."
+        raise ValueError(msg)
+
+    return affine_transform(
+        polytope,
+        np.eye(polytope.dimension),
+        translation=translation_vec,
+        name=name or f"{polytope.name}-translated",
+        description=description or f"Translation of {polytope.name} by {translation_vec}.",
+    )
+
+
+def mirror_polytope(
+    polytope: Polytope,
+    axes: Sequence[bool],
+    *,
+    name: str | None = None,
+    description: str | None = None,
+) -> Polytope:
+    """Reflect ``polytope`` across the coordinate axes toggled by ``axes``."""
+    if len(tuple(axes)) != polytope.dimension:
+        msg = "Axis mask must match the polytope dimension."
+        raise ValueError(msg)
+
+    signs = np.where(np.asarray(tuple(axes), dtype=bool), -1.0, 1.0)
+    matrix = np.diag(signs)
+    return affine_transform(
+        polytope,
+        matrix,
+        translation=np.zeros(polytope.dimension),
+        name=name or f"{polytope.name}-mirrored",
+        description=description or "Coordinate reflection of the base polytope.",
+    )
+
+
+def rotate_polytope(
+    polytope: Polytope,
+    *,
+    plane: tuple[int, int],
+    angle: float,
+    name: str | None = None,
+    description: str | None = None,
+) -> Polytope:
+    """Rotate ``polytope`` within the two-dimensional ``plane`` by ``angle`` radians."""
+    i, j = plane
+    dimension = polytope.dimension
+    if not (0 <= i < dimension and 0 <= j < dimension) or i == j:
+        msg = "Rotation plane indices must be distinct and within range."
+        raise ValueError(msg)
+
+    rotation = np.eye(dimension)
+    cosine = math.cos(angle)
+    sine = math.sin(angle)
+    rotation[i, i] = cosine
+    rotation[j, j] = cosine
+    rotation[i, j] = -sine
+    rotation[j, i] = sine
+
+    return affine_transform(
+        polytope,
+        rotation,
+        translation=np.zeros(dimension),
+        name=name or f"{polytope.name}-rot",
+        description=description or f"Rotation of {polytope.name} in plane {(i, j)} by {angle} rad.",
+    )
+
+
+def random_affine_map(
+    dimension: int,
+    *,
+    rng: np.random.Generator,
+    scale_range: tuple[float, float] = (0.6, 1.4),
+    shear_scale: float = 0.25,
+    translation_scale: float = 0.3,
+) -> tuple[
+    Float[np.ndarray, _SQUARE_MATRIX_AXES],
+    Float[np.ndarray, _DIMENSION_AXIS],
+]:
+    """Sample a well-conditioned random affine map for deterministic experiments."""
+    lower, upper = scale_range
+    if lower <= 0 or upper <= 0:
+        msg = "Scale factors must be positive."
+        raise ValueError(msg)
+
+    for _ in range(32):
+        q, _ = np.linalg.qr(rng.normal(size=(dimension, dimension)))
+        scales = rng.uniform(lower, upper, size=dimension)
+        shear = np.eye(dimension) + rng.normal(scale=shear_scale, size=(dimension, dimension))
+        matrix = q @ np.diag(scales) @ shear
+        try:
+            np.linalg.inv(matrix)
+        except np.linalg.LinAlgError:
+            continue
+        translation = rng.normal(scale=translation_scale, size=dimension)
+        return matrix, translation
+
+    msg = "Failed to sample an invertible affine map."
+    raise RuntimeError(msg)
+
+
+def random_polytope(
+    dimension: int,
+    *,
+    rng: np.random.Generator,
+    facets: int | None = None,
+    offset_range: tuple[float, float] = (0.5, 1.5),
+    translation_scale: float = 0.2,
+    name: str | None = None,
+    description: str | None = None,
+    max_attempts: int = 64,
+) -> Polytope:
+    """Sample a bounded random polytope with redundant facets removed."""
+    if dimension <= 0:
+        msg = "Dimension must be positive."
+        raise ValueError(msg)
+
+    low, high = offset_range
+    if low <= 0 or high <= 0 or high <= low:
+        msg = "Offsets must satisfy 0 < low < high."
+        raise ValueError(msg)
+
+    if facets is None:
+        facets = max(dimension + 1, 4 * dimension)
+    if facets < dimension + 1:
+        msg = "At least dimension + 1 facets are required."
+        raise ValueError(msg)
+
+    identity = np.eye(dimension)
+    for attempt in range(max_attempts):
+        normals = rng.normal(size=(facets, dimension))
+        norms = np.linalg.norm(normals, axis=1, keepdims=True)
+        normals = normals / np.clip(norms, a_min=1e-12, a_max=None)
+        offsets = rng.uniform(low, high, size=facets)
+
+        normals = np.vstack((normals, identity, -identity))
+        offsets = np.concatenate((offsets, np.full(2 * dimension, high)))
+
+        try:
+            reduced_B, reduced_c = remove_redundant_facets(normals, offsets, atol=1e-9)
+        except ValueError:
+            continue
+
+        if reduced_B.shape[0] < dimension + 1:
+            continue
+
+        translation = rng.normal(scale=translation_scale, size=dimension)
+        translated_c = reduced_c + reduced_B @ translation
+
+        poly_name = name or f"random-{dimension}d-{attempt}"
+        poly_description = description or (
+            f"Random half-space polytope with {reduced_B.shape[0]} facets in dimension {dimension}."
+        )
+
+        return Polytope(
+            name=poly_name,
+            B=reduced_B,
+            c=translated_c,
+            description=poly_description,
+        )
+
+    msg = "Failed to generate a bounded random polytope."
+    raise RuntimeError(msg)
 
 
 def haim_kislev_action(
@@ -315,26 +605,31 @@ def random_transformations(
     count: int,
     scale_range: tuple[float, float] = (0.6, 1.4),
     translation_scale: float = 0.3,
-) -> list[tuple[np.ndarray, np.ndarray]]:
+    shear_scale: float = 0.25,
+) -> list[
+    tuple[
+        Float[np.ndarray, _FACET_MATRIX_AXES],
+        Float[np.ndarray, _FACET_AXIS],
+    ]
+]:
     """Generate random linear transformations and translations of ``polytope``."""
-    lower, upper = scale_range
-    if lower <= 0 or upper <= 0:
-        msg = "Scaling factors must be positive."
-        raise ValueError(msg)
-
-    dimension = polytope.dimension
     results: list[tuple[np.ndarray, np.ndarray]] = []
     for _ in range(count):
-        random_matrix = rng.normal(size=(dimension, dimension))
-        q, _ = np.linalg.qr(random_matrix)
-        scales = rng.uniform(lower, upper, size=dimension)
-        transform = q @ np.diag(scales)
-        transformed_B = polytope.B @ transform
-
-        translation = rng.normal(scale=translation_scale, size=dimension)
-        transformed_c = polytope.c + transformed_B @ translation
-
-        results.append((transformed_B, transformed_c))
+        matrix, translation = random_affine_map(
+            polytope.dimension,
+            rng=rng,
+            scale_range=scale_range,
+            shear_scale=shear_scale,
+            translation_scale=translation_scale,
+        )
+        transformed = affine_transform(
+            polytope,
+            matrix,
+            translation=translation,
+            name=f"{polytope.name}-random",
+            description=f"Random affine perturbation of {polytope.name}",
+        )
+        results.append(transformed.halfspace_data())
     return results
 
 
@@ -352,17 +647,3 @@ def catalog() -> tuple[Polytope, ...]:
     )
     counterexample = viterbo_counterexample()
     return simplex4, truncated, simplex6, hexagon_product, counterexample
-
-
-__all__ = [
-    "Polytope",
-    "catalog",
-    "cross_polytope",
-    "haim_kislev_action",
-    "hypercube",
-    "random_transformations",
-    "regular_polygon_product",
-    "simplex_with_uniform_weights",
-    "truncated_simplex_four_dim",
-    "viterbo_counterexample",
-]
