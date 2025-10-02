@@ -15,6 +15,13 @@ This roadmap balances literature work with incremental, testable Python code.
 - Add unit tests for helpers, and examples as doctests or literate snippets.
 - Optional: exploratory notebooks or scripts for volume vs. capacity comparisons.
 
+### Active milestone — Polytope search utilities
+- Finalize deterministic affine/Cartesian constructors so candidate families are easy to script.
+- Implement Euclidean volume backends (reference + optimized) with cross-tests.
+- Provide a systolic-ratio wrapper around ``c_EHZ`` and the new volume helpers.
+- Stand up a reproducible search enumerator that combines the canonical catalog with random draws.
+- Wire benchmarks/profilers for the new routines and extend pytest coverage to transformations and known counterexamples.
+
 ## Phase 4 — Synthesis
 - Draft the survey with diagrams and a results map.
 - Consolidate examples, benchmarks, and discussions of limitations.

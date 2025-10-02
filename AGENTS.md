@@ -44,6 +44,7 @@ update those docs to match this.
 - Coding
   - Prefer pure functions for math core; isolate I/O in thin shells.
   - Use type hints everywhere practical; leverage jaxtyping for array shapes/dtypes.
+  - Do **not** introduce custom NumPy array aliases (e.g., ``FloatMatrix``); annotate arrays directly with jaxtyping types.
   - Include docstrings for public symbols with examples when practical.
   - Maintain 4-space indentation across Python files.
   - Keep tests deterministic; prefer small, targeted assertions.
