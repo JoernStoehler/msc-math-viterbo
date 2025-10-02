@@ -10,9 +10,9 @@ from typing import Callable, Iterable, Sequence
 
 import numpy as np
 
-from viterbo import compute_ehz_capacity
-from viterbo.ehz_fast import compute_ehz_capacity_fast
-from viterbo.polytopes import Polytope, catalog, random_transformations
+from viterbo.geometry.polytopes import Polytope, catalog, random_transformations
+from viterbo.symplectic.capacity import compute_ehz_capacity
+from viterbo.symplectic.capacity_fast import compute_ehz_capacity_fast
 
 Algorithm = Callable[[np.ndarray, np.ndarray], float]
 

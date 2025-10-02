@@ -11,10 +11,9 @@ import numpy as np
 import pytest
 import pytest_benchmark.plugin
 
-from viterbo import compute_ehz_capacity
-from viterbo.ehz_fast import compute_ehz_capacity_fast
-
-from .._polytope_samples import load_polytope_instances
+from tests.geometry._polytope_samples import load_polytope_instances
+from viterbo.symplectic.capacity import compute_ehz_capacity
+from viterbo.symplectic.capacity_fast import compute_ehz_capacity_fast
 
 # Reuse the exact same catalog of polytopes as the regression tests so that any
 # deviation caught here points to a performance-only issue rather than a change

@@ -12,9 +12,9 @@ Status tags: unmarked items remain in progress; entries labelled ``[done]`` are 
 
 - Algorithms covered: the six EHZ-capacity approaches and six polytope-volume methods marked as
   promising in `docs/convex-polytope-cehz-capacities.md` and `docs/convex-polytope-volumes.md`.
-- Code layout: place each major function in its own module under `src/viterbo/algorithms/` with
-  paired `*_reference.py` and `*_fast.py` files when optimisations are warranted. Export public
-  entry points via lightweight wrappers in `src/viterbo/__init__.py` as needed.
+- Code layout: colocate the reference and optimised variants under domain-specific packages
+  (for example `src/viterbo/symplectic/capacity_algorithms/`). Provide thin wrappers in
+  `src/viterbo/symplectic/` or `src/viterbo/geometry/` when a stable public API is required.
 - Reference vs fast:
   - Reference modules optimise for clarity and correctness, relying on straightforward numerical
     methods (dense linear algebra, exact arithmetic libraries, generic solvers).
@@ -31,17 +31,17 @@ Status tags: unmarked items remain in progress; entries labelled ``[done]`` are 
   - Integrate open-source solvers instead of hand-rolling LP/MILP/SDP routines (`cvxpy` with
     default ECOS/SCS backends, `pulp` or `mip` for MILP, `networkx` for graph searches, `pygurobi`
     behind an optional extra if licensed).
-  - Reuse existing half-space and vertex utilities in `viterbo.polytopes` for conversions and
+  - Reuse existing half-space and vertex utilities in `viterbo.geometry.polytopes` for conversions and
     canonicalisation.
 
 ## 2. Shared infrastructure tasks
 
 | Task | Description | Dependencies | Validation |
 | --- | --- | --- | --- |
-| [done] Geometry backends | Extend `viterbo.polytopes` with converters between H/V-representations, facet adjacency, and normal fan traversal utilities. Cache combinatorial data keyed by hashable polytope fingerprints. | `scipy`, `pycddlib` (optional) | Unit tests covering cubes, simplices, products; deterministic hashing |
-| [done] Symplectic form helpers | Centralise symplectic matrix builders, support-function evaluations, and Minkowski sums in `viterbo/core`. | `numpy` | Compare with closed-form values on axis-aligned boxes |
+| [done] Geometry backends | Extend `viterbo.geometry.polytopes` with converters between H/V-representations, facet adjacency, and normal fan traversal utilities. Cache combinatorial data keyed by hashable polytope fingerprints. | `scipy`, `pycddlib` (optional) | Unit tests covering cubes, simplices, products; deterministic hashing |
+| [done] Symplectic form helpers | Centralise symplectic matrix builders, support-function evaluations, and Minkowski sums in `viterbo.symplectic.core`. | `numpy` | Compare with closed-form values on axis-aligned boxes |
 | [done] Solver abstraction | Wrap LP/MILP/SDP calls behind thin adapters that accept problem objects and choose a backend (`cvxpy`, `pulp`, `sdpa-python`). Allow dependency injection for tests. | `cvxpy`, `pulp`, `sdpa-python` (optional) | Mock adapters in tests; smoke-test simple problems with known optima |
-| [done] Test fixtures | Expand `tests/_polytope_samples.py` with representative polytopes (toric, centrally symmetric, product). Provide expected capacities/volumes when available. | none | Verified values from literature |
+| [done] Test fixtures | Expand `tests/geometry/_polytope_samples.py` with representative polytopes (toric, centrally symmetric, product). Provide expected capacities/volumes when available. | none | Verified values from literature |
 | Benchmark harness | Add `tests/performance/` cases that exercise each fast implementation with pytest-benchmark markers and profile hooks. | `pytest-benchmark`, `pytest-line-profiler` | Baseline run records stored under `.benchmarks/` |
 
 ## 3. EHZ capacity algorithms
@@ -56,7 +56,7 @@ Status tags: unmarked items remain in progress; entries labelled ``[done]`` are 
   - [blocked] Add cone prefilters and symmetry heuristics to prune infeasible subsets.
 - **Validation**
   - [done] Cross-check reference and fast algorithms on cubes/cross-polytopes and assert symplectic invariance in regression tests.
-  - Compare against the current `viterbo.ehz.compute_ehz_capacity` implementation on 4D samples.
+  - Compare against the current `viterbo.symplectic.capacity.compute_ehz_capacity` implementation on 4D samples.
 - **Profiling triggers**
   - Benchmark facet counts 8–14 in 4D, inspect time per subset; optimise only if fast version yields >2× improvement.
 
@@ -88,7 +88,7 @@ Status tags: unmarked items remain in progress; entries labelled ``[done]`` are 
 
 ### 3.4 Minkowski billiard shortest path (Rudolf)
 - **Reference (`minkowski_billiards_reference.py`)**
-  - Build normal fan as a directed graph and run exhaustive search over paths up to length `n+1`, computing lengths via support functions from `viterbo.core`.
+  - Build normal fan as a directed graph and run exhaustive search over paths up to length `n+1`, computing lengths via support functions from `viterbo.symplectic.core`.
   - Use `itertools.product` for low-dimensional enumeration.
 - **Fast (`minkowski_billiards_fast.py`)**
   - Apply dynamic programming on the normal fan with memoised path prefixes and prune using triangle inequality bounds.

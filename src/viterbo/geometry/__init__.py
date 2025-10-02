@@ -1,9 +1,7 @@
-"""Top-level package for the Viterbo tools."""
+"""Geometry primitives and polytope helpers."""
 
-from __future__ import annotations
-
-from .examples import hello_numpy
-from .geometry import (
+from .halfspaces import enumerate_vertices, remove_redundant_facets
+from .polytopes import (
     NormalCone,
     Polytope,
     PolytopeCombinatorics,
@@ -11,20 +9,16 @@ from .geometry import (
     cartesian_product,
     catalog,
     cross_polytope,
-    enumerate_vertices,
     haim_kislev_action,
     halfspaces_from_vertices,
     hypercube,
     mirror_polytope,
     polytope_combinatorics,
     polytope_fingerprint,
-    polytope_volume_fast,
-    polytope_volume_reference,
     random_affine_map,
     random_polytope,
     random_transformations,
     regular_polygon_product,
-    remove_redundant_facets,
     rotate_polytope,
     simplex_with_uniform_weights,
     translate_polytope,
@@ -32,54 +26,21 @@ from .geometry import (
     vertices_from_halfspaces,
     viterbo_counterexample,
 )
-from .optimization import (
-    LinearProgram,
-    LinearProgramBackend,
-    LinearProgramSolution,
-    ScipyLinearProgramBackend,
-    enumerate_search_space,
-    iter_search_space,
-    solve_linear_program,
-)
-from .symplectic import (
-    ZERO_TOLERANCE,
-    Vector,
-    compute_ehz_capacity,
-    compute_ehz_capacity_fast,
-    minkowski_sum,
-    normalize_vector,
-    standard_symplectic_matrix,
-    support_function,
-    symplectic_product,
-    systolic_ratio,
-)
+from .volume import polytope_volume_fast, polytope_volume_reference
 
 __all__ = [
-    "LinearProgram",
-    "LinearProgramBackend",
-    "LinearProgramSolution",
     "NormalCone",
     "Polytope",
     "PolytopeCombinatorics",
-    "ScipyLinearProgramBackend",
-    "Vector",
-    "ZERO_TOLERANCE",
     "affine_transform",
     "cartesian_product",
     "catalog",
-    "compute_ehz_capacity",
-    "compute_ehz_capacity_fast",
     "cross_polytope",
-    "enumerate_search_space",
     "enumerate_vertices",
     "haim_kislev_action",
     "halfspaces_from_vertices",
-    "hello_numpy",
     "hypercube",
-    "iter_search_space",
-    "minkowski_sum",
     "mirror_polytope",
-    "normalize_vector",
     "polytope_combinatorics",
     "polytope_fingerprint",
     "polytope_volume_fast",
@@ -91,11 +52,6 @@ __all__ = [
     "remove_redundant_facets",
     "rotate_polytope",
     "simplex_with_uniform_weights",
-    "solve_linear_program",
-    "standard_symplectic_matrix",
-    "support_function",
-    "symplectic_product",
-    "systolic_ratio",
     "translate_polytope",
     "truncated_simplex_four_dim",
     "vertices_from_halfspaces",

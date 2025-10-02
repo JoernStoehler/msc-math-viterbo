@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 import pytest_benchmark.plugin
 
-from viterbo import random_polytope
-from viterbo.volume import polytope_volume_fast, polytope_volume_reference
+from viterbo.geometry.polytopes import random_polytope
+from viterbo.geometry.volume import polytope_volume_fast, polytope_volume_reference
 
 
 @pytest.mark.benchmark

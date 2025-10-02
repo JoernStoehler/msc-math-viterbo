@@ -1,1 +1,1 @@
-"""Test suite package to enable relative imports for shared fixtures."""
+"""Test suite namespace used for cross-module fixtures and helpers."""

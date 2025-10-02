@@ -36,7 +36,7 @@ profile:
 	pytest tests/performance --profile
 
 profile-line:
-	pytest tests/performance --line-profile viterbo.ehz_fast.compute_ehz_capacity_fast
+	pytest tests/performance --line-profile viterbo.symplectic.capacity_fast.compute_ehz_capacity_fast
 
 ci:
 	ruff format --check .
