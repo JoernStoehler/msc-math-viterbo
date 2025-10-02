@@ -27,6 +27,8 @@ from typing import Iterable
 import numpy as np
 from jaxtyping import Float
 
+from .core import standard_symplectic_matrix
+
 
 @dataclass(frozen=True)
 class FacetSubset:
@@ -35,39 +37,6 @@ class FacetSubset:
     indices: tuple[int, ...]
     beta: Float[np.ndarray, " m"]  # shape: (m,)
     symplectic_products: Float[np.ndarray, "m m"]  # shape: (m, m)
-
-
-def standard_symplectic_matrix(dimension: int) -> np.ndarray:
-    r"""
-    Return the matrix of the standard symplectic form on ``\mathbb{R}^d``.
-
-    Parameters
-    ----------
-    dimension:
-        An even integer at least two. The resulting matrix encodes the
-        bilinear form ``\omega(x, y) = x^{\mathsf{T}} J y`` with the block
-        structure ``J = [[0, I_n], [-I_n, 0]]`` for ``n = d/2``.
-
-    Returns
-    -------
-    numpy.ndarray
-        The ``d \times d`` symplectic matrix ``J``.
-
-    Raises
-    ------
-    ValueError
-        If ``dimension`` is not an even integer greater or equal to two.
-
-    """
-    if dimension % 2 != 0 or dimension < 2:
-        msg = "The standard symplectic matrix is defined for even d >= 2."
-        raise ValueError(msg)
-
-    half = dimension // 2
-    upper = np.hstack((np.zeros((half, half)), np.eye(half)))
-    lower = np.hstack((-np.eye(half), np.zeros((half, half))))
-    matrix = np.vstack((upper, lower))
-    return matrix
 
 
 def compute_ehz_capacity(

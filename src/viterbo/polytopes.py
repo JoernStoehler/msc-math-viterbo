@@ -4,22 +4,34 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from itertools import product
+from itertools import combinations, product
 from typing import Final, Sequence
+
+import hashlib
 
 import numpy as np
 from jaxtyping import Float
 
-from .ehz import standard_symplectic_matrix
-from .halfspaces import remove_redundant_facets
+from .core import standard_symplectic_matrix
+from .halfspaces import enumerate_vertices, remove_redundant_facets
+
+try:  # Optional dependency used only when available.
+    from scipy.spatial import ConvexHull
+except ModuleNotFoundError:  # pragma: no cover - exercised in environments without SciPy.
+    ConvexHull = None
 
 _DIMENSION_AXIS: Final[str] = "dimension"
 _FACET_AXIS: Final[str] = "num_facets"
 _FACET_MATRIX_AXES: Final[str] = f"{_FACET_AXIS} {_DIMENSION_AXIS}"
 _SQUARE_MATRIX_AXES: Final[str] = f"{_DIMENSION_AXIS} {_DIMENSION_AXIS}"
+_VERTEX_MATRIX_AXES: Final[str] = "num_vertices dimension"
+
+_POLYTOPE_CACHE: dict[tuple[str, float], PolytopeCombinatorics] = {}
 
 __all__ = [
     "Polytope",
+    "NormalCone",
+    "PolytopeCombinatorics",
     "affine_transform",
     "cartesian_product",
     "catalog",
@@ -31,12 +43,163 @@ __all__ = [
     "random_polytope",
     "random_transformations",
     "regular_polygon_product",
+    "vertices_from_halfspaces",
+    "halfspaces_from_vertices",
+    "polytope_fingerprint",
+    "polytope_combinatorics",
     "rotate_polytope",
     "simplex_with_uniform_weights",
     "translate_polytope",
     "truncated_simplex_four_dim",
     "viterbo_counterexample",
 ]
+
+
+@dataclass(frozen=True)
+class NormalCone:
+    """Normal cone data attached to a polytope vertex."""
+
+    vertex: Float[np.ndarray, _DIMENSION_AXIS]
+    active_facets: tuple[int, ...]
+    normals: Float[np.ndarray, "num_active dimension"]
+
+    def __post_init__(self) -> None:
+        vertex = np.asarray(self.vertex, dtype=float)
+        normals = np.asarray(self.normals, dtype=float)
+        object.__setattr__(self, "vertex", vertex)
+        object.__setattr__(self, "normals", normals)
+        vertex.setflags(write=False)
+        normals.setflags(write=False)
+
+
+@dataclass(frozen=True)
+class PolytopeCombinatorics:
+    """Cached combinatorial structure derived from a ``Polytope``."""
+
+    vertices: Float[np.ndarray, _VERTEX_MATRIX_AXES]
+    facet_adjacency: np.ndarray
+    normal_cones: tuple[NormalCone, ...]
+
+    def __post_init__(self) -> None:
+        vertices = np.asarray(self.vertices, dtype=float)
+        adjacency = np.asarray(self.facet_adjacency, dtype=bool)
+        object.__setattr__(self, "vertices", vertices)
+        object.__setattr__(self, "facet_adjacency", adjacency)
+        vertices.setflags(write=False)
+        adjacency.setflags(write=False)
+
+
+def _halfspace_fingerprint(
+    matrix: Float[np.ndarray, _FACET_MATRIX_AXES],
+    offsets: Float[np.ndarray, _FACET_AXIS],
+    *,
+    decimals: int = 12,
+) -> str:
+    """Return a deterministic hash for a half-space description."""
+
+    rounded_matrix = np.round(np.asarray(matrix, dtype=float), decimals=decimals)
+    rounded_offsets = np.round(np.asarray(offsets, dtype=float), decimals=decimals)
+
+    contiguous_matrix = np.ascontiguousarray(rounded_matrix)
+    contiguous_offsets = np.ascontiguousarray(rounded_offsets)
+
+    hasher = hashlib.sha256()
+    hasher.update(np.array(contiguous_matrix.shape, dtype=np.int64).tobytes())
+    hasher.update(np.array(contiguous_offsets.shape, dtype=np.int64).tobytes())
+    hasher.update(contiguous_matrix.tobytes())
+    hasher.update(contiguous_offsets.tobytes())
+    return hasher.hexdigest()
+
+
+def polytope_fingerprint(polytope: Polytope, *, decimals: int = 12) -> str:
+    """Return a hash that uniquely identifies ``polytope`` up to rounding."""
+
+    return _halfspace_fingerprint(polytope.B, polytope.c, decimals=decimals)
+
+
+def vertices_from_halfspaces(
+    B: Float[np.ndarray, _FACET_MATRIX_AXES],
+    c: Float[np.ndarray, _FACET_AXIS],
+    *,
+    atol: float = 1e-9,
+) -> Float[np.ndarray, _VERTEX_MATRIX_AXES]:
+    """Enumerate the vertices of a polytope described by ``Bx <= c``."""
+
+    return enumerate_vertices(B, c, atol=atol)
+
+
+def halfspaces_from_vertices(
+    vertices: Float[np.ndarray, _VERTEX_MATRIX_AXES],
+    *,
+    qhull_options: str | None = None,
+) -> tuple[
+    Float[np.ndarray, _FACET_MATRIX_AXES],
+    Float[np.ndarray, _FACET_AXIS],
+]:
+    """Return a half-space description from a vertex set using Qhull."""
+
+    if ConvexHull is None:  # pragma: no cover - SciPy is an optional dependency.
+        msg = "scipy is required to convert vertices to half-space form."
+        raise ModuleNotFoundError(msg)
+
+    hull = ConvexHull(np.asarray(vertices, dtype=float), qhull_options=qhull_options)
+    # Qhull stores inequalities as <normal, offset> with normal pointing outward
+    # and the inequality ``normal @ x + offset <= 0``. We flip the sign so that
+    # rows match the ``Bx <= c`` convention used throughout the project.
+    normals = hull.equations[:, :-1]
+    offsets = hull.equations[:, -1]
+    B = normals
+    c = -offsets
+    return remove_redundant_facets(B, c)
+
+
+def polytope_combinatorics(
+    polytope: Polytope,
+    *,
+    atol: float = 1e-9,
+    use_cache: bool = True,
+) -> PolytopeCombinatorics:
+    """Return cached combinatorial data for ``polytope``."""
+
+    key = (polytope_fingerprint(polytope), float(np.round(atol, decimals=12)))
+    if use_cache and key in _POLYTOPE_CACHE:
+        return _POLYTOPE_CACHE[key]
+
+    B, c = polytope.halfspace_data()
+    vertices = enumerate_vertices(B, c, atol=atol)
+    adjacency = np.zeros((polytope.facets, polytope.facets), dtype=bool)
+    normal_cones: list[NormalCone] = []
+
+    for vertex in vertices:
+        residuals = B @ vertex - c
+        active = np.where(np.abs(residuals) <= atol)[0]
+        if active.size == 0:
+            continue
+
+        for first, second in combinations(active, 2):
+            adjacency[first, second] = True
+            adjacency[second, first] = True
+
+        normals = B[active, :]
+        normal_cones.append(
+            NormalCone(
+                vertex=vertex,
+                active_facets=tuple(int(index) for index in active),
+                normals=normals,
+            )
+        )
+
+    np.fill_diagonal(adjacency, False)
+    combinatorics = PolytopeCombinatorics(
+        vertices=vertices,
+        facet_adjacency=adjacency,
+        normal_cones=tuple(normal_cones),
+    )
+
+    if use_cache:
+        _POLYTOPE_CACHE[key] = combinatorics
+
+    return combinatorics
 
 
 @dataclass(frozen=True)
@@ -648,9 +811,12 @@ def random_transformations(
 
 def catalog() -> tuple[Polytope, ...]:
     """Return a curated tuple of polytopes used for regression and profiling."""
+
     simplex4 = simplex_with_uniform_weights(4, name="simplex-4d")
     truncated = truncated_simplex_four_dim()
     simplex6 = simplex_with_uniform_weights(6, name="simplex-6d")
+    cube4 = hypercube(4, name="hypercube-4d")
+    cross4 = cross_polytope(4, name="cross-polytope-4d")
     hexagon_product = regular_polygon_product(
         6,
         6,
@@ -658,5 +824,17 @@ def catalog() -> tuple[Polytope, ...]:
         name="hexagon-product-rot30",
         description="Product of two hexagons; features twelve facets in dimension four.",
     )
+    simplex_product = cartesian_product(
+        simplex_with_uniform_weights(2), simplex_with_uniform_weights(2)
+    )
     counterexample = viterbo_counterexample()
-    return simplex4, truncated, simplex6, hexagon_product, counterexample
+    return (
+        simplex4,
+        truncated,
+        simplex6,
+        cube4,
+        cross4,
+        hexagon_product,
+        simplex_product,
+        counterexample,
+    )

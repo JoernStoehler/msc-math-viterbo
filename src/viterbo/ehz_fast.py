@@ -7,7 +7,8 @@ from itertools import combinations
 import numpy as np
 from jaxtyping import Float
 
-from .ehz import FacetSubset, _prepare_subset, standard_symplectic_matrix
+from .core import standard_symplectic_matrix
+from .ehz import FacetSubset, _prepare_subset
 
 
 def compute_ehz_capacity_fast(
