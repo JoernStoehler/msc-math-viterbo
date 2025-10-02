@@ -1,29 +1,39 @@
 # Roadmap
 
-This roadmap balances literature work with incremental, testable Python code.
+_Last reviewed: 2025-10-02._
 
-## Phase 1 — Foundations
-- Collect precise definitions and properties of major capacities.
-- Capture canonical examples (ellipsoids, polydisks, product bodies) for later computation.
+This roadmap balances literature work with incremental, testable Python code and reflects the current repository state.
 
-## Phase 2 — Techniques & Results
-- Summarize strongest partial results and proof ideas.
-- Identify computationally tractable families for experiments.
+## Current snapshot
+- Symplectic capacity definitions, inequalities, and algorithm sketches are consolidated in the research notes on capacities and related docs, giving Phase 1 a solid reference base.【F:docs/13-symplectic-quantities.md†L1-L116】【F:docs/convex-polytope-cehz-capacities.md†L1-L73】
+- The Python package now includes deterministic polytope constructors and transforms, a reproducible search enumerator, fast/reference volume backends, and a systolic-ratio wrapper on top of the EHZ implementations, providing the tooling for large-scale experiments.【F:src/viterbo/polytopes.py†L1-L176】【F:src/viterbo/search.py†L1-L100】【F:src/viterbo/volume.py†L1-L69】【F:src/viterbo/systolic.py†L1-L65】
+- Thesis scaffolding and the weekly mail workflow are in place, so planning tasks can tie directly into drafting and reporting cadence.【F:thesis/README.md†L1-L12】【F:docs/06-weekly-mail-workflow.md†L1-L27】
 
-## Phase 3 — Python Implementation & Experiments
-- Implement core helpers for convex bodies and simple capacity proxies/estimates.
-- Add unit tests for helpers, and examples as doctests or literate snippets.
-- Optional: exploratory notebooks or scripts for volume vs. capacity comparisons.
+## Phase 1 — Foundations
+Status: ✅ Core references drafted.
+- Maintain the capacity definitions and reading list as new papers surface.
+- Promote any ad-hoc notes from `tmp/` into the research docs to keep the foundation synced with the code base.
 
-### Active milestone — Polytope search utilities
-- Finalize deterministic affine/Cartesian constructors so candidate families are easy to script.
-- Implement Euclidean volume backends (reference + optimized) with cross-tests.
-- Provide a systolic-ratio wrapper around ``c_EHZ`` and the new volume helpers.
-- Stand up a reproducible search enumerator that combines the canonical catalog with random draws.
-- Wire benchmarks/profilers for the new routines and extend pytest coverage to transformations and known counterexamples.
+## Phase 2 — Techniques & Results
+Status: 🟡 Iterating on coverage of results and algorithms.
+- Expand the partial results section to highlight gaps the experiments could address.
+- Capture benchmarking ideas for the algorithms already surveyed so they can graduate into reproducible tests later.
+- Continue tagging open questions or proof sketches with TODO markers that link back to thesis chapters.
 
-## Phase 4 — Synthesis
-- Draft the survey with diagrams and a results map.
-- Consolidate examples, benchmarks, and discussions of limitations.
+## Phase 3 — Python Implementation & Experiments
+Status: 🟡 Core utilities landed; experiments need structuring.
+- Harden performance-sensitive kernels with additional benchmarks and profiling hooks before scaling search runs.
+- Integrate additional symplectic invariants (e.g., cylindrical capacity bounds) reusing the existing polytope abstractions.
+- Add higher-level experiment scripts or notebooks that combine `search`, `volume`, and `systolic` helpers to generate reproducible datasets.
 
-Tracking: use GitHub Issues with the RFC template for larger design notes; smaller tasks as issues with clear acceptance criteria.
+### Active milestone — Thesis-aligned experiment plan
+- Sync the LaTeX outline with concrete computational objectives (link code modules to chapters/sections).【F:thesis/README.md†L1-L12】
+- Define the first batch of search/volume experiments and record acceptance criteria directly in the roadmap so they feed the weekly progress workflow.【F:src/viterbo/search.py†L22-L91】【F:docs/06-weekly-mail-workflow.md†L1-L27】
+- Ensure each experiment has an auditable path from raw polytopes to reported systolic ratios, including tests that guard against regressions.【F:src/viterbo/systolic.py†L33-L65】【F:tests/test_systolic.py†L1-L160】
+
+## Phase 4 — Synthesis
+Status: 🔜 Thesis drafting scaffolded, content to follow.
+- Use the experiment outputs to populate thesis chapters and figures incrementally.
+- Consolidate limitations, benchmarking results, and open questions alongside the narrative.
+
+Tracking: Use GitHub Issues with the RFC template for larger design notes; smaller tasks as issues with clear acceptance criteria. Update the weekly mail drafts with roadmap deltas each Friday to maintain alignment.【F:docs/06-weekly-mail-workflow.md†L11-L27】
