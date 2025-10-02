@@ -16,6 +16,12 @@ Preferred workflow (`make` targets, backed by `uv`):
 - Typecheck: `make typecheck`
 - Full CI mirror: `make ci`
 
+## Typing
+
+The published `viterbo` package ships a `py.typed` marker so type checkers consume the
+inline annotations. Please keep signatures and jaxtyping shapes accurate when touching
+the codebase.
+
 ## Repository Layout
 
 - `src/viterbo/`: Python package with numerical helpers and experiments.
