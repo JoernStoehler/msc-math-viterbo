@@ -4,13 +4,16 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+import pytest_benchmark.plugin
 
 from viterbo import random_polytope
 from viterbo.volume import polytope_volume_fast, polytope_volume_reference
 
 
 @pytest.mark.benchmark
-def test_volume_fast_matches_reference(benchmark: pytest.BenchmarkFixture) -> None:
+def test_volume_fast_matches_reference(
+    benchmark: pytest_benchmark.plugin.BenchmarkFixture,
+) -> None:
     rng = np.random.default_rng(314)
     polytope = random_polytope(4, rng=rng, name="volume-bench")
     B, c = polytope.halfspace_data()

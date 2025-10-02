@@ -25,8 +25,9 @@ update those docs to match this.
   - Run `make format`, `make lint`, and `make test` locally before committing.
   - Use the performance workflows below whenever you touch optimized kernels.
 - Local CI Check
-  - Run `make ci` to mirror the GitHub Actions workflow (ruff check/format, pyright, pytest across `src/` **and** `tests/`).
-  - Resolve all lint and typecheck warnings; treat warnings as errors, including those raised from fixtures and benchmarks.
+  - Run `make ci` to mirror the GitHub Actions workflow (ruff check/format, pyright, pytest).
+  - Resolve all lint and typecheck warnings; treat warnings as errors.
+  - Pyright covers both `src/` and `tests/`; keep the full suite type-clean, including fixtures and benchmarks.
 - Devcontainer (Codex Cloud)
   - One-time: `bash .devcontainer/post-create.sh`
   - Every boot: `bash .devcontainer/post-start.sh`
