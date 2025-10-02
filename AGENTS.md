@@ -23,6 +23,7 @@ update those docs to match this.
   - Provide docstrings for public APIs, include shape information inline where helpful.
   - Annotate NumPy arrays with jaxtyping types and inline shape comments (`# shape: (n,)`).
   - Run `make format`, `make lint`, and `make test` locally before committing.
+  - Use the performance workflows below whenever you touch optimized kernels.
 - Local CI Check
   - Run `make ci` to mirror the GitHub Actions workflow (ruff check/format, pyright, pytest).
   - Resolve all lint and typecheck warnings; treat warnings as errors.
@@ -49,6 +50,7 @@ update those docs to match this.
 - Project Layout
   - `src/viterbo/` — Python package with functional core helpers.
   - `tests/` — pytest test suite.
+    - `tests/performance/` centralizes benchmarks that reuse the same fixtures as regression tests.
   - `docs/` — overview + numbered references (project, math, tooling). Onboarding lives in this file.
   - `tmp/` — ignored scratch area for copied papers/notes you intend to incorporate later; do not commit raw notes.
   - `.devcontainer/` — container config and lifecycle scripts.
@@ -57,6 +59,18 @@ update those docs to match this.
   - GitHub Actions on push/PR (Linux only): checkout, setup Python 3.12, cache pip, install deps, run Ruff format check, Ruff lint, Pyright, pytest.
   - Concurrency cancels in-progress runs per ref.
   - Coverage policy: upload-only TBD; currently no coverage upload or threshold.
+
+**Performance Workflows**
+- Install tooling via `make setup` (includes pytest-benchmark, pytest-profiling, pytest-line-profiler, scalene, and py-spy).
+- Benchmarks live in `tests/performance/` and double as correctness checks.
+  - `make bench` → run only benchmarked tests with autosaved stats under `.benchmarks/`.
+  - `make profile` → wrap the same suite in `cProfile` for call graph exploration (`pytest --profile`).
+  - `make profile-line` → activate `line_profiler` for the fast kernel (`pytest --line-profile viterbo.ehz_fast.compute_ehz_capacity_fast`).
+- Mark new optimized workloads with `@pytest.mark.benchmark` and (optionally) `@pytest.mark.line_profile("path.to.function")`.
+- Prefer extending `tests/_polytope_samples.py` when adding datasets so benchmarks and regression tests stay aligned.
+- For deep dives outside pytest, use the installed standalone tools:
+  - `scalene path/to/script.py` for CPU/GPU/memory sampling.
+  - `py-spy top --pid <pid>` or `py-spy record -o profile.svg -- python script.py` for low-overhead profiling.
 - Security
   - Never log secrets; environment variables only; avoid `set -x` and echoing env.
 
