@@ -42,6 +42,15 @@ the codebase.
 GitHub Actions runs Ruff format checks, Ruff lint, Pyright, and pytest on pushes and pull requests
 (see `.github/workflows/ci.yml`).
 
+### Performance benchmarks
+
+- A dedicated `performance-benchmarks` job runs weekly (Mondays at 05:00 UTC) or on-demand via
+  the **Run workflow** button. It installs the dev dependencies and executes
+  `pytest tests/performance --benchmark-only --benchmark-autosave --benchmark-storage=.benchmarks`.
+- Benchmark outputs are uploaded as a `benchmark-history` workflow artifact so regressions can be
+  tracked locally. Download the latest artifact and unpack `.benchmarks/` to compare against your
+  branch, or regenerate locally with `make bench` for a quick spot check.
+
 ## License
 
 MIT License — see `LICENSE`.
