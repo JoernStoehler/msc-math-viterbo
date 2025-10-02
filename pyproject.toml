@@ -40,6 +40,7 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+norecursedirs = ["tests/performance"]
 markers = [
     "benchmark: marks tests that exercise pytest-benchmark fixtures.",
     "line_profile: profile annotated tests with line_profiler.",

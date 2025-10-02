@@ -202,7 +202,8 @@ def normalize_vector(vector: Vector) -> Vector:
     Parameters
     ----------
     vector:
-        One-dimensional NumPy array representing the vector to normalize.
+        Array-like object representing the vector to normalize. One-dimensional
+        input is required; nested arrays raise ``ValueError``.
 
     Returns
     -------
@@ -222,6 +223,12 @@ def normalize_vector(vector: Vector) -> Vector:
     array([0.6, 0.8])
 
     """
+    vector = np.asarray(vector, dtype=float)
+
+    if vector.ndim != 1:
+        msg = "normalize_vector expects a one-dimensional input vector."
+        raise ValueError(msg)
+
     norm: float = float(np.linalg.norm(vector))
     if norm <= ZERO_TOLERANCE:
         raise ValueError("Cannot normalize a vector with near-zero magnitude.")

@@ -6,7 +6,7 @@ This roadmap balances literature work with incremental, testable Python code and
 
 ## Current snapshot
 - Symplectic capacity definitions, inequalities, and algorithm sketches are consolidated in the research notes on capacities and related docs, giving Phase 1 a solid reference base.【F:docs/13-symplectic-quantities.md†L1-L116】【F:docs/convex-polytope-cehz-capacities.md†L1-L73】
-- The Python package now includes deterministic polytope constructors and transforms, a reproducible search enumerator, fast/reference volume backends, and a systolic-ratio wrapper on top of the EHZ implementations, providing the tooling for large-scale experiments.【F:src/viterbo/polytopes.py†L1-L176】【F:src/viterbo/search.py†L1-L100】【F:src/viterbo/volume.py†L1-L69】【F:src/viterbo/systolic.py†L1-L65】
+- The Python package now includes deterministic polytope constructors and transforms, a reproducible search enumerator, fast/reference volume backends, and a systolic-ratio wrapper on top of the EHZ implementations, providing the tooling for large-scale experiments.【F:src/viterbo/geometry/polytopes.py†L1-L200】【F:src/viterbo/optimization/search.py†L1-L100】【F:src/viterbo/geometry/volume.py†L1-L69】【F:src/viterbo/symplectic/systolic.py†L1-L80】
 - Thesis scaffolding and the weekly mail workflow are in place, so planning tasks can tie directly into drafting and reporting cadence.【F:thesis/README.md†L1-L12】【F:docs/06-weekly-mail-workflow.md†L1-L27】
 
 ## Phase 1 — Foundations
@@ -28,8 +28,8 @@ Status: 🟡 Core utilities landed; experiments need structuring.
 
 ### Active milestone — Thesis-aligned experiment plan
 - Sync the LaTeX outline with concrete computational objectives (link code modules to chapters/sections).【F:thesis/README.md†L1-L12】
-- Define the first batch of search/volume experiments and record acceptance criteria directly in the roadmap so they feed the weekly progress workflow.【F:src/viterbo/search.py†L22-L91】【F:docs/06-weekly-mail-workflow.md†L1-L27】
-- Ensure each experiment has an auditable path from raw polytopes to reported systolic ratios, including tests that guard against regressions.【F:src/viterbo/systolic.py†L33-L65】【F:tests/test_systolic.py†L1-L160】
+- Define the first batch of search/volume experiments and record acceptance criteria directly in the roadmap so they feed the weekly progress workflow.【F:src/viterbo/optimization/search.py†L22-L91】【F:docs/06-weekly-mail-workflow.md†L1-L27】
+- Ensure each experiment has an auditable path from raw polytopes to reported systolic ratios, including tests that guard against regressions.【F:src/viterbo/symplectic/systolic.py†L20-L80】【F:tests/symplectic/test_systolic.py†L1-L42】
 
 ## Phase 4 — Synthesis
 Status: 🔜 Thesis drafting scaffolded, content to follow.

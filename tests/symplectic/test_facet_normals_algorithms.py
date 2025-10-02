@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from pytest import MonkeyPatch
 
+import viterbo.symplectic.capacity_algorithms.facet_normals_reference as reference
 from tests.geometry._polytope_samples import load_polytope_instances
 from viterbo.symplectic.capacity_algorithms import (
     compute_ehz_capacity_fast,
     compute_ehz_capacity_reference,
 )
+from viterbo.symplectic.core import standard_symplectic_matrix
 
 _BASE_DATA = load_polytope_instances(variant_count=0)
 _BASE_INSTANCES = _BASE_DATA[0]
@@ -64,3 +67,50 @@ def test_rejects_odd_dimension() -> None:
         compute_ehz_capacity_reference(B, c)
     with pytest.raises(ValueError):
         compute_ehz_capacity_fast(B, c)
+
+
+def test_prepare_subset_respects_tol(monkeypatch: MonkeyPatch) -> None:
+    """Internal subset feasibility checks should use the caller-provided tol."""
+    B = np.array(
+        [
+            [-1.0, 0.0],
+            [0.0, -1.0],
+            [1.0, 1.0],
+        ]
+    )
+    c = np.array([0.0, 0.0, 1.0])
+    J = standard_symplectic_matrix(2)
+    records: dict[str, float | None] = {
+        "allclose": None,
+        "allclose_rtol": None,
+        "isclose": None,
+        "isclose_rtol": None,
+    }
+
+    def fake_allclose(*args: object, **kwargs: object) -> bool:
+        atol = kwargs.get("atol")
+        rtol = kwargs.get("rtol")
+        assert isinstance(atol, float)
+        assert isinstance(rtol, float)
+        records["allclose"] = atol
+        records["allclose_rtol"] = rtol
+        return True
+
+    def fake_isclose(*args: object, **kwargs: object) -> bool:
+        atol = kwargs.get("atol")
+        rtol = kwargs.get("rtol")
+        assert isinstance(atol, float)
+        assert isinstance(rtol, float)
+        records["isclose"] = atol
+        records["isclose_rtol"] = rtol
+        return True
+
+    monkeypatch.setattr(reference.np, "allclose", fake_allclose)
+    monkeypatch.setattr(reference.np, "isclose", fake_isclose)
+
+    subset = reference._prepare_subset(B=B, c=c, indices=(0, 1, 2), J=J, tol=1e-6)
+    assert subset is not None
+    assert records["allclose"] == pytest.approx(1e-6)
+    assert records["isclose"] == pytest.approx(1e-6)
+    assert records["allclose_rtol"] == pytest.approx(0.0)
+    assert records["isclose_rtol"] == pytest.approx(0.0)

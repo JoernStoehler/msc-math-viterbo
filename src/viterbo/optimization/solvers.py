@@ -154,7 +154,7 @@ class CvxpyLinearProgramBackend:
         try:
             import cvxpy as cp  # pyright: ignore[reportMissingImports]
         except ModuleNotFoundError as exc:  # pragma: no cover - exercised when cvxpy is absent.
-            msg = "cvxpy is not installed; install the 'milp' extra to enable this backend."
+            msg = "cvxpy is not installed; install it separately (e.g. `uv pip install cvxpy`)."
             raise ModuleNotFoundError(msg) from exc
 
         x = cp.Variable(problem.dimension)

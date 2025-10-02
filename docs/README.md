@@ -17,3 +17,5 @@ Conventions for new docs
 - Use the filename pattern `<num>-<descriptive-slug>.md` to keep a manual order independent of slugs.
 - We loosely group numbers by area (e.g., 01–09 project meta; 11–19 math; 21–29 tooling), but strict blocks aren’t required.
 - Keep this overview in sync when adding, renaming, or removing docs.
+- Legacy short filenames (for example `01-goal.md`) have been retired; update any personal notes or bookmarks to point at the
+  numbered canonical documents listed above.
