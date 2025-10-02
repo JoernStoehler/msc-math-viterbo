@@ -20,6 +20,13 @@ dev = [
     "pyright>=1.1.375",
     "pytest>=8.1",
     "pytest-xdist>=3.6",
+    "pytest-benchmark>=4.0",
+    "pytest-codspeed>=2.2",
+    "pytest-profiling>=1.7",
+    "pytest-line-profiler>=0.2",
+    "line-profiler>=5.0",
+    "scalene>=1.5",
+    "py-spy>=0.3",
     "ruff>=0.4.8",
 ]
 
@@ -29,6 +36,10 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+markers = [
+    "benchmark: marks tests that exercise pytest-benchmark fixtures.",
+    "line_profile: profile annotated tests with line_profiler.",
+]
 
 [tool.ruff]
 line-length = 100

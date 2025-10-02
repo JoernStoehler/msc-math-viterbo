@@ -12,7 +12,8 @@ from viterbo.ehz_fast import (
     _maximum_antisymmetric_order_value,
     compute_ehz_capacity_fast,
 )
-from viterbo.polytopes import catalog, random_transformations
+
+from ._polytope_samples import load_polytope_instances
 
 
 def test_dynamic_program_matches_bruteforce() -> None:
@@ -34,24 +35,7 @@ def test_dynamic_program_matches_bruteforce() -> None:
     assert np.isclose(dp_value, brute)
 
 
-def _instances() -> tuple[list[tuple[np.ndarray, np.ndarray]], list[str]]:
-    rng = np.random.default_rng(2023)
-    instances: list[tuple[np.ndarray, np.ndarray]] = []
-    ids: list[str] = []
-    for polytope in catalog():
-        B, c = polytope.halfspace_data()
-        instances.append((B, c))
-        ids.append(polytope.name)
-
-        variants = random_transformations(polytope, rng=rng, count=3)
-        for index, (variant_B, variant_c) in enumerate(variants):
-            instances.append((variant_B, variant_c))
-            ids.append(f"{polytope.name}-variant-{index}")
-
-    return instances, ids
-
-
-_POLYTOPE_INSTANCES, _POLYTOPE_IDS = _instances()
+_POLYTOPE_INSTANCES, _POLYTOPE_IDS = load_polytope_instances()
 
 
 @pytest.mark.parametrize(("B", "c"), _POLYTOPE_INSTANCES, ids=_POLYTOPE_IDS)

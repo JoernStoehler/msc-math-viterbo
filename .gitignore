@@ -15,9 +15,14 @@ dist/
 .venv/
 .uv/
 .pytest_cache/
+.benchmarks/
 .mypy_cache/
 ruff_cache/
 .pyright/
+
+# Profiling artefacts
+profile.svg
+*.prof
 
 # Coverage reports
 htmlcov/
