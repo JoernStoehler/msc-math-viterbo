@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from viterbo import compute_ehz_capacity
+from viterbo import compute_ehz_capacity, compute_ehz_capacity_fast
 from viterbo.polytopes import (
     Polytope,
     catalog,
@@ -69,3 +69,17 @@ def test_truncated_simplex_matches_known_subset_action() -> None:
 
     assert polytope.reference_capacity is not None
     assert np.isclose(capacity, polytope.reference_capacity, atol=1e-9)
+
+
+def test_two_dimensional_simplex_matches_fast_capacity() -> None:
+    """The 2D simplex yields a finite, consistent capacity across implementations."""
+
+    polytope = simplex_with_uniform_weights(2, name="simplex-2d-test")
+    B, c = polytope.halfspace_data()
+
+    reference = compute_ehz_capacity(B, c)
+    optimized = compute_ehz_capacity_fast(B, c)
+
+    assert np.isfinite(reference)
+    assert np.isfinite(optimized)
+    assert np.isclose(reference, optimized, atol=1e-9)

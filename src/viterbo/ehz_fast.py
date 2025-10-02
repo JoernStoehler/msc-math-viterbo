@@ -31,7 +31,7 @@ def compute_ehz_capacity_fast(
     ----------
     B:
         Outward pointing facet normals describing the polytope ``P = {x : Bx <= c}``.
-        The dimension of the ambient space equals ``2n`` with ``n >= 2``.
+        The dimension of the ambient space equals ``2n`` with ``n >= 1``.
     c:
         Facet offsets for the inequality representation.
     tol:
@@ -59,8 +59,8 @@ def compute_ehz_capacity_fast(
         raise ValueError("Vector c must have length equal to the number of facets.")
 
     num_facets, dimension = B.shape
-    if dimension % 2 != 0 or dimension < 4:
-        raise ValueError("The ambient dimension must satisfy 2n with n >= 2.")
+    if dimension % 2 != 0 or dimension < 2:
+        raise ValueError("The ambient dimension must satisfy 2n with n >= 1.")
 
     J = standard_symplectic_matrix(dimension)
     subset_size = dimension + 1
