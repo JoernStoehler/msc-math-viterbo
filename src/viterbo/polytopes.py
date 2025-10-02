@@ -376,6 +376,19 @@ def haim_kislev_action(
     c_subset = offsets[rows]
     m = len(rows)
 
+    order_tuple = tuple(order)
+    if len(order_tuple) != m:
+        msg = "Facet order must include each subset index exactly once."
+        raise ValueError(msg)
+    if not all(isinstance(idx, (int, np.integer)) for idx in order_tuple):
+        msg = "Facet order must contain integer indices."
+        raise ValueError(msg)
+
+    order_indices = np.asarray(order_tuple, dtype=int)
+    if not np.array_equal(np.sort(order_indices), np.arange(m)):
+        msg = "Facet order must be a permutation of range(m)."
+        raise ValueError(msg)
+
     system = np.zeros((m, m))
     system[0, :] = c_subset
     system[1:, :] = B_subset.T
