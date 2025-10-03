@@ -95,6 +95,3 @@ def iter_search_space(**kwargs: int) -> Iterator[Polytope]:
     """Yield polytopes from :func:`enumerate_search_space` lazily."""
     for polytope in enumerate_search_space(**kwargs):
         yield polytope
-
-
-__all__ = ["enumerate_search_space", "iter_search_space"]

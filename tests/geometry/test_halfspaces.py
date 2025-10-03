@@ -8,14 +8,14 @@ from viterbo.geometry.halfspaces import enumerate_vertices, remove_redundant_fac
 
 
 def _square_halfspaces() -> tuple[np.ndarray, np.ndarray]:
-    B = np.array([[1.0, 0.0], [-1.0, 0.0], [0.0, 1.0], [0.0, -1.0]])
+    B_matrix = np.array([[1.0, 0.0], [-1.0, 0.0], [0.0, 1.0], [0.0, -1.0]])
     c = np.array([1.0, 1.0, 1.0, 1.0])
-    return B, c
+    return B_matrix, c
 
 
 def test_enumerate_vertices_returns_expected_square() -> None:
-    B, c = _square_halfspaces()
-    vertices = enumerate_vertices(B, c)
+    B_matrix, c = _square_halfspaces()
+    vertices = enumerate_vertices(B_matrix, c)
     expected = np.array(
         [
             [1.0, 1.0],
@@ -32,11 +32,11 @@ def test_enumerate_vertices_returns_expected_square() -> None:
 
 
 def test_remove_redundant_facets_discards_duplicates() -> None:
-    B, c = _square_halfspaces()
-    B = np.vstack((B, B[0:1]))
+    B_matrix, c = _square_halfspaces()
+    B_matrix = np.vstack((B_matrix, B_matrix[0:1]))
     c = np.concatenate((c, c[0:1]))
 
-    reduced_B, reduced_c = remove_redundant_facets(B, c)
+    reduced_B, reduced_c = remove_redundant_facets(B_matrix, c)
 
     assert reduced_B.shape == (4, 2)
     assert reduced_c.shape == (4,)

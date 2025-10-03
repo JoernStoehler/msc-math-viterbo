@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 import pytest
-import pytest_benchmark.plugin
+import pytest_benchmark.plugin  # type: ignore[reportMissingTypeStubs]  # Third-party plugin has no stubs; TODO: add types or vendor stubs
 
 from viterbo.geometry.polytopes import random_polytope
 from viterbo.geometry.volume import polytope_volume_fast, polytope_volume_reference
@@ -23,5 +25,8 @@ def test_volume_fast_matches_reference(
     def _run() -> float:
         return polytope_volume_fast(B, c)
 
-    result = benchmark(_run)
-    assert pytest.approx(baseline, rel=1e-9) == result
+    result = cast(float, benchmark(_run))
+    assert (
+        pytest.approx(baseline, rel=1e-9)  # type: ignore[reportUnknownMemberType]  # Pytest stubs incomplete; TODO: refine types
+        == result
+    )

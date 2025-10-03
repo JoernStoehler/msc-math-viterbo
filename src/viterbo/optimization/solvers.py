@@ -6,19 +6,14 @@ from dataclasses import dataclass
 from typing import Any, Mapping, Protocol, Sequence
 
 import numpy as np
+import scipy.optimize as _opt  # type: ignore[reportMissingTypeStubs]  # SciPy lacks type stubs; TODO: add stubs or pin typeshed
 from jaxtyping import Float
+
+linprog = _opt.linprog  # type: ignore[reportUnknownMemberType]  # Treat as dynamic; SciPy stubs are incomplete. TODO: type this via stub
 
 _DIMENSION_AXIS = "dimension"
 _INEQUALITY_AXIS = "num_inequalities"
 _EQUALITY_AXIS = "num_equalities"
-
-__all__ = [
-    "LinearProgram",
-    "LinearProgramSolution",
-    "LinearProgramBackend",
-    "ScipyLinearProgramBackend",
-    "solve_linear_program",
-]
 
 
 @dataclass(slots=True)
@@ -113,9 +108,7 @@ class ScipyLinearProgramBackend:
         options: Mapping[str, Any] | None = None,
     ) -> LinearProgramSolution:
         """Solve ``problem`` using :func:`scipy.optimize.linprog`."""
-        from scipy.optimize import linprog
-
-        result = linprog(
+        result: Any = linprog(
             c=np.asarray(problem.objective, dtype=float),
             A_ub=None if problem.lhs_ineq is None else np.asarray(problem.lhs_ineq, dtype=float),
             b_ub=None if problem.rhs_ineq is None else np.asarray(problem.rhs_ineq, dtype=float),

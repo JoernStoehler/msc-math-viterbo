@@ -70,4 +70,4 @@ def test_random_polytope_facets_are_active() -> None:
     polytope = random_polytope(3, rng=rng, name="random-3d-test")
     vertices = enumerate_vertices(polytope.B, polytope.c)
     for row, offset in zip(polytope.B, polytope.c, strict=False):
-        assert np.any(np.isclose(vertices @ row, offset, atol=1e-9))
+        assert np.any(np.isclose(vertices @ row, offset, atol=1e-9))  # type: ignore[reportUnknownArgumentType]  # NumPy stubs are partial; TODO: refine types

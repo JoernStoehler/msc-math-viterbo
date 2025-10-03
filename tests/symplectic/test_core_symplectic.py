@@ -36,18 +36,24 @@ def test_symplectic_product_default_matrix() -> None:
     vector_a = np.array([1.0, 0.0, 0.0, 0.0])
     vector_b = np.array([0.0, 1.0, 0.0, 0.0])
     value = symplectic_product(vector_a, vector_b)
-    assert value == pytest.approx(0.0)
+    assert (
+        value == pytest.approx(0.0)  # type: ignore[reportUnknownMemberType]  # Pytest stubs incomplete; TODO: refine types
+    )
 
     vector_c = np.array([1.0, 0.0, 0.0, 0.0])
     vector_d = np.array([0.0, 0.0, 1.0, 0.0])
     value_cd = symplectic_product(vector_c, vector_d)
-    assert value_cd == pytest.approx(1.0)
+    assert (
+        value_cd == pytest.approx(1.0)  # type: ignore[reportUnknownMemberType]  # Pytest stubs incomplete; TODO: refine types
+    )
 
 
 def test_symplectic_product_custom_matrix() -> None:
     matrix = np.array([[0.0, 2.0], [-2.0, 0.0]])
     value = symplectic_product(np.array([1.0, 0.0]), np.array([0.0, 1.0]), matrix=matrix)
-    assert value == pytest.approx(2.0)
+    assert (
+        value == pytest.approx(2.0)  # type: ignore[reportUnknownMemberType]  # Pytest stubs incomplete; TODO: refine types
+    )
 
 
 def test_support_function_simplex() -> None:
@@ -60,7 +66,9 @@ def test_support_function_simplex() -> None:
     )
     direction = np.array([1.0, 1.0])
     value = support_function(vertices, direction)
-    assert value == pytest.approx(1.0)
+    assert (
+        value == pytest.approx(1.0)  # type: ignore[reportUnknownMemberType]  # Pytest stubs incomplete; TODO: refine types
+    )
 
 
 def test_minkowski_sum_pairwise_vertices() -> None:

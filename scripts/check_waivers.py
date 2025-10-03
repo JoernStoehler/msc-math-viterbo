@@ -33,6 +33,7 @@ def _parse_date(value: str) -> _dt.date:
 
 
 def main() -> int:
+    """Validate `waivers.toml` and return a non-zero exit on failure."""
     waivers_file = Path("waivers.toml")
     if not waivers_file.exists():
         # No waivers → nothing to check.
@@ -64,7 +65,9 @@ def main() -> int:
             continue
         missing = required.difference(waiver.keys())
         if missing:
-            failures.append(f"waiver '{waiver.get('id', f'#${idx}')}' missing fields: {sorted(missing)}")
+            failures.append(
+                f"waiver '{waiver.get('id', f'#${idx}')}' missing fields: {sorted(missing)}"
+            )
             continue
         try:
             expires = _parse_date(str(waiver["expires"]))
@@ -85,4 +88,3 @@ def main() -> int:
 
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())
-

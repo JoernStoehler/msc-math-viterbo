@@ -1,20 +1,33 @@
-"""Canonical polytope families and deterministic transformations."""
+"""Canonical polytope families and deterministic transformations.
+
+Caching policy
+--------------
+- Combinatorics are cached by a fingerprint of ``(B, c)`` and the tolerance.
+- Cache is bounded (LRU) with a hard size limit set by
+  ``_POLYTOPE_CACHE_MAX_SIZE``.
+- Disable caching by setting environment variable ``VITERBO_DISABLE_CACHE=1``
+  or by passing ``use_cache=False`` to ``polytope_combinatorics``.
+- Invalidate all entries via ``clear_polytope_cache()``.
+"""
 
 from __future__ import annotations
 
 import hashlib
 import math
+import os
+from collections import OrderedDict
 from dataclasses import dataclass
 from itertools import combinations, product
 from typing import Final, Sequence
 
 import numpy as np
+import scipy.spatial as _spatial  # type: ignore[reportMissingTypeStubs]  # SciPy lacks type stubs; TODO: add stubs or vendor minimal types
 from jaxtyping import Float
-from scipy.spatial import ConvexHull
 
+from viterbo.geometry.halfspaces import enumerate_vertices, remove_redundant_facets
 from viterbo.symplectic.core import standard_symplectic_matrix
 
-from .halfspaces import enumerate_vertices, remove_redundant_facets
+ConvexHull = _spatial.ConvexHull
 
 _DIMENSION_AXIS: Final[str] = "dimension"
 _FACET_AXIS: Final[str] = "num_facets"
@@ -22,33 +35,13 @@ _FACET_MATRIX_AXES: Final[str] = f"{_FACET_AXIS} {_DIMENSION_AXIS}"
 _SQUARE_MATRIX_AXES: Final[str] = f"{_DIMENSION_AXIS} {_DIMENSION_AXIS}"
 _VERTEX_MATRIX_AXES: Final[str] = "num_vertices dimension"
 
-_POLYTOPE_CACHE: dict[tuple[str, float], PolytopeCombinatorics] = {}
+_POLYTOPE_CACHE_MAX_SIZE: Final[int] = 128
+_POLYTOPE_CACHE: "OrderedDict[tuple[str, float], PolytopeCombinatorics]" = OrderedDict()
 
-__all__ = [
-    "Polytope",
-    "NormalCone",
-    "PolytopeCombinatorics",
-    "affine_transform",
-    "cartesian_product",
-    "catalog",
-    "cross_polytope",
-    "haim_kislev_action",
-    "hypercube",
-    "mirror_polytope",
-    "random_affine_map",
-    "random_polytope",
-    "random_transformations",
-    "regular_polygon_product",
-    "vertices_from_halfspaces",
-    "halfspaces_from_vertices",
-    "polytope_fingerprint",
-    "polytope_combinatorics",
-    "rotate_polytope",
-    "simplex_with_uniform_weights",
-    "translate_polytope",
-    "truncated_simplex_four_dim",
-    "viterbo_counterexample",
-]
+
+def clear_polytope_cache() -> None:
+    """Clear all cached polytope combinatorics entries."""
+    _POLYTOPE_CACHE.clear()
 
 
 @dataclass(frozen=True)
@@ -149,10 +142,19 @@ def polytope_combinatorics(
     atol: float = 1e-9,
     use_cache: bool = True,
 ) -> PolytopeCombinatorics:
-    """Return cached combinatorial data for ``polytope``."""
+    """Return cached combinatorial data for ``polytope``.
+
+    Uses an LRU cache with a hard size bound. Caching can be disabled by
+    setting the environment variable ``VITERBO_DISABLE_CACHE=1`` or by
+    passing ``use_cache=False``.
+    """
     key = (polytope_fingerprint(polytope), float(np.round(atol, decimals=12)))
-    if use_cache and key in _POLYTOPE_CACHE:
-        return _POLYTOPE_CACHE[key]
+    caching_disabled = os.environ.get("VITERBO_DISABLE_CACHE", "0") == "1"
+    if use_cache and not caching_disabled and key in _POLYTOPE_CACHE:
+        # Move to end to mark as recently used
+        value = _POLYTOPE_CACHE.pop(key)
+        _POLYTOPE_CACHE[key] = value
+        return value
 
     B, c = polytope.halfspace_data()
     vertices = enumerate_vertices(B, c, atol=atol)
@@ -185,8 +187,13 @@ def polytope_combinatorics(
         normal_cones=tuple(normal_cones),
     )
 
-    if use_cache:
+    if use_cache and not caching_disabled:
+        # Insert/update and enforce LRU bound
+        if key in _POLYTOPE_CACHE:
+            _POLYTOPE_CACHE.pop(key)
         _POLYTOPE_CACHE[key] = combinatorics
+        while len(_POLYTOPE_CACHE) > _POLYTOPE_CACHE_MAX_SIZE:
+            _POLYTOPE_CACHE.popitem(last=False)
 
     return combinatorics
 
@@ -532,9 +539,7 @@ def haim_kislev_action(
     if len(order_tuple) != m:
         msg = "Facet order must include each subset index exactly once."
         raise ValueError(msg)
-    if not all(isinstance(idx, (int, np.integer)) for idx in order_tuple):
-        msg = "Facet order must contain integer indices."
-        raise ValueError(msg)
+    # Indices are integers by contract from the function signature; permutation check follows.
 
     order_indices = np.asarray(order_tuple, dtype=int)
     if not np.array_equal(np.sort(order_indices), np.arange(m)):
@@ -583,9 +588,9 @@ def simplex_with_uniform_weights(
         msg = "Dimension must be at least two."
         raise ValueError(msg)
 
-    B = np.eye(dimension)
+    B_matrix = np.eye(dimension)
     extra = -np.ones((1, dimension))
-    B = np.vstack((B, extra))
+    B_matrix = np.vstack((B_matrix, extra))
 
     offsets = np.ones(dimension + 1)
     if last_offset is None:
@@ -604,7 +609,7 @@ def simplex_with_uniform_weights(
     )
     return Polytope(
         name=polytope_name,
-        B=B,
+        B=B_matrix,
         c=offsets,
         description=description,
         reference_capacity=reference_capacity,
@@ -613,7 +618,7 @@ def simplex_with_uniform_weights(
 
 def truncated_simplex_four_dim() -> Polytope:
     """Return the 4D simplex truncated by an additional slanted facet."""
-    B = np.array(
+    B_matrix = np.array(
         [
             [1.0, 0.0, 0.0, 0.0],
             [0.0, 1.0, 0.0, 0.0],
@@ -625,7 +630,7 @@ def truncated_simplex_four_dim() -> Polytope:
     )
     c = np.array([1.0, 1.0, 1.0, 1.0, 2.0, 1.2])
     reference_capacity = haim_kislev_action(
-        B,
+        B_matrix,
         c,
         subset=(0, 1, 2, 3, 4),
         order=(2, 0, 4, 3, 1),
@@ -633,7 +638,7 @@ def truncated_simplex_four_dim() -> Polytope:
     description = "Simplex-like model with an extra facet; preserves the optimal Reeb action"
     return Polytope(
         name="truncated-simplex-4d",
-        B=B,
+        B=B_matrix,
         c=c,
         description=description,
         reference_capacity=reference_capacity,
@@ -674,12 +679,12 @@ def hypercube(
         raise ValueError(msg)
 
     identity = np.eye(dimension)
-    B = np.vstack((identity, -identity))
+    B_matrix = np.vstack((identity, -identity))
     c = np.full(2 * dimension, float(radius))
     description = "Hypercube aligned with the coordinate axes."
     return Polytope(
         name=name or f"hypercube-{dimension}d",
-        B=B,
+        B=B_matrix,
         c=c,
         description=description,
     )

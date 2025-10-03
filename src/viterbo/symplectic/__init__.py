@@ -1,27 +1,25 @@
 """Symplectic helpers, capacities, and systolic invariants."""
 
-from .capacity import compute_ehz_capacity
-from .capacity_fast import compute_ehz_capacity_fast
-from .core import (
-    ZERO_TOLERANCE,
-    Vector,
-    minkowski_sum,
-    normalize_vector,
-    standard_symplectic_matrix,
-    support_function,
-    symplectic_product,
+from viterbo.symplectic.capacity import compute_ehz_capacity as compute_ehz_capacity
+from viterbo.symplectic.capacity_fast import (
+    compute_ehz_capacity_fast as compute_ehz_capacity_fast,
 )
-from .systolic import systolic_ratio
-
-__all__ = [
-    "ZERO_TOLERANCE",
-    "Vector",
-    "compute_ehz_capacity",
-    "compute_ehz_capacity_fast",
-    "minkowski_sum",
-    "normalize_vector",
-    "standard_symplectic_matrix",
-    "support_function",
-    "symplectic_product",
-    "systolic_ratio",
-]
+from viterbo.symplectic.core import (
+    ZERO_TOLERANCE as ZERO_TOLERANCE,
+)
+from viterbo.symplectic.core import (
+    minkowski_sum as minkowski_sum,
+)
+from viterbo.symplectic.core import (
+    normalize_vector as normalize_vector,
+)
+from viterbo.symplectic.core import (
+    standard_symplectic_matrix as standard_symplectic_matrix,
+)
+from viterbo.symplectic.core import (
+    support_function as support_function,
+)
+from viterbo.symplectic.core import (
+    symplectic_product as symplectic_product,
+)
+from viterbo.symplectic.systolic import systolic_ratio as systolic_ratio

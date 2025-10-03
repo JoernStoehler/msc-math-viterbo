@@ -11,11 +11,16 @@ from typing import Final
 import numpy as np
 from jaxtyping import Float
 
-Vector = Float[np.ndarray, " n"]
 ZERO_TOLERANCE: Final[float] = 1e-12
 
+_DIMENSION_AXIS: Final[str] = "dimension"
+_VERTEX_MATRIX_AXES: Final[str] = "num_vertices dimension"
+_PAIRS_AXIS: Final[str] = "k"
 
-def standard_symplectic_matrix(dimension: int) -> Float[np.ndarray, " d d"]:
+
+def standard_symplectic_matrix(
+    dimension: int,
+) -> Float[np.ndarray, f"{_DIMENSION_AXIS} {_DIMENSION_AXIS}"]:
     r"""
     Return the standard symplectic matrix on R^d.
 
@@ -38,22 +43,22 @@ def standard_symplectic_matrix(dimension: int) -> Float[np.ndarray, " d d"]:
     half = dimension // 2
     upper = np.hstack((np.zeros((half, half)), np.eye(half)))
     lower = np.hstack((-np.eye(half), np.zeros((half, half))))
-    matrix: Float[np.ndarray, "d d"] = np.vstack((upper, lower))
+    matrix: Float[np.ndarray, f"{_DIMENSION_AXIS} {_DIMENSION_AXIS}"] = np.vstack((upper, lower))
     return matrix
 
 
 def symplectic_product(
-    first: Vector,
-    second: Vector,
+    first: Float[np.ndarray, _DIMENSION_AXIS],
+    second: Float[np.ndarray, _DIMENSION_AXIS],
     *,
-    matrix: Float[np.ndarray, " d d"] | None = None,
+    matrix: Float[np.ndarray, f"{_DIMENSION_AXIS} {_DIMENSION_AXIS}"] | None = None,
 ) -> float:
     r"""
     Evaluate the symplectic form of two vectors.
 
     Args:
-      first: Vector in ``R^{2n}``.
-      second: Vector in ``R^{2n}``.
+      first: One-dimensional vector in ``R^{2n}``.
+      second: One-dimensional vector in ``R^{2n}``.
       matrix: Optional symplectic matrix ``J``. Defaults to the standard form
         for ``dimension = len(first)``.
 
@@ -90,8 +95,8 @@ def symplectic_product(
 
 
 def support_function(
-    vertices: Float[np.ndarray, " num_vertices d"],
-    direction: Vector,
+    vertices: Float[np.ndarray, _VERTEX_MATRIX_AXES],
+    direction: Float[np.ndarray, _DIMENSION_AXIS],
 ) -> float:
     r"""
     Evaluate the support function of a convex body from its vertices.
@@ -102,7 +107,7 @@ def support_function(
 
     Args:
       vertices: Vertex coordinates, shape ``(num_vertices, dimension)``.
-      direction: Direction vector in ``R^d``.
+      direction: Direction vector in ``R^{dimension}``.
 
     Returns:
       Support value ``h_K(direction)``.
@@ -132,18 +137,18 @@ def support_function(
 
 
 def minkowski_sum(
-    first_vertices: Float[np.ndarray, " m d"],
-    second_vertices: Float[np.ndarray, " n d"],
-) -> Float[np.ndarray, " mn d"]:
+    first_vertices: Float[np.ndarray, f"m {_DIMENSION_AXIS}"],
+    second_vertices: Float[np.ndarray, f"n {_DIMENSION_AXIS}"],
+) -> Float[np.ndarray, f"{_PAIRS_AXIS} {_DIMENSION_AXIS}"]:
     r"""
     Return vertices of the Minkowski sum ``A + B``.
 
     Args:
-      first_vertices: Vertex array for polytope ``A``, shape ``(m, d)``.
-      second_vertices: Vertex array for polytope ``B``, shape ``(n, d)``.
+      first_vertices: Vertex array for polytope ``A``, shape ``(m, dimension)``.
+      second_vertices: Vertex array for polytope ``B``, shape ``(n, dimension)``.
 
     Returns:
-      Array of shape ``(m * n, d)`` with all pairwise sums. No deduplication
+      Array of shape ``(k, dimension)`` with all pairwise sums, ``k = m * n``. No deduplication
       is performed; callers may prune or convexify later.
 
     Raises:
@@ -166,11 +171,15 @@ def minkowski_sum(
         raise ValueError(msg)
 
     sums = first_vertices[:, None, :] + second_vertices[None, :, :]
-    result: Float[np.ndarray, "mn d"] = sums.reshape(-1, first_vertices.shape[1])
+    result: Float[np.ndarray, f"{_PAIRS_AXIS} {_DIMENSION_AXIS}"] = sums.reshape(
+        -1, first_vertices.shape[1]
+    )
     return result
 
 
-def normalize_vector(vector: Vector) -> Vector:
+def normalize_vector(
+    vector: Float[np.ndarray, _DIMENSION_AXIS],
+) -> Float[np.ndarray, _DIMENSION_AXIS]:
     r"""
     Return a unit vector pointing in the same direction.
 
@@ -202,5 +211,5 @@ def normalize_vector(vector: Vector) -> Vector:
     if norm <= ZERO_TOLERANCE:
         raise ValueError("Cannot normalize a vector with near-zero magnitude.")
 
-    normalized: Vector = vector / norm  # shape: (n,)
+    normalized: Float[np.ndarray, _DIMENSION_AXIS] = vector / norm
     return normalized

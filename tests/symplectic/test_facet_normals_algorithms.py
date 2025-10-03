@@ -30,7 +30,10 @@ def test_fast_matches_reference(B: np.ndarray, c: np.ndarray) -> None:
         assert str(caught.value) == str(exc)
     else:
         fast_value = compute_ehz_capacity_fast(B, c)
-        assert pytest.approx(reference_value, rel=1e-10, abs=1e-12) == fast_value
+        assert (
+            pytest.approx(reference_value, rel=1e-10, abs=1e-12)  # type: ignore[reportUnknownMemberType]  # Pytest stubs incomplete; TODO: refine types
+            == fast_value
+        )
 
 
 def test_symplectic_invariance_square() -> None:
@@ -56,7 +59,10 @@ def test_symplectic_invariance_square() -> None:
         transformed = compute_ehz_capacity_reference(transformed_B, c)
     except ValueError:
         pytest.skip("Reference algorithm is undefined for the chosen symmetric sample.")
-    assert pytest.approx(base, rel=1e-10, abs=1e-12) == transformed
+    assert (
+        pytest.approx(base, rel=1e-10, abs=1e-12)  # type: ignore[reportUnknownMemberType]  # Pytest stubs incomplete; TODO: refine types
+        == transformed
+    )
 
 
 def test_rejects_odd_dimension() -> None:

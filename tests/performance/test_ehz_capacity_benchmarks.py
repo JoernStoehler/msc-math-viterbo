@@ -7,9 +7,11 @@ plugins compose so future maintainers can extend the pattern to other modules.
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 import pytest
-import pytest_benchmark.plugin
+import pytest_benchmark.plugin  # type: ignore[reportMissingTypeStubs]  # Third-party plugin has no stubs; TODO: add types or vendor stubs
 
 from tests.geometry._polytope_samples import load_polytope_instances
 from viterbo.symplectic.capacity import compute_ehz_capacity
@@ -51,5 +53,5 @@ def test_fast_ehz_capacity_matches_reference_and_tracks_speed(
             benchmark(lambda: compute_ehz_capacity_fast(B, c))
         assert str(caught.value) == str(error)
     else:
-        optimized = benchmark(lambda: compute_ehz_capacity_fast(B, c))
+        optimized = cast(float, benchmark(lambda: compute_ehz_capacity_fast(B, c)))
         assert np.isclose(optimized, reference, atol=1e-8)

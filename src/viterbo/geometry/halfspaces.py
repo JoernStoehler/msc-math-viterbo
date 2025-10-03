@@ -7,7 +7,7 @@ Docstrings follow Google style; shapes use the AGENTS.md vocabulary.
 from __future__ import annotations
 
 import itertools
-from typing import Final
+from typing import Final, cast
 
 import numpy as np
 from jaxtyping import Float
@@ -157,7 +157,8 @@ def enumerate_vertices(
         raise ValueError("Polytope dimension must be positive.")
 
     vertices: list[Float[np.ndarray, _DIMENSION_AXIS]] = []
-    for indices in itertools.combinations(range(num_facets), dimension):
+    for idx_tuple in itertools.combinations(range(num_facets), dimension):  # type: ignore[reportUnknownVariableType]  # Combinations yields tuples of ints here; TODO: tighten stubs
+        indices = cast(tuple[int, ...], tuple(idx_tuple))  # type: ignore[reportUnknownArgumentType]  # Tuple consumes known ints from combinations; TODO: refine stubs
         subset = matrix[indices, :]
         if np.linalg.matrix_rank(subset) < dimension:
             continue
@@ -219,6 +220,3 @@ def remove_redundant_facets(
     reduced_B = matrix[keep, :]
     reduced_c = offsets[keep]
     return reduced_B, reduced_c
-
-
-__all__ = ["enumerate_vertices", "remove_redundant_facets"]

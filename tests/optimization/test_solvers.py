@@ -30,7 +30,10 @@ def test_scipy_backend_solves_simple_problem() -> None:
     solution = backend.solve(problem)
     assert solution.status == "optimal"
     assert np.allclose(solution.x, np.array([0.0, 1.0]), atol=1e-8)
-    assert pytest.approx(0.0, abs=1e-8) == solution.objective_value
+    assert (
+        pytest.approx(0.0, abs=1e-8)  # type: ignore[reportUnknownMemberType]  # Pytest stubs incomplete; TODO: refine types
+        == solution.objective_value
+    )
 
 
 def test_solve_linear_program_uses_default_backend() -> None:

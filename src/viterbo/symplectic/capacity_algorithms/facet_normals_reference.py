@@ -4,15 +4,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from itertools import combinations, permutations
-from typing import Final, Iterable
+from typing import Final, Iterable, cast
 
 import numpy as np
 from jaxtyping import Float
 
-from ..core import standard_symplectic_matrix
+from viterbo.symplectic.core import standard_symplectic_matrix
 
 _DIMENSION_AXIS: Final[str] = "dimension"
 _FACET_AXIS: Final[str] = "num_facets"
+_M_AXIS: Final[str] = "m"
 
 
 @dataclass(frozen=True)
@@ -20,12 +21,12 @@ class FacetSubset:
     """Data describing a subset of polytope facets."""
 
     indices: tuple[int, ...]
-    beta: Float[np.ndarray, " m"]  # shape: (m,)
-    symplectic_products: Float[np.ndarray, "m m"]  # shape: (m, m)
+    beta: Float[np.ndarray, f"{_M_AXIS}"]  # shape: (m,)
+    symplectic_products: Float[np.ndarray, f"{_M_AXIS} {_M_AXIS}"]  # shape: (m, m)
 
 
 def compute_ehz_capacity_reference(
-    B: Float[np.ndarray, f"{_FACET_AXIS} {_DIMENSION_AXIS}"],
+    B_matrix: Float[np.ndarray, f"{_FACET_AXIS} {_DIMENSION_AXIS}"],
     c: Float[np.ndarray, _FACET_AXIS],
     *,
     tol: float = 1e-10,
@@ -34,7 +35,7 @@ def compute_ehz_capacity_reference(
     Compute the Ekeland–Hofer–Zehnder capacity of a polytope (reference).
 
     Args:
-      B: Outward facet normals for ``P = {x : Bx <= c}``, dimension ``d = 2n``.
+      B_matrix: Outward facet normals for ``P = {x : Bx <= c}``, dimension ``d = 2n``.
       c: Offsets ``c``.
       tol: Tolerance for feasibility checks.
 
@@ -51,7 +52,7 @@ def compute_ehz_capacity_reference(
         non-negativity constraints.
 
     """
-    B = np.asarray(B, dtype=float)
+    B = np.asarray(B_matrix, dtype=float)
     c = np.asarray(c, dtype=float)
 
     if B.ndim != 2:
@@ -68,8 +69,9 @@ def compute_ehz_capacity_reference(
     subset_size = dimension + 1
     best_capacity = np.inf
 
-    for indices in combinations(range(num_facets), subset_size):
-        subset = _prepare_subset(B=B, c=c, indices=indices, J=J, tol=tol)
+    for idx_tuple in combinations(range(num_facets), subset_size):  # type: ignore[reportUnknownVariableType]  # Combinations yields tuples of ints; TODO: refine typing
+        indices = cast(tuple[int, ...], tuple(idx_tuple))  # type: ignore[reportUnknownArgumentType]  # Tuple consumes known ints from combinations; TODO: refine stubs
+        subset = _prepare_subset(B_matrix=B, c=c, indices=indices, J=J, tol=tol)
         if subset is None:
             continue
 
@@ -88,7 +90,7 @@ def compute_ehz_capacity_reference(
 
 def _prepare_subset(
     *,
-    B: Float[np.ndarray, f"{_FACET_AXIS} {_DIMENSION_AXIS}"],
+    B_matrix: Float[np.ndarray, f"{_FACET_AXIS} {_DIMENSION_AXIS}"],
     c: Float[np.ndarray, _FACET_AXIS],
     indices: Iterable[int],
     J: np.ndarray,
@@ -98,7 +100,7 @@ def _prepare_subset(
     Solve Reeb-measure system for a facet subset and build cached data.
 
     Args:
-      B: Facet normals.
+      B_matrix: Facet normals.
       c: Offsets.
       indices: Chosen facet indices.
       J: Symplectic matrix.
@@ -110,7 +112,7 @@ def _prepare_subset(
     """
     selected_tuple = tuple(indices)
     row_indices = np.array(selected_tuple, dtype=int)
-    B_subset = B[row_indices, :]
+    B_subset = B_matrix[row_indices, :]
     c_subset = c[row_indices]
     m = B_subset.shape[0]
 
@@ -173,9 +175,3 @@ def _subset_capacity_candidate(subset: FacetSubset, *, tol: float) -> float | No
         return None
 
     return 0.5 / maximal_value
-
-
-__all__ = [
-    "FacetSubset",
-    "compute_ehz_capacity_reference",
-]

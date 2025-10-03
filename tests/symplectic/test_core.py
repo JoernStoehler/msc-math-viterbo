@@ -13,7 +13,10 @@ from viterbo.symplectic.core import ZERO_TOLERANCE, normalize_vector
 def test_normalize_vector_unit_length() -> None:
     vector = np.array([3.0, 4.0])  # shape: (2,)
     normalized = normalize_vector(vector)
-    assert pytest.approx(1.0) == float(np.linalg.norm(normalized))
+    assert (
+        pytest.approx(1.0)  # type: ignore[reportUnknownMemberType]  # Pytest stubs incomplete; TODO: refine types
+        == float(np.linalg.norm(normalized))
+    )
 
 
 def test_normalize_vector_zero_vector_raises() -> None:

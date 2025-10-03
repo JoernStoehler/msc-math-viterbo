@@ -2,102 +2,47 @@
 
 from __future__ import annotations
 
-from .examples import hello_numpy
-from .geometry import (
-    NormalCone,
-    Polytope,
-    PolytopeCombinatorics,
-    affine_transform,
-    cartesian_product,
-    catalog,
-    cross_polytope,
-    enumerate_vertices,
-    haim_kislev_action,
-    halfspaces_from_vertices,
-    hypercube,
-    mirror_polytope,
-    polytope_combinatorics,
-    polytope_fingerprint,
-    polytope_volume_fast,
-    polytope_volume_reference,
-    random_affine_map,
-    random_polytope,
-    random_transformations,
-    regular_polygon_product,
-    remove_redundant_facets,
-    rotate_polytope,
-    simplex_with_uniform_weights,
-    translate_polytope,
-    truncated_simplex_four_dim,
-    vertices_from_halfspaces,
-    viterbo_counterexample,
-)
-from .optimization import (
-    LinearProgram,
-    LinearProgramBackend,
-    LinearProgramSolution,
-    ScipyLinearProgramBackend,
-    enumerate_search_space,
-    iter_search_space,
-    solve_linear_program,
-)
-from .symplectic import (
-    ZERO_TOLERANCE,
-    Vector,
-    compute_ehz_capacity,
-    compute_ehz_capacity_fast,
-    minkowski_sum,
-    normalize_vector,
-    standard_symplectic_matrix,
-    support_function,
-    symplectic_product,
-    systolic_ratio,
-)
-
-__all__ = [
-    "LinearProgram",
-    "LinearProgramBackend",
-    "LinearProgramSolution",
-    "NormalCone",
-    "Polytope",
-    "PolytopeCombinatorics",
-    "ScipyLinearProgramBackend",
-    "Vector",
-    "ZERO_TOLERANCE",
-    "affine_transform",
-    "cartesian_product",
-    "catalog",
-    "compute_ehz_capacity",
-    "compute_ehz_capacity_fast",
-    "cross_polytope",
-    "enumerate_search_space",
-    "enumerate_vertices",
-    "haim_kislev_action",
-    "halfspaces_from_vertices",
-    "hello_numpy",
-    "hypercube",
-    "iter_search_space",
-    "minkowski_sum",
-    "mirror_polytope",
-    "normalize_vector",
-    "polytope_combinatorics",
-    "polytope_fingerprint",
-    "polytope_volume_fast",
-    "polytope_volume_reference",
-    "random_affine_map",
-    "random_polytope",
-    "random_transformations",
-    "regular_polygon_product",
-    "remove_redundant_facets",
-    "rotate_polytope",
-    "simplex_with_uniform_weights",
-    "solve_linear_program",
-    "standard_symplectic_matrix",
-    "support_function",
-    "symplectic_product",
-    "systolic_ratio",
-    "translate_polytope",
-    "truncated_simplex_four_dim",
-    "vertices_from_halfspaces",
-    "viterbo_counterexample",
-]
+from viterbo.examples import hello_numpy as hello_numpy
+from viterbo.geometry import NormalCone as NormalCone
+from viterbo.geometry import Polytope as Polytope
+from viterbo.geometry import PolytopeCombinatorics as PolytopeCombinatorics
+from viterbo.geometry import affine_transform as affine_transform
+from viterbo.geometry import cartesian_product as cartesian_product
+from viterbo.geometry import catalog as catalog
+from viterbo.geometry import cross_polytope as cross_polytope
+from viterbo.geometry import enumerate_vertices as enumerate_vertices
+from viterbo.geometry import haim_kislev_action as haim_kislev_action
+from viterbo.geometry import halfspaces_from_vertices as halfspaces_from_vertices
+from viterbo.geometry import hypercube as hypercube
+from viterbo.geometry import mirror_polytope as mirror_polytope
+from viterbo.geometry import polytope_combinatorics as polytope_combinatorics
+from viterbo.geometry import polytope_fingerprint as polytope_fingerprint
+from viterbo.geometry import polytope_volume_fast as polytope_volume_fast
+from viterbo.geometry import polytope_volume_reference as polytope_volume_reference
+from viterbo.geometry import random_affine_map as random_affine_map
+from viterbo.geometry import random_polytope as random_polytope
+from viterbo.geometry import random_transformations as random_transformations
+from viterbo.geometry import regular_polygon_product as regular_polygon_product
+from viterbo.geometry import remove_redundant_facets as remove_redundant_facets
+from viterbo.geometry import rotate_polytope as rotate_polytope
+from viterbo.geometry import simplex_with_uniform_weights as simplex_with_uniform_weights
+from viterbo.geometry import translate_polytope as translate_polytope
+from viterbo.geometry import truncated_simplex_four_dim as truncated_simplex_four_dim
+from viterbo.geometry import vertices_from_halfspaces as vertices_from_halfspaces
+from viterbo.geometry import viterbo_counterexample as viterbo_counterexample
+from viterbo.optimization import LinearProgram as LinearProgram
+from viterbo.optimization import LinearProgramBackend as LinearProgramBackend
+from viterbo.optimization import LinearProgramSolution as LinearProgramSolution
+from viterbo.optimization import ScipyLinearProgramBackend as ScipyLinearProgramBackend
+from viterbo.optimization import enumerate_search_space as enumerate_search_space
+from viterbo.optimization import iter_search_space as iter_search_space
+from viterbo.optimization import solve_linear_program as solve_linear_program
+from viterbo.symplectic import ZERO_TOLERANCE as ZERO_TOLERANCE
+from viterbo.symplectic import compute_ehz_capacity as compute_ehz_capacity
+from viterbo.symplectic import compute_ehz_capacity_fast as compute_ehz_capacity_fast
+from viterbo.symplectic import minkowski_sum as minkowski_sum
+from viterbo.symplectic import normalize_vector as normalize_vector
+from viterbo.symplectic import standard_symplectic_matrix as standard_symplectic_matrix
+from viterbo.symplectic import support_function as support_function
+from viterbo.symplectic import symplectic_product as symplectic_product
+from viterbo.symplectic import systolic_ratio as systolic_ratio

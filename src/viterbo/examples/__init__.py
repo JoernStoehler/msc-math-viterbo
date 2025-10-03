@@ -1,5 +1,3 @@
 """Small example helpers used in documentation and smoke tests."""
 
-from .hello import hello_numpy
-
-__all__ = ["hello_numpy"]
+from viterbo.examples.hello import hello_numpy as hello_numpy

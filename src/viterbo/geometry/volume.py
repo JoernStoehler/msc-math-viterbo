@@ -6,10 +6,14 @@ import math
 from typing import Final
 
 import numpy as np
+import scipy.spatial as _spatial  # type: ignore[reportMissingTypeStubs]  # SciPy lacks type stubs; TODO: add stubs or vendor minimal types
 from jaxtyping import Float
-from scipy.spatial import ConvexHull, Delaunay, QhullError
 
-from .halfspaces import enumerate_vertices
+from viterbo.geometry.halfspaces import enumerate_vertices
+
+ConvexHull = _spatial.ConvexHull
+Delaunay = _spatial.Delaunay
+QhullError = _spatial.QhullError
 
 _DIMENSION_AXIS: Final[str] = "dimension"
 _FACET_AXIS: Final[str] = "num_facets"
@@ -79,9 +83,3 @@ def polytope_volume_fast(
         return float(hull.volume)
     simplices = vertices[triangulation.simplices]
     return _volume_of_simplices(simplices)
-
-
-__all__ = [
-    "polytope_volume_fast",
-    "polytope_volume_reference",
-]
