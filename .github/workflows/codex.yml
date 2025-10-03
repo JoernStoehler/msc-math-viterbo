@@ -6,8 +6,10 @@ on:
     types: [created]
   workflow_dispatch:
     inputs:
-      task:   { description: "Task", required: true, type: string }
-      resume: { description: "none|chat|full", required: false, default: none }
+      task:
+        description: "Task to run"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -18,17 +20,8 @@ jobs:
     if: >
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'issue_comment' &&
-       contains(github.event.comment.body, '@codex'))
-    uses: JoernStoehler/codex-github-app/.github/workflows/codex.yml@v1
+       contains(toLower(github.event.comment.body), '@codex'))
+    uses: JoernStoehler/codex-github-app/.github/workflows/codex.yml@v1.2
     secrets: inherit
     with:
-      container_image: mcr.microsoft.com/devcontainers/universal:2-linux
-      lifecycle_scripts: |
-        .devcontainer/post-create.sh
-        .devcontainer/post-start.sh
-      resume: ${{ inputs.resume || 'none' }}
-      model: gpt5-codex-medium
-      thinking_budget: medium
-      artifact_retention_days: 90
-      danger_mode: true
-      ready_on_success: false
+      task: ${{ inputs.task || '' }}
