@@ -20,7 +20,7 @@ jobs:
     if: >
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'issue_comment' &&
-       contains(toLower(github.event.comment.body), '@codex'))
+       contains(github.event.comment.body, '@codex'))
     uses: JoernStoehler/codex-github-app/.github/workflows/codex.yml@v1.2
     secrets: inherit
     with:
