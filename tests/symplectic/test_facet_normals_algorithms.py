@@ -1,18 +1,18 @@
 """Regression tests for the facet-normal EHZ capacity algorithms."""
-
 from __future__ import annotations
 
 import math
+
 import numpy as np
 import pytest
 from pytest import MonkeyPatch
 
 from tests.geometry._polytope_samples import load_polytope_instances
+from viterbo.symplectic.capacity_algorithms import _subset_utils as subset_utils
 from viterbo.symplectic.capacity_algorithms import (
     compute_ehz_capacity_fast,
     compute_ehz_capacity_reference,
 )
-from viterbo.symplectic.capacity_algorithms import _subset_utils as subset_utils
 from viterbo.symplectic.core import standard_symplectic_matrix
 
 _BASE_DATA = load_polytope_instances(variant_count=0)
@@ -25,7 +25,6 @@ def fixture_subset_utils_close_records(
     monkeypatch: MonkeyPatch,
 ) -> dict[str, float | None]:
     """Patch ``subset_utils`` closeness helpers and capture tolerance arguments."""
-
     records: dict[str, float | None] = {
         "allclose": None,
         "allclose_rtol": None,

@@ -94,9 +94,12 @@ def enumerate_search_space(
     """Return a deterministic tuple of polytopes spanning diverse geometries.
 
     Args:
+      rng_seed: Seed controlling the pseudo-random search components.
+      max_dimension: Maximum ambient dimension for enumerated polytopes.
+      transforms_per_base: Number of affine transforms applied to each base polytope.
+      random_polytopes_per_dimension: Random samples generated per dimension.
       max_candidates: Optional cap on the number of polytopes produced.
     """
-
     generator = _generate_search_space(
         rng_seed=rng_seed,
         max_dimension=max_dimension,
@@ -110,7 +113,6 @@ def enumerate_search_space(
 
 def iter_search_space(**kwargs: int) -> Iterator[Polytope]:
     """Yield polytopes from :func:`enumerate_search_space` lazily."""
-
     max_candidates = kwargs.pop("max_candidates", None)
     rng_seed = kwargs.pop("rng_seed", 7)
     max_dimension = kwargs.pop("max_dimension", 6)

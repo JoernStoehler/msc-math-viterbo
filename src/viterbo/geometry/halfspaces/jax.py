@@ -2,32 +2,23 @@
 
 from __future__ import annotations
 
-from functools import lru_cache
 from itertools import combinations
-from typing import Any, Iterator, Sequence, cast
+from typing import Iterator, Sequence
 
+import jax
+import jax.numpy as jnp
 import numpy as np
 from jaxtyping import Float
 
 from viterbo.geometry.halfspaces import _shared
 
-
-@lru_cache(1)
-def _jax_numpy() -> Any:
-    """Return ``jax.numpy`` with 64-bit mode enabled."""
-
-    import jax
-
-    config = cast(Any, jax.config)
-    config.update("jax_enable_x64", True)
-    import jax.numpy as jnp_mod
-
-    return jnp_mod
+if not bool(jax.config.read("jax_enable_x64")):
+    msg = "JAX 64-bit mode must be enabled; set JAX_ENABLE_X64=1."
+    raise RuntimeError(msg)
 
 
 def _iter_index_combinations(count: int, dimension: int) -> Iterator[tuple[int, ...]]:
     """Yield index combinations for ``dimension`` facets."""
-
     for combination in combinations(range(count), dimension):
         yield tuple(int(index) for index in combination)
 
@@ -39,7 +30,6 @@ def _solve_subset(
 ) -> np.ndarray:
     subset = matrix[list(indices), :].astype(np.float64, copy=False)
     subset_offsets = offsets[list(indices)].astype(np.float64, copy=False)
-    jnp = _jax_numpy()
     return np.asarray(jnp.linalg.solve(subset, subset_offsets), dtype=float)
 
 

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import importlib
 from dataclasses import dataclass
 from functools import lru_cache
-import importlib
 from typing import Any, Mapping, Protocol, Sequence, TypeGuard, cast
 
 import numpy as np
@@ -47,21 +47,17 @@ class _LinprogCallable(Protocol):
 @lru_cache(1)
 def _load_linprog() -> _LinprogCallable:
     """Return the SciPy ``linprog`` callable with a static type signature."""
-
     module = importlib.import_module("scipy.optimize")
-    linprog_callable = getattr(module, "linprog")
-    return cast(_LinprogCallable, linprog_callable)
+    return cast(_LinprogCallable, module.linprog)
 
 
 def _is_bounds_object(candidate: object) -> TypeGuard[_BoundsProtocol]:
     """Return ``True`` if ``candidate`` exposes ``lb``/``ub`` arrays."""
-
     return hasattr(candidate, "lb") and hasattr(candidate, "ub")
 
 
 def _coerce_bound_value(value: float | None) -> float | None:
     """Convert ``value`` to a finite float or ``None`` for unbounded entries."""
-
     if value is None:
         return None
     numeric = float(value)
@@ -78,7 +74,6 @@ def _normalize_bounds(
     dimension: int,
 ) -> tuple[BoundTuple, ...]:
     """Validate and canonicalise ``bounds`` for SciPy's ``linprog``."""
-
     normalized: list[BoundTuple]
 
     if _is_bounds_object(bounds):

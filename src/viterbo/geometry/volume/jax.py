@@ -46,11 +46,10 @@ class _DelaunayFactory(Protocol):
 @lru_cache(1)
 def _load_spatial() -> tuple[_ConvexHullFactory, _DelaunayFactory, type[Exception]]:
     """Return SciPy spatial factories with static typing."""
-
     spatial = importlib.import_module("scipy.spatial")
-    convex_hull = cast(_ConvexHullFactory, getattr(spatial, "ConvexHull"))
-    delaunay = cast(_DelaunayFactory, getattr(spatial, "Delaunay"))
-    qhull_error = cast(type[Exception], getattr(spatial, "QhullError"))
+    convex_hull = cast(_ConvexHullFactory, spatial.ConvexHull)
+    delaunay = cast(_DelaunayFactory, spatial.Delaunay)
+    qhull_error = cast(type[Exception], spatial.QhullError)
     return convex_hull, delaunay, qhull_error
 
 

@@ -135,10 +135,14 @@ def affine_transform(
     ``B' y \le c'`` where ``B' = B A^{-1}`` and ``c' = c + B' t``.
 
     Args:
+      polytope: Polytope to transform. Must expose ``dimension`` matching ``matrix``.
       matrix: Linear component ``A``.
       translation: Optional translation ``t``.
       matrix_inverse: Optional precomputed inverse of ``matrix``. When provided
         the inverse is validated and reused instead of recomputing it.
+      name: Optional override for the transformed polytope's name. Defaults to
+        ``"{polytope.name}-affine"`` when not provided.
+      description: Optional textual description for the transformed polytope.
     """
     matrix = np.asarray(matrix, dtype=float)
     if matrix.shape != (polytope.dimension, polytope.dimension):

@@ -26,7 +26,6 @@ class FacetSubset:
 
 def iter_index_combinations(count: int, size: int) -> Iterator[tuple[int, ...]]:
     """Yield index tuples of length ``size`` drawn from ``count`` facets."""
-
     for combination in combinations(range(count), size):
         yield tuple(int(index) for index in combination)
 
@@ -40,7 +39,6 @@ def prepare_subset(
     tol: float,
 ) -> FacetSubset | None:
     """Solve the Reeb-measure system for a facet subset and cache products."""
-
     selected_tuple = tuple(int(index) for index in indices)
     row_indices = np.array(selected_tuple, dtype=int)
     B_subset = B_matrix[row_indices, :]
@@ -80,7 +78,6 @@ def prepare_subset(
 
 def maximum_antisymmetric_order_value(weights: np.ndarray) -> float:
     r"""Return the maximum order value for an antisymmetric weight matrix."""
-
     m = weights.shape[0]
     if m == 0:
         return 0.0
@@ -121,7 +118,6 @@ def subset_capacity_candidate_dynamic(
     tol: float,
 ) -> float | None:
     """Return the candidate capacity using the dynamic-programming shortcut."""
-
     beta = subset.beta
     symplectic_products = subset.symplectic_products
 
