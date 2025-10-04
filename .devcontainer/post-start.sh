@@ -35,4 +35,27 @@ if [ -f "pyproject.toml" ]; then
   fi
 fi
 
+# If running inside the local VS Code devcontainer, ensure Git uses gh for credentials.
+if [ "${LOCAL_DEVCONTAINER:-}" = "1" ]; then
+  if command -v gh >/dev/null 2>&1; then
+    echo "[post-start] Configuring Git to use gh credential helper (local devcontainer)"
+    # Remove any VS Code Remote Containers helper from the GLOBAL scope to avoid precedence issues.
+    # (System-level helper may remain; Git will fall through to gh if system helper returns no creds.)
+    if git config --global --get-all credential.helper | grep -q 'vscode-remote-containers'; then
+      git config --global --unset-all credential.helper || true
+    fi
+    # Ensure gh uses HTTPS for git operations and installs its credential helper.
+    gh config set git_protocol https >/dev/null 2>&1 || true
+    gh auth setup-git >/dev/null 2>&1 || true
+    # As a deterministic fallback in this repo: clear inherited helpers and set gh explicitly.
+    git config --local credential.helper "" || true
+    git config --local credential.helper "!gh auth git-credential" || true
+    # Brief diagnostics (non-fatal if they fail):
+    git config --global --get-all credential.helper || true
+    git config --local --get-all credential.helper || true
+  else
+    echo "[post-start] WARN: gh not found; skipping credential helper setup" >&2
+  fi
+fi
+
 echo "[post-start] Environment ready."

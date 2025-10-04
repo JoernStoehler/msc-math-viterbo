@@ -3,6 +3,11 @@
   "name": "msc-math-viterbo",
   "image": "mcr.microsoft.com/vscode/devcontainers/universal:2",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  // Mark this container as a local VS Code devcontainer so
+  // startup scripts can make environment-specific choices.
+  "containerEnv": {
+    "LOCAL_DEVCONTAINER": "1"
+  },
   "mounts": [
     // GitHub CLI auth/config persistence
     "source=gh_auth,target=/home/codespace/.config/gh,type=volume",
