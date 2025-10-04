@@ -1,0 +1,27 @@
+name: codex
+run-name: "codex PR #${{ github.event.issue.number || 'manual' }}: ${{ github.event.comment.body || inputs.task }}"
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Task to run"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  codex:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issue_comment' &&
+       contains(github.event.comment.body, '@codex'))
+    uses: JoernStoehler/codex-github-app/.github/workflows/codex.yml@v1.2
+    secrets: inherit
+    with:
+      task: ${{ inputs.task || '' }}
