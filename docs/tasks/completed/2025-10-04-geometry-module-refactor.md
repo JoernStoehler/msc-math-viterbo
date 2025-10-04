@@ -1,7 +1,7 @@
 # Task Brief — Geometry quantity module restructure and JAX baselines
 
-- **Status**: Scheduled
-- **Last updated**: 2025-10-04
+- **Status**: Completed
+- **Last updated**: 2025-10-06
 - **Owner / DRI**: Unassigned
 - **Related docs**: `docs/tasks/01-task-evaluation-methodology.md`, `docs/tasks/02-task-portfolio.md`, `docs/algorithm-implementation-plan.md`, `docs/22-code-structure.md`
 
@@ -63,3 +63,13 @@ The geometry package currently mixes reference algorithms, optimisation shortcut
 - Task for benchmark and profiling harness (T2) to leverage the new layout.
 - Experiment E1 (facet-normal dataset) consuming the refactored modules.
 - Future tasks for extending JAX coverage once blockers are resolved (e.g., SciPy replacements).
+
+## 10. Outcome summary
+- ✅ Restructured `viterbo.geometry.halfspaces` and `viterbo.geometry.volume` into quantity packages exposing
+  reference, optimised, and JAX-friendly implementations alongside shared samples and parity tests.
+- ✅ Completed the `viterbo.geometry.polytopes` package by adding optimised and JAX combinatorics variants
+  backed by shared caching utilities and vertex enumerators.
+- ✅ Added curated half-space and volume datasets plus documentation touchpoints, enabling downstream
+  experiments to consume consistent module surfaces.
+- ✅ Recorded post-task documentation updates (roadmap, portfolio) and promoted the brief into `completed/`, readying T2 as the next dependency.
+- ✅ Captured the Pyright–JAX typing trade-off study in RFC 002 to anchor the follow-up implementation plan.【F:docs/rfc/002-jax-pyright-typing-options.md†L1-L78】

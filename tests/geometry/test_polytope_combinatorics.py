@@ -9,8 +9,12 @@ from viterbo.geometry.polytopes import (
     halfspaces_from_vertices,
     hypercube,
     polytope_combinatorics,
+    polytope_combinatorics_jax,
+    polytope_combinatorics_optimized,
     polytope_fingerprint,
     vertices_from_halfspaces,
+    vertices_from_halfspaces_jax,
+    vertices_from_halfspaces_optimized,
 )
 
 
@@ -32,6 +36,55 @@ def test_polytope_combinatorics_square_facets() -> None:
     # Each facet of a square touches exactly two neighbours.
     degree = combinatorics.facet_adjacency.sum(axis=1)
     assert np.all(degree == 2)
+
+
+def test_polytope_combinatorics_variants_match() -> None:
+    cube = hypercube(3)
+    baseline = polytope_combinatorics(cube, use_cache=False)
+    optimized = polytope_combinatorics_optimized(cube, use_cache=False)
+    jax_variant = polytope_combinatorics_jax(cube, use_cache=False)
+
+    assert np.array_equal(optimized.facet_adjacency, baseline.facet_adjacency)
+    assert np.array_equal(jax_variant.facet_adjacency, baseline.facet_adjacency)
+
+    assert np.allclose(optimized.vertices, baseline.vertices)
+    assert np.allclose(jax_variant.vertices, baseline.vertices)
+
+    for expected, actual in zip(
+        baseline.normal_cones,
+        optimized.normal_cones,
+        strict=True,
+    ):
+        assert actual.active_facets == expected.active_facets
+        assert np.allclose(actual.vertex, expected.vertex)
+        assert np.allclose(actual.normals, expected.normals)
+
+    for expected, actual in zip(
+        baseline.normal_cones,
+        jax_variant.normal_cones,
+        strict=True,
+    ):
+        assert actual.active_facets == expected.active_facets
+        assert np.allclose(actual.vertex, expected.vertex)
+        assert np.allclose(actual.normals, expected.normals)
+
+
+def _sorted_vertices(vertices: np.ndarray) -> np.ndarray:
+    array = np.asarray(vertices, dtype=float)
+    keys = np.lexsort(array.T[::-1])
+    return array[keys]
+
+
+def test_vertex_enumeration_variants_match() -> None:
+    cube = hypercube(3)
+    B, c = cube.halfspace_data()
+    reference_vertices = vertices_from_halfspaces(B, c)
+    optimized_vertices = vertices_from_halfspaces_optimized(B, c)
+    jax_vertices = vertices_from_halfspaces_jax(B, c)
+
+    expected = _sorted_vertices(reference_vertices)
+    assert np.allclose(_sorted_vertices(optimized_vertices), expected)
+    assert np.allclose(_sorted_vertices(jax_vertices), expected)
 
 
 def test_polytope_combinatorics_cached_instances_are_reused() -> None:

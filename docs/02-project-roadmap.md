@@ -6,7 +6,7 @@ This roadmap balances literature work with incremental, testable Python code and
 
 ## Current snapshot
 - Symplectic capacity definitions, inequalities, and algorithm sketches are consolidated in the research notes on capacities and related docs, giving Phase 1 a solid reference base.【F:docs/13-symplectic-quantities.md†L1-L116】【F:docs/convex-polytope-cehz-capacities.md†L1-L73】
-- The Python package now includes deterministic polytope constructors and transforms, a reproducible search enumerator, fast/reference volume backends, and a systolic-ratio wrapper on top of the EHZ implementations, providing the tooling for large-scale experiments.【F:src/viterbo/geometry/polytopes.py†L1-L200】【F:src/viterbo/optimization/search.py†L1-L100】【F:src/viterbo/geometry/volume.py†L1-L69】【F:src/viterbo/symplectic/systolic.py†L1-L80】
+- The Python package now includes deterministic polytope constructors and transforms, a reproducible search enumerator, fast/reference/JAX volume backends, and a systolic-ratio wrapper on top of the EHZ implementations, providing the tooling for large-scale experiments.【F:src/viterbo/geometry/polytopes/reference.py†L1-L200】【F:src/viterbo/optimization/search.py†L1-L100】【F:src/viterbo/geometry/volume/reference.py†L1-L20】【F:src/viterbo/geometry/volume/optimized.py†L1-L28】【F:src/viterbo/geometry/volume/jax.py†L1-L35】【F:src/viterbo/symplectic/systolic.py†L1-L80】
 - Thesis scaffolding and the weekly mail workflow are in place, so planning tasks can tie directly into drafting and reporting cadence.【F:thesis/README.md†L1-L12】【F:docs/06-weekly-mail-workflow.md†L1-L27】
 - Experiment evaluation methodology and the live portfolio (including SWE-first tasks) now live under `docs/tasks/`, giving agents a shared quantitative prioritisation framework.【F:docs/tasks/01-task-evaluation-methodology.md†L1-L203】【F:docs/tasks/02-task-portfolio.md†L1-L151】【F:docs/tasks/template.md†L1-L53】
 
@@ -23,7 +23,7 @@ Status: 🟡 Iterating on coverage of results and algorithms.
 
 ## Phase 3 — Python Implementation & Experiments
 Status: 🟡 Core utilities landed; experiments need structuring.
-- Execute the research-portfolio infrastructure tasks (T1/T2): restructure quantity modules around reference/optimised/JAX splits and land the shared testing/benchmarking harness.【F:docs/tasks/scheduled/2025-10-04-geometry-module-refactor.md†L1-L83】【F:docs/tasks/draft/2025-10-04-testing-benchmark-harness.md†L1-L84】
+- Execute the research-portfolio infrastructure tasks (T1/T2): restructure quantity modules around reference/optimised/JAX splits and land the shared testing/benchmarking harness.【F:docs/tasks/completed/2025-10-04-geometry-module-refactor.md†L1-L120】【F:docs/tasks/draft/2025-10-04-testing-benchmark-harness.md†L1-L84】
 - Harden performance-sensitive kernels with additional benchmarks and profiling hooks before scaling search runs.
 - Integrate additional symplectic invariants (e.g., cylindrical capacity bounds) reusing the existing polytope abstractions.
 - Add higher-level experiment scripts or notebooks that combine `search`, `volume`, and `systolic` helpers to generate reproducible datasets.

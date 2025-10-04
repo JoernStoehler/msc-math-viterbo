@@ -10,9 +10,10 @@ visible at a glance.
 
 | ID | Brief | Status | Expected utility | Cost (agent / compute / expert) | Priority | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| T1 | [Geometry quantity module restructure & JAX baselines](scheduled/2025-10-04-geometry-module-refactor.md) | Scheduled | **+3.15** | Medium / Low / Low | 0 | Root of SWE work; enables all downstream experiments. |
+| T1 | [Geometry quantity module restructure & JAX baselines](completed/2025-10-04-geometry-module-refactor.md) | Completed | **+3.15** | Medium / Low / Low | — | Root of SWE work; enables all downstream experiments. |
 | T2 | [Testing, benchmarking, and profiling harness](draft/2025-10-04-testing-benchmark-harness.md) | Draft | **+2.30** | Medium / Low / Low | 0.5 | Lands immediately after T1 to secure regression safety. |
 | T3 | [Symplectic invariants regression suite](scheduled/2025-10-05-symplectic-invariant-regression-suite.md) | Scheduled | **+2.50** | Medium / Low / Medium | 0.75 | Hardens invariants before dataset work. |
+| T4 | [JAX Pyright stub integration](scheduled/2025-10-06-jax-pyright-stubs.md) | Scheduled | **+2.10** | Medium / Low / Low | 0.60 | Unlocks strict typing for JAX-backed modules. |
 | E1 | [Facet-normal validation & dataset build](draft/2025-10-04-facet-dataset.md) | Draft | **+2.70** | Medium / Low / Low | 1 | First numerical experiment; seeds data for the rest. |
 | E2 | [Reeb orbit cross-check](draft/2025-10-04-reeb-cross-check.md) | Draft | **+2.10** | Medium / Low / Low | 2 | Tests numerical agreement across methods. |
 | E3 | [MILP relaxation bounds](draft/2025-10-04-milp-relaxations.md) | Draft | **+1.40** | Medium / Medium / Medium | 3 | Evaluates feasibility of open-source MILP tooling. |
@@ -29,7 +30,9 @@ before launching the dataset or analysis experiments.
 graph TD
   T1["T1\nGeometry module restructure"] --> T2["T2\nTesting & benchmarks"]
   T1 --> T3["T3\nInvariant regression suite"]
+  T1 --> T4["T4\nJAX Pyright stubs"]
   T2 --> T3
+  T4 --> T3
   T3 --> E1["E1\nFacet dataset"]
   E1 --> E2["E2\nReeb cross-check"]
   E1 --> E3["E3\nMILP bounds"]
@@ -43,12 +46,11 @@ Update this graph whenever briefs change status or new items enter the queue.
 ## 3. Item summaries
 
 ### T1 — Geometry quantity module restructure & JAX baselines
-- **Brief**: [`docs/tasks/scheduled/2025-10-04-geometry-module-refactor.md`](scheduled/2025-10-04-geometry-module-refactor.md)
+- **Brief**: [`docs/tasks/completed/2025-10-04-geometry-module-refactor.md`](completed/2025-10-04-geometry-module-refactor.md)
 - **Why it matters**: establishes the quantity-first package layout, harmonises
   reference/optimised/JAX implementations, and seeds example datasets so later
   experiments can rely on consistent APIs.
-- **Next checkpoint**: confirm the directory proposal before large refactors;
-  escalate if JAX primitives are missing for priority kernels.
+- **Status**: Completed — downstream work (T2, T3) can now assume the new layout.
 
 ### T2 — Testing, benchmarking, and profiling harness
 - **Brief**: [`docs/tasks/draft/2025-10-04-testing-benchmark-harness.md`](draft/2025-10-04-testing-benchmark-harness.md)
@@ -64,6 +66,11 @@ Update this graph whenever briefs change status or new items enter the queue.
   trusted guarantees and surface failures quickly.
 - **Next checkpoint**: confirm the invariant inventory with the maintainer and
   stabilise smoke/deep marker runtimes.
+
+### T4 — JAX Pyright stub integration
+- **Brief**: [`docs/tasks/scheduled/2025-10-06-jax-pyright-stubs.md`](scheduled/2025-10-06-jax-pyright-stubs.md)
+- **Why it matters**: operationalises the stub strategy from RFC 002 so JAX-backed modules stay type-safe under Pyright strict.
+- **Next checkpoint**: integrate the stub tree and supporting docs before resuming geometry enhancements.
 
 ### E1 — Facet-normal validation & dataset build
 - **Brief**: [`docs/tasks/draft/2025-10-04-facet-dataset.md`](draft/2025-10-04-facet-dataset.md)
