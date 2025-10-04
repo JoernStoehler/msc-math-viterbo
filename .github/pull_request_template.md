@@ -1,15 +1,49 @@
 Title: <concise, agent-friendly summary>
 
+Executive Summary (3–6 bullets)
+- <what changed and why>
+- <outcomes and user-visible effects>
+- <notable risks/mitigations>
+
+Scope
+- Goal: <one feature OR one fix OR one refactor>
+- Diff size: <approx LOC>; keep small and focused (≈ ≤300 LOC when practical)
+
+Files Touched
+- `path/to/file.py`
+- `docs/xyz.md`
+
+What I Read (evidence)
+- Pointers that informed the change (files, docs, issues). Use file references like `path/to/file.py:42`.
+
 Changes
-- Affected files/folders: <list>
+- <file/path>: <one-sentence rationale>
+- <file/path>: <one-sentence rationale>
+
+Testing
+- Commands run locally (paste short summaries):
+  - `make format && make lint && make typecheck && make test`
+  - Optional full: `make ci`
+- Add/updated tests: <brief list>
+
+Performance (if perf-critical code)
+- Bench command: `pytest tests/performance -q --benchmark-only --benchmark-autosave --benchmark-storage=.benchmarks`
+- Delta summary: <short note or link to artifact>; waiver if applicable.
+
+Limitations
+- <known gaps or trade-offs>
+
+Clarifications Needed (numbered)
+1. <question>. Assumption used: <assumption>.
+
+Follow-ups (numbered, prioritized H/M/L)
+1. <task> — <H/M/L>
 
 Checklist
-- [ ] Ran `python -m pip install -e .[dev]` (first time only)
-- [ ] Ran `pytest`
-- [ ] Ran `ruff format` + `ruff check`
-- [ ] Ran `pyright`
-- [ ] Added/updated unit tests for any new or changed behavior
-- [ ] No secrets logged; env-only for auth
+- [ ] `make setup` (first-time env) or environment already prepared
+- [ ] `make format && make lint && make typecheck && make test` pass locally
+- [ ] `make ci` green locally (recommended before merge)
+- [ ] No secrets in code or logs; configuration via env vars
 
-Notes for reviewers
-- <optional>
+Reviewer Notes (optional)
+- <review guidance, noteworthy decisions, or alternative paths considered>
