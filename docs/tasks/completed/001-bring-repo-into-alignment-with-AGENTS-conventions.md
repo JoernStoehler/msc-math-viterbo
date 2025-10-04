@@ -27,8 +27,8 @@ Refactor relative imports to absolute across the project. Start with these files
 - `src/viterbo/symplectic/capacity_fast.py`
 - `src/viterbo/symplectic/capacity_algorithms/facet_normals_fast.py`
 - `src/viterbo/symplectic/capacity_algorithms/facet_normals_reference.py`
-- `src/viterbo/geometry/polytopes.py` (currently uses `.halfspaces`)
-- `src/viterbo/geometry/volume.py` (currently uses `.halfspaces`)
+- `src/viterbo/geometry/polytopes/reference.py` (currently uses `.halfspaces`)
+- `src/viterbo/geometry/volume/reference.py` (currently uses `.halfspaces`)
 
 Verification:
 - `rg -n "^from \\." src` → no matches.
@@ -37,7 +37,7 @@ Verification:
 ### 2) Remove `__all__` everywhere
 Delete all `__all__` declarations (leaf modules and aggregators). Curate the public surface via explicit imports in `viterbo/__init__.py` only.
 - Likely locations:
-  - `src/viterbo/geometry/polytopes.py`
+  - `src/viterbo/geometry/polytopes/reference.py`
   - `src/viterbo/geometry/halfspaces.py`
   - `src/viterbo/symplectic/capacity_algorithms/facet_normals_fast.py`
   - `src/viterbo/symplectic/capacity_algorithms/facet_normals_reference.py`
@@ -62,7 +62,7 @@ AGENTS forbids typedefs like `Vector`. Remove and adjust signatures to use `jaxt
 - Ensure call sites reflect the inline `jaxtyping` types.
 
 ### 5) Bounded caches with clear() and test toggles
-`src/viterbo/geometry/polytopes.py` defines `_POLYTOPE_CACHE`.
+`src/viterbo/geometry/polytopes/reference.py` defines `_POLYTOPE_CACHE`.
 - Add a hard size limit (e.g., LRU; simple deque or OrderedDict is fine).
 - Provide `clear_polytope_cache()` and an opt‑out (e.g., env var `VITERBO_DISABLE_CACHE` or function arg) for tests.
 - Document invalidation rules in the module docstring.

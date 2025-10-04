@@ -12,117 +12,44 @@ Caching policy
 
 from __future__ import annotations
 
-import hashlib
 import math
-import os
-from collections import OrderedDict
-from dataclasses import dataclass
-from itertools import combinations, product
-from typing import Final, Sequence
+from itertools import product
+from typing import Sequence
 
 import numpy as np
 import scipy.spatial as _spatial  # type: ignore[reportMissingTypeStubs]  # SciPy lacks type stubs; TODO: add stubs or vendor minimal types
 from jaxtyping import Float
 
 from viterbo.geometry.halfspaces import enumerate_vertices, remove_redundant_facets
+from viterbo.geometry.polytopes import _shared
 from viterbo.symplectic.core import standard_symplectic_matrix
 
 ConvexHull = _spatial.ConvexHull
 
-_DIMENSION_AXIS: Final[str] = "dimension"
-_FACET_AXIS: Final[str] = "num_facets"
-_FACET_MATRIX_AXES: Final[str] = f"{_FACET_AXIS} {_DIMENSION_AXIS}"
-_SQUARE_MATRIX_AXES: Final[str] = f"{_DIMENSION_AXIS} {_DIMENSION_AXIS}"
-_VERTEX_MATRIX_AXES: Final[str] = "num_vertices dimension"
-
-_POLYTOPE_CACHE_MAX_SIZE: Final[int] = 128
-_POLYTOPE_CACHE: "OrderedDict[tuple[str, float], PolytopeCombinatorics]" = OrderedDict()
-
-
-def clear_polytope_cache() -> None:
-    """Clear all cached polytope combinatorics entries."""
-    _POLYTOPE_CACHE.clear()
-
-
-@dataclass(frozen=True)
-class NormalCone:
-    """Normal cone data attached to a polytope vertex."""
-
-    vertex: Float[np.ndarray, _DIMENSION_AXIS]
-    active_facets: tuple[int, ...]
-    normals: Float[np.ndarray, "num_active dimension"]
-
-    def __post_init__(self) -> None:
-        """Normalise arrays describing the normal cone."""
-        vertex = np.asarray(self.vertex, dtype=float)
-        normals = np.asarray(self.normals, dtype=float)
-        object.__setattr__(self, "vertex", vertex)
-        object.__setattr__(self, "normals", normals)
-        vertex.setflags(write=False)
-        normals.setflags(write=False)
-
-
-@dataclass(frozen=True)
-class PolytopeCombinatorics:
-    """Cached combinatorial structure derived from a ``Polytope``."""
-
-    vertices: Float[np.ndarray, _VERTEX_MATRIX_AXES]
-    facet_adjacency: np.ndarray
-    normal_cones: tuple[NormalCone, ...]
-
-    def __post_init__(self) -> None:
-        """Validate cached arrays for combinatorial reuse."""
-        vertices = np.asarray(self.vertices, dtype=float)
-        adjacency = np.asarray(self.facet_adjacency, dtype=bool)
-        object.__setattr__(self, "vertices", vertices)
-        object.__setattr__(self, "facet_adjacency", adjacency)
-        vertices.setflags(write=False)
-        adjacency.setflags(write=False)
-
-
-def _halfspace_fingerprint(
-    matrix: Float[np.ndarray, _FACET_MATRIX_AXES],
-    offsets: Float[np.ndarray, _FACET_AXIS],
-    *,
-    decimals: int = 12,
-) -> str:
-    """Return a deterministic hash for a half-space description."""
-    rounded_matrix = np.round(np.asarray(matrix, dtype=float), decimals=decimals)
-    rounded_offsets = np.round(np.asarray(offsets, dtype=float), decimals=decimals)
-
-    contiguous_matrix = np.ascontiguousarray(rounded_matrix)
-    contiguous_offsets = np.ascontiguousarray(rounded_offsets)
-
-    hasher = hashlib.sha256()
-    hasher.update(np.array(contiguous_matrix.shape, dtype=np.int64).tobytes())
-    hasher.update(np.array(contiguous_offsets.shape, dtype=np.int64).tobytes())
-    hasher.update(contiguous_matrix.tobytes())
-    hasher.update(contiguous_offsets.tobytes())
-    return hasher.hexdigest()
-
-
-def polytope_fingerprint(polytope: Polytope, *, decimals: int = 12) -> str:
-    """Return a hash that uniquely identifies ``polytope`` up to rounding."""
-    return _halfspace_fingerprint(polytope.B, polytope.c, decimals=decimals)
+NormalCone = _shared.NormalCone
+Polytope = _shared.Polytope
+PolytopeCombinatorics = _shared.PolytopeCombinatorics
+clear_polytope_cache = _shared.clear_polytope_cache
+polytope_fingerprint = _shared.polytope_fingerprint
 
 
 def vertices_from_halfspaces(
-    B: Float[np.ndarray, _FACET_MATRIX_AXES],
-    c: Float[np.ndarray, _FACET_AXIS],
+    B: Float[np.ndarray, "num_facets dimension"],
+    c: Float[np.ndarray, "num_facets"],
     *,
     atol: float = 1e-9,
-) -> Float[np.ndarray, _VERTEX_MATRIX_AXES]:
+) -> Float[np.ndarray, "num_vertices dimension"]:
     """Enumerate the vertices of a polytope described by ``Bx <= c``."""
     return enumerate_vertices(B, c, atol=atol)
 
 
 def halfspaces_from_vertices(
-    vertices: Float[np.ndarray, _VERTEX_MATRIX_AXES],
+    vertices: Float[np.ndarray, "num_vertices dimension"],
     *,
     qhull_options: str | None = None,
 ) -> tuple[
-    Float[np.ndarray, _FACET_MATRIX_AXES],
-    Float[np.ndarray, _FACET_AXIS],
+    Float[np.ndarray, "num_facets dimension"],
+    Float[np.ndarray, "num_facets"],
 ]:
     """Return a half-space description from a vertex set using Qhull."""
     hull = ConvexHull(np.asarray(vertices, dtype=float), qhull_options=qhull_options)
@@ -148,115 +75,20 @@ def polytope_combinatorics(
     setting the environment variable ``VITERBO_DISABLE_CACHE=1`` or by
     passing ``use_cache=False``.
     """
-    key = (polytope_fingerprint(polytope), float(np.round(atol, decimals=12)))
-    caching_disabled = os.environ.get("VITERBO_DISABLE_CACHE", "0") == "1"
-    if use_cache and not caching_disabled and key in _POLYTOPE_CACHE:
-        # Move to end to mark as recently used
-        value = _POLYTOPE_CACHE.pop(key)
-        _POLYTOPE_CACHE[key] = value
-        return value
+    key = _shared.polytope_cache_key(polytope, atol)
+    if _shared.cache_enabled(use_cache):
+        cached = _shared.cache_lookup(key)
+        if cached is not None:
+            return cached
 
     B, c = polytope.halfspace_data()
     vertices = enumerate_vertices(B, c, atol=atol)
-    adjacency = np.zeros((polytope.facets, polytope.facets), dtype=bool)
-    normal_cones: list[NormalCone] = []
+    combinatorics = _shared.build_combinatorics(B, c, vertices, atol=atol)
 
-    for vertex in vertices:
-        residuals = B @ vertex - c
-        active = np.where(np.abs(residuals) <= atol)[0]
-        if active.size == 0:
-            continue
-
-        for first, second in combinations(active, 2):
-            adjacency[first, second] = True
-            adjacency[second, first] = True
-
-        normals = B[active, :]
-        normal_cones.append(
-            NormalCone(
-                vertex=vertex,
-                active_facets=tuple(int(index) for index in active),
-                normals=normals,
-            )
-        )
-
-    np.fill_diagonal(adjacency, False)
-    combinatorics = PolytopeCombinatorics(
-        vertices=vertices,
-        facet_adjacency=adjacency,
-        normal_cones=tuple(normal_cones),
-    )
-
-    if use_cache and not caching_disabled:
-        # Insert/update and enforce LRU bound
-        if key in _POLYTOPE_CACHE:
-            _POLYTOPE_CACHE.pop(key)
-        _POLYTOPE_CACHE[key] = combinatorics
-        while len(_POLYTOPE_CACHE) > _POLYTOPE_CACHE_MAX_SIZE:
-            _POLYTOPE_CACHE.popitem(last=False)
+    if _shared.cache_enabled(use_cache):
+        _shared.cache_store(key, combinatorics)
 
     return combinatorics
-
-
-@dataclass(frozen=True)
-class Polytope:
-    """Immutable container describing a convex polytope via half-space data."""
-
-    name: str
-    B: Float[np.ndarray, _FACET_MATRIX_AXES]  # shape: (num_facets, dimension)
-    c: Float[np.ndarray, _FACET_AXIS]  # shape: (num_facets,)
-    description: str = ""
-    reference_capacity: float | None = None
-
-    def __post_init__(self) -> None:
-        """Normalize inputs and freeze the underlying arrays."""
-        matrix = np.asarray(self.B, dtype=float)
-        offsets = np.asarray(self.c, dtype=float)
-
-        if matrix.ndim != 2:
-            msg = "Facet matrix B must be two-dimensional."
-            raise ValueError(msg)
-
-        if offsets.ndim != 1 or offsets.shape[0] != matrix.shape[0]:
-            msg = "Offsets vector c must match the number of facets."
-            raise ValueError(msg)
-
-        object.__setattr__(self, "B", matrix)
-        object.__setattr__(self, "c", offsets)
-
-        matrix.setflags(write=False)
-        offsets.setflags(write=False)
-
-    @property
-    def dimension(self) -> int:
-        """Ambient dimension of the polytope."""
-        return int(self.B.shape[1])
-
-    @property
-    def facets(self) -> int:
-        """Number of facet-defining inequalities."""
-        return int(self.B.shape[0])
-
-    def halfspace_data(
-        self,
-    ) -> tuple[
-        Float[np.ndarray, _FACET_MATRIX_AXES],
-        Float[np.ndarray, _FACET_AXIS],
-    ]:
-        """Return copies of ``(B, c)`` suitable for downstream mutation."""
-        return np.array(self.B, copy=True), np.array(self.c, copy=True)
-
-    def with_metadata(
-        self, *, name: str | None = None, description: str | None = None
-    ) -> "Polytope":
-        """Return a shallow copy with updated metadata while sharing arrays."""
-        return Polytope(
-            name=name or self.name,
-            B=self.B,
-            c=self.c,
-            description=description or self.description,
-            reference_capacity=self.reference_capacity,
-        )
 
 
 def cartesian_product(
@@ -290,9 +122,9 @@ def cartesian_product(
 
 def affine_transform(
     polytope: Polytope,
-    matrix: Float[np.ndarray, _SQUARE_MATRIX_AXES],
+    matrix: Float[np.ndarray, "dimension dimension"],
     *,
-    translation: Float[np.ndarray, _DIMENSION_AXIS] | None = None,
+    translation: Float[np.ndarray, "dimension"] | None = None,
     name: str | None = None,
     description: str | None = None,
 ) -> Polytope:
@@ -337,7 +169,7 @@ def affine_transform(
 
 def translate_polytope(
     polytope: Polytope,
-    translation: Float[np.ndarray, _DIMENSION_AXIS],
+    translation: Float[np.ndarray, "dimension"],
     *,
     name: str | None = None,
     description: str | None = None,
@@ -420,8 +252,8 @@ def random_affine_map(
     shear_scale: float = 0.25,
     translation_scale: float = 0.3,
 ) -> tuple[
-    Float[np.ndarray, _SQUARE_MATRIX_AXES],
-    Float[np.ndarray, _DIMENSION_AXIS],
+    Float[np.ndarray, "dimension dimension"],
+    Float[np.ndarray, "dimension"],
 ]:
     """Sample a well-conditioned random affine map for deterministic experiments."""
     lower, upper = scale_range
@@ -778,8 +610,8 @@ def random_transformations(
     shear_scale: float = 0.25,
 ) -> list[
     tuple[
-        Float[np.ndarray, _FACET_MATRIX_AXES],
-        Float[np.ndarray, _FACET_AXIS],
+        Float[np.ndarray, "num_facets dimension"],
+        Float[np.ndarray, "num_facets"],
     ]
 ]:
     """Generate random linear transformations and translations of ``polytope``."""

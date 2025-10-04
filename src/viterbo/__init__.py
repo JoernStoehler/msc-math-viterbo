@@ -13,9 +13,19 @@ from viterbo.geometry import cross_polytope as cross_polytope
 from viterbo.geometry import enumerate_vertices as enumerate_vertices
 from viterbo.geometry import haim_kislev_action as haim_kislev_action
 from viterbo.geometry import halfspaces_from_vertices as halfspaces_from_vertices
+from viterbo.geometry import (
+    halfspaces_from_vertices_jax as halfspaces_from_vertices_jax,
+)
+from viterbo.geometry import (
+    halfspaces_from_vertices_optimized as halfspaces_from_vertices_optimized,
+)
 from viterbo.geometry import hypercube as hypercube
 from viterbo.geometry import mirror_polytope as mirror_polytope
 from viterbo.geometry import polytope_combinatorics as polytope_combinatorics
+from viterbo.geometry import polytope_combinatorics_jax as polytope_combinatorics_jax
+from viterbo.geometry import (
+    polytope_combinatorics_optimized as polytope_combinatorics_optimized,
+)
 from viterbo.geometry import polytope_fingerprint as polytope_fingerprint
 from viterbo.geometry import polytope_volume_fast as polytope_volume_fast
 from viterbo.geometry import polytope_volume_reference as polytope_volume_reference
@@ -29,6 +39,12 @@ from viterbo.geometry import simplex_with_uniform_weights as simplex_with_unifor
 from viterbo.geometry import translate_polytope as translate_polytope
 from viterbo.geometry import truncated_simplex_four_dim as truncated_simplex_four_dim
 from viterbo.geometry import vertices_from_halfspaces as vertices_from_halfspaces
+from viterbo.geometry import (
+    vertices_from_halfspaces_jax as vertices_from_halfspaces_jax,
+)
+from viterbo.geometry import (
+    vertices_from_halfspaces_optimized as vertices_from_halfspaces_optimized,
+)
 from viterbo.geometry import viterbo_counterexample as viterbo_counterexample
 from viterbo.optimization import LinearProgram as LinearProgram
 from viterbo.optimization import LinearProgramBackend as LinearProgramBackend
