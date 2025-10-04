@@ -29,7 +29,7 @@ fi
 if [ -f "pyproject.toml" ]; then
   if command -v uv >/dev/null 2>&1; then
     echo "[post-start] Syncing dependencies with uv (idempotent)"
-    uv sync --extra dev --system >/dev/null || true
+    uv sync --extra dev >/dev/null || true
   else
     echo "[post-start] WARN: uv missing; run .devcontainer/post-create.sh" >&2
   fi
