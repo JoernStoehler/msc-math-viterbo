@@ -74,7 +74,3 @@ convention = "google"
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
 
-[tool.pyright]
-pythonVersion = "3.12"
-include = ["src", "tests"]
-reportMissingImports = "warning"

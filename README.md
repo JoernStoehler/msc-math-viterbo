@@ -33,7 +33,7 @@ the codebase.
 
 ## Docs
 
-- Overview: `docs/README.md`
+- Conventions for contributors working in `docs/`: `docs/AGENTS.md`
 - Reading list: `docs/12-math-reading-list.md`
 - Thesis topics (incl. systolic-ratio brief): `docs/11-math-thesis-topics.md`
 
