@@ -28,7 +28,10 @@ def test_normalize_vector_zero_vector_raises() -> None:
 def test_normalize_vector_accepts_list_input() -> None:
     values = [3.0, 4.0, 12.0]
     normalized = normalize_vector(cast(Any, values))
-    assert pytest.approx(1.0) == float(np.linalg.norm(normalized))
+    assert (
+        pytest.approx(1.0)  # type: ignore[reportUnknownMemberType]  # Pytest stubs incomplete; TODO: refine types
+        == float(np.linalg.norm(normalized))
+    )
 
 
 def test_zero_tolerance_reasonable() -> None:

@@ -114,9 +114,11 @@ def test_prepare_subset_respects_tol(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(reference.np, "allclose", fake_allclose)
     monkeypatch.setattr(reference.np, "isclose", fake_isclose)
 
-    subset = reference._prepare_subset(B=B, c=c, indices=(0, 1, 2), J=J, tol=1e-6)
+    subset = reference._prepare_subset(  # type: ignore[reportPrivateUsage]  # Accessing private helper for targeted test; TODO: expose via public API
+        B_matrix=B, c=c, indices=(0, 1, 2), J=J, tol=1e-6
+    )
     assert subset is not None
-    assert records["allclose"] == pytest.approx(1e-6)
-    assert records["isclose"] == pytest.approx(1e-6)
-    assert records["allclose_rtol"] == pytest.approx(0.0)
-    assert records["isclose_rtol"] == pytest.approx(0.0)
+    assert records["allclose"] == pytest.approx(1e-6)  # type: ignore[reportUnknownMemberType]
+    assert records["isclose"] == pytest.approx(1e-6)  # type: ignore[reportUnknownMemberType]
+    assert records["allclose_rtol"] == pytest.approx(0.0)  # type: ignore[reportUnknownMemberType]
+    assert records["isclose_rtol"] == pytest.approx(0.0)  # type: ignore[reportUnknownMemberType]

@@ -185,8 +185,6 @@ def normalize_vector(
 
     Args:
       vector: One-dimensional vector to normalize.
-    Args:
-      vector: One-dimensional vector to normalize.
 
     Returns:
       A unit vector with the same direction as ``vector``.
