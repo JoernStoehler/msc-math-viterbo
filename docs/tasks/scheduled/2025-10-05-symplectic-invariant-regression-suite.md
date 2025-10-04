@@ -4,8 +4,8 @@
 - **Last updated**: 2025-10-06
 - **Owner / DRI**: Unassigned
 - **Related docs**: `docs/tasks/02-task-portfolio.md`, `docs/algorithm-implementation-plan.md`,
-  `docs/tasks/scheduled/2025-10-04-geometry-module-refactor.md`,
-  `docs/tasks/draft/2025-10-04-testing-benchmark-harness.md`
+  `docs/tasks/completed/2025-10-04-geometry-module-refactor.md`,
+  `docs/tasks/scheduled/2025-10-04-testing-benchmark-harness.md`
 
 ## 1. Context and intent
 The geometry restructure (T1) and harness work (T2) unlock richer property-based

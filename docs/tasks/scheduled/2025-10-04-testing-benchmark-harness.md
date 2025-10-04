@@ -1,12 +1,14 @@
-# Task Brief — Testing, benchmarking, and profiling harness
+# Task Brief — Testing, benchmarking, and profiling harness (T2)
 
-- **Status**: Draft
-- **Last updated**: 2025-10-05
+- **Status**: Scheduled
+- **Last updated**: 2025-10-07
 - **Owner / DRI**: Unassigned
-- **Related docs**: `docs/tasks/01-task-evaluation-methodology.md`, `docs/tasks/02-task-portfolio.md`, `docs/algorithm-implementation-plan.md`
+- **Related docs**: `docs/tasks/01-task-evaluation-methodology.md`, `docs/tasks/02-task-portfolio.md`,
+  `docs/algorithm-implementation-plan.md`,
+  `docs/tasks/completed/2025-10-04-geometry-module-refactor.md`
 
 ## 1. Context and intent
-After the geometry module restructure (Task 2025-10-04-geometry-module-refactor), we need automated verification to prevent regressions. This task establishes unit comparisons across implementation variants, codifies benchmark tiers (smoke, CI, deep, long-haul), wires profiling entry points, and ensures these hooks integrate with the existing `Makefile` + `pytest.ini` tooling so agents can reason about performance before launching computational experiments.
+After the geometry module restructure (Task 2025-10-04-geometry-module-refactor) wrapped, we need automated verification to prevent regressions. This task establishes unit comparisons across implementation variants, codifies benchmark tiers (smoke, CI, deep, long-haul), wires profiling entry points, and ensures these hooks integrate with the existing `Makefile` + `pytest.ini` tooling so agents can reason about performance before launching computational experiments.
 
 ## 2. Objectives and non-goals
 
@@ -28,13 +30,14 @@ After the geometry module restructure (Task 2025-10-04-geometry-module-refactor)
 - Documentation (could live alongside the benchmark README) explaining cadence expectations, how to invoke tiers via `make`/`pytest`/`uv run`, and where to log long-haul runs (task brief updates or progress reports).
 
 ## 4. Dependencies and prerequisites
-- Completion of geometry module restructure (Task 2025-10-04-geometry-module-refactor) or a stable branch exposing reference/optimised/JAX variants.
+- Completion of geometry module restructure (Task 2025-10-04-geometry-module-refactor) — satisfied via the
+  [completed brief](../completed/2025-10-04-geometry-module-refactor.md) and the new quantity packages.
 - Access to curated fixtures delivered by the restructure task.
 - Agreement on benchmark runtime targets (CI <5 min, deep local <20 min, long-haul manual) per evaluation methodology.
 - Availability (or planned addition) of `pytest-benchmark` and profiling dependencies in `pyproject.toml`; escalate if missing.
 
 ## 5. Execution plan and checkpoints
-1. **Fixture audit**: confirm the restructured modules expose canonical sample polytopes/volumes.
+1. **Fixture audit**: confirm the restructured modules expose canonical sample polytopes/volumes and catalogue the parity tests delivered in T1.
 2. **Unit test sweep**: write or adapt tests that exercise each implementation variant side-by-side and register them with the new pytest markers.
 3. **Benchmark scaffolding**: create pytest benchmark modules, mark tiers, update `pytest.ini`, and ensure the smoke tier runs within CI budget.
 4. **Makefile integration**: extend or document `make bench`/related targets so each tier is easy to invoke locally and in CI.
