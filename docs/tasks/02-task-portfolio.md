@@ -11,7 +11,7 @@ visible at a glance.
 | ID | Brief | Status | Expected utility | Cost (agent / compute / expert) | Priority | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | T1 | [Geometry quantity module restructure & JAX baselines](completed/2025-10-04-geometry-module-refactor.md) | Completed | **+3.15** | Medium / Low / Low | — | Root of SWE work; enables all downstream experiments. |
-| T2 | [Testing, benchmarking, and profiling harness](draft/2025-10-04-testing-benchmark-harness.md) | Draft | **+2.30** | Medium / Low / Low | 0.5 | Lands immediately after T1 to secure regression safety. |
+| T2 | [Testing, benchmarking, and profiling harness](scheduled/2025-10-04-testing-benchmark-harness.md) | Scheduled | **+2.30** | Medium / Low / Low | 0.5 | Ready to execute now that T1 fixtures shipped; secures regression safety. |
 | T3 | [Symplectic invariants regression suite](scheduled/2025-10-05-symplectic-invariant-regression-suite.md) | Scheduled | **+2.50** | Medium / Low / Medium | 0.75 | Hardens invariants before dataset work. |
 | T4 | [JAX Pyright stub integration](scheduled/2025-10-06-jax-pyright-stubs.md) | Scheduled | **+2.10** | Medium / Low / Low | 0.60 | Unlocks strict typing for JAX-backed modules. |
 | E1 | [Facet-normal validation & dataset build](draft/2025-10-04-facet-dataset.md) | Draft | **+2.70** | Medium / Low / Low | 1 | First numerical experiment; seeds data for the rest. |
@@ -53,8 +53,8 @@ Update this graph whenever briefs change status or new items enter the queue.
 - **Status**: Completed — downstream work (T2, T3) can now assume the new layout.
 
 ### T2 — Testing, benchmarking, and profiling harness
-- **Brief**: [`docs/tasks/draft/2025-10-04-testing-benchmark-harness.md`](draft/2025-10-04-testing-benchmark-harness.md)
-- **Why it matters**: secures regression safety once T1 lands, provides pytest
+- **Brief**: [`docs/tasks/scheduled/2025-10-04-testing-benchmark-harness.md`](scheduled/2025-10-04-testing-benchmark-harness.md)
+- **Why it matters**: secures regression safety now that T1 landed, provides pytest
   benchmark tiers, and documents profiling recipes aligned with the agreed
   cadence.
 - **Next checkpoint**: validate smoke benchmark runtime (<5 minutes) before

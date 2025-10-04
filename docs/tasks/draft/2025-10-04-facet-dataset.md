@@ -1,7 +1,7 @@
 # Task Brief — Facet-normal validation and dataset build (E1)
 
 - **Status**: Draft
-- **Last updated**: 2025-10-04
+- **Last updated**: 2025-10-07
 - **Owner / DRI**: Unassigned
 - **Related docs**: `docs/tasks/02-task-portfolio.md`, `docs/algorithm-implementation-plan.md`
 
@@ -27,7 +27,11 @@ We aim to construct a curated dataset of polytopes, their facet normals, and der
 - Updated task brief follow-up notes or weekly progress report capturing observed patterns, potential conjectures, and flagged edge cases.
 
 ## 4. Dependencies and prerequisites
-- Completion of Tasks 2025-10-04-geometry-module-refactor and 2025-10-04-testing-benchmark-harness.
+- Completion of Task 2025-10-04-geometry-module-refactor — satisfied via the
+  [completed brief](../completed/2025-10-04-geometry-module-refactor.md).
+- Execution of Task 2025-10-04-testing-benchmark-harness
+  ([scheduled brief](../scheduled/2025-10-04-testing-benchmark-harness.md)) to lock
+  in regression coverage and benchmark markers.
 - Agreement on dataset storage location and format.
 - Benchmark cadence guidance from methodology to monitor runtime.
 
