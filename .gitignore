@@ -1,6 +1,9 @@
 # General
 .DS_Store
-.vscode/
+# Keep workspace settings tracked, ignore other VS Code files
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
 tmp/*
 !tmp/.gitkeep
@@ -17,12 +20,13 @@ dist/
 .pytest_cache/
 .benchmarks/
 .mypy_cache/
-ruff_cache/
+.ruff_cache/
 .pyright/
 
 # Profiling artefacts
 profile.svg
 *.prof
+prof/
 
 # Coverage reports
 htmlcov/
