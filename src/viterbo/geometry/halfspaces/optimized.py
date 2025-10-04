@@ -12,11 +12,11 @@ from viterbo.geometry.halfspaces import _shared
 
 
 def enumerate_vertices(
-    B: Float[np.ndarray, "num_facets dimension"],
-    c: Float[np.ndarray, "num_facets"],
+    B: Float[np.ndarray, " num_facets dimension"],
+    c: Float[np.ndarray, " num_facets"],
     *,
     atol: float = 1e-9,
-) -> Float[np.ndarray, "num_vertices dimension"]:
+) -> Float[np.ndarray, " num_vertices dimension"]:
     """Vectorised variant that caches feasibility checks."""
     matrix, offsets = _shared.validate_halfspace_data(B, c)
     num_facets, dimension = matrix.shape
@@ -61,11 +61,11 @@ def enumerate_vertices(
 
 
 def remove_redundant_facets(
-    B: Float[np.ndarray, "num_facets dimension"],
-    c: Float[np.ndarray, "num_facets"],
+    B: Float[np.ndarray, " num_facets dimension"],
+    c: Float[np.ndarray, " num_facets"],
     *,
     atol: float = 1e-9,
-) -> tuple[Float[np.ndarray, "num_facets dimension"], Float[np.ndarray, "num_facets"]]:
+) -> tuple[Float[np.ndarray, " num_facets dimension"], Float[np.ndarray, " num_facets"]]:
     """Vectorised redundancy pruning using matrix operations."""
     matrix, offsets = _shared.validate_halfspace_data(B, c)
     matrix, offsets = _shared.deduplicate_facets(matrix, offsets, atol=atol)

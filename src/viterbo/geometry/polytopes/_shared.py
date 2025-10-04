@@ -31,7 +31,7 @@ class NormalCone:
 
     vertex: Float[np.ndarray, _DIMENSION_AXIS]
     active_facets: tuple[int, ...]
-    normals: Float[np.ndarray, "num_active dimension"]
+    normals: Float[np.ndarray, " num_active dimension"]
 
     def __post_init__(self) -> None:
         """Normalise arrays describing the normal cone."""

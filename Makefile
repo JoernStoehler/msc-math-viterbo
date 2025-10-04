@@ -1,4 +1,6 @@
 UV ?= uv
+JAX_ENABLE_X64 ?= 1
+export JAX_ENABLE_X64
 
 .PHONY: help setup format lint typecheck test bench profile profile-line ci clean
 

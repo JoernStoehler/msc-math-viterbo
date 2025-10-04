@@ -7,9 +7,9 @@ from jaxtyping import Float
 
 
 def validate_halfspace_data(
-    B: Float[np.ndarray, "num_facets dimension"],
-    c: Float[np.ndarray, "num_facets"],
-) -> tuple[Float[np.ndarray, "num_facets dimension"], Float[np.ndarray, "num_facets"]]:
+    B: Float[np.ndarray, " num_facets dimension"],
+    c: Float[np.ndarray, " num_facets"],
+) -> tuple[Float[np.ndarray, " num_facets dimension"], Float[np.ndarray, " num_facets"]]:
     """Validate and normalize half-space inputs."""
     matrix = np.asarray(B, dtype=float)
     offsets = np.asarray(c, dtype=float)
@@ -26,10 +26,10 @@ def validate_halfspace_data(
 
 
 def unique_rows(
-    points: Float[np.ndarray, "num_points dimension"],
+    points: Float[np.ndarray, " num_points dimension"],
     *,
     atol: float,
-) -> Float[np.ndarray, "num_unique dimension"]:
+) -> Float[np.ndarray, " num_unique dimension"]:
     """Deduplicate stacked vectors using an infinity-norm tolerance."""
     if points.size == 0:
         return points
@@ -49,12 +49,12 @@ def unique_rows(
 
 
 def deduplicate_facets(
-    matrix: Float[np.ndarray, "num_facets dimension"],
-    offsets: Float[np.ndarray, "num_facets"],
+    matrix: Float[np.ndarray, " num_facets dimension"],
+    offsets: Float[np.ndarray, " num_facets"],
     *,
     atol: float,
 ) -> tuple[
-    Float[np.ndarray, "num_unique_facets dimension"], Float[np.ndarray, "num_unique_facets"]
+    Float[np.ndarray, " num_unique_facets dimension"], Float[np.ndarray, " num_unique_facets"]
 ]:
     """Remove near-duplicate facet rows with shared offsets."""
     keep: list[int] = []
