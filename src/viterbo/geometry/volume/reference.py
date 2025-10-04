@@ -12,8 +12,8 @@ ConvexHull = _spatial.ConvexHull
 
 
 def polytope_volume(
-    B: Float[np.ndarray, "num_facets dimension"],
-    c: Float[np.ndarray, "num_facets"],
+    B: Float[np.ndarray, " num_facets dimension"],
+    c: Float[np.ndarray, " num_facets"],
     *,
     atol: float = 1e-9,
 ) -> float:

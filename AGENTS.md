@@ -39,6 +39,7 @@ Every task brief should include: scope, acceptance criteria, links to context (f
 - **Type checking policy**: Strict with zero silent waivers. Inline suppressions require a one-line justification and a TODO to remove.
 - **Docs**: Google docstring style (fact). All public functions/classes carry Google-style docstrings. Include shape tokens from the vocabulary for all array args/returns. Prefer Google docstrings for internal helpers as well; tiny local helpers or throwaway closures can omit. Examples only when they add clarity.
 - **Arrays & shapes**: **jaxtyping** for explicit shapes/dtypes. **No custom array typedefs** (no `Vector`, `FloatMatrix`, etc.). Prefer semantic shape names (`"num_facets"`, `"dimension"`, `"num_polytopes"`).
+- **Ruff + jaxtyping quirk**: Add a leading space inside jaxtyping shape strings (e.g., `Float[np.ndarray, " dimension"]`) so Ruff does not emit false-positive `F821` diagnostics for single tokens. This whitespace convention is required across the codebase.
 - **Dtypes**: Default to **float64** for numeric stability unless a function clearly documents another dtype.
 - **Functional core**: Math code is **pure** (no I/O, no hidden state). Side-effects live in thin adapters (imperative shell).
 - **Errors**: Fail fast with precise exceptions (`ValueError`, `TypeError`). Do not silently coerce incompatible shapes/dtypes.
