@@ -129,6 +129,7 @@ def ehz_capacity(
 
 1. Read the task and scan relevant modules and tests.
 2. Plan the **minimal** change (one feature OR one fix OR one refactor).
+   - Before edits, write a short, outcome-oriented plan (≈ 4–7 steps). Update it if scope evolves.
 3. Implement small, pure functions in `src/viterbo/`. Keep I/O at the edges.
 4. Add or adjust tests next to the code (deterministic, minimal fixtures).
 5. Run locally: use the commands in Quick reference. `make ci` mirrors CI.
@@ -147,11 +148,15 @@ def ehz_capacity(
 * Keep diffs focused (≈ ≤300 LOC when practical).
 * Ensure types, tests, and docs are updated.
 * Ensure `make ci` is **green locally**.
+* If scope balloons or time or compute budget is tight, land a minimal, correct slice first and list the remainder as follow-ups.
 
 ### 4.5 Pull request (concise content)
 
 * State **scope**, **files touched**, **what you read**, **what you changed**, **how you tested** (paste summaries of Ruff/Pyright/pytest), and **perf delta** if applicable.
-* Brief **limitations** and **follow-ups**.
+* Add an **Executive Summary** (3–6 bullets) and **limitations**.
+* Add **Clarifications Needed** (numbered). For each, note the assumption used to proceed.
+* Add **Follow-ups** (numbered, prioritized H/M/L) for deferred work and nice-to-haves.
+* Where practical, include file path references for claims in the PR description (e.g., `path/to/file.py:42`) to speed review.
 * Keep the PR small; split if needed.
 
 ### 4.6 When blocked
