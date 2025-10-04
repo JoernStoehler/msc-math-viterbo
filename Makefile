@@ -39,6 +39,7 @@ profile-line:
 	$(UV) run pytest tests/performance --line-profile viterbo.symplectic.capacity_fast.compute_ehz_capacity_fast
 
 ci:
+	$(UV) run python scripts/check_waivers.py
 	$(UV) run ruff format --check .
 	$(UV) run ruff check .
 	$(UV) run pyright
