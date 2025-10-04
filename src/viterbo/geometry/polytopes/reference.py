@@ -124,6 +124,7 @@ def affine_transform(
     matrix: Float[np.ndarray, " dimension dimension"],
     *,
     translation: Float[np.ndarray, " dimension"] | None = None,
+    matrix_inverse: Float[np.ndarray, "dimension dimension"] | None = None,
     name: str | None = None,
     description: str | None = None,
 ) -> Polytope:
@@ -132,17 +133,33 @@ def affine_transform(
 
     For ``y = A x + t`` with invertible ``A``, the transformed inequality system is
     ``B' y \le c'`` where ``B' = B A^{-1}`` and ``c' = c + B' t``.
+
+    Args:
+      matrix: Linear component ``A``.
+      translation: Optional translation ``t``.
+      matrix_inverse: Optional precomputed inverse of ``matrix``. When provided
+        the inverse is validated and reused instead of recomputing it.
     """
     matrix = np.asarray(matrix, dtype=float)
     if matrix.shape != (polytope.dimension, polytope.dimension):
         msg = "Linear transform must match the ambient dimension."
         raise ValueError(msg)
 
-    try:
-        matrix_inv = np.linalg.inv(matrix)
-    except np.linalg.LinAlgError as exc:
-        msg = "Affine transform requires an invertible matrix."
-        raise ValueError(msg) from exc
+    if matrix_inverse is None:
+        try:
+            matrix_inv = np.linalg.inv(matrix)
+        except np.linalg.LinAlgError as exc:
+            msg = "Affine transform requires an invertible matrix."
+            raise ValueError(msg) from exc
+    else:
+        matrix_inv = np.asarray(matrix_inverse, dtype=float)
+        if matrix_inv.shape != (polytope.dimension, polytope.dimension):
+            msg = "Matrix inverse must match the ambient dimension."
+            raise ValueError(msg)
+
+        if not np.allclose(matrix @ matrix_inv, np.eye(polytope.dimension), atol=1e-9):
+            msg = "Provided matrix_inverse is not a valid inverse of matrix."
+            raise ValueError(msg)
 
     translation_vec = (
         np.zeros(polytope.dimension)
@@ -336,7 +353,11 @@ def random_polytope(
             description=poly_description,
         )
 
-    msg = "Failed to generate a bounded random polytope."
+    msg = (
+        "Failed to generate a bounded random polytope after "
+        f"{max_attempts} attempts (dimension={dimension}, facets={facets}, "
+        f"offset_range={offset_range}, translation_scale={translation_scale})."
+    )
     raise RuntimeError(msg)
 
 
@@ -630,7 +651,7 @@ def random_transformations(
             name=f"{polytope.name}-random",
             description=f"Random affine perturbation of {polytope.name}",
         )
-        results.append(transformed.halfspace_data())
+        results.append(transformed)
     return results
 
 

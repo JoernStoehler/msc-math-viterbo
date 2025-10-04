@@ -58,7 +58,8 @@ def load_polytope_instances(
             )
 
         variants = random_transformations(polytope, rng=rng, count=variant_count)
-        for index, (variant_B, variant_c) in enumerate(variants):
+        for index, variant in enumerate(variants):
+            variant_B, variant_c = variant.halfspace_data()
             instances.append((variant_B, variant_c))
             identifiers.append(f"{polytope.name}-variant-{index}")
             if include_metadata:

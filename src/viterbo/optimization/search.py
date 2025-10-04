@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Iterator
-from itertools import combinations
+from itertools import combinations, islice
 
 import numpy as np
 
@@ -19,19 +19,17 @@ from viterbo.geometry.polytopes import (
 )
 
 
-def enumerate_search_space(
+def _generate_search_space(
     *,
-    rng_seed: int = 7,
-    max_dimension: int = 6,
-    transforms_per_base: int = 4,
-    random_polytopes_per_dimension: int = 5,
-) -> tuple[Polytope, ...]:
-    """Return a deterministic tuple of polytopes spanning diverse geometries."""
+    rng_seed: int,
+    max_dimension: int,
+    transforms_per_base: int,
+    random_polytopes_per_dimension: int,
+) -> Iterator[Polytope]:
     rng = np.random.default_rng(rng_seed)
-    candidates: list[Polytope] = []
+    base_catalog = tuple(catalog())
 
-    base_catalog = list(catalog())
-    candidates.extend(base_catalog)
+    yield from base_catalog
 
     for polytope in base_catalog:
         for index in range(transforms_per_base):
@@ -40,21 +38,21 @@ def enumerate_search_space(
                 rng=rng,
                 translation_scale=0.2,
             )
-            transformed = affine_transform(
+            matrix_inv = np.linalg.inv(matrix)
+            yield affine_transform(
                 polytope,
                 matrix,
                 translation=translation,
+                matrix_inverse=matrix_inv,
                 name=f"{polytope.name}-affine-{index}",
                 description=f"Affine image #{index} of {polytope.name}",
             )
-            candidates.append(transformed)
 
-    valid_products: list[Polytope] = []
     for first, second in combinations(base_catalog, 2):
         dimension = first.dimension + second.dimension
         if dimension > max_dimension:
             continue
-        product_poly = cartesian_product(
+        yield cartesian_product(
             first,
             second,
             name=f"{first.name}-x-{second.name}",
@@ -62,14 +60,12 @@ def enumerate_search_space(
                 f"Cartesian product spanning dimensions {first.dimension} + {second.dimension}"
             ),
         )
-        valid_products.append(product_poly)
-    candidates.extend(valid_products)
 
     if max_dimension >= 4:
         for sides_first in range(5, 9):
             for sides_second in range(5, 9):
                 rotation = rng.uniform(0.0, math.pi / 2)
-                polygon_product = regular_polygon_product(
+                yield regular_polygon_product(
                     sides_first,
                     sides_second,
                     rotation=rotation,
@@ -77,21 +73,61 @@ def enumerate_search_space(
                     radius_second=1.0,
                     name=f"{sides_first}gonx{sides_second}gon-{rotation:.2f}",
                 )
-                candidates.append(polygon_product)
 
     for dimension in range(2, max_dimension + 1):
         for sample_index in range(random_polytopes_per_dimension):
-            random_poly = random_polytope(
+            yield random_polytope(
                 dimension,
                 rng=rng,
                 name=f"random-{dimension}d-{sample_index}",
             )
-            candidates.append(random_poly)
 
-    return tuple(candidates)
+
+def enumerate_search_space(
+    *,
+    rng_seed: int = 7,
+    max_dimension: int = 6,
+    transforms_per_base: int = 4,
+    random_polytopes_per_dimension: int = 5,
+    max_candidates: int | None = None,
+) -> tuple[Polytope, ...]:
+    """Return a deterministic tuple of polytopes spanning diverse geometries.
+
+    Args:
+      max_candidates: Optional cap on the number of polytopes produced.
+    """
+
+    generator = _generate_search_space(
+        rng_seed=rng_seed,
+        max_dimension=max_dimension,
+        transforms_per_base=transforms_per_base,
+        random_polytopes_per_dimension=random_polytopes_per_dimension,
+    )
+    if max_candidates is None:
+        return tuple(generator)
+    return tuple(islice(generator, max_candidates))
 
 
 def iter_search_space(**kwargs: int) -> Iterator[Polytope]:
     """Yield polytopes from :func:`enumerate_search_space` lazily."""
-    for polytope in enumerate_search_space(**kwargs):
-        yield polytope
+
+    max_candidates = kwargs.pop("max_candidates", None)
+    rng_seed = kwargs.pop("rng_seed", 7)
+    max_dimension = kwargs.pop("max_dimension", 6)
+    transforms_per_base = kwargs.pop("transforms_per_base", 4)
+    random_polytopes_per_dimension = kwargs.pop("random_polytopes_per_dimension", 5)
+    if kwargs:
+        unexpected = ", ".join(sorted(kwargs))
+        msg = f"Unknown keyword arguments for iter_search_space: {unexpected}"
+        raise TypeError(msg)
+
+    generator = _generate_search_space(
+        rng_seed=rng_seed,
+        max_dimension=max_dimension,
+        transforms_per_base=transforms_per_base,
+        random_polytopes_per_dimension=random_polytopes_per_dimension,
+    )
+    if max_candidates is None:
+        yield from generator
+    else:
+        yield from islice(generator, max_candidates)

@@ -2,21 +2,66 @@
 
 from __future__ import annotations
 
+import math
 import numpy as np
 import pytest
 from pytest import MonkeyPatch
 
-import viterbo.symplectic.capacity_algorithms.facet_normals_reference as reference
 from tests.geometry._polytope_samples import load_polytope_instances
 from viterbo.symplectic.capacity_algorithms import (
     compute_ehz_capacity_fast,
     compute_ehz_capacity_reference,
 )
+from viterbo.symplectic.capacity_algorithms import _subset_utils as subset_utils
 from viterbo.symplectic.core import standard_symplectic_matrix
 
 _BASE_DATA = load_polytope_instances(variant_count=0)
 _BASE_INSTANCES = _BASE_DATA[0]
 _BASE_IDS = _BASE_DATA[1]
+
+
+@pytest.fixture(name="subset_utils_close_records")
+def fixture_subset_utils_close_records(
+    monkeypatch: MonkeyPatch,
+) -> dict[str, float | None]:
+    """Patch ``subset_utils`` closeness helpers and capture tolerance arguments."""
+
+    records: dict[str, float | None] = {
+        "allclose": None,
+        "allclose_rtol": None,
+        "isclose": None,
+        "isclose_rtol": None,
+    }
+
+    def fake_allclose(*args: object, **kwargs: object) -> bool:
+        atol = kwargs.get("atol")
+        rtol = kwargs.get("rtol")
+        if atol is None and len(args) > 2:
+            atol = args[2]
+        if rtol is None and len(args) > 3:
+            rtol = args[3]
+        assert isinstance(atol, float)
+        assert isinstance(rtol, float)
+        records["allclose"] = atol
+        records["allclose_rtol"] = rtol
+        return True
+
+    def fake_isclose(*args: object, **kwargs: object) -> bool:
+        atol = kwargs.get("atol")
+        rtol = kwargs.get("rtol")
+        if atol is None and len(args) > 2:
+            atol = args[2]
+        if rtol is None and len(args) > 3:
+            rtol = args[3]
+        assert isinstance(atol, float)
+        assert isinstance(rtol, float)
+        records["isclose"] = atol
+        records["isclose_rtol"] = rtol
+        return True
+
+    monkeypatch.setattr(subset_utils.np, "allclose", fake_allclose)
+    monkeypatch.setattr(subset_utils.np, "isclose", fake_isclose)
+    return records
 
 
 @pytest.mark.parametrize(("B", "c"), _BASE_INSTANCES, ids=_BASE_IDS)
@@ -30,10 +75,7 @@ def test_fast_matches_reference(B: np.ndarray, c: np.ndarray) -> None:
         assert str(caught.value) == str(exc)
     else:
         fast_value = compute_ehz_capacity_fast(B, c)
-        assert (
-            pytest.approx(reference_value, rel=1e-10, abs=1e-12)  # type: ignore[reportUnknownMemberType]  # Pytest stubs incomplete; TODO: refine types
-            == fast_value
-        )
+        assert math.isclose(reference_value, fast_value, rel_tol=1e-10, abs_tol=1e-12)
 
 
 def test_symplectic_invariance_square() -> None:
@@ -59,10 +101,7 @@ def test_symplectic_invariance_square() -> None:
         transformed = compute_ehz_capacity_reference(transformed_B, c)
     except ValueError:
         pytest.skip("Reference algorithm is undefined for the chosen symmetric sample.")
-    assert (
-        pytest.approx(base, rel=1e-10, abs=1e-12)  # type: ignore[reportUnknownMemberType]  # Pytest stubs incomplete; TODO: refine types
-        == transformed
-    )
+    assert math.isclose(base, transformed, rel_tol=1e-10, abs_tol=1e-12)
 
 
 def test_rejects_odd_dimension() -> None:
@@ -75,7 +114,9 @@ def test_rejects_odd_dimension() -> None:
         compute_ehz_capacity_fast(B, c)
 
 
-def test_prepare_subset_respects_tol(monkeypatch: MonkeyPatch) -> None:
+def test_prepare_subset_respects_tol(
+    subset_utils_close_records: dict[str, float | None],
+) -> None:
     """Internal subset feasibility checks should use the caller-provided tol."""
     B = np.array(
         [
@@ -86,39 +127,20 @@ def test_prepare_subset_respects_tol(monkeypatch: MonkeyPatch) -> None:
     )
     c = np.array([0.0, 0.0, 1.0])
     J = standard_symplectic_matrix(2)
-    records: dict[str, float | None] = {
-        "allclose": None,
-        "allclose_rtol": None,
-        "isclose": None,
-        "isclose_rtol": None,
-    }
-
-    def fake_allclose(*args: object, **kwargs: object) -> bool:
-        atol = kwargs.get("atol")
-        rtol = kwargs.get("rtol")
-        assert isinstance(atol, float)
-        assert isinstance(rtol, float)
-        records["allclose"] = atol
-        records["allclose_rtol"] = rtol
-        return True
-
-    def fake_isclose(*args: object, **kwargs: object) -> bool:
-        atol = kwargs.get("atol")
-        rtol = kwargs.get("rtol")
-        assert isinstance(atol, float)
-        assert isinstance(rtol, float)
-        records["isclose"] = atol
-        records["isclose_rtol"] = rtol
-        return True
-
-    monkeypatch.setattr(reference.np, "allclose", fake_allclose)
-    monkeypatch.setattr(reference.np, "isclose", fake_isclose)
-
-    subset = reference._prepare_subset(  # type: ignore[reportPrivateUsage]  # Accessing private helper for targeted test; TODO: expose via public API
-        B_matrix=B, c=c, indices=(0, 1, 2), J=J, tol=1e-6
-    )
+    subset = subset_utils.prepare_subset(B_matrix=B, c=c, indices=(0, 1, 2), J=J, tol=1e-6)
     assert subset is not None
-    assert records["allclose"] == pytest.approx(1e-6)  # type: ignore[reportUnknownMemberType]
-    assert records["isclose"] == pytest.approx(1e-6)  # type: ignore[reportUnknownMemberType]
-    assert records["allclose_rtol"] == pytest.approx(0.0)  # type: ignore[reportUnknownMemberType]
-    assert records["isclose_rtol"] == pytest.approx(0.0)  # type: ignore[reportUnknownMemberType]
+
+    allclose = subset_utils_close_records["allclose"]
+    isclose_value = subset_utils_close_records["isclose"]
+    allclose_rtol = subset_utils_close_records["allclose_rtol"]
+    isclose_rtol = subset_utils_close_records["isclose_rtol"]
+
+    assert allclose is not None
+    assert isclose_value is not None
+    assert allclose_rtol is not None
+    assert isclose_rtol is not None
+
+    assert math.isclose(allclose, 1e-6, rel_tol=0.0, abs_tol=1e-12)
+    assert math.isclose(isclose_value, 1e-6, rel_tol=0.0, abs_tol=1e-12)
+    assert math.isclose(allclose_rtol, 0.0, rel_tol=0.0, abs_tol=1e-12)
+    assert math.isclose(isclose_rtol, 0.0, rel_tol=0.0, abs_tol=1e-12)

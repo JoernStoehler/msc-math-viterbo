@@ -9,8 +9,10 @@ import pytest
 
 from tests.geometry._polytope_samples import load_polytope_instances
 from viterbo.symplectic.capacity import compute_ehz_capacity
+from viterbo.symplectic.capacity_algorithms._subset_utils import (
+    maximum_antisymmetric_order_value,
+)
 from viterbo.symplectic.capacity_algorithms.facet_normals_fast import (
-    _maximum_antisymmetric_order_value,  # type: ignore[reportPrivateUsage]  # Internal test of private helper; TODO: expose via public API
     compute_ehz_capacity_fast,
 )
 
@@ -30,7 +32,7 @@ def test_dynamic_program_matches_bruteforce() -> None:
                 total += weights[idx_i, idx_j]
         brute = max(brute, total)
 
-    dp_value = _maximum_antisymmetric_order_value(weights)
+    dp_value = maximum_antisymmetric_order_value(weights)
     assert np.isclose(dp_value, brute, atol=1e-12)
 
 

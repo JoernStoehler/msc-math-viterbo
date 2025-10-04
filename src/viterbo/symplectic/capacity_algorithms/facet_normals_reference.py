@@ -2,27 +2,24 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from itertools import combinations, permutations
-from typing import Final, Iterable, cast
+from itertools import permutations
+from typing import Final
 
 import numpy as np
 from jaxtyping import Float
 
+from viterbo.symplectic.capacity_algorithms._subset_utils import (
+    FacetSubset,
+    iter_index_combinations,
+    prepare_subset,
+    subset_capacity_candidate_dynamic,
+)
 from viterbo.symplectic.core import standard_symplectic_matrix
 
 _DIMENSION_AXIS: Final[str] = "dimension"
 _FACET_AXIS: Final[str] = "num_facets"
 _M_AXIS: Final[str] = "m"
-
-
-@dataclass(frozen=True)
-class FacetSubset:
-    """Data describing a subset of polytope facets."""
-
-    indices: tuple[int, ...]
-    beta: Float[np.ndarray, f"{_M_AXIS}"]  # shape: (m,)
-    symplectic_products: Float[np.ndarray, f"{_M_AXIS} {_M_AXIS}"]  # shape: (m, m)
+_MAX_PERMUTATION_SIZE: Final[int] = 7
 
 
 def compute_ehz_capacity_reference(
@@ -69,9 +66,8 @@ def compute_ehz_capacity_reference(
     subset_size = dimension + 1
     best_capacity = np.inf
 
-    for idx_tuple in combinations(range(num_facets), subset_size):  # type: ignore[reportUnknownVariableType]  # Combinations yields tuples of ints; TODO: refine typing
-        indices = cast(tuple[int, ...], tuple(idx_tuple))  # type: ignore[reportUnknownArgumentType]  # Tuple consumes known ints from combinations; TODO: refine stubs
-        subset = _prepare_subset(B_matrix=B, c=c, indices=indices, J=J, tol=tol)
+    for indices in iter_index_combinations(num_facets, subset_size):
+        subset = prepare_subset(B_matrix=B, c=c, indices=indices, J=J, tol=tol)
         if subset is None:
             continue
 
@@ -88,70 +84,14 @@ def compute_ehz_capacity_reference(
     return best_capacity
 
 
-def _prepare_subset(
-    *,
-    B_matrix: Float[np.ndarray, f"{_FACET_AXIS} {_DIMENSION_AXIS}"],
-    c: Float[np.ndarray, _FACET_AXIS],
-    indices: Iterable[int],
-    J: np.ndarray,
-    tol: float,
-) -> FacetSubset | None:
-    """
-    Solve Reeb-measure system for a facet subset and build cached data.
-
-    Args:
-      B_matrix: Facet normals.
-      c: Offsets.
-      indices: Chosen facet indices.
-      J: Symplectic matrix.
-      tol: Numerical tolerance.
-
-    Returns:
-      ``FacetSubset`` if feasible and non-negative, otherwise ``None``.
-
-    """
-    selected_tuple = tuple(indices)
-    row_indices = np.array(selected_tuple, dtype=int)
-    B_subset = B_matrix[row_indices, :]
-    c_subset = c[row_indices]
-    m = B_subset.shape[0]
-
-    system = np.zeros((m, m))
-    system[0, :] = c_subset
-    system[1:, :] = B_subset.T
-
-    rhs = np.zeros(m)
-    rhs[0] = 1.0
-
-    try:
-        beta = np.linalg.solve(system, rhs)
-    except np.linalg.LinAlgError:
-        return None
-
-    beta[np.abs(beta) <= tol] = 0.0
-    if np.any(beta < -tol):
-        return None
-
-    if not np.allclose(
-        B_subset.T @ beta,
-        np.zeros(B_subset.shape[1]),
-        atol=tol,
-        rtol=0.0,
-    ):
-        return None
-
-    if not np.isclose(float(c_subset @ beta), 1.0, atol=tol, rtol=0.0):
-        return None
-
-    symplectic_products = (B_subset @ J) @ B_subset.T
-    return FacetSubset(indices=selected_tuple, beta=beta, symplectic_products=symplectic_products)
-
-
 def _subset_capacity_candidate(subset: FacetSubset, *, tol: float) -> float | None:
     beta = subset.beta
     W = subset.symplectic_products
     m = beta.shape[0]
     indices = range(m)
+
+    if m > _MAX_PERMUTATION_SIZE:
+        return subset_capacity_candidate_dynamic(subset, tol=tol)
 
     maximal_value = -np.inf
     for ordering in permutations(indices):
