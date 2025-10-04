@@ -99,7 +99,8 @@ def _build_dataset(
         dataset.append((poly.name, B, c))
         if transforms:
             variants = random_transformations(poly, rng=rng, count=transforms)
-            for index, (variant_B, variant_c) in enumerate(variants):
+            for index, variant in enumerate(variants):
+                variant_B, variant_c = variant.halfspace_data()
                 label = f"{poly.name}-variant-{index}"
                 dataset.append((label, variant_B, variant_c))
     return dataset

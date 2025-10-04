@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import os
+import struct
+import threading
 from collections import OrderedDict
 from dataclasses import dataclass
 from itertools import combinations
@@ -19,7 +21,8 @@ _SQUARE_MATRIX_AXES: Final[str] = f"{_DIMENSION_AXIS} {_DIMENSION_AXIS}"
 _VERTEX_MATRIX_AXES: Final[str] = "num_vertices dimension"
 
 _POLYTOPE_CACHE_MAX_SIZE: Final[int] = 128
-_POLYTOPE_CACHE: "OrderedDict[tuple[str, float], PolytopeCombinatorics]" = OrderedDict()
+_POLYTOPE_CACHE: "OrderedDict[tuple[str, str], PolytopeCombinatorics]" = OrderedDict()
+_POLYTOPE_CACHE_LOCK = threading.RLock()
 
 
 @dataclass(frozen=True)
@@ -121,7 +124,8 @@ class Polytope:
 
 def clear_polytope_cache() -> None:
     """Clear all cached polytope combinatorics entries."""
-    _POLYTOPE_CACHE.clear()
+    with _POLYTOPE_CACHE_LOCK:
+        _POLYTOPE_CACHE.clear()
 
 
 def _halfspace_fingerprint(
@@ -150,9 +154,16 @@ def polytope_fingerprint(polytope: Polytope, *, decimals: int = 12) -> str:
     return _halfspace_fingerprint(polytope.B, polytope.c, decimals=decimals)
 
 
-def polytope_cache_key(polytope: Polytope, atol: float) -> tuple[str, float]:
+def _tolerance_fingerprint(atol: float) -> str:
+    """Return a deterministic fingerprint for ``atol``."""
+
+    return struct.pack("!d", float(atol)).hex()
+
+
+def polytope_cache_key(polytope: Polytope, atol: float) -> tuple[str, str]:
     """Return the cache key used for combinatorics lookups."""
-    return polytope_fingerprint(polytope), float(np.round(atol, decimals=12))
+
+    return polytope_fingerprint(polytope), _tolerance_fingerprint(atol)
 
 
 def cache_enabled(use_cache: bool) -> bool:
@@ -161,22 +172,24 @@ def cache_enabled(use_cache: bool) -> bool:
     return use_cache and not disabled
 
 
-def cache_lookup(key: tuple[str, float]) -> PolytopeCombinatorics | None:
+def cache_lookup(key: tuple[str, str]) -> PolytopeCombinatorics | None:
     """Return the cached combinatorics value, updating LRU order."""
-    if key not in _POLYTOPE_CACHE:
-        return None
-    value = _POLYTOPE_CACHE.pop(key)
-    _POLYTOPE_CACHE[key] = value
-    return value
+    with _POLYTOPE_CACHE_LOCK:
+        if key not in _POLYTOPE_CACHE:
+            return None
+        value = _POLYTOPE_CACHE.pop(key)
+        _POLYTOPE_CACHE[key] = value
+        return value
 
 
-def cache_store(key: tuple[str, float], value: PolytopeCombinatorics) -> None:
+def cache_store(key: tuple[str, str], value: PolytopeCombinatorics) -> None:
     """Insert ``value`` into the cache while enforcing the size bound."""
-    if key in _POLYTOPE_CACHE:
-        _POLYTOPE_CACHE.pop(key)
-    _POLYTOPE_CACHE[key] = value
-    while len(_POLYTOPE_CACHE) > _POLYTOPE_CACHE_MAX_SIZE:
-        _POLYTOPE_CACHE.popitem(last=False)
+    with _POLYTOPE_CACHE_LOCK:
+        if key in _POLYTOPE_CACHE:
+            _POLYTOPE_CACHE.pop(key)
+        _POLYTOPE_CACHE[key] = value
+        while len(_POLYTOPE_CACHE) > _POLYTOPE_CACHE_MAX_SIZE:
+            _POLYTOPE_CACHE.popitem(last=False)
 
 
 def build_combinatorics(

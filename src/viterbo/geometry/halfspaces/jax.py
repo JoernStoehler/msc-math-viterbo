@@ -2,18 +2,34 @@
 
 from __future__ import annotations
 
-import os
+from functools import lru_cache
+from itertools import combinations
+from typing import Any, Iterator, Sequence, cast
 
-os.environ.setdefault("JAX_ENABLE_X64", "1")
-
-import itertools
-from typing import Iterable, Sequence, cast
-
-import jax.numpy as jnp
 import numpy as np
 from jaxtyping import Float
 
 from viterbo.geometry.halfspaces import _shared
+
+
+@lru_cache(1)
+def _jax_numpy() -> Any:
+    """Return ``jax.numpy`` with 64-bit mode enabled."""
+
+    import jax
+
+    config = cast(Any, jax.config)
+    config.update("jax_enable_x64", True)
+    import jax.numpy as jnp_mod
+
+    return jnp_mod
+
+
+def _iter_index_combinations(count: int, dimension: int) -> Iterator[tuple[int, ...]]:
+    """Yield index combinations for ``dimension`` facets."""
+
+    for combination in combinations(range(count), dimension):
+        yield tuple(int(index) for index in combination)
 
 
 def _solve_subset(
@@ -23,6 +39,7 @@ def _solve_subset(
 ) -> np.ndarray:
     subset = matrix[list(indices), :].astype(np.float64, copy=False)
     subset_offsets = offsets[list(indices)].astype(np.float64, copy=False)
+    jnp = _jax_numpy()
     return np.asarray(jnp.linalg.solve(subset, subset_offsets), dtype=float)
 
 
@@ -40,11 +57,7 @@ def enumerate_vertices(
         raise ValueError("Polytope dimension must be positive.")
 
     vertices: list[np.ndarray] = []
-    combinations_iter = cast(
-        Iterable[tuple[int, ...]], itertools.combinations(range(num_facets), dimension)
-    )
-    for combination in combinations_iter:
-        indices = tuple(combination)
+    for indices in _iter_index_combinations(num_facets, dimension):
         subset = matrix[list(indices), :]
         if np.linalg.matrix_rank(subset) < dimension:
             continue

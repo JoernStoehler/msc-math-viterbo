@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from itertools import combinations
-from typing import Final, cast
+from typing import Final
 
 import numpy as np
 from jaxtyping import Float
 
-from viterbo.symplectic.capacity_algorithms.facet_normals_reference import (
-    FacetSubset,
-    _prepare_subset,  # type: ignore[reportPrivateUsage]  # Internal cross-module use; TODO: refactor shared helper
+from viterbo.symplectic.capacity_algorithms._subset_utils import (
+    iter_index_combinations,
+    prepare_subset,
+    subset_capacity_candidate_dynamic,
 )
 from viterbo.symplectic.core import standard_symplectic_matrix
 
@@ -60,13 +60,12 @@ def compute_ehz_capacity_fast(
     subset_size = dimension + 1
     best_capacity = np.inf
 
-    for idx_tuple in combinations(range(num_facets), subset_size):  # type: ignore[reportUnknownVariableType]  # Combinations yields tuples of ints; TODO: refine typing
-        indices = cast(tuple[int, ...], tuple(idx_tuple))  # type: ignore[reportUnknownArgumentType]  # Tuple consumes known ints from combinations; TODO: refine stubs
-        subset = _prepare_subset(B_matrix=B, c=c, indices=indices, J=J, tol=tol)
+    for indices in iter_index_combinations(num_facets, subset_size):
+        subset = prepare_subset(B_matrix=B, c=c, indices=indices, J=J, tol=tol)
         if subset is None:
             continue
 
-        candidate_value = _subset_capacity_candidate_fast(subset, tol=tol)
+        candidate_value = subset_capacity_candidate_dynamic(subset, tol=tol)
         if candidate_value is None:
             continue
 
@@ -77,70 +76,3 @@ def compute_ehz_capacity_fast(
         raise ValueError("No admissible facet subset satisfied the non-negativity constraints.")
 
     return best_capacity
-
-
-def _subset_capacity_candidate_fast(subset: FacetSubset, *, tol: float) -> float | None:
-    beta = subset.beta
-    symplectic_products = subset.symplectic_products
-
-    positive = np.where(beta > tol)[0]
-    if positive.size < 2:
-        return None
-
-    beta_active = beta[positive]
-    W_active = symplectic_products[np.ix_(positive, positive)]
-    weights = np.multiply.outer(beta_active, beta_active) * W_active
-
-    np.fill_diagonal(weights, 0.0)
-
-    maximal_value = _maximum_antisymmetric_order_value(weights)
-    if maximal_value <= tol:
-        return None
-
-    return 0.5 / maximal_value
-
-
-def _maximum_antisymmetric_order_value(weights: np.ndarray) -> float:
-    r"""
-    Return maximum order value for an antisymmetric weight matrix.
-
-    Args:
-      weights: Square matrix ``W`` with ``W[i, j] = -W[j, i]`` after weighting
-        by Reeb measures.
-
-    Returns:
-      Maximal order value obtained by summing row prefixes.
-
-    """
-    m = weights.shape[0]
-    if m == 0:
-        return 0.0
-
-    size = 1 << m
-    dp = np.full(size, -np.inf)
-    dp[0] = 0.0
-
-    prefix_sums = np.zeros((m, size))
-    for idx in range(m):
-        for mask in range(1, size):
-            lsb = mask & -mask
-            bit_index = lsb.bit_length() - 1
-            prev_mask = mask ^ lsb
-            prefix_sums[idx, mask] = prefix_sums[idx, prev_mask] + weights[idx, bit_index]
-
-    for mask in range(size):
-        current = dp[mask]
-        if not np.isfinite(current):
-            continue
-
-        remaining = (~mask) & (size - 1)
-        while remaining:
-            lsb = remaining & -remaining
-            next_index = lsb.bit_length() - 1
-            new_mask = mask | lsb
-            candidate = current + prefix_sums[next_index, mask]
-            if candidate > dp[new_mask]:
-                dp[new_mask] = candidate
-            remaining ^= lsb
-
-    return dp[-1]

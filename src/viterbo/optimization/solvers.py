@@ -1,15 +1,135 @@
-"""Solver abstractions for linear optimisation problems."""
+"""Dense linear program representations and SciPy-backed solvers."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Mapping, Protocol, Sequence
+from functools import lru_cache
+import importlib
+from typing import Any, Mapping, Protocol, Sequence, TypeGuard, cast
 
 import numpy as np
-import scipy.optimize as _opt  # type: ignore[reportMissingTypeStubs]  # SciPy lacks type stubs; TODO: add stubs or pin typeshed
 from jaxtyping import Float
 
-linprog = _opt.linprog  # type: ignore[reportUnknownMemberType]  # Treat as dynamic; SciPy stubs are incomplete. TODO: type this via stub
+BoundTuple = tuple[float | None, float | None]
+
+
+class _BoundsProtocol(Protocol):
+    """Structural protocol matching ``scipy.optimize.Bounds``."""
+
+    lb: np.ndarray | Sequence[float | None] | float | None
+    ub: np.ndarray | Sequence[float | None] | float | None
+
+
+class _OptimizeResultProtocol(Protocol):
+    """Subset of the SciPy ``OptimizeResult`` interface used by linprog."""
+
+    x: np.ndarray | None
+    fun: float | None
+    success: bool
+    status: int | str
+    message: str | None
+
+
+class _LinprogCallable(Protocol):
+    def __call__(
+        self,
+        *,
+        c: np.ndarray,
+        A_ub: np.ndarray | None,
+        b_ub: np.ndarray | None,
+        A_eq: np.ndarray | None,
+        b_eq: np.ndarray | None,
+        bounds: Sequence[BoundTuple] | None,
+        **options: Any,
+    ) -> _OptimizeResultProtocol: ...
+
+
+@lru_cache(1)
+def _load_linprog() -> _LinprogCallable:
+    """Return the SciPy ``linprog`` callable with a static type signature."""
+
+    module = importlib.import_module("scipy.optimize")
+    linprog_callable = getattr(module, "linprog")
+    return cast(_LinprogCallable, linprog_callable)
+
+
+def _is_bounds_object(candidate: object) -> TypeGuard[_BoundsProtocol]:
+    """Return ``True`` if ``candidate`` exposes ``lb``/``ub`` arrays."""
+
+    return hasattr(candidate, "lb") and hasattr(candidate, "ub")
+
+
+def _coerce_bound_value(value: float | None) -> float | None:
+    """Convert ``value`` to a finite float or ``None`` for unbounded entries."""
+
+    if value is None:
+        return None
+    numeric = float(value)
+    if np.isnan(numeric):
+        msg = "Bounds must not contain NaN entries."
+        raise ValueError(msg)
+    if not np.isfinite(numeric):
+        return None
+    return numeric
+
+
+def _normalize_bounds(
+    bounds: Sequence[BoundTuple] | _BoundsProtocol,
+    dimension: int,
+) -> tuple[BoundTuple, ...]:
+    """Validate and canonicalise ``bounds`` for SciPy's ``linprog``."""
+
+    normalized: list[BoundTuple]
+
+    if _is_bounds_object(bounds):
+        lower_array = np.atleast_1d(np.asarray(bounds.lb, dtype=float))
+        upper_array = np.atleast_1d(np.asarray(bounds.ub, dtype=float))
+
+        if lower_array.size == 1:
+            lower_array = np.full(dimension, lower_array.item(), dtype=float)
+        if upper_array.size == 1:
+            upper_array = np.full(dimension, upper_array.item(), dtype=float)
+
+        if lower_array.size != dimension or upper_array.size != dimension:
+            msg = "Bounds lb/ub must match the number of variables."
+            raise ValueError(msg)
+
+        normalized = []
+        for lower, upper in zip(lower_array, upper_array, strict=True):
+            lower_value = _coerce_bound_value(float(lower))
+            upper_value = _coerce_bound_value(float(upper))
+            if lower_value is not None and upper_value is not None and lower_value > upper_value:
+                msg = "Lower bound exceeds upper bound."
+                raise ValueError(msg)
+            normalized.append((lower_value, upper_value))
+        return tuple(normalized)
+
+    if not isinstance(bounds, Sequence):
+        msg = "Bounds must be a sequence of (lower, upper) pairs."
+        raise TypeError(msg)
+
+    sequence_bounds = tuple(bounds)
+    if len(sequence_bounds) != dimension:
+        msg = "Bounds length must match the number of variables."
+        raise ValueError(msg)
+
+    normalized = []
+    for index, pair in enumerate(sequence_bounds):
+        if len(pair) != 2:
+            msg = "Each bounds entry must be a (lower, upper) pair."
+            raise ValueError(msg)
+
+        lower_raw, upper_raw = pair
+        lower_value = _coerce_bound_value(lower_raw if lower_raw is None else float(lower_raw))
+        upper_value = _coerce_bound_value(upper_raw if upper_raw is None else float(upper_raw))
+
+        if lower_value is not None and upper_value is not None and lower_value > upper_value:
+            msg = f"Lower bound exceeds upper bound at index {index}."
+            raise ValueError(msg)
+        normalized.append((lower_value, upper_value))
+
+    return tuple(normalized)
+
 
 _DIMENSION_AXIS = "dimension"
 _INEQUALITY_AXIS = "num_inequalities"
@@ -25,7 +145,7 @@ class LinearProgram:
     rhs_ineq: Float[np.ndarray, _INEQUALITY_AXIS] | None = None
     lhs_eq: Float[np.ndarray, f"{_EQUALITY_AXIS} {_DIMENSION_AXIS}"] | None = None
     rhs_eq: Float[np.ndarray, _EQUALITY_AXIS] | None = None
-    bounds: Sequence[tuple[float | None, float | None]] | None = None
+    bounds: Sequence[BoundTuple] | _BoundsProtocol | None = None
 
     def __post_init__(self) -> None:
         """Normalise array inputs and validate dimension compatibility."""
@@ -66,9 +186,9 @@ class LinearProgram:
             msg = "Equality RHS provided without coefficients."
             raise ValueError(msg)
 
-        if self.bounds is not None and len(self.bounds) != objective.shape[0]:
-            msg = "Bounds length must match the number of variables."
-            raise ValueError(msg)
+        if self.bounds is not None:
+            normalized_bounds = _normalize_bounds(self.bounds, objective.shape[0])
+            object.__setattr__(self, "bounds", normalized_bounds)
 
     @property
     def dimension(self) -> int:
@@ -107,18 +227,33 @@ class ScipyLinearProgramBackend:
         *,
         options: Mapping[str, Any] | None = None,
     ) -> LinearProgramSolution:
-        """Solve ``problem`` using :func:`scipy.optimize.linprog`."""
-        result: Any = linprog(
+        """Solve ``problem`` using :func:`scipy.optimize.linprog`.
+
+        Raises:
+            RuntimeError: If the SciPy solver reports a non-success status.
+        """
+        linprog_callable = _load_linprog()
+        bounds_argument = cast(tuple[BoundTuple, ...] | None, problem.bounds)
+        result: _OptimizeResultProtocol = linprog_callable(
             c=np.asarray(problem.objective, dtype=float),
             A_ub=None if problem.lhs_ineq is None else np.asarray(problem.lhs_ineq, dtype=float),
             b_ub=None if problem.rhs_ineq is None else np.asarray(problem.rhs_ineq, dtype=float),
             A_eq=None if problem.lhs_eq is None else np.asarray(problem.lhs_eq, dtype=float),
             b_eq=None if problem.rhs_eq is None else np.asarray(problem.rhs_eq, dtype=float),
-            bounds=problem.bounds,
+            bounds=bounds_argument,
             **({} if options is None else dict(options)),
         )
 
-        status = "optimal" if result.success else f"failed({result.status})"
+        if not result.success:
+            status_code = getattr(result, "status", "unknown")
+            message = getattr(result, "message", "")
+            msg = (
+                "Linear program solve failed with status"
+                f" {status_code!r}: {message or 'no diagnostic message provided.'}"
+            )
+            raise RuntimeError(msg)
+
+        status = "optimal"
         vector = (
             np.asarray(result.x, dtype=float)
             if result.x is not None
@@ -133,7 +268,6 @@ class ScipyLinearProgramBackend:
         return solution
 
 
-## Golden-path only: we intentionally omit alternative MILP backends to avoid optional stacks.
 ## Golden-path only: we intentionally omit alternative MILP backends to avoid optional stacks.
 
 
