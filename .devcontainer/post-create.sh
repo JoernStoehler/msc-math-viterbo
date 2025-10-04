@@ -26,7 +26,7 @@ if ! command -v uv >/dev/null 2>&1; then
 fi
 
 echo "[post-create] Syncing project dependencies with uv (lockfile-driven)"
-uv sync --extra dev --system >/dev/null
+uv sync --extra dev >/dev/null
 
 # Install ripgrep (best-effort) because many workflows rely on it for search.
 echo "[post-create] Ensuring ripgrep is installed"
