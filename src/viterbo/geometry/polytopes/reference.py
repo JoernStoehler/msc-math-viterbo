@@ -32,24 +32,23 @@ PolytopeCombinatorics = _shared.PolytopeCombinatorics
 clear_polytope_cache = _shared.clear_polytope_cache
 polytope_fingerprint = _shared.polytope_fingerprint
 
-
 def vertices_from_halfspaces(
-    B: Float[np.ndarray, "num_facets dimension"],
-    c: Float[np.ndarray, "num_facets"],
+    B: Float[np.ndarray, " num_facets dimension"],
+    c: Float[np.ndarray, " num_facets"],
     *,
     atol: float = 1e-9,
-) -> Float[np.ndarray, "num_vertices dimension"]:
+) -> Float[np.ndarray, " num_vertices dimension"]:
     """Enumerate the vertices of a polytope described by ``Bx <= c``."""
     return enumerate_vertices(B, c, atol=atol)
 
 
 def halfspaces_from_vertices(
-    vertices: Float[np.ndarray, "num_vertices dimension"],
+    vertices: Float[np.ndarray, " num_vertices dimension"],
     *,
     qhull_options: str | None = None,
 ) -> tuple[
-    Float[np.ndarray, "num_facets dimension"],
-    Float[np.ndarray, "num_facets"],
+    Float[np.ndarray, " num_facets dimension"],
+    Float[np.ndarray, " num_facets"],
 ]:
     """Return a half-space description from a vertex set using Qhull."""
     hull = ConvexHull(np.asarray(vertices, dtype=float), qhull_options=qhull_options)
@@ -122,9 +121,9 @@ def cartesian_product(
 
 def affine_transform(
     polytope: Polytope,
-    matrix: Float[np.ndarray, "dimension dimension"],
+    matrix: Float[np.ndarray, " dimension dimension"],
     *,
-    translation: Float[np.ndarray, "dimension"] | None = None,
+    translation: Float[np.ndarray, " dimension"] | None = None,
     name: str | None = None,
     description: str | None = None,
 ) -> Polytope:
@@ -169,7 +168,7 @@ def affine_transform(
 
 def translate_polytope(
     polytope: Polytope,
-    translation: Float[np.ndarray, "dimension"],
+    translation: Float[np.ndarray, " dimension"],
     *,
     name: str | None = None,
     description: str | None = None,
@@ -252,8 +251,8 @@ def random_affine_map(
     shear_scale: float = 0.25,
     translation_scale: float = 0.3,
 ) -> tuple[
-    Float[np.ndarray, "dimension dimension"],
-    Float[np.ndarray, "dimension"],
+    Float[np.ndarray, " dimension dimension"],
+    Float[np.ndarray, " dimension"],
 ]:
     """Sample a well-conditioned random affine map for deterministic experiments."""
     lower, upper = scale_range
@@ -610,8 +609,8 @@ def random_transformations(
     shear_scale: float = 0.25,
 ) -> list[
     tuple[
-        Float[np.ndarray, "num_facets dimension"],
-        Float[np.ndarray, "num_facets"],
+        Float[np.ndarray, " num_facets dimension"],
+        Float[np.ndarray, " num_facets"],
     ]
 ]:
     """Generate random linear transformations and translations of ``polytope``."""

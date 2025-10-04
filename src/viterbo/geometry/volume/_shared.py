@@ -9,7 +9,7 @@ from jaxtyping import Float
 
 
 def volume_of_simplices(
-    simplex_vertices: Float[np.ndarray, "num_simplices vertices dimension"],
+    simplex_vertices: Float[np.ndarray, " num_simplices vertices dimension"],
 ) -> float:
     """Return the total volume of stacked simplices."""
     base = simplex_vertices[:, 0, :]

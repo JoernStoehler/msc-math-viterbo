@@ -7,6 +7,8 @@ set -euo pipefail
 
 echo "[post-start] Container started."
 
+export JAX_ENABLE_X64=1
+
 HIST_DIR="$HOME/.bash_history_dir"
 HIST_FILE="$HIST_DIR/.bash_history"
 mkdir -p "$HIST_DIR" && touch "$HIST_FILE"
@@ -18,6 +20,14 @@ if ! grep -qE 'HISTFILE=.*\\.bash_history_dir/.bash_history' "$HOME/.bashrc" 2>/
     echo ''
     echo '# Persist bash history to mounted volume'
     echo 'export HISTFILE="$HOME/.bash_history_dir/.bash_history"'
+  } >> "$HOME/.bashrc"
+fi
+
+if ! grep -q 'export JAX_ENABLE_X64=1' "$HOME/.bashrc" 2>/dev/null; then
+  {
+    echo ''
+    echo '# Enable 64-bit precision for JAX by default'
+    echo 'export JAX_ENABLE_X64=1'
   } >> "$HOME/.bashrc"
 fi
 
