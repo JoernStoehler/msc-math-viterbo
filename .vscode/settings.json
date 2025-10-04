@@ -1,0 +1,29 @@
+{
+  // Keep Explorer uncluttered without hiding all gitignored files
+  "explorer.compactFolders": true,
+
+  // Explicitly hide low-value cache directories
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true,
+    "**/.mypy_cache": true,
+    "**/.pyright": true,
+    "**/.benchmarks": true,
+    ".venv": true,
+    ".uv": true,
+    "*.egg-info": true,
+    ".DS_Store": true
+  },
+
+  // Keep them out of search results too
+  "search.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true,
+    "**/.mypy_cache": true,
+    "**/.pyright": true,
+    "**/.benchmarks": true
+  }
+}
+
