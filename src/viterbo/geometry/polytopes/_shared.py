@@ -156,13 +156,11 @@ def polytope_fingerprint(polytope: Polytope, *, decimals: int = 12) -> str:
 
 def _tolerance_fingerprint(atol: float) -> str:
     """Return a deterministic fingerprint for ``atol``."""
-
     return struct.pack("!d", float(atol)).hex()
 
 
 def polytope_cache_key(polytope: Polytope, atol: float) -> tuple[str, str]:
     """Return the cache key used for combinatorics lookups."""
-
     return polytope_fingerprint(polytope), _tolerance_fingerprint(atol)
 
 
