@@ -12,6 +12,7 @@ visible at a glance.
 | --- | --- | --- | --- | --- | --- | --- |
 | T1 | [Geometry quantity module restructure & JAX baselines](scheduled/2025-10-04-geometry-module-refactor.md) | Scheduled | **+3.15** | Medium / Low / Low | 0 | Root of SWE work; enables all downstream experiments. |
 | T2 | [Testing, benchmarking, and profiling harness](draft/2025-10-04-testing-benchmark-harness.md) | Draft | **+2.30** | Medium / Low / Low | 0.5 | Lands immediately after T1 to secure regression safety. |
+| T3 | [Symplectic invariants regression suite](scheduled/2025-10-05-symplectic-invariant-regression-suite.md) | Scheduled | **+2.50** | Medium / Low / Medium | 0.75 | Hardens invariants before dataset work. |
 | E1 | [Facet-normal validation & dataset build](draft/2025-10-04-facet-dataset.md) | Draft | **+2.70** | Medium / Low / Low | 1 | First numerical experiment; seeds data for the rest. |
 | E2 | [Reeb orbit cross-check](draft/2025-10-04-reeb-cross-check.md) | Draft | **+2.10** | Medium / Low / Low | 2 | Tests numerical agreement across methods. |
 | E3 | [MILP relaxation bounds](draft/2025-10-04-milp-relaxations.md) | Draft | **+1.40** | Medium / Medium / Medium | 3 | Evaluates feasibility of open-source MILP tooling. |
@@ -19,16 +20,17 @@ visible at a glance.
 | E5 | [Support-function relaxation stress test](draft/2025-10-04-support-function-stress.md) | Draft | **+0.90** | Medium / Medium / Low | 5 | Probes robustness of relaxation techniques. |
 
 Expected utilities remain the sum of probability-weighted utilities captured in
-the owning briefs. Priorities reflect the qualitative ordering: complete T1 and
-T2 before launching the dataset or analysis experiments.
+the owning briefs. Priorities reflect the qualitative ordering: complete T1–T3
+before launching the dataset or analysis experiments.
 
 ## 2. Dependency structure
 
 ```mermaid
 graph TD
   T1["T1\nGeometry module restructure"] --> T2["T2\nTesting & benchmarks"]
-  T1 --> E1["E1\nFacet dataset"]
-  T2 --> E1
+  T1 --> T3["T3\nInvariant regression suite"]
+  T2 --> T3
+  T3 --> E1["E1\nFacet dataset"]
   E1 --> E2["E2\nReeb cross-check"]
   E1 --> E3["E3\nMILP bounds"]
   E1 --> E4["E4\nCapacity-volume study"]
@@ -55,6 +57,13 @@ Update this graph whenever briefs change status or new items enter the queue.
   cadence.
 - **Next checkpoint**: validate smoke benchmark runtime (<5 minutes) before
   enabling in CI.
+
+### T3 — Symplectic invariants regression suite
+- **Brief**: [`docs/tasks/scheduled/2025-10-05-symplectic-invariant-regression-suite.md`](scheduled/2025-10-05-symplectic-invariant-regression-suite.md)
+- **Why it matters**: codifies core invariants across reference/optimised/JAX implementations so downstream experiments inherit
+  trusted guarantees and surface failures quickly.
+- **Next checkpoint**: confirm the invariant inventory with the maintainer and
+  stabilise smoke/deep marker runtimes.
 
 ### E1 — Facet-normal validation & dataset build
 - **Brief**: [`docs/tasks/draft/2025-10-04-facet-dataset.md`](draft/2025-10-04-facet-dataset.md)
