@@ -15,6 +15,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      JAX_ENABLE_X64: "1"
 
     steps:
       - name: Checkout repository
@@ -49,6 +51,8 @@ jobs:
   performance-benchmarks:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    env:
+      JAX_ENABLE_X64: "1"
 
     steps:
       - name: Checkout repository

@@ -12,9 +12,7 @@ def hypercube_volume_inputs(
     dimension: int,
     *,
     radius: float = 1.0,
-) -> tuple[
-    Float[np.ndarray, " num_facets dimension"], Float[np.ndarray, " num_facets"], float
-]:
+) -> tuple[Float[np.ndarray, " num_facets dimension"], Float[np.ndarray, " num_facets"], float]:
     """Return scaled hypercube ``(B, c, volume)`` triples for regression tests."""
     matrix, offsets = halfspace_samples.unit_hypercube_halfspaces(dimension)
     scaled_matrix = matrix.copy()
