@@ -15,11 +15,6 @@ Execution
 Budget Awareness
 - If token/time is tight, prioritize: (1) correctness, (2) minimal focused diff, (3) clear Executive Summary + Clarifications + Follow-ups. Defer deep alternatives and say so.
 
-Citations & Evidence
-- For repo-sourced claims/changes, include at least one file+line citation: 【F:path/to/file.ext†Lstart(-Lend)?】.
-- For terminal-derived facts (e.g., tests), cite the chunk: 【<chunk_id>†Lstart(-Lend)?】.
-- Prefer one clear citation per claim/bullet over dense clusters.
-
 Final Message (structure)
 - Executive Summary: 3–6 bullets on scope, changes, outcomes.
 - Analysis & Plan: numbered plan; key assumptions and trade-offs.
