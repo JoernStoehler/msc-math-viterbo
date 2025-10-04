@@ -17,11 +17,15 @@ class _JaxConfig(Protocol):
     def read(self, name: str, /) -> object:
         """Return the configured value for ``name``."""
 
+    def update(self, name: str, value: object, /) -> None:
+        """Set the configured value for ``name``."""
+
 
 config = cast(_JaxConfig, jax.config)
+config.update("jax_enable_x64", True)
 enable_x64_raw = config.read("jax_enable_x64")
 if not bool(enable_x64_raw):
-    msg = "JAX 64-bit mode must be enabled; set JAX_ENABLE_X64=1."
+    msg = "Failed to enable JAX 64-bit mode; set JAX_ENABLE_X64=1 before import."
     raise RuntimeError(msg)
 
 
