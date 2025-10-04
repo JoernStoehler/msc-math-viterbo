@@ -32,6 +32,7 @@ PolytopeCombinatorics = _shared.PolytopeCombinatorics
 clear_polytope_cache = _shared.clear_polytope_cache
 polytope_fingerprint = _shared.polytope_fingerprint
 
+
 def vertices_from_halfspaces(
     B: Float[np.ndarray, " num_facets dimension"],
     c: Float[np.ndarray, " num_facets"],
@@ -632,14 +633,9 @@ def random_transformations(
     scale_range: tuple[float, float] = (0.6, 1.4),
     translation_scale: float = 0.3,
     shear_scale: float = 0.25,
-) -> list[
-    tuple[
-        Float[np.ndarray, " num_facets dimension"],
-        Float[np.ndarray, " num_facets"],
-    ]
-]:
+) -> list[Polytope]:
     """Generate random linear transformations and translations of ``polytope``."""
-    results: list[tuple[np.ndarray, np.ndarray]] = []
+    results: list[Polytope] = []
     for _ in range(count):
         matrix, translation = random_affine_map(
             polytope.dimension,

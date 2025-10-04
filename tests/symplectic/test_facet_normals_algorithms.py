@@ -1,4 +1,5 @@
 """Regression tests for the facet-normal EHZ capacity algorithms."""
+
 from __future__ import annotations
 
 import math

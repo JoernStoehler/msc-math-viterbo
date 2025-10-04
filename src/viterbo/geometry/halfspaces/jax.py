@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from itertools import combinations
-from typing import Iterator, Sequence
+from typing import Iterator, Protocol, Sequence, cast
 
 import jax
 import jax.numpy as jnp
@@ -12,7 +12,15 @@ from jaxtyping import Float
 
 from viterbo.geometry.halfspaces import _shared
 
-if not bool(jax.config.read("jax_enable_x64")):
+
+class _JaxConfig(Protocol):
+    def read(self, name: str, /) -> object:
+        """Return the configured value for ``name``."""
+
+
+config = cast(_JaxConfig, jax.config)
+enable_x64_raw = config.read("jax_enable_x64")
+if not bool(enable_x64_raw):
     msg = "JAX 64-bit mode must be enabled; set JAX_ENABLE_X64=1."
     raise RuntimeError(msg)
 

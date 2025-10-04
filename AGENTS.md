@@ -216,6 +216,7 @@ def ehz_capacity(
 ## 12) CI & Branch protection (facts)
 
 * `make ci` mirrors GitHub Actions (format check → lint → strict typecheck → tests).
+* **Before opening a PR**, run `make ci` locally and ensure it succeeds; if it fails for reasons you cannot resolve quickly, escalate via the task brief rather than skipping the check.
 * Branch protection requires all checks to pass before merge.
 * Concurrency cancels in-progress runs per ref to save CI time.
 * Perf-critical changes: include a benchmark delta summary or a documented waiver.
