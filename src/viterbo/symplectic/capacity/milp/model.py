@@ -25,10 +25,12 @@ class SubsetMilpModel:
 
     @property
     def subset_size(self) -> int:
+        """Number of facets in the fixed subset."""
         return int(self.facet_normals.shape[0])
 
     @property
     def dimension(self) -> int:
+        """Ambient dimension of the facet normals."""
         return int(self.facet_normals.shape[1])
 
 
@@ -50,18 +52,22 @@ class MilpCertificate:
 
     @property
     def subset_indices(self) -> tuple[int, ...]:
+        """Facet indices that define this certificate's subset."""
         return self.subset.indices
 
     @property
     def beta(self) -> Float[Array, " subset_size"]:
+        """Reeb measure weights for the subset facets."""
         return self.subset.beta
 
     @property
     def symplectic_products(self) -> Float[Array, " subset_size subset_size"]:
+        """Symplectic product matrix restricted to the subset facets."""
         return self.subset.symplectic_products
 
     @property
     def subset_size(self) -> int:
+        """Number of facets in the certificate's subset."""
         return int(self.subset.beta.shape[0])
 
 
@@ -77,11 +83,8 @@ class MilpCapacityResult:
     gap_absolute: float | None
 
 
-def compute_gap_absolute(
-    *, upper_bound: float, lower_bound: float | None
-) -> float | None:
+def compute_gap_absolute(*, upper_bound: float, lower_bound: float | None) -> float | None:
     """Return the absolute gap ``upper - lower`` when finite bounds are available."""
-
     if lower_bound is None:
         return None
     if upper_bound <= 0.0:
@@ -93,7 +96,6 @@ def compute_gap_absolute(
 
 def compute_gap_ratio(*, upper_bound: float, lower_bound: float | None) -> float | None:
     """Return the relative gap ``(upper-lower)/upper`` when finite bounds are available."""
-
     absolute_gap = compute_gap_absolute(upper_bound=upper_bound, lower_bound=lower_bound)
     if absolute_gap is None:
         return None
@@ -111,7 +113,6 @@ def build_subset_model(
     indices: Iterable[int],
 ) -> SubsetMilpModel:
     """Return the MILP model representing the Reeb constraints for ``indices``."""
-
     subset = tuple(int(i) for i in indices)
     rows = jnp.asarray(subset, dtype=int)
     facet_normals = jnp.asarray(B_matrix)[rows, :]
@@ -125,7 +126,6 @@ def solve_subset_model(
     options: Mapping[str, float] | None = None,
 ) -> SubsetMilpSolution | None:
     """Solve the MILP corresponding to ``model`` using HiGHS."""
-
     resources = load_highs()
     highs = resources.Highs()
     highs.setOptionValue("output_flag", False)
@@ -189,7 +189,6 @@ def _solve_beta_linear_program(
     options: Mapping[str, float] | None,
 ) -> np.ndarray | None:
     """Solve ``max objective @ beta`` subject to the global Reeb constraints."""
-
     resources = load_highs()
     highs = resources.Highs()
     highs.setOptionValue("output_flag", False)
@@ -246,7 +245,6 @@ def _solve_beta_product_linear_program(
     options: Mapping[str, float] | None,
 ) -> float | None:
     """Return an upper bound on ``beta_i * beta_j`` via a lifted relaxation."""
-
     i, j = pair
     upper_i = float(single_bounds[i])
     upper_j = float(single_bounds[j])
@@ -336,7 +334,6 @@ def _compute_beta_upper_bounds(
     options: Mapping[str, float] | None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Return per-facet, pairwise, and product bounds for Reeb coefficients."""
-
     num_facets = int(support.size)
     single_bounds = np.zeros(num_facets, dtype=np.float64)
     pair_bounds = np.zeros((num_facets, num_facets), dtype=np.float64)
@@ -393,7 +390,6 @@ def _compute_beta_upper_bounds(
 @lru_cache(maxsize=32)
 def _standard_symplectic_matrix_cached(dimension: int) -> np.ndarray:
     """Return the canonical symplectic form as a cached NumPy array."""
-
     return np.asarray(standard_symplectic_matrix(dimension), dtype=np.float64)
 
 
@@ -405,7 +401,6 @@ def estimate_capacity_lower_bound(
     options: Mapping[str, float] | None = None,
 ) -> float | None:
     """Return a relaxation-based lower bound for the EHZ capacity."""
-
     normals = np.ascontiguousarray(B_matrix, dtype=np.float64)
     support = np.ascontiguousarray(c, dtype=np.float64)
 
@@ -426,7 +421,6 @@ def estimate_capacity_lower_bound(
 
 def _normalise_options(options: Mapping[str, float] | None) -> Tuple[Tuple[str, float], ...]:
     """Return a deterministic tuple encoding HiGHS options for caching."""
-
     if options is None:
         return ()
     return tuple(sorted((str(key), float(value)) for key, value in options.items()))
@@ -442,7 +436,6 @@ def _cached_relaxation_upper_estimate(
     options_key: Tuple[Tuple[str, float], ...],
 ) -> float:
     """Return the cached lifted-relaxation contribution sum for ``B`` and ``c``."""
-
     normals = np.frombuffer(normals_bytes, dtype=np.float64).reshape(normals_shape)
     support = np.frombuffer(support_bytes, dtype=np.float64).reshape((support_size,))
 
@@ -484,7 +477,6 @@ def build_certificate(
     tol: float,
 ) -> MilpCertificate | None:
     """Construct a capacity certificate from a solved subset model."""
-
     beta = jnp.asarray(solution.beta, dtype=jnp.float64)
     beta = jnp.where(jnp.abs(beta) <= float(tol), 0.0, beta)
 

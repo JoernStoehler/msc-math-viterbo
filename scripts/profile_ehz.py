@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import cProfile
 import pstats
+import sys
 from dataclasses import dataclass
 from typing import Callable, Iterable, Sequence
 
@@ -120,7 +121,7 @@ def _profile(
             config.function(B, c)
     profiler.disable()
     stats = pstats.Stats(profiler).sort_stats("cumtime")
-    print(f"\n=== Profile: {config.label} ===")
+    sys.stdout.write(f"\n=== Profile: {config.label} ===\n")
     stats.print_stats(top)
 
 
@@ -131,10 +132,10 @@ def main() -> None:
     selected_polytopes = [registry[name] for name in args.polytopes]
     dataset = _build_dataset(selected_polytopes, transforms=args.transforms, seed=args.seed)
 
-    print("Profiling algorithms:", ", ".join(args.algorithms))
-    print("Polytopes:", ", ".join(args.polytopes))
-    print(f"Affine variants per polytope: {args.transforms}")
-    print(f"Total instances: {len(dataset)}")
+    sys.stdout.write("Profiling algorithms: " + ", ".join(args.algorithms) + "\n")
+    sys.stdout.write("Polytopes: " + ", ".join(args.polytopes) + "\n")
+    sys.stdout.write(f"Affine variants per polytope: {args.transforms}\n")
+    sys.stdout.write(f"Total instances: {len(dataset)}\n")
 
     configs = (
         ProfileConfig(label=label, function=ALGORITHMS[label], repeats=args.repeats)

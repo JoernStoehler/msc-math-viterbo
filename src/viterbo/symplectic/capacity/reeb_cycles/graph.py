@@ -36,12 +36,10 @@ class OrientedEdgeGraph:
 
     def outgoing(self, edge_id: int) -> list[int]:
         """Return identifiers of edges admissible after ``edge_id``."""
-
         return list(self.graph.successors(edge_id))
 
     def incoming(self, edge_id: int) -> list[int]:
         """Return identifiers of edges leading into ``edge_id``."""
-
         return list(self.graph.predecessors(edge_id))
 
 
@@ -57,7 +55,6 @@ def build_oriented_edge_graph(
     atol: float = 1e-9,
 ) -> OrientedEdgeGraph:
     """Construct the oriented-edge transition graph from ``(B, c)``."""
-
     B = jnp.asarray(B_matrix, dtype=jnp.float64)
     c = jnp.asarray(c_vector, dtype=jnp.float64)
     if B.ndim != 2:
@@ -150,7 +147,10 @@ def build_oriented_edge_graph(
                 edge_out = oriented_edges[target]
                 if source == target:
                     continue
-                if edge_in.tail_vertex == edge_out.head_vertex and edge_in.facets == edge_out.facets:
+                if (
+                    edge_in.tail_vertex == edge_out.head_vertex
+                    and edge_in.facets == edge_out.facets
+                ):
                     continue
                 shared_facets = set(edge_in.facets).intersection(edge_out.facets)
                 if len(shared_facets) != 2:

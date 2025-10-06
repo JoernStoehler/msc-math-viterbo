@@ -32,6 +32,7 @@ def test_standard_symplectic_matrix_structure() -> None:
     )
     np.testing.assert_array_equal(np.asarray(matrix), expected)
 
+
 @pytest.mark.goal_code
 @pytest.mark.parametrize("dimension", [1, 3])
 def test_standard_symplectic_matrix_requires_even_dimension(dimension: int) -> None:
@@ -52,6 +53,7 @@ def test_symplectic_product_default_matrix() -> None:
     vector_d = jnp.array([0.0, 0.0, 1.0, 0.0])
     value_cd = symplectic_product(vector_c, vector_d)
     assert math.isclose(value_cd, 1.0, rel_tol=1e-12, abs_tol=0.0)
+
 
 @pytest.mark.goal_math
 def test_symplectic_product_custom_matrix() -> None:

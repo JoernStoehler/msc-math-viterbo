@@ -7,6 +7,8 @@ from viterbo.symplectic.capacity.symmetry_reduced.fast import (
 )
 from viterbo.symplectic.capacity.symmetry_reduced.pairs import (
     FacetPairingMetadata as FacetPairingMetadata,
+)
+from viterbo.symplectic.capacity.symmetry_reduced.pairs import (
     detect_opposite_facet_pairs as detect_opposite_facet_pairs,
 )
 from viterbo.symplectic.capacity.symmetry_reduced.reference import (

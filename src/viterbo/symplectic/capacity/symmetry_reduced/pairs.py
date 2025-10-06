@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Iterable, Sequence
 
 import numpy as np
+from jaxtyping import Array, Float
 
 
 @dataclass(frozen=True)
@@ -16,16 +17,18 @@ class FacetPairingMetadata:
     unpaired: tuple[int, ...]
 
     def __post_init__(self) -> None:
+        """Normalise pairs/unpaired facets and validate disjointness."""
         seen: set[int] = set()
         normalised_pairs: list[tuple[int, int]] = []
         for first, second in self.pairs:
             if first == second:
                 raise ValueError("Facet pairs must reference two distinct facets.")
-            ordered = tuple(sorted((int(first), int(second))))
-            if ordered[0] in seen or ordered[1] in seen:
+            a, b = int(first), int(second)
+            ordered_pair: tuple[int, int] = (a, b) if a <= b else (b, a)
+            if ordered_pair[0] in seen or ordered_pair[1] in seen:
                 raise ValueError("Facet indices cannot appear in more than one pair.")
-            seen.update(ordered)
-            normalised_pairs.append(ordered)
+            seen.update(ordered_pair)
+            normalised_pairs.append(ordered_pair)
         object.__setattr__(self, "pairs", tuple(normalised_pairs))
 
         unpaired_indices = tuple(int(idx) for idx in self.unpaired)
@@ -37,7 +40,6 @@ class FacetPairingMetadata:
     @property
     def partner_lookup(self) -> dict[int, int]:
         """Return a lookup mapping each facet to its opposite partner."""
-
         lookup: dict[int, int] = {}
         for first, second in self.pairs:
             lookup[first] = second
@@ -46,7 +48,6 @@ class FacetPairingMetadata:
 
     def is_canonical_subset(self, indices: Sequence[int]) -> bool:
         """Return ``True`` if ``indices`` respects canonical representatives."""
-
         ordered = [int(i) for i in indices]
         positions: dict[int, int] = {}
         for position, index in enumerate(ordered):
@@ -64,7 +65,6 @@ class FacetPairingMetadata:
 
     def subset_groups(self, indices: Sequence[int]) -> tuple[tuple[int, ...], ...]:
         """Return tuples of facet indices constrained to share ``β`` weights."""
-
         partners = self.partner_lookup
         subset_order = [int(i) for i in indices]
         present = set(subset_order)
@@ -85,13 +85,12 @@ class FacetPairingMetadata:
 
     def orbit_representatives(self) -> tuple[int, ...]:
         """Return canonical orbit representatives (pairs' minima and unpaired facets)."""
-
         return tuple(sorted({pair[0] for pair in self.pairs} | set(self.unpaired)))
 
 
 def detect_opposite_facet_pairs(
-    B_matrix: np.ndarray | Iterable[Sequence[float]],
-    c: np.ndarray | Sequence[float],
+    B_matrix: (Float[Array, " num_facets dimension"] | np.ndarray | Iterable[Sequence[float]]),
+    c: Float[Array, " num_facets"] | np.ndarray | Sequence[float],
     *,
     atol: float = 1e-9,
     rtol: float = 1e-9,
@@ -107,13 +106,12 @@ def detect_opposite_facet_pairs(
     ``overrides`` with explicit index pairs, in which case all remaining facets are
     treated as unpaired. Override indices must be disjoint.
     """
-
     B = np.asarray(B_matrix, dtype=np.float64)
     offsets = np.asarray(c, dtype=np.float64)
     num_facets = int(B.shape[0])
 
     if overrides is not None:
-        provided_pairs = tuple(tuple(int(i) for i in pair) for pair in overrides)
+        provided_pairs = tuple((int(i0), int(i1)) for (i0, i1) in overrides)
         used = {idx for pair in provided_pairs for idx in pair}
         if any(idx < 0 or idx >= num_facets for idx in used):
             raise ValueError("Override indices must lie within the facet range.")

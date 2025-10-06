@@ -1,4 +1,4 @@
-from typing import Any, Callable, Iterable, Literal, ParamSpec, TypeVar, overload
+from typing import Any, Callable, Iterable, Iterator, Literal, ParamSpec, TypeVar, overload
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -10,6 +10,7 @@ class Array:
     size: int
     ndim: int
     def __len__(self) -> int: ...
+    def __iter__(self) -> Iterator[Any]: ...
 
     # Simple methods/properties commonly used in this codebase
     def item(self) -> Any: ...

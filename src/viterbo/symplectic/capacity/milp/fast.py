@@ -28,7 +28,6 @@ def compute_ehz_capacity_fast(
     node_limit: int = 8192,
 ) -> MilpCapacityResult:
     """Search for good MILP certificates via a depth-first subset exploration."""
-
     B = jnp.asarray(B_matrix, dtype=jnp.float64)
     offsets = jnp.asarray(c, dtype=jnp.float64)
 

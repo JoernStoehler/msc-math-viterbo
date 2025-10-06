@@ -24,7 +24,6 @@ def compute_minkowski_billiard_length_reference(
     atol: float = 1e-9,
 ) -> float:
     """Return the minimal closed path length for the Minkowski billiard."""
-
     fan = build_normal_fan(billiard_table, atol=atol)
     if fan.vertex_count == 0:
         raise ValueError("Normal fan construction yielded no vertices.")
@@ -55,7 +54,6 @@ def _enumerate_cycles(
     max_length: int,
 ) -> Iterable[tuple[int, ...]]:
     """Enumerate simple cycles using a Johnson-style search with pruning."""
-
     neighbor_lists = [sorted(neighbors) for neighbors in fan.neighbors]
     vertex_count = fan.vertex_count
     seen: set[tuple[int, ...]] = set()
@@ -77,7 +75,7 @@ def _enumerate_cycles(
         allowed: set[int],
         blocked: list[bool],
         block_map: list[set[int]],
-    ) -> bool:
+    ) -> Iterable[tuple[int, ...]]:
         found = False
         stack.append(vertex)
         blocked[vertex] = True
@@ -115,7 +113,7 @@ def _enumerate_cycles(
                 block_map[neighbor].add(vertex)
 
         stack.pop()
-        return found
+        return
 
     for start in range(vertex_count):
         if not neighbor_lists[start]:
@@ -149,7 +147,6 @@ def _component_containing(
     min_vertex: int,
 ) -> set[int] | None:
     """Return the SCC containing ``start`` restricted to vertices ≥ ``min_vertex``."""
-
     components = _strongly_connected_components(neighbor_lists, min_vertex)
     for component in components:
         if start in component:
@@ -162,7 +159,6 @@ def _strongly_connected_components(
     min_vertex: int,
 ) -> list[set[int]]:
     """Compute SCCs of the induced subgraph on vertices ≥ ``min_vertex``."""
-
     vertex_count = len(neighbor_lists)
     index = 0
     stack: list[int] = []

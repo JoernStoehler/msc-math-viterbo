@@ -24,6 +24,7 @@ def _volumes(polytope: Polytope) -> tuple[float, float]:
     B, c = polytope.halfspace_data()
     return polytope_volume_reference(B, c), polytope_volume_fast(B, c)
 
+
 @pytest.mark.goal_math
 def test_hypercube_volume_matches_closed_form() -> None:
     """Both volume estimators match the analytic volume of a hypercube."""

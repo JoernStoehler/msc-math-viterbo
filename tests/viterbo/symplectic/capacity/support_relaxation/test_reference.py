@@ -35,9 +35,7 @@ def test_reference_solver_translation_invariant(unit_disk_vertices) -> None:
     translated = compute_support_relaxation_capacity_reference(
         unit_disk_vertices + 0.25,
     )
-    assert translated.capacity_upper_bound == pytest.approx(
-        base.capacity_upper_bound, rel=1e-9
-    )
+    assert translated.capacity_upper_bound == pytest.approx(base.capacity_upper_bound, rel=1e-9)
 
 
 def test_reference_solver_softmax_schedule(unit_disk_vertices) -> None:
@@ -47,4 +45,3 @@ def test_reference_solver_softmax_schedule(unit_disk_vertices) -> None:
         smoothing_method="softmax",
     )
     assert result.capacity_upper_bound > 0.0
-

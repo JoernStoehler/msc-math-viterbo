@@ -18,8 +18,8 @@ from viterbo.symplectic.capacity.symmetry_reduced.pairs import (
     detect_opposite_facet_pairs,
 )
 from viterbo.symplectic.capacity.symmetry_reduced.reference import (
-    _GroupCache,
     _enforce_pair_constraints,
+    _GroupCache,
 )
 from viterbo.symplectic.core import standard_symplectic_matrix
 
@@ -33,7 +33,6 @@ def compute_ehz_capacity_fast_symmetry_reduced(
     enforce_detection: bool = True,
 ) -> float:
     """Compute the EHZ capacity via symmetry-reduced dynamic programming."""
-
     B = jnp.asarray(B_matrix, dtype=jnp.float64)
     offsets = jnp.asarray(c, dtype=jnp.float64)
 

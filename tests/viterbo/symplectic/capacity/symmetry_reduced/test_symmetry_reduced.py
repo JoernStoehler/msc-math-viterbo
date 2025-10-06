@@ -15,7 +15,6 @@ from viterbo.symplectic.capacity import (
     detect_opposite_facet_pairs,
 )
 
-
 _CENTRAL_POLYTOPES = tuple(
     (*poly.halfspace_data(), poly.name)
     for poly in (

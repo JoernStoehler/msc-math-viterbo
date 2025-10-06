@@ -51,9 +51,17 @@ from viterbo.optimization import (
 )
 from viterbo.symplectic.capacity import (
     MinkowskiNormalFan as MinkowskiNormalFan,
+)
+from viterbo.symplectic.capacity import (
     build_normal_fan as build_normal_fan,
+)
+from viterbo.symplectic.capacity import (
     compute_ehz_capacity_reference as compute_ehz_capacity_reference,
+)
+from viterbo.symplectic.capacity import (
     compute_minkowski_billiard_length_fast as compute_minkowski_billiard_length_fast,
+)
+from viterbo.symplectic.capacity import (
     compute_minkowski_billiard_length_reference as compute_minkowski_billiard_length_reference,
 )
 from viterbo.symplectic.core import ZERO_TOLERANCE as ZERO_TOLERANCE

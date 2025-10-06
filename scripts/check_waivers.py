@@ -24,7 +24,7 @@ from pathlib import Path
 try:  # Python 3.11+
     import tomllib  # type: ignore[attr-defined]
 except ModuleNotFoundError:  # pragma: no cover
-    print("Python 3.11+ required for tomllib.", file=sys.stderr)
+    sys.stderr.write("Python 3.11+ required for tomllib.\n")
     sys.exit(2)
 
 
@@ -42,7 +42,7 @@ def main() -> int:
     data = tomllib.loads(waivers_file.read_text(encoding="utf-8"))
     waivers = data.get("waiver", [])
     if not isinstance(waivers, list):
-        print("waivers.toml: `[ [waiver] ... ]` array expected", file=sys.stderr)
+        sys.stderr.write("waivers.toml: `[ [waiver] ... ]` array expected\n")
         return 2
 
     today = _dt.date.today()
@@ -72,7 +72,7 @@ def main() -> int:
         try:
             expires = _parse_date(str(waiver["expires"]))
             created = _parse_date(str(waiver["created"]))
-        except Exception as exc:
+        except ValueError as exc:
             failures.append(f"waiver '{waiver.get('id')}': invalid date format ({exc})")
             continue
         if created > expires:
@@ -81,7 +81,7 @@ def main() -> int:
             failures.append(f"waiver '{waiver['id']}' expired on {expires.isoformat()}")
 
     if failures:
-        print("Policy waiver check failed:\n- " + "\n- ".join(failures), file=sys.stderr)
+        sys.stderr.write("Policy waiver check failed:\n- " + "\n- ".join(failures) + "\n")
         return 1
     return 0
 

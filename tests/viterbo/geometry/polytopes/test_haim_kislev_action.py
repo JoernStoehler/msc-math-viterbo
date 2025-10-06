@@ -20,6 +20,7 @@ def test_haim_kislev_action_valid_order_matches_reference_capacity() -> None:
     assert reference_capacity is not None
     assert math.isclose(action, reference_capacity, rel_tol=1e-9, abs_tol=0.0)
 
+
 @pytest.mark.goal_code
 def test_haim_kislev_action_invalid_order_raises_value_error() -> None:
     """Invalid permutations trigger validation errors before computing the action."""

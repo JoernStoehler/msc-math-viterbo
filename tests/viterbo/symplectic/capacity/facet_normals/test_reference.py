@@ -21,11 +21,12 @@ from viterbo.symplectic.capacity.facet_normals.fast import compute_ehz_capacity_
 def _simplex() -> Polytope:
     return simplex_with_uniform_weights(4, name="simplex-test")
 
+
 _BASELINE_CAPACITIES = {
-    entry["name"]: entry["reference_capacity"]
-    for entry in load_baseline("ehz_capacity_reference")
+    entry["name"]: entry["reference_capacity"] for entry in load_baseline("ehz_capacity_reference")
 }
 _POLYTOPE_LOOKUP = {poly.name: poly for poly in catalog()}
+
 
 @pytest.mark.goal_math
 @pytest.mark.parametrize(

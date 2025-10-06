@@ -97,9 +97,11 @@ def test_mixed_integer_solver_supports_maximisation() -> None:
     assert math.isclose(float(np.sum(solution.x)), 1.5, rel_tol=0.0, abs_tol=1e-9)
     assert math.isclose(solution.objective_value, 1.5, rel_tol=0.0, abs_tol=1e-9)
 
+
 @pytest.mark.goal_code
 def test_normalize_bounds_expands_scalars() -> None:
     """`_normalize_bounds` broadens scalar bounds into per-variable tuples."""
+
     class DummyBounds:
         def __init__(self) -> None:
             self.lb = -1.0
@@ -107,6 +109,7 @@ def test_normalize_bounds_expands_scalars() -> None:
 
     normalized = _normalize_bounds(DummyBounds(), dimension=3)
     assert normalized == ((-1.0, 2.0), (-1.0, None), (-1.0, 0.5))
+
 
 @pytest.mark.goal_code
 def test_normalize_bounds_validates_sequence() -> None:
@@ -117,8 +120,9 @@ def test_normalize_bounds_validates_sequence() -> None:
     with pytest.raises(ValueError, match="Lower bound exceeds upper bound"):
         _normalize_bounds([(0.0, -0.5)], dimension=1)
 
+
 @pytest.mark.goal_code
 def test_normalize_bounds_rejects_nan_entries() -> None:
     """`_normalize_bounds` refuses NaN inputs to prevent invalid solver requests."""
     with pytest.raises(ValueError, match="Bounds must not contain NaN"):
-        _normalize_bounds([(float('nan'), 1.0)], dimension=1)
+        _normalize_bounds([(float("nan"), 1.0)], dimension=1)

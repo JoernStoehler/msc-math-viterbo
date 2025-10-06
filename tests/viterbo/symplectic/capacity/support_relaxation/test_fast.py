@@ -39,9 +39,7 @@ def test_fast_solver_translation_invariant(unit_disk_vertices) -> None:
         unit_disk_vertices + 0.75,
         jit_compile=False,
     )
-    assert translated.capacity_upper_bound == pytest.approx(
-        base.capacity_upper_bound, rel=1e-9
-    )
+    assert translated.capacity_upper_bound == pytest.approx(base.capacity_upper_bound, rel=1e-9)
 
 
 def test_fast_solver_supports_softmax_kernel(unit_disk_vertices) -> None:

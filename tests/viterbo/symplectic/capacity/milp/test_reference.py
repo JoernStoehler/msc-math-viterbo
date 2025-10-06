@@ -13,10 +13,10 @@ from viterbo.geometry.polytopes import (
     truncated_simplex_four_dim,
 )
 from viterbo.symplectic.capacity import compute_ehz_capacity_reference
+from viterbo.symplectic.capacity.facet_normals.subset_utils import FacetSubset
 from viterbo.symplectic.capacity.milp.reference import (
     compute_ehz_capacity_reference as compute_ehz_capacity_reference_milp,
 )
-from viterbo.symplectic.capacity.facet_normals.subset_utils import FacetSubset
 
 
 @pytest.fixture(scope="module")

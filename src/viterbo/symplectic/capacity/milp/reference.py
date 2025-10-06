@@ -29,7 +29,6 @@ def compute_ehz_capacity_reference(
     highs_options: Mapping[str, float] | None = None,
 ) -> MilpCapacityResult:
     """Enumerate all facet subsets and return the optimal MILP certificate."""
-
     B = jnp.asarray(B_matrix, dtype=jnp.float64)
     offsets = jnp.asarray(c, dtype=jnp.float64)
 

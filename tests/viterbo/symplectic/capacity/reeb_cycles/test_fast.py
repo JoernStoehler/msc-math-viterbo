@@ -31,4 +31,3 @@ def test_fast_matches_reference(polytope_factory) -> None:
     fast_value = compute_ehz_capacity_fast(B, c)
     reference_value = compute_ehz_capacity_reference(B, c)
     assert math.isclose(fast_value, reference_value, rel_tol=0.0, abs_tol=1e-8)
-

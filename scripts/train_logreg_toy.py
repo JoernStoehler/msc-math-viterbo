@@ -5,10 +5,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import secrets
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
-import secrets
 
 import jax
 import numpy as np
@@ -78,6 +78,7 @@ def _log_metrics_jsonl(path: Path, entries: list[dict[str, object]]) -> None:
 
 
 def run(args: argparse.Namespace) -> None:
+    """Train the toy logistic regression model and log artefacts."""
     dataset_dir = Path(args.dataset_dir)
     train_x, train_y, test_x, test_y, metadata = _load_dataset(dataset_dir)
 
@@ -225,7 +226,7 @@ def _to_yaml(payload: dict[str, object]) -> str:
         import yaml  # type: ignore[import-not-found]
 
         return yaml.safe_dump(payload, sort_keys=False)
-    except Exception:
+    except ImportError:
         # Minimal YAML writer to avoid new dependency if PyYAML is absent.
         lines = []
         for key, value in payload.items():
@@ -234,6 +235,7 @@ def _to_yaml(payload: dict[str, object]) -> str:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build an argument parser for the training script."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset-dir", type=Path, default=DEFAULT_DATASET_DIR)
     parser.add_argument("--learning-rate", type=float, default=0.1)
@@ -245,6 +247,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    """Parse arguments and run training."""
     parser = build_parser()
     args = parser.parse_args()
     os.environ.setdefault("WANDB_SILENT", "true")

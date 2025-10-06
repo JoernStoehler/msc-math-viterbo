@@ -12,9 +12,9 @@ import orbax.checkpoint as ocp
 import pyarrow.parquet as pq
 
 from viterbo.experiments.logreg_toy import (
-    evaluate,
     LogisticRegressionConfig,
     LogisticRegressionWeights,
+    evaluate,
 )
 
 jax.config.update("jax_enable_x64", True)
@@ -48,6 +48,7 @@ def _restore_params(checkpoint_path: Path) -> LogisticRegressionWeights:
 
 
 def run(args: argparse.Namespace) -> None:
+    """Evaluate a saved run and write metrics to JSON files/stdout."""
     run_dir = args.run_dir
     summary_path = run_dir / "summary.json"
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
@@ -72,10 +73,13 @@ def run(args: argparse.Namespace) -> None:
         "test": test_metrics,
     }
     (run_dir / "evaluation.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(report, indent=2))
+    import sys
+
+    sys.stdout.write(json.dumps(report, indent=2) + "\n")
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build an argument parser for the evaluation CLI."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir", type=Path, required=True)
     parser.add_argument("--dataset-dir", type=Path, default=None)
@@ -83,6 +87,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    """Parse arguments and run the evaluator."""
     parser = build_parser()
     args = parser.parse_args()
     run(args)

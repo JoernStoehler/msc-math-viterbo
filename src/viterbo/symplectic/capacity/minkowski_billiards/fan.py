@@ -30,13 +30,11 @@ class MinkowskiNormalFan:
     @property
     def dimension(self) -> int:
         """Return the ambient dimension of the fan."""
-
         return int(self.vertices.shape[1])
 
     @property
     def vertex_count(self) -> int:
         """Return the number of normal cones/vertices."""
-
         return int(self.vertices.shape[0])
 
 
@@ -46,7 +44,6 @@ def build_normal_fan(
     atol: float = 1e-9,
 ) -> MinkowskiNormalFan:
     """Construct the normal fan of ``polytope`` from cached combinatorics."""
-
     combinatorics = polytope_combinatorics(polytope, atol=atol)
     cones = combinatorics.normal_cones
     if not cones:
@@ -55,8 +52,7 @@ def build_normal_fan(
 
     adjacency = _vertex_adjacency(cones, dimension=polytope.dimension)
     neighbors = tuple(
-        tuple(int(index) for index in jnp.where(row)[0].tolist())
-        for row in adjacency
+        tuple(int(index) for index in jnp.where(row)[0].tolist()) for row in adjacency
     )
     coordinate_blocks = coordinate_partition(polytope)
 
@@ -76,7 +72,6 @@ def _vertex_adjacency(
     dimension: int,
 ) -> Array:
     """Return an adjacency matrix for the normal cones."""
-
     count = len(cones)
     adjacency = jnp.zeros((count, count), dtype=bool)
 
@@ -101,7 +96,6 @@ def coordinate_partition(
     tol: float = 1e-12,
 ) -> tuple[tuple[int, ...], ...]:
     """Return coordinate blocks induced by facet support sets."""
-
     return _coordinate_blocks(polytope.B, tol=tol)
 
 
@@ -111,7 +105,6 @@ def _coordinate_blocks(
     tol: float,
 ) -> tuple[tuple[int, ...], ...]:
     """Internal helper to compute coordinate blocks for a raw matrix."""
-
     dimension = int(matrix.shape[1])
     adjacency = jnp.zeros((dimension, dimension), dtype=bool)
 

@@ -34,6 +34,7 @@ def test_translate_polytope_updates_offsets() -> None:
         np.asarray(translated.c), np.asarray(expected_c), rtol=1e-9, atol=0.0
     )
 
+
 @pytest.mark.goal_math
 def test_cartesian_product_dimensions_add() -> None:
     """Cartesian products add both dimension and facet counts."""
@@ -53,6 +54,7 @@ def test_mirror_polytope_flips_coordinate() -> None:
     expected_B = expected_B.at[:, 0].multiply(-1)
     np.testing.assert_allclose(np.asarray(mirrored.B), np.asarray(expected_B), rtol=1e-9, atol=0.0)
 
+
 @pytest.mark.goal_math
 def test_rotate_polytope_consistency_in_plane() -> None:
     """Rotation updates facet normals according to the inverse rotation matrix."""
@@ -64,6 +66,7 @@ def test_rotate_polytope_consistency_in_plane() -> None:
     )
     expected_B = polytope.B @ jnp.linalg.inv(rotation_matrix)
     np.testing.assert_allclose(np.asarray(rotated.B), np.asarray(expected_B), rtol=1e-9, atol=0.0)
+
 
 @pytest.mark.goal_code
 def test_random_affine_map_is_deterministic_per_seed() -> None:

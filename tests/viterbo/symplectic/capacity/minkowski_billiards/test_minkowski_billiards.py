@@ -31,7 +31,7 @@ def test_normal_fan_vertex_adjacency_for_hypercube(dimension: int) -> None:
 
     cube = hypercube(dimension)
     fan = build_normal_fan(cube)
-    assert fan.vertex_count == 2 ** dimension
+    assert fan.vertex_count == 2**dimension
 
     expected_degree = dimension
     for neighbors in fan.neighbors:

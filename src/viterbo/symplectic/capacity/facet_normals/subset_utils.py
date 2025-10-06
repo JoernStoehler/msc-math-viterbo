@@ -54,7 +54,7 @@ def prepare_subset(
     # we conservatively treat as infeasible by returning None.
     try:
         beta = jnp.linalg.solve(system, rhs)
-    except Exception:
+    except (TypeError, ValueError, RuntimeError):
         return None
 
     beta = jnp.where(jnp.abs(beta) <= float(tol), 0.0, beta)

@@ -56,7 +56,6 @@ def train_logistic_regression(
     Returns:
       Tuple of fitted parameters and a training trace for diagnostics.
     """
-
     features = jnp.asarray(features, dtype=jnp.float64)
     labels = jnp.asarray(labels, dtype=jnp.float64)
 
@@ -119,7 +118,6 @@ def evaluate(
     l2_penalty: float = 0.0,
 ) -> dict[str, float]:
     """Compute loss and accuracy on a holdout split."""
-
     features = jnp.asarray(features, dtype=jnp.float64)
     labels = jnp.asarray(labels, dtype=jnp.float64)
     logits = _predict_logits(params, features)

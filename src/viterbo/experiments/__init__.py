@@ -1,6 +1,6 @@
 """Experiment utilities and reference training loops."""
 
-from viterbo.experiments.logreg_toy import (  # noqa: F401 re-export
+from viterbo.experiments.logreg_toy import (
     LogisticRegressionConfig,
     LogisticRegressionWeights,
     TrainingTrace,

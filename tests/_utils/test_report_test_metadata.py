@@ -5,7 +5,6 @@ from __future__ import annotations
 import textwrap
 
 import pytest
-
 from scripts import report_test_metadata
 
 

@@ -3,18 +3,18 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-import hashlib
 
 import jax
-from jax import config as jax_config
 import jax.numpy as jnp
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
+from jax import config as jax_config
 
 DEFAULT_SEED = 20251005
 
@@ -23,6 +23,7 @@ jax_config.update("jax_enable_x64", True)
 
 @dataclass(frozen=True)
 class GaussianBlob:
+    """Parameters of an axis-aligned Gaussian used to sample points."""
     mean: tuple[float, float]
     cov_diag: tuple[float, float]
 
@@ -51,6 +52,7 @@ def _write_parquet(path: Path, features: jnp.ndarray, labels: jnp.ndarray) -> No
 
 @dataclass(frozen=True)
 class DatasetConfig:
+    """Configuration for the toy dataset generation."""
     version: str = "v1"
     train_size: int = 800
     test_size: int = 200
@@ -58,6 +60,7 @@ class DatasetConfig:
     negative_blob: GaussianBlob = GaussianBlob(mean=(-1.0, -1.0), cov_diag=(0.75, 0.75))
 
     def as_serialisable(self) -> dict[str, object]:
+        """Return a JSON-serialisable representation of the config."""
         data = asdict(self)
         data["positive_blob"] = asdict(self.positive_blob)
         data["negative_blob"] = asdict(self.negative_blob)
@@ -65,6 +68,7 @@ class DatasetConfig:
 
 
 def generate_dataset(output_dir: Path, seed: int, config: DatasetConfig) -> None:
+    """Generate train/test splits and write dataset files and metadata."""
     output_dir.mkdir(parents=True, exist_ok=True)
     key = jax.random.PRNGKey(seed)
     key_train_pos, key_train_neg, key_test_pos, key_test_neg, key_train_perm, key_test_perm = (
@@ -166,6 +170,7 @@ def _config_hash(config: DatasetConfig, seed: int) -> str:
 
 
 def main() -> None:
+    """Parse args and generate the dataset."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--output-dir",

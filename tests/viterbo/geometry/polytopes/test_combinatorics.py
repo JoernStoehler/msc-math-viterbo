@@ -24,6 +24,7 @@ def _sort_halfspaces(
     key = np.lexsort(np.column_stack((B_np, c_np)).T)
     return B_np[key], c_np[key]
 
+
 @pytest.mark.goal_math
 def test_polytope_combinatorics_square_facets() -> None:
     """Facet adjacency for a square has degree two across all faces."""
@@ -36,6 +37,7 @@ def test_polytope_combinatorics_square_facets() -> None:
     # Each facet of a square touches exactly two neighbours.
     degree = combinatorics.facet_adjacency.sum(axis=1)
     assert np.all(degree == 2)
+
 
 @pytest.mark.goal_math
 def test_polytope_combinatorics_properties() -> None:
@@ -54,6 +56,7 @@ def _sorted_vertices(vertices: object) -> np.ndarray:
     array = np.asarray(vertices, dtype=float)
     keys = np.lexsort(array.T[::-1])
     return array[keys]
+
 
 @pytest.mark.goal_math
 def test_vertex_enumeration_matches_reference_shape() -> None:
@@ -85,6 +88,7 @@ def test_halfspace_vertex_roundtrip() -> None:
     actual_B, actual_c = _sort_halfspaces(roundtrip_B, roundtrip_c)
     assert np.allclose(actual_B, expected_B)
     assert np.allclose(actual_c, expected_c)
+
 
 @pytest.mark.goal_code
 def test_polytope_fingerprint_invariant_to_metadata() -> None:

@@ -52,7 +52,6 @@ def compute_ehz_capacity_reference_symmetry_reduced(
       facet subsets that are symmetric duplicates and re-solves the Reeb-measure
       system with equality constraints ``β_i = β_j`` for detected facet pairs.
     """
-
     B = jnp.asarray(B_matrix, dtype=jnp.float64)
     offsets = jnp.asarray(c, dtype=jnp.float64)
 
@@ -130,7 +129,6 @@ def _enforce_pair_constraints(
     tol: float,
 ) -> FacetSubset | None:
     """Solve for ``β`` under equality constraints for opposite facets."""
-
     if not groups:
         return subset
 

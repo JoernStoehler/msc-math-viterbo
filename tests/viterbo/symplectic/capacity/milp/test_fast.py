@@ -13,6 +13,8 @@ from viterbo.geometry.polytopes import (
 )
 from viterbo.symplectic.capacity import (
     compute_ehz_capacity_fast as compute_ehz_capacity_fast_facet,
+)
+from viterbo.symplectic.capacity import (
     compute_ehz_capacity_reference,
 )
 from viterbo.symplectic.capacity.milp.fast import (

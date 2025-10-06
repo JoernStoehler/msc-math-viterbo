@@ -18,7 +18,6 @@ from viterbo.symplectic.capacity.reeb_cycles.reference import (
 )
 
 
-
 @pytest.mark.parametrize(
     "polytope_factory",
     [

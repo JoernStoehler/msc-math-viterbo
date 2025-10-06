@@ -59,6 +59,12 @@ def _is_fast_mode() -> bool:
 def pytest_configure(config: pytest.Config) -> None:
     """Configure FAST mode defaults when enabled."""
 
+    # Ensure JAX runs in float64 precision for numerical stability in tests.
+    os.environ.setdefault("JAX_ENABLE_X64", "1")
+    import jax
+
+    jax.config.update("jax_enable_x64", True)  # type: ignore[attr-defined]
+
     if not _is_fast_mode():
         return
 

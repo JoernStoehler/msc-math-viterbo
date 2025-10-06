@@ -17,7 +17,6 @@ class HighsResources:
 
 def load_highs() -> HighsResources:
     """Import :mod:`highspy` lazily and return the relevant classes."""
-
     from highspy import Highs, HighsModelStatus, HighsStatus, HighsVarType
 
     return HighsResources(

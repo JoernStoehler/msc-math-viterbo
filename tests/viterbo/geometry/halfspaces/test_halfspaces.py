@@ -30,6 +30,7 @@ def _run_enumerator(
     vertices = enumerator(matrix, offsets)
     return np.asarray(vertices, dtype=float)
 
+
 @pytest.mark.goal_math
 def test_reference_enumeration_matches_expected_square() -> None:
     """Reference enumeration returns the vertices of the canonical unit square."""

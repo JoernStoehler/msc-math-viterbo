@@ -438,7 +438,6 @@ def solve_mixed_integer_linear_program(
     Raises:
         RuntimeError: If HiGHS reports an error or fails to find an optimal solution.
     """
-
     resources = _load_highs()
     highs = resources.Highs()
     highs.setOptionValue("output_flag", False)

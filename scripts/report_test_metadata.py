@@ -5,11 +5,22 @@ from __future__ import annotations
 import argparse
 from typing import Sequence
 
-from scripts._test_metadata_helpers import (
-    GOAL_MARKERS,
-    collect_tests_in_file,
-    iter_test_files,
-)
+try:
+    from scripts._test_metadata_helpers import (
+        GOAL_MARKERS,
+        collect_tests_in_file,
+        iter_test_files,
+    )
+except ModuleNotFoundError:  # pragma: no cover - import fallback for direct execution
+    import pathlib
+    import sys as _sys
+
+    _sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
+    from scripts._test_metadata_helpers import (  # type: ignore[redefined-builtin]
+        GOAL_MARKERS,
+        collect_tests_in_file,
+        iter_test_files,
+    )
 
 
 def _docstring_summary(docstring: str | None) -> str:
@@ -61,14 +72,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 marker_display = ",".join(goal_markers)
 
             summary = _docstring_summary(testcase.docstring)
-            entries.append(
-                f"{testcase.path}::{testcase.name} [{marker_display}] - {summary}"
-            )
+            entries.append(f"{testcase.path}::{testcase.name} [{marker_display}] - {summary}")
 
+    import sys
     entries.sort()
-    print(f"LINES:{len(entries)}")
+    sys.stdout.write(f"LINES:{len(entries)}\n")
     if entries:
-        print("\n".join(entries))
+        sys.stdout.write("\n".join(entries) + "\n")
 
     return 0
 

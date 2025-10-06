@@ -22,7 +22,6 @@ def compute_ehz_capacity_fast(
     atol: float = 1e-9,
 ) -> float:
     """Compute ``c_EHZ`` via the fast facet-normal search after graph validation."""
-
     graph = build_oriented_edge_graph(B_matrix, c_vector, atol=atol)
     if graph.graph.number_of_nodes() == 0:
         raise ValueError("Oriented-edge graph is empty; polytope lacks admissible edges.")

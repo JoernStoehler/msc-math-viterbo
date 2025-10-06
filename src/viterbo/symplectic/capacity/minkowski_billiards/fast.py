@@ -24,7 +24,6 @@ def compute_minkowski_billiard_length_fast(
     atol: float = 1e-9,
 ) -> float:
     """Return the minimal closed path length using dynamic programming."""
-
     fan = build_normal_fan(billiard_table, atol=atol)
     if fan.vertex_count == 0:
         raise ValueError("Normal fan construction yielded no vertices.")
@@ -270,12 +269,9 @@ def _completion_bounds(
     max_length: int,
 ) -> list[list[float]]:
     """Precompute lower bounds for returning to ``start`` with fixed edge budgets."""
-
     num_vertices = len(neighbors)
     max_remaining = max(0, max_length - 2)
-    bounds = [
-        [math.inf for _ in range(max_remaining + 1)] for _ in range(num_vertices)
-    ]
+    bounds = [[math.inf for _ in range(max_remaining + 1)] for _ in range(num_vertices)]
 
     for vertex in range(num_vertices):
         bounds[vertex][0] = length_matrix[vertex][start]
