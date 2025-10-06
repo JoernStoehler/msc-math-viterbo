@@ -11,6 +11,7 @@ authors = [{ name = "MSc Viterbo Team" }]
 license = { file = "LICENSE" }
 requires-python = ">=3.12"
 dependencies = [
+    "cvxpy>=1.7.3",
     "highspy>=1.11.0",
     "hypothesis>=6.140.3",
     "jax>=0.7.2",
