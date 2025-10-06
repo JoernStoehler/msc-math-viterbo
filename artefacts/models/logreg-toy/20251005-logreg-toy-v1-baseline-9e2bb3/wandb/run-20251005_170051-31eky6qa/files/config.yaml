@@ -1,0 +1,86 @@
+_wandb:
+  value:
+    cli_version: 0.22.1
+    e:
+      0s4jyojvd7obyhwor9ld8bo8upcssg48:
+        codePath: scripts/train_logreg_toy.py
+        codePathLocal: scripts/train_logreg_toy.py
+        cpu_count: 6
+        cpu_count_logical: 12
+        disk:
+          /:
+            total: "983348297728"
+            used: "530024759296"
+        executable: /workspaces/msc-math-viterbo/.venv/bin/python3
+        git:
+          commit: 19b3a9f6024b8f181f3e5a9c817d6f5c04605dd5
+          remote: https://github.com/JoernStoehler/msc-math-viterbo.git
+        host: ccb9a79df495
+        memory:
+          total: "16690130944"
+        os: Linux-6.8.0-85-generic-x86_64-with-glibc2.31
+        program: /workspaces/msc-math-viterbo/scripts/train_logreg_toy.py
+        python: CPython 3.12.1
+        root: artefacts/models/logreg-toy/20251005-logreg-toy-v1-baseline-9e2bb3
+        startedAt: "2025-10-05T17:00:51.054272Z"
+        writerId: 0s4jyojvd7obyhwor9ld8bo8upcssg48
+    m: []
+    python_version: 3.12.1
+    t:
+      "1":
+        - 12
+      "2":
+        - 12
+      "3":
+        - 2
+        - 13
+        - 15
+        - 16
+        - 61
+      "4": 3.12.1
+      "5": 0.22.1
+      "10":
+        - 20
+      "12": 0.22.1
+      "13": linux-x86_64
+dataset:
+  value:
+    config_hash: 475904b3fc6ed18cb6fe61d9df0a0fb3643de7fc09f7a0a4c30df575bdacf36a
+    dataset_name: logreg-toy
+    feature_names:
+      - x0
+      - x1
+    generated_at: "2025-10-05T16:39:23.778683+00:00"
+    generation_params:
+      negative_blob:
+        cov_diag:
+          - 0.75
+          - 0.75
+        mean:
+          - -1
+          - -1
+      positive_blob:
+        cov_diag:
+          - 0.5
+          - 0.5
+        mean:
+          - 1.5
+          - 1.5
+      test_size: 200
+      train_size: 800
+      version: v1
+    generator: scripts/generate_logreg_toy_dataset.py
+    git_commit: 19b3a9f6024b8f181f3e5a9c817d6f5c04605dd5
+    jax_seed: 20251005
+    label_name: label
+    split_sizes:
+      test: 200
+      train: 800
+    version: v1
+training:
+  value:
+    l2_penalty: 0
+    learning_rate: 0.1
+    num_steps: 500
+variant:
+  value: baseline

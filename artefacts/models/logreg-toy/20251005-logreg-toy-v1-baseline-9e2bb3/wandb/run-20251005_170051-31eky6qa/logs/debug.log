@@ -1,0 +1,25 @@
+2025-10-05 17:00:51,055 INFO    MainThread:539268 [wandb_setup.py:_flush():81] Current SDK version is 0.22.1
+2025-10-05 17:00:51,055 INFO    MainThread:539268 [wandb_setup.py:_flush():81] Configure stats pid to 539268
+2025-10-05 17:00:51,055 INFO    MainThread:539268 [wandb_setup.py:_flush():81] Loading settings from /home/codespace/.config/wandb/settings
+2025-10-05 17:00:51,055 INFO    MainThread:539268 [wandb_setup.py:_flush():81] Loading settings from /workspaces/msc-math-viterbo/wandb/settings
+2025-10-05 17:00:51,055 INFO    MainThread:539268 [wandb_setup.py:_flush():81] Loading settings from environment variables
+2025-10-05 17:00:51,055 INFO    MainThread:539268 [wandb_init.py:setup_run_log_directory():705] Logging user logs to artefacts/models/logreg-toy/20251005-logreg-toy-v1-baseline-9e2bb3/wandb/run-20251005_170051-31eky6qa/logs/debug.log
+2025-10-05 17:00:51,055 INFO    MainThread:539268 [wandb_init.py:setup_run_log_directory():706] Logging internal logs to artefacts/models/logreg-toy/20251005-logreg-toy-v1-baseline-9e2bb3/wandb/run-20251005_170051-31eky6qa/logs/debug-internal.log
+2025-10-05 17:00:51,055 INFO    MainThread:539268 [wandb_init.py:init():832] calling init triggers
+2025-10-05 17:00:51,056 INFO    MainThread:539268 [wandb_init.py:init():837] wandb.init called with sweep_config: {}
+config: {'dataset': {'dataset_name': 'logreg-toy', 'version': 'v1', 'generated_at': '2025-10-05T16:39:23.778683+00:00', 'git_commit': '19b3a9f6024b8f181f3e5a9c817d6f5c04605dd5', 'generator': 'scripts/generate_logreg_toy_dataset.py', 'jax_seed': 20251005, 'split_sizes': {'train': 800, 'test': 200}, 'feature_names': ['x0', 'x1'], 'label_name': 'label', 'generation_params': {'version': 'v1', 'train_size': 800, 'test_size': 200, 'positive_blob': {'mean': [1.5, 1.5], 'cov_diag': [0.5, 0.5]}, 'negative_blob': {'mean': [-1.0, -1.0], 'cov_diag': [0.75, 0.75]}}, 'config_hash': '475904b3fc6ed18cb6fe61d9df0a0fb3643de7fc09f7a0a4c30df575bdacf36a'}, 'training': {'learning_rate': 0.1, 'num_steps': 500, 'l2_penalty': 0.0}, 'variant': 'baseline', '_wandb': {}}
+2025-10-05 17:00:51,056 INFO    MainThread:539268 [wandb_init.py:init():880] starting backend
+2025-10-05 17:00:51,262 INFO    MainThread:539268 [wandb_init.py:init():883] sending inform_init request
+2025-10-05 17:00:51,268 INFO    MainThread:539268 [wandb_init.py:init():891] backend started and connected
+2025-10-05 17:00:51,269 INFO    MainThread:539268 [wandb_init.py:init():961] updated telemetry
+2025-10-05 17:00:51,278 INFO    MainThread:539268 [wandb_init.py:init():985] communicating run to backend with 90.0 second timeout
+2025-10-05 17:00:51,875 INFO    MainThread:539268 [wandb_init.py:init():1036] starting run threads in backend
+2025-10-05 17:00:51,978 INFO    MainThread:539268 [wandb_run.py:_console_start():2506] atexit reg
+2025-10-05 17:00:51,978 INFO    MainThread:539268 [wandb_run.py:_redirect():2354] redirect: wrap_raw
+2025-10-05 17:00:51,978 INFO    MainThread:539268 [wandb_run.py:_redirect():2423] Wrapping output streams.
+2025-10-05 17:00:51,978 INFO    MainThread:539268 [wandb_run.py:_redirect():2446] Redirects installed.
+2025-10-05 17:00:51,982 INFO    MainThread:539268 [wandb_init.py:init():1076] run started, returning control to user process
+2025-10-05 17:01:03,145 INFO    MainThread:539268 [wandb_run.py:_finish():2272] finishing run joernstoehler-augsburg-university/viterbo-experiments/31eky6qa
+2025-10-05 17:01:03,145 INFO    MainThread:539268 [wandb_run.py:_atexit_cleanup():2471] got exitcode: 0
+2025-10-05 17:01:03,146 INFO    MainThread:539268 [wandb_run.py:_restore():2453] restore
+2025-10-05 17:01:03,146 INFO    MainThread:539268 [wandb_run.py:_restore():2459] restore done

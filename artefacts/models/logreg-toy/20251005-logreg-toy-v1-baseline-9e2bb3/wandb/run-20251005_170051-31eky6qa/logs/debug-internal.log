@@ -1,0 +1,12 @@
+{"time":"2025-10-05T17:00:51.269853287Z","level":"INFO","msg":"stream: starting","core version":"0.22.1"}
+{"time":"2025-10-05T17:00:51.585242504Z","level":"INFO","msg":"stream: created new stream","id":"31eky6qa"}
+{"time":"2025-10-05T17:00:51.585307215Z","level":"INFO","msg":"handler: started","stream_id":"31eky6qa"}
+{"time":"2025-10-05T17:00:51.585444372Z","level":"INFO","msg":"stream: started","id":"31eky6qa"}
+{"time":"2025-10-05T17:00:51.585467275Z","level":"INFO","msg":"writer: started","stream_id":"31eky6qa"}
+{"time":"2025-10-05T17:00:51.585492482Z","level":"INFO","msg":"sender: started","stream_id":"31eky6qa"}
+{"time":"2025-10-05T17:01:03.147685657Z","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"updating run metadata","runtime_seconds":3.127490959},{"desc":"uploading artifact 20251005-logreg-toy-v1-baseline-9e2bb3","runtime_seconds":0.339270186}],"total_operations":2}}
+{"time":"2025-10-05T17:01:05.544785427Z","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-10-05T17:01:05.900649149Z","level":"INFO","msg":"stream: closing","id":"31eky6qa"}
+{"time":"2025-10-05T17:01:05.900666111Z","level":"INFO","msg":"handler: closed","stream_id":"31eky6qa"}
+{"time":"2025-10-05T17:01:05.900742594Z","level":"INFO","msg":"sender: closed","stream_id":"31eky6qa"}
+{"time":"2025-10-05T17:01:05.900765667Z","level":"INFO","msg":"stream: closed","id":"31eky6qa"}

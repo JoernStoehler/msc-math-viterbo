@@ -1,0 +1,20 @@
+# Git LFS configuration for experimental artefacts
+
+# Datasets
+artefacts/**/*.parquet filter=lfs diff=lfs merge=lfs -text
+
+# Packaged model artefacts
+artefacts/**/*.tar.gz filter=lfs diff=lfs merge=lfs -text
+artefacts/**/*.ckpt filter=lfs diff=lfs merge=lfs -text
+artefacts/**/*.pt filter=lfs diff=lfs merge=lfs -text
+artefacts/**/*.onnx filter=lfs diff=lfs merge=lfs -text
+
+# Training checkpoints (Orbax, tensor storage)
+artefacts/models/**/checkpoints/** filter=lfs diff=lfs merge=lfs -text
+
+# TensorBoard + W&B binaries
+artefacts/**/*.tfevents* filter=lfs diff=lfs merge=lfs -text
+artefacts/**/*.wandb filter=lfs diff=lfs merge=lfs -text
+
+# Large metrics exports
+artefacts/**/*.jsonl filter=lfs diff=lfs merge=lfs -text

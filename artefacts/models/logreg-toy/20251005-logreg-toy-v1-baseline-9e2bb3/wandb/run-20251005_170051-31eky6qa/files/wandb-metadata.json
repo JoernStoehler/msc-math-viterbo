@@ -1,0 +1,27 @@
+{
+  "os": "Linux-6.8.0-85-generic-x86_64-with-glibc2.31",
+  "python": "CPython 3.12.1",
+  "startedAt": "2025-10-05T17:00:51.054272Z",
+  "program": "/workspaces/msc-math-viterbo/scripts/train_logreg_toy.py",
+  "codePath": "scripts/train_logreg_toy.py",
+  "codePathLocal": "scripts/train_logreg_toy.py",
+  "git": {
+    "remote": "https://github.com/JoernStoehler/msc-math-viterbo.git",
+    "commit": "19b3a9f6024b8f181f3e5a9c817d6f5c04605dd5"
+  },
+  "root": "artefacts/models/logreg-toy/20251005-logreg-toy-v1-baseline-9e2bb3",
+  "host": "ccb9a79df495",
+  "executable": "/workspaces/msc-math-viterbo/.venv/bin/python3",
+  "cpu_count": 6,
+  "cpu_count_logical": 12,
+  "disk": {
+    "/": {
+      "total": "983348297728",
+      "used": "530024759296"
+    }
+  },
+  "memory": {
+    "total": "16690130944"
+  },
+  "writerId": "0s4jyojvd7obyhwor9ld8bo8upcssg48"
+}

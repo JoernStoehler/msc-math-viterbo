@@ -1,0 +1,28 @@
+{
+  "dataset_name": "logreg-toy",
+  "version": "v1",
+  "generated_at": "2025-10-05T16:39:23.778683+00:00",
+  "git_commit": "19b3a9f6024b8f181f3e5a9c817d6f5c04605dd5",
+  "generator": "scripts/generate_logreg_toy_dataset.py",
+  "jax_seed": 20251005,
+  "split_sizes": {
+    "train": 800,
+    "test": 200
+  },
+  "feature_names": ["x0", "x1"],
+  "label_name": "label",
+  "generation_params": {
+    "version": "v1",
+    "train_size": 800,
+    "test_size": 200,
+    "positive_blob": {
+      "mean": [1.5, 1.5],
+      "cov_diag": [0.5, 0.5]
+    },
+    "negative_blob": {
+      "mean": [-1.0, -1.0],
+      "cov_diag": [0.75, 0.75]
+    }
+  },
+  "config_hash": "475904b3fc6ed18cb6fe61d9df0a0fb3643de7fc09f7a0a4c30df575bdacf36a"
+}

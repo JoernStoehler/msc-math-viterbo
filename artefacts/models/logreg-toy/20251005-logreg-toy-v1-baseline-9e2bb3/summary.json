@@ -1,0 +1,27 @@
+{
+  "run_name": "20251005_logreg_toy_v1_baseline",
+  "run_slug": "20251005-logreg-toy-v1-baseline-9e2bb3",
+  "timestamp": "2025-10-05T17:01:02.287480+00:00",
+  "dataset_version": "v1",
+  "variant": "baseline",
+  "hyperparameters": {
+    "learning_rate": 0.1,
+    "num_steps": 500,
+    "l2_penalty": 0.0
+  },
+  "train_metrics": {
+    "loss": 0.047939597577247486,
+    "accuracy": 0.98875
+  },
+  "test_metrics": {
+    "loss": 0.0534343076338028,
+    "accuracy": 0.97
+  },
+  "checkpoint_step": 500,
+  "checkpoint_path": "/workspaces/msc-math-viterbo/artefacts/models/logreg-toy/20251005-logreg-toy-v1-baseline-9e2bb3/checkpoints/step_500",
+  "artefacts": {
+    "metrics_jsonl": "/workspaces/msc-math-viterbo/artefacts/models/logreg-toy/20251005-logreg-toy-v1-baseline-9e2bb3/metrics.jsonl",
+    "tensorboard": "/workspaces/msc-math-viterbo/artefacts/models/logreg-toy/20251005-logreg-toy-v1-baseline-9e2bb3/tensorboard",
+    "checkpoint_dir": "/workspaces/msc-math-viterbo/artefacts/models/logreg-toy/20251005-logreg-toy-v1-baseline-9e2bb3/checkpoints"
+  }
+}

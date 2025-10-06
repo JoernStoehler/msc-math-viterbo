@@ -1,0 +1,12 @@
+{
+  "run_slug": "20251005-logreg-toy-v1-baseline-9e2bb3",
+  "dataset_version": "v1",
+  "train": {
+    "loss": 0.047939597577247486,
+    "accuracy": 0.98875
+  },
+  "test": {
+    "loss": 0.0534343076338028,
+    "accuracy": 0.97
+  }
+}
