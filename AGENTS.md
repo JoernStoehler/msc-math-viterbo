@@ -117,6 +117,9 @@ def ehz_capacity(
   `rtol` ~ 1e‑9–1e‑12 and `atol` near 0.0 for well‑conditioned problems, but adjust as needed.
 - Assertions: use clear options such as `pytest.approx`, `numpy.testing.assert_allclose`,
   `numpy.isclose`, or `math.isclose` depending on the case.
+- Makefile toggles for pytest-driven targets:
+  - Testmon caching is enabled by default. Set `USE_TESTMON=0` to disable for a run.
+  - `PYTEST_ARGS="..."` forwards additional selectors/markers (e.g., `PYTEST_ARGS="-k smoke"`).
 - Property‑based tests: welcome when invariants are cleanly expressible (e.g., monotonicity,
   symmetry). Prefer Hypothesis.
 - Shape/name validation in tests: enable `jaxtyping` + `beartype`/`jaxtyped` during tests when
@@ -150,8 +153,14 @@ Daily development (in provisioned env)
 1. Read the task and scan relevant modules/tests.
 2. Plan the minimal change (one feature OR one fix OR one refactor). Write a short plan (≈4–7 steps).
 3. Implement pure functions in `src/viterbo/`; keep I/O at the edges. Add/adjust tests.
-4. Run: `make precommit-fast` during quick loops; finish with `make precommit` (alias for
-   `make precommit-slow`) before handing off or requesting review.
+4. Run: `make precommit-fast` during quick loops (wraps `lint-fast` + `test-incremental`); finish with
+   `make precommit` (alias for `make precommit-slow`) before handing off or requesting review. Use
+   `make help` for per-target tips, toggles, and related workflows (testmon caching is on by default;
+   set `USE_TESTMON=0` to disable, `PYTEST_ARGS="..."` forwards selectors/markers).
+   - Lint tiers: `make lint-fast` runs Ruff E/F/B essentials (ignores jaxtyping F722); `make lint`
+     mirrors CI (Ruff policy set + Prettier).
+   - Typechecking tiers: `make typecheck-fast` targets `src/viterbo`; `make typecheck` covers the
+     entire repo.
 
 Short loops may use direct commands (`uv run pytest path/to/test.py`, custom markers, etc.). Close
 each handoff by re-running the golden-path targets above.
