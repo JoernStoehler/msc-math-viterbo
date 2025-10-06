@@ -1,1 +1,0 @@
-"""Example-level smoke tests."""

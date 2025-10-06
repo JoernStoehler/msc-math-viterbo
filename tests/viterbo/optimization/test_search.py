@@ -12,12 +12,14 @@ def test_enumerate_search_space_deterministic() -> None:
         max_dimension=4,
         transforms_per_base=1,
         random_polytopes_per_dimension=1,
+        max_candidates=12,
     )
     second = enumerate_search_space(
         rng_seed=11,
         max_dimension=4,
         transforms_per_base=1,
         random_polytopes_per_dimension=1,
+        max_candidates=12,
     )
     assert len(first) == len(second)
     for poly_a, poly_b in zip(first, second, strict=True):
@@ -32,6 +34,7 @@ def test_search_space_contains_catalog() -> None:
         max_dimension=4,
         transforms_per_base=0,
         random_polytopes_per_dimension=0,
+        max_candidates=32,
     )
     catalog_names = {poly.name for poly in catalog()}
     search_names = {poly.name for poly in search_space}

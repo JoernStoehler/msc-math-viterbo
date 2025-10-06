@@ -13,9 +13,12 @@ import numpy as np
 import pytest
 import pytest_benchmark.plugin  # type: ignore[reportMissingTypeStubs]  # Third-party plugin has no stubs; TODO: add types or vendor stubs
 
-from tests.geometry._polytope_samples import load_polytope_instances
-from viterbo.symplectic.capacity import compute_ehz_capacity
-from viterbo.symplectic.capacity_fast import compute_ehz_capacity_fast
+
+pytestmark = [pytest.mark.smoke, pytest.mark.deep]
+
+from tests._utils.polytope_samples import load_polytope_instances
+from viterbo.symplectic.capacity import compute_ehz_capacity_reference
+from viterbo.symplectic.capacity.facet_normals.fast import compute_ehz_capacity_fast
 
 # Reuse the exact same catalog of polytopes as the regression tests so that any
 # deviation caught here points to a performance-only issue rather than a change
@@ -43,15 +46,15 @@ def test_fast_ehz_capacity_matches_reference_and_tracks_speed(
     """
 
     try:
-        reference = compute_ehz_capacity(B, c)
+        reference = compute_ehz_capacity_reference(B, c)
     except ValueError as error:
         # When the reference rejects an instance (e.g. infeasible constraints)
         # we still run the optimized variant through the benchmark harness so
         # the failure is visible in timing reports. Pytest-benchmark re-raises
         # the underlying exception, letting us assert on parity of the message.
         with pytest.raises(ValueError) as caught:
-            benchmark(lambda: compute_ehz_capacity_fast(B, c))
+            benchmark(lambda: compute_ehz_capacity_fast(B, c))  # type: ignore[reportArgumentType]
         assert str(caught.value) == str(error)
     else:
-        optimized = cast(float, benchmark(lambda: compute_ehz_capacity_fast(B, c)))
+        optimized = cast(float, benchmark(lambda: compute_ehz_capacity_fast(B, c)))  # type: ignore[reportArgumentType]
         assert np.isclose(optimized, reference, atol=1e-8)

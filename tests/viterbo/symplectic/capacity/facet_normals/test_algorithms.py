@@ -8,17 +8,42 @@ import numpy as np
 import pytest
 from pytest import MonkeyPatch
 
-from tests.geometry._polytope_samples import load_polytope_instances
-from viterbo.symplectic.capacity_algorithms import _subset_utils as subset_utils
-from viterbo.symplectic.capacity_algorithms import (
+from tests._utils.polytope_samples import load_polytope_instances
+from viterbo.geometry.polytopes import (
+    cross_polytope,
+    hypercube,
+    simplex_with_uniform_weights,
+)
+from viterbo.symplectic.capacity.facet_normals import (
     compute_ehz_capacity_fast,
     compute_ehz_capacity_reference,
 )
+from viterbo.symplectic.capacity.facet_normals import subset_utils as subset_utils
 from viterbo.symplectic.core import standard_symplectic_matrix
 
+_SMOKE_POLYTOPES = (
+    simplex_with_uniform_weights(2, name="simplex-2d-smoke"),
+    hypercube(2, name="hypercube-2d-smoke"),
+    cross_polytope(2, name="cross-polytope-2d-smoke"),
+)
+_SMOKE_CAPACITY_CASES = tuple(
+    pytest.param(*poly.halfspace_data(), id=poly.name) for poly in _SMOKE_POLYTOPES
+)
+
 _BASE_DATA = load_polytope_instances(variant_count=0)
-_BASE_INSTANCES = _BASE_DATA[0]
-_BASE_IDS = _BASE_DATA[1]
+_BASE_INSTANCES = list(_BASE_DATA[0])
+_BASE_IDS = list(_BASE_DATA[1])
+
+
+def _capacity_case(index: int) -> pytest.ParameterSet:
+    B, c = _BASE_INSTANCES[index]
+    identifier = _BASE_IDS[index]
+    return pytest.param(B, c, id=identifier, marks=(pytest.mark.deep,))
+
+
+_CAPACITY_CASES = _SMOKE_CAPACITY_CASES + tuple(
+    _capacity_case(idx) for idx in range(len(_BASE_INSTANCES))
+)
 
 
 @pytest.fixture(name="subset_utils_close_records")
@@ -64,17 +89,17 @@ def fixture_subset_utils_close_records(
     return records
 
 
-@pytest.mark.parametrize(("B", "c"), _BASE_INSTANCES, ids=_BASE_IDS)
+@pytest.mark.parametrize(("B", "c"), _CAPACITY_CASES)
 def test_fast_matches_reference(B: np.ndarray, c: np.ndarray) -> None:
     """Reference and fast implementations should agree on sample polytopes."""
     try:
         reference_value = compute_ehz_capacity_reference(B, c)
     except ValueError as exc:
         with pytest.raises(ValueError) as caught:
-            compute_ehz_capacity_fast(B, c)
+            compute_ehz_capacity_fast(B, c)  # type: ignore[reportArgumentType]
         assert str(caught.value) == str(exc)
     else:
-        fast_value = compute_ehz_capacity_fast(B, c)
+        fast_value = compute_ehz_capacity_fast(B, c)  # type: ignore[reportArgumentType]
         assert math.isclose(reference_value, fast_value, rel_tol=1e-10, abs_tol=1e-12)
 
 
@@ -97,11 +122,11 @@ def test_symplectic_invariance_square() -> None:
     )
     transformed_B = B @ np.linalg.inv(transform)
     try:
-        base = compute_ehz_capacity_reference(B, c)
-        transformed = compute_ehz_capacity_reference(transformed_B, c)
+        base: float = compute_ehz_capacity_reference(B, c)
+        transformed: float = compute_ehz_capacity_reference(transformed_B, c)  # type: ignore[reportArgumentType]
     except ValueError:
         pytest.skip("Reference algorithm is undefined for the chosen symmetric sample.")
-    assert math.isclose(base, transformed, rel_tol=1e-10, abs_tol=1e-12)
+    assert math.isclose(float(base), float(transformed), rel_tol=1e-10, abs_tol=1e-12)  # type: ignore[reportUnknownArgumentType]
 
 
 def test_rejects_odd_dimension() -> None:
@@ -111,7 +136,7 @@ def test_rejects_odd_dimension() -> None:
     with pytest.raises(ValueError):
         compute_ehz_capacity_reference(B, c)
     with pytest.raises(ValueError):
-        compute_ehz_capacity_fast(B, c)
+        compute_ehz_capacity_fast(B, c)  # type: ignore[reportArgumentType]
 
 
 def test_prepare_subset_respects_tol(
@@ -127,7 +152,13 @@ def test_prepare_subset_respects_tol(
     )
     c = np.array([0.0, 0.0, 1.0])
     J = standard_symplectic_matrix(2)
-    subset = subset_utils.prepare_subset(B_matrix=B, c=c, indices=(0, 1, 2), J=J, tol=1e-6)
+    subset = subset_utils.prepare_subset(  # type: ignore[reportArgumentType]
+        B_matrix=B,  # type: ignore[reportArgumentType]
+        c=c,  # type: ignore[reportArgumentType]
+        indices=(0, 1, 2),
+        J=J,
+        tol=1e-6,  # type: ignore[reportArgumentType]
+    )  # type: ignore[reportArgumentType]
     assert subset is not None
 
     allclose = subset_utils_close_records["allclose"]

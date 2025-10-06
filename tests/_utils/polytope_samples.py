@@ -10,7 +10,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Final
 
-import numpy as np
+import jax
+import jax.numpy as jnp
 
 from viterbo.geometry.polytopes import catalog, random_transformations
 from viterbo.geometry.volume import polytope_volume_reference
@@ -23,11 +24,11 @@ def load_polytope_instances(
     include_metadata: bool = False,
 ) -> (
     tuple[
-        Sequence[tuple[np.ndarray, np.ndarray]],
+        Sequence[tuple[jnp.ndarray, jnp.ndarray]],
         Sequence[str],
     ]
     | tuple[
-        Sequence[tuple[np.ndarray, np.ndarray]],
+        Sequence[tuple[jnp.ndarray, jnp.ndarray]],
         Sequence[str],
         Sequence[dict[str, float | None]],
     ]
@@ -40,8 +41,8 @@ def load_polytope_instances(
     sample set across correctness, benchmarking, and profiling runs.
     """
 
-    rng = np.random.default_rng(rng_seed)
-    instances: list[tuple[np.ndarray, np.ndarray]] = []
+    key = jax.random.PRNGKey(rng_seed)
+    instances: list[tuple[jnp.ndarray, jnp.ndarray]] = []
     identifiers: list[str] = []
     metadata: list[dict[str, float | None]] = []
 
@@ -57,7 +58,7 @@ def load_polytope_instances(
                 }
             )
 
-        variants = random_transformations(polytope, rng=rng, count=variant_count)
+        variants = random_transformations(polytope, key=key, count=variant_count)
         for index, variant in enumerate(variants):
             variant_B, variant_c = variant.halfspace_data()
             instances.append((variant_B, variant_c))

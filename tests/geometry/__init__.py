@@ -1,1 +1,0 @@
-"""Geometry-focused regression tests."""
