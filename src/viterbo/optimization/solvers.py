@@ -11,6 +11,7 @@ import jax.numpy as jnp
 import numpy as np
 from jaxtyping import Array, Float
 
+from viterbo._wrapped.highs import load_highs
 from viterbo._wrapped.optimize import linprog as _wrapped_linprog
 
 BoundTuple = tuple[float | None, float | None]
@@ -69,13 +70,13 @@ class _HighsResources:
 @lru_cache(1)
 def _load_highs() -> _HighsResources:
     """Load HiGHS classes on-demand."""
-    from highspy import Highs, HighsModelStatus, HighsStatus, HighsVarType
+    resources = load_highs()
 
     return _HighsResources(
-        Highs=Highs,
-        HighsModelStatus=HighsModelStatus,
-        HighsStatus=HighsStatus,
-        HighsVarType=HighsVarType,
+        Highs=resources.Highs,
+        HighsModelStatus=resources.HighsModelStatus,
+        HighsStatus=resources.HighsStatus,
+        HighsVarType=resources.HighsVarType,
     )
 
 
