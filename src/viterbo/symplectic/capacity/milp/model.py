@@ -74,10 +74,13 @@ class MilpCapacityResult:
     certificate: MilpCertificate
     explored_subsets: int
     gap_ratio: float | None
+    gap_absolute: float | None
 
 
-def compute_gap_ratio(*, upper_bound: float, lower_bound: float | None) -> float | None:
-    """Return the relative gap ``(upper-lower)/upper`` when finite bounds are available."""
+def compute_gap_absolute(
+    *, upper_bound: float, lower_bound: float | None
+) -> float | None:
+    """Return the absolute gap ``upper - lower`` when finite bounds are available."""
 
     if lower_bound is None:
         return None
@@ -85,7 +88,19 @@ def compute_gap_ratio(*, upper_bound: float, lower_bound: float | None) -> float
         return None
 
     gap = max(0.0, upper_bound - max(0.0, lower_bound))
-    ratio = gap / upper_bound
+    return float(gap)
+
+
+def compute_gap_ratio(*, upper_bound: float, lower_bound: float | None) -> float | None:
+    """Return the relative gap ``(upper-lower)/upper`` when finite bounds are available."""
+
+    absolute_gap = compute_gap_absolute(upper_bound=upper_bound, lower_bound=lower_bound)
+    if absolute_gap is None:
+        return None
+    if upper_bound <= 0.0:
+        return None
+
+    ratio = absolute_gap / upper_bound
     return float(min(1.0, ratio))
 
 

@@ -14,6 +14,7 @@ from viterbo.symplectic.capacity.milp.model import (
     SubsetMilpModel,
     build_certificate,
     build_subset_model,
+    compute_gap_absolute,
     compute_gap_ratio,
     estimate_capacity_lower_bound,
     solve_subset_model,
@@ -79,4 +80,5 @@ def compute_ehz_capacity_reference(
         certificate=best_certificate,
         explored_subsets=explored,
         gap_ratio=compute_gap_ratio(upper_bound=value, lower_bound=lower_value),
+        gap_absolute=compute_gap_absolute(upper_bound=value, lower_bound=lower_value),
     )

@@ -46,6 +46,8 @@ def test_reference_matches_facet_solution(
     assert 0.0 <= result.lower_bound <= result.upper_bound
     assert result.gap_ratio is not None
     assert 0.0 <= result.gap_ratio <= 1.0
+    assert result.gap_absolute is not None
+    assert 0.0 <= result.gap_absolute <= result.upper_bound
 
     certificate = result.certificate
     assert isinstance(certificate.subset, FacetSubset)
