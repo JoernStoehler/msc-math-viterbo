@@ -113,6 +113,11 @@ def ehz_capacity(
 ## 6) Testing (facts)
 
 - Structure: organize by feature/module; explicit fixtures; no hidden I/O; clean up temp files.
+- Metadata: every `tests/**/test_*.py` function must declare exactly one goal marker
+  (`@pytest.mark.goal_math`, `@pytest.mark.goal_code`, or `@pytest.mark.goal_performance`) and
+  start with a concise docstring that states the invariant or behaviour under test. Docstrings in
+  `tests/` may use plain prose (no Google-style sections required) but must mention what the test
+  covers and, for math/code markers, which algorithmic surface or property is exercised.
 - Tolerances: choose context‑appropriate tolerances; document rationale. Typical float64 ranges are
   `rtol` ~ 1e‑9–1e‑12 and `atol` near 0.0 for well‑conditioned problems, but adjust as needed.
 - Assertions: use clear options such as `pytest.approx`, `numpy.testing.assert_allclose`,

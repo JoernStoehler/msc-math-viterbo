@@ -13,10 +13,10 @@ import numpy as np
 import pytest
 import pytest_benchmark.plugin  # type: ignore[reportMissingTypeStubs]  # Third-party plugin has no stubs; TODO: add types or vendor stubs
 
-
 pytestmark = [pytest.mark.smoke, pytest.mark.deep]
 
 from tests._utils.polytope_samples import load_polytope_instances
+
 from viterbo.symplectic.capacity import compute_ehz_capacity_reference
 from viterbo.symplectic.capacity.facet_normals.fast import compute_ehz_capacity_fast
 
@@ -30,6 +30,7 @@ _POLYTOPE_INSTANCES = _POLYTOPE_DATA[0]
 _POLYTOPE_IDS = _POLYTOPE_DATA[1]
 
 
+@pytest.mark.goal_performance
 @pytest.mark.benchmark(group="ehz_capacity")
 @pytest.mark.parametrize(("B", "c"), _POLYTOPE_INSTANCES, ids=_POLYTOPE_IDS)
 def test_fast_ehz_capacity_matches_reference_and_tracks_speed(

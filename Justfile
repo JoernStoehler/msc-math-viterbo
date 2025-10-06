@@ -59,6 +59,7 @@ format:
 lint:
     @echo "Running Ruff lint and Prettier check (CI parity)."
     $UV run ruff check .
+    $UV run python scripts/check_test_metadata.py
     {{PRETTIER}} --log-level warn --check {{PRETTIER_PATTERNS}}
 
 # Minimal Ruff diagnostics (E/F/B006/B008).
