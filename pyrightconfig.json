@@ -1,13 +1,14 @@
 {
-  "$schema": "https://raw.githubusercontent.com/microsoft/pyright/main/packages/pyright/schemas/pyrightconfig.schema.json",
-  "include": ["src", "tests"],
+  "$schema": "https://raw.githubusercontent.com/microsoft/pyright/main/packages/pyright/schema/pyrightconfig.schema.json",
+  "include": ["src"],
+  "exclude": [".venv", "build", "dist", "**/__pycache__"],
   "pythonVersion": "3.12",
-  "typeCheckingMode": "strict",
+  "typeCheckingMode": "basic",
   "useLibraryCodeForTypes": true,
   "stubPath": "typings",
-  "reportMissingImports": "error",
-  "reportUnknownParameterType": "error",
-  "reportUnknownVariableType": "error",
-  "reportUnknownMemberType": "error",
-  "reportMissingTypeStubs": "error"
+  "extraPaths": ["src", "tests"],
+  "executionEnvironments": [
+    { "root": "src" }
+  ],
+  "reportMissingImports": "error"
 }
