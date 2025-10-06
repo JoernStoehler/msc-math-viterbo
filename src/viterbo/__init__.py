@@ -50,10 +50,11 @@ from viterbo.optimization import (
     solve_mixed_integer_linear_program as solve_mixed_integer_linear_program,
 )
 from viterbo.symplectic.capacity import (
+    MinkowskiNormalFan as MinkowskiNormalFan,
+    build_normal_fan as build_normal_fan,
     compute_ehz_capacity_reference as compute_ehz_capacity_reference,
-)
-from viterbo.symplectic.capacity.facet_normals.fast import (
-    compute_ehz_capacity_fast as compute_ehz_capacity_fast,
+    compute_minkowski_billiard_length_fast as compute_minkowski_billiard_length_fast,
+    compute_minkowski_billiard_length_reference as compute_minkowski_billiard_length_reference,
 )
 from viterbo.symplectic.core import ZERO_TOLERANCE as ZERO_TOLERANCE
 from viterbo.symplectic.core import minkowski_sum as minkowski_sum

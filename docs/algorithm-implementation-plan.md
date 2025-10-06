@@ -30,8 +30,9 @@ Status tags: unmarked items remain in progress; entries labelled `[done]` are co
   - Use reference implementations as oracles for the fast counterparts on random polytopes in low
     dimension, and compare different algorithms where theoretical equality/ordering holds.
 - Tooling:
-  - LP: adopt a single JAX‑first path via JAXopt’s OSQP with `Q = 0` (no generic solver
-    abstraction). Keep SciPy/NumPy interop under `viterbo._wrapped/` only.
+  - LP: adopt a single JAX‑first path. JAXopt’s OSQP wrapper is deprecated, so evaluate a
+    maintained replacement before adding a new dependency; keep SciPy/NumPy interop under
+    `viterbo._wrapped/` only.
 - MILP: standardise on HiGHS via `highspy` with direct use and no abstraction. Place any interop
   code under `viterbo._wrapped/` or keep in notebooks/scripts.
   - Reuse existing half-space and vertex utilities in `viterbo.geometry.polytopes` for conversions
@@ -43,7 +44,7 @@ Status tags: unmarked items remain in progress; entries labelled `[done]` are co
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------- |
 | [done] Geometry backends       | Extend `viterbo.geometry.polytopes` with converters between H/V-representations, facet adjacency, and normal fan traversal utilities. Cache combinatorial data keyed by hashable polytope fingerprints. | `scipy`, `pycddlib` (optional)             | Unit tests covering cubes, simplices, products; deterministic hashing |
 | [done] Symplectic form helpers | Centralise symplectic matrix builders, support-function evaluations, and Minkowski sums in `viterbo.symplectic.core`.                                                                                   | `jax.numpy` (migrate from NumPy)           | Compare with closed-form values on axis-aligned boxes                 |
-| Policy: Single LP path         | Replace prior abstraction with a single JAX‑first LP entry using JAXopt OSQP (`Q = 0`), tracked in task T5.                                                                                             | `jaxopt`                                   | Unit tests for feasible/infeasible cases; CI green                    |
+| Policy: Single LP path         | Replace prior abstraction with a single JAX‑first LP entry; assess a maintained solver to supersede the deprecated JAXopt OSQP route (tracked in task T5).                                          | pending (JAX‑first solver)      | Unit tests for feasible/infeasible cases; CI green                    |
 | [done] Test fixtures           | Expand `tests/geometry/_polytope_samples.py` with representative polytopes (toric, centrally symmetric, product). Provide expected capacities/volumes when available.                                   | none                                       | Verified values from literature                                       |
 | Benchmark harness              | Add `tests/performance/` cases that exercise each fast implementation with pytest-benchmark markers and profile hooks.                                                                                  | `pytest-benchmark`, `pytest-line-profiler` | Baseline run records stored under `.benchmarks/`                      |
 
