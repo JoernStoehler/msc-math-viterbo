@@ -13,7 +13,13 @@
     ".venv": true,
     ".uv": true,
     "**/*.egg-info": true,
-    ".DS_Store": true
+    ".DS_Store": true,
+    "artefacts": true,
+    "htmlcov": true,
+    "node_modules": true,
+    "prof": true,
+    "site": true,
+    "tmp": true
   },
 
   // Keep them out of search results too
@@ -23,6 +29,12 @@
     "**/.ruff_cache": true,
     "**/.mypy_cache": true,
     "**/.pyright": true,
-    "**/.benchmarks": true
+    "**/.benchmarks": true,
+    "artefacts": true,
+    "htmlcov": true,
+    "node_modules": true,
+    "prof": true,
+    "site": true,
+    "tmp": true
   }
 }
