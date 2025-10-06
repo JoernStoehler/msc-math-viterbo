@@ -126,31 +126,37 @@ type-strict: typecheck
 # Tip: Testmon cache is on by default; set `USE_TESTMON=0` to disable, add selectors via `PYTEST_ARGS`.
 test:
     @echo "Running smoke-tier pytest (testmon cache: {{USE_TESTMON}}; set USE_TESTMON=0 to disable)."
-    @testmon_flags=(); \
+    @testmon_flags=(); parallel_flags=(); \
     if [[ "${USE_TESTMON,,}" != "0" && "${USE_TESTMON,,}" != "false" && "${USE_TESTMON,,}" != "no" ]]; then \
-        testmon_flags=(--testmon); \
+        testmon_flags=(--testmon); parallel_flags=(-p no:xdist); \
+    else \
+        parallel_flags=(-n auto); \
     fi; \
-    TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_SMOKE_FLAGS}} -n auto {{PYTEST_ARGS}}
+    TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_SMOKE_FLAGS}} "${parallel_flags[@]}" {{PYTEST_ARGS}}
 
 # Smoke + deep tiers.
 # Tip: Ideal before review; combine with `just bench-deep` for performance-sensitive work.
 test-deep:
     @echo "Running smoke + deep pytest tiers."
-    @testmon_flags=(); \
+    @testmon_flags=(); parallel_flags=(); \
     if [[ "${USE_TESTMON,,}" != "0" && "${USE_TESTMON,,}" != "false" && "${USE_TESTMON,,}" != "no" ]]; then \
-        testmon_flags=(--testmon); \
+        testmon_flags=(--testmon); parallel_flags=(-p no:xdist); \
+    else \
+        parallel_flags=(-n auto); \
     fi; \
-    TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_DEEP_FLAGS}} -n auto {{PYTEST_ARGS}}
+    TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_DEEP_FLAGS}} "${parallel_flags[@]}" {{PYTEST_ARGS}}
 
 # Longhaul pytest tier (manual).
 # Tip: Scheduled weekly; coordinate with maintainer before running locally.
 test-longhaul:
     @echo "Running longhaul pytest tier (expect multi-hour runtime)."
-    @testmon_flags=(); \
+    @testmon_flags=(); parallel_flags=(); \
     if [[ "${USE_TESTMON,,}" != "0" && "${USE_TESTMON,,}" != "false" && "${USE_TESTMON,,}" != "no" ]]; then \
-        testmon_flags=(--testmon); \
+        testmon_flags=(--testmon); parallel_flags=(-p no:xdist); \
+    else \
+        parallel_flags=(-n auto); \
     fi; \
-    TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_LONGHAUL_FLAGS}} -n auto {{PYTEST_ARGS}}
+    TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_LONGHAUL_FLAGS}} "${parallel_flags[@]}" {{PYTEST_ARGS}}
 
 # Run smoke, deep, and longhaul sequentially.
 test-all: test test-deep test-longhaul
@@ -159,7 +165,7 @@ test-all: test test-deep test-longhaul
 # Tip: Keeps testmon warm during tight loops; clear cache by deleting `{{TESTMON_CACHE}}`.
 test-incremental:
     @echo "Running smoke-tier pytest with testmon cache warmup."
-    TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest --testmon --maxfail=1 {{PYTEST_SMOKE_FLAGS}} -n auto {{PYTEST_ARGS}}
+    TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest --testmon --maxfail=1 {{PYTEST_SMOKE_FLAGS}} -p no:xdist {{PYTEST_ARGS}}
 
 # Smoke-tier benchmarks.
 # Tip: Use `PYTEST_ARGS="-k case"` to focus on a specific benchmark.
@@ -196,11 +202,13 @@ profile-line:
 # Tip: Generates HTML at `htmlcov/index.html`; testmon cache is on by default.
 coverage:
     @echo "Running smoke-tier tests with coverage (HTML + XML reports)."
-    @testmon_flags=(); \
+    @testmon_flags=(); parallel_flags=(); \
     if [[ "${USE_TESTMON,,}" != "0" && "${USE_TESTMON,,}" != "false" && "${USE_TESTMON,,}" != "no" ]]; then \
-        testmon_flags=(--testmon); \
+        testmon_flags=(--testmon); parallel_flags=(-p no:xdist); \
+    else \
+        parallel_flags=(-n auto); \
     fi; \
-    TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_SMOKE_FLAGS}} -n auto --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml {{PYTEST_ARGS}}
+    TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_SMOKE_FLAGS}} "${parallel_flags[@]}" --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml {{PYTEST_ARGS}}
 
 # Lint essentials and incremental smoke tests.
 # Tip: Use during tight dev loops; relies on the testmon cache.
