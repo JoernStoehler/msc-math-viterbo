@@ -26,6 +26,7 @@ dist/
 .pyright/
 .pyright_cache/
 .artefacts/
+artefacts/
 .testmondata
 
 # Node tooling

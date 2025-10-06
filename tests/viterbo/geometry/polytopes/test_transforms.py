@@ -7,6 +7,7 @@ import math
 import jax
 import jax.numpy as jnp
 import numpy as np
+import pytest
 
 from viterbo.geometry.halfspaces import enumerate_vertices
 from viterbo.geometry.polytopes import (
@@ -76,6 +77,7 @@ def test_random_affine_map_is_deterministic_per_seed() -> None:
     assert np.linalg.cond(np.asarray(matrix_a)) < 1e6
 
 
+@pytest.mark.deep
 def test_random_polytope_facets_are_active() -> None:
     key = jax.random.PRNGKey(2024)
     polytope = random_polytope(3, key=key, name="random-3d-test")
