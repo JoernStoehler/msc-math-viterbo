@@ -42,7 +42,7 @@ def test_reference_matches_facet_solution(
 
     assert math.isclose(result.upper_bound, facet_value, rel_tol=0.0, abs_tol=1e-9)
     assert result.lower_bound is not None
-    assert math.isclose(result.lower_bound, facet_value, rel_tol=0.0, abs_tol=1e-9)
+    assert 0.0 <= result.lower_bound <= result.upper_bound
 
     certificate = result.certificate
     beta = jnp.asarray(certificate.beta)

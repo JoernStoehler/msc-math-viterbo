@@ -14,6 +14,7 @@ from viterbo.symplectic.capacity.milp.model import (
     SubsetMilpModel,
     build_certificate,
     build_subset_model,
+    estimate_capacity_lower_bound,
     solve_subset_model,
 )
 
@@ -60,10 +61,19 @@ def compute_ehz_capacity_reference(
     if best_certificate is None:
         raise ValueError("No admissible facet subset satisfied the MILP constraints.")
 
+    lower_bound = estimate_capacity_lower_bound(
+        B_matrix=B,
+        c=offsets,
+        tol=float(tol),
+        options=highs_options,
+    )
+
     value = float(best_certificate.capacity)
     return MilpCapacityResult(
         upper_bound=value,
-        lower_bound=value,
+        lower_bound=value
+        if lower_bound is None
+        else float(min(value, lower_bound)),
         certificate=best_certificate,
         explored_subsets=explored,
     )

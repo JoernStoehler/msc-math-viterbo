@@ -43,7 +43,8 @@ def test_fast_solver_matches_reference(
     fast_result = compute_ehz_capacity_fast_milp(B, c, node_limit=4096)
 
     assert math.isclose(fast_result.upper_bound, reference_value, rel_tol=0.0, abs_tol=1e-9)
-    assert fast_result.lower_bound is None
+    assert fast_result.lower_bound is not None
+    assert 0.0 <= fast_result.lower_bound <= fast_result.upper_bound
     assert fast_result.explored_subsets >= 1
 
 
