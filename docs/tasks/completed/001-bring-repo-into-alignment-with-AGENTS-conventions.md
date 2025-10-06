@@ -7,7 +7,7 @@ typing, no `__all__`, bounded caches, and CI green under the golden path.
 
 ## Acceptance criteria
 
-- CI is green locally and on GitHub (`make ci`): Ruff format/lint (Google docstrings, no relative
+- CI is green locally and on GitHub (`just ci`): Ruff format/lint (Google docstrings, no relative
   imports), Pyright strict, tests, benchmarks job unaffected.
 - No relative imports anywhere in `src/` (aggregators included). Verification:
   `rg -n "^from \\." src` returns no results.
@@ -26,7 +26,7 @@ typing, no `__all__`, bounded caches, and CI green under the golden path.
 ## Starter notes (longlist, actionable)
 
 Use small PRs. Keep changes scoped; prefer one theme per PR (imports vs. docstrings vs. cache).
-Always run `make ci`.
+Always run `just ci`.
 
 ### 1) Absolute imports only (aggregators included)
 
@@ -129,10 +129,10 @@ directly.
 
 ## Commands (quick reference)
 
-- Run all checks: `make ci`
+- Run all checks: `just ci`
 - Grep relative imports: `rg -n "^from \\." src`
 - Grep **all**: `rg -n "^__all__\s*="`
-- Benchmarks (fast paths): `make bench`
+- Benchmarks (fast paths): `just bench`
 
 ---
 

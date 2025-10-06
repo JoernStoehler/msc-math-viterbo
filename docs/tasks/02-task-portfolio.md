@@ -84,7 +84,7 @@ Update this graph whenever briefs change status or new items enter the queue.
   [`docs/tasks/scheduled/2025-10-05-single-jax-first-lp-solver.md`](scheduled/2025-10-05-single-jax-first-lp-solver.md)
 - **Why it matters**: removes LP indirection and SciPy wrapper, standardises on a JAX‑native solver
   (JAXopt OSQP), and improves onboarding while keeping the library JAX‑first.
-- **Next checkpoint**: implement `linprog_jax`, replace tests, and validate `make ci` locally; land
+- **Next checkpoint**: implement `linprog_jax`, replace tests, and validate `just ci` locally; land
   as a single focused PR after current queue merges.
 
 ### E1 — Facet-normal validation & dataset build

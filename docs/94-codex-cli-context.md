@@ -723,7 +723,7 @@ def ehz_capacity(
    - `bash .devcontainer/post-create.sh` (one-time)
    - `bash .devcontainer/post-start.sh` (each boot)
 
-1. Install deps: `make setup` (uses `uv sync` with a lockfile)
+1. Install deps: `just setup` (uses `uv sync` with a lockfile)
 
 ### 4.2 Daily development
 
@@ -731,7 +731,7 @@ def ehz_capacity(
 1. Plan the **minimal** change (one feature OR one fix OR one refactor).
 1. Implement small, pure functions in `src/viterbo/`. Keep I/O at the edges.
 1. Add or adjust tests next to the code (deterministic, minimal fixtures).
-1. Run locally: use the commands in Quick reference. `make ci` mirrors CI.
+1. Run locally: use the commands in Quick reference. `just ci` mirrors CI.
 
 ### 4.3 Performance-sensitive changes
 
@@ -748,7 +748,7 @@ def ehz_capacity(
 
 - Keep diffs focused (≈ ≤300 LOC when practical).
 - Ensure types, tests, and docs are updated.
-- Ensure `make ci` is **green locally**.
+- Ensure `just ci` is **green locally**.
 
 ### 4.5 Pull request (concise content)
 
@@ -779,7 +779,7 @@ def ehz_capacity(
 - Benchmarks live in `tests/performance/` and **reuse the same fixtures** as correctness tests.
 - Autosave results under `.benchmarks/` for comparisons in PRs.
 - Perf hygiene for fast paths:
-  - Run `make bench` (autosave enabled) and include a short delta summary in the PR (compare against
+  - Run `just bench` (autosave enabled) and include a short delta summary in the PR (compare against
     latest artifact or baseline branch).
   - Keep RNG seeds fixed and note any environment constraints that influence results.
   - If regression > 10% and not justified, add a time‑boxed waiver entry in `waivers.toml` while
@@ -830,7 +830,7 @@ def ehz_capacity(
 
 ## 12) CI & Branch protection (facts)
 
-- `make ci` mirrors GitHub Actions (format check → lint → strict typecheck → tests).
+- `just ci` mirrors GitHub Actions (format check → lint → strict typecheck → tests).
 - Branch protection requires all checks to pass before merge.
 - Concurrency cancels in-progress runs per ref to save CI time.
 - Perf-critical changes: include a benchmark delta summary or a documented waiver.
@@ -840,13 +840,13 @@ def ehz_capacity(
 
 ```bash
 # install (dev)
-make setup
+just setup
 
 # format + lint + typecheck + unit tests (fast loop)
-make format && make lint && make typecheck && make test
+just format && just lint && just typecheck && just test
 
 # full local mirror of CI
-make ci
+just ci
 
 # performance (when touching fast paths)
 pytest tests/performance -q --benchmark-only --benchmark-autosave --benchmark-storage=.benchmarks
@@ -856,7 +856,7 @@ pytest tests/performance -q --benchmark-only --benchmark-autosave --benchmark-st
 
 - Do **not** introduce custom array aliases (`Vector`, `FloatMatrix`, …). Use jaxtyping with
   explicit shapes.
-- Do **not** merge PRs without local `make ci` passing.
+- Do **not** merge PRs without local `just ci` passing.
 - Do **not** add dependencies without necessity and a clearly documented rationale. Prefer a single
   golden path over optional backends.
 - Do **not** hide I/O or mutation inside math helpers.
@@ -872,9 +872,9 @@ pytest tests/performance -q --benchmark-only --benchmark-autosave --benchmark-st
 ## 16) Environment assurance (facts)
 
 - Maintainers ensure tool configs are correct and pre-baked into the devcontainer, `pyproject.toml`,
-  CI, and `Makefile`.
-- New contributors should rely on the provided commands (`make setup`, `make format`, `make lint`,
-  `make typecheck`, `make test`, `make ci`) without re‑validating tool configuration.
+  CI, and `Justfile`.
+- New contributors should rely on the provided commands (`just setup`, `just format`, `just lint`,
+  `just typecheck`, `just test`, `just ci`) without re‑validating tool configuration.
 - If you notice a mismatch (tools disagree or the golden path breaks), do not hand‑tune your local
   setup. Open an issue or a draft PR (`Needs-Unblock: <topic>`) describing the mismatch; maintainers
   will fix the environment.

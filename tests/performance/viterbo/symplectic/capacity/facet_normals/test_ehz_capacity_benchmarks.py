@@ -23,7 +23,7 @@ from viterbo.symplectic.capacity.facet_normals.fast import compute_ehz_capacity_
 # Reuse the exact same catalog of polytopes as the regression tests so that any
 # deviation caught here points to a performance-only issue rather than a change
 # in sampling. The helper also carries documentation about why the instances are
-# structured the way they are. We keep line-profiler opt-in via CLI (`make
+# structured the way they are. We keep line-profiler opt-in via CLI (`just
 # profile-line`) to avoid noisy output during normal pytest runs.
 _POLYTOPE_DATA = load_polytope_instances()
 _POLYTOPE_INSTANCES = _POLYTOPE_DATA[0]

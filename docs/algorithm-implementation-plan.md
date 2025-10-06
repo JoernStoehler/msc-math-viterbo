@@ -232,7 +232,7 @@ Status tags: unmarked items remain in progress; entries labelled `[done]` are co
      `c_EHZ^n ≤ n!·vol`).
 1. **Benchmark suites**
    - For each fast implementation, add `@pytest.mark.benchmark` tests and profile runs via
-     `make profile` before deciding on micro-optimisations.
+     `just profile` before deciding on micro-optimisations.
    - Record baseline metrics in the repository wiki or docs for trend tracking.
 1. **Documentation**
    - Update `docs/convex-polytope-cehz-capacities.md` and `docs/convex-polytope-volumes.md` with

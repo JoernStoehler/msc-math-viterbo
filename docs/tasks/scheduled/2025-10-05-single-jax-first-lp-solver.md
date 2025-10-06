@@ -52,7 +52,7 @@ We will standardize on JAXopt’s OSQP as the JAX‑first solver. LPs are a spec
 - Docs:
   - Short README snippet: “LP solver policy: use `viterbo.optimization.linprog_jax`”.
 - Tooling:
-  - `make ci` green (Ruff format/lint, Pyright strict, tests).
+  - `just ci` green (Ruff format/lint, Pyright strict, tests).
 
 ## 4. Dependencies and prerequisites
 
@@ -70,7 +70,7 @@ Blocking prerequisites: none; defer execution until currently queued PRs land.
 1. Update `optimization/__init__.py` and package `__init__.py` to export only `linprog_jax`.
 1. Replace solver tests with `test_linprog_jax.py` and adjust assertions.
 1. Add the README policy note.
-1. Run `make ci`; iterate until green.
+1. Run `just ci`; iterate until green.
 
 Checkpoint: single PR with focused diff (preferably ≤300 LOC) and CI summary in the PR description.
 
@@ -82,7 +82,7 @@ Checkpoint: single PR with focused diff (preferably ≤300 LOC) and CI summary i
 
 ## 7. Testing, benchmarks, and verification
 
-- CI: `make ci` (format → lint → typecheck → tests) must pass.
+- CI: `just ci` (format → lint → typecheck → tests) must pass.
 - Numerical checks use explicit tolerances: `rtol=1e-9`, `atol=1e-8`.
 - Optional local timing vs. previous SciPy path (informational only, not required in CI).
 
