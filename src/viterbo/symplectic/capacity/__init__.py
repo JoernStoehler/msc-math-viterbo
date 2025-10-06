@@ -23,6 +23,11 @@ from viterbo.symplectic.capacity.facet_normals.fast import (
 from viterbo.symplectic.capacity.facet_normals.reference import (
     compute_ehz_capacity_reference as compute_ehz_capacity_reference,
 )
+from viterbo.symplectic.capacity.support_relaxation.fast import (
+    compute_support_relaxation_capacity_fast as compute_support_relaxation_capacity_fast,
+)
+from viterbo.symplectic.capacity.support_relaxation.reference import (
+    compute_support_relaxation_capacity_reference as compute_support_relaxation_capacity_reference,
 from viterbo.symplectic.capacity.symmetry_reduced import (
     FacetPairingMetadata as FacetPairingMetadata,
     compute_ehz_capacity_fast_symmetry_reduced as compute_ehz_capacity_fast_symmetry_reduced,
