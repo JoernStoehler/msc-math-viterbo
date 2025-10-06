@@ -38,7 +38,7 @@ We will standardize on JAXopt’s OSQP as the JAX‑first solver. LPs are a spec
 ## 3. Deliverables and exit criteria
 
 - Code:
-  - `viterbo.optimization.linprog_jax` implemented (JAXopt OSQP, `Q = 0`).
+  - `viterbo.optimization.linprog_jax` implemented (JAX-first solver with a maintained OSQP-compatible backend).
   - Deleted files and APIs:
     - `src/viterbo/optimization/solvers.py` (all LP abstractions)
     - `src/viterbo/_wrapped/optimize.py` (SciPy linprog wrapper)
@@ -56,16 +56,14 @@ We will standardize on JAXopt’s OSQP as the JAX‑first solver. LPs are a spec
 
 ## 4. Dependencies and prerequisites
 
-- `jaxopt` is already included in `pyproject.toml` (golden path). Confirm the version meets the
-  minimal requirement; no environment change needed.
+- Select a maintained JAX-first solver dependency (JAXopt replacement) and add it deliberately once chosen; current golden path keeps the slot empty.
 - No change to SciPy usage elsewhere (`_wrapped/spatial.py` remains).
 
 Blocking prerequisites: none; defer execution until currently queued PRs land.
 
 ## 5. Execution plan and checkpoints
 
-1. Implement `linprog_jax` (JAX arrays in/out, shape checks, constraint builder to `A, l, u`, OSQP
-   call with sensible defaults, clear status mapping).
+1. Implement `linprog_jax` (JAX arrays in/out, shape checks, constraint builder to `A, l, u`, call into the chosen maintained solver with sensible defaults, clear status mapping).
 1. Delete LP abstractions and SciPy wrapper; remove all re‑exports.
 1. Update `optimization/__init__.py` and package `__init__.py` to export only `linprog_jax`.
 1. Replace solver tests with `test_linprog_jax.py` and adjust assertions.
@@ -78,7 +76,7 @@ Checkpoint: single PR with focused diff (preferably ≤300 LOC) and CI summary i
 
 - Agent time: Low → Medium (one PR, code + tests + docs).
 - Compute budget: Low (unit tests only).
-- Maintainer involvement: Low (review, environment approval for `jaxopt`).
+- Maintainer involvement: Low (review, dependency approval once the maintained solver is proposed).
 
 ## 7. Testing, benchmarks, and verification
 
@@ -94,7 +92,7 @@ Checkpoint: single PR with focused diff (preferably ≤300 LOC) and CI summary i
   - Mitigation: translate non‑optimal OSQP statuses to `RuntimeError` with clear messages; add unit
     tests.
 - Escalate (Needs-Unblock) if:
-  - Adding `jaxopt` clashes with the devcontainer or CI setup.
+  - The selected maintained solver clashes with the devcontainer or CI setup.
   - Material performance regression (>10%) blocks progress on downstream tasks.
 
 ## 9. Follow-on work
