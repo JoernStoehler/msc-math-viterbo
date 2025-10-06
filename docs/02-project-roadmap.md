@@ -46,7 +46,7 @@ Status: 🟡 Core utilities landed; experiments need structuring.
 - Execute the research‑portfolio infrastructure tasks (T1/T2): structure quantity modules around
   reference/fast (JAX‑first) splits with shared kernels and central wrappers, and land the shared
   testing/benchmarking
-  harness.【F:docs/tasks/completed/2025-10-04-geometry-module-refactor.md†L1-L120】【F:docs/tasks/scheduled/2025-10-04-testing-benchmark-harness.md†L1-L84】
+  program.【F:docs/tasks/completed/2025-10-04-geometry-module-refactor.md†L1-L120】【F:docs/tasks/draft/2025-10-06-testing-benchmark-regression-program.md†L1-L200】
 - Harden performance-sensitive kernels with additional benchmarks and profiling hooks before scaling
   search runs.
 - Integrate additional symplectic invariants (e.g., cylindrical capacity bounds) reusing the

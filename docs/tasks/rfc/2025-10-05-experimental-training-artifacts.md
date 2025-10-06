@@ -2,7 +2,7 @@
 
 - **Status**: RFC
 - **Last updated**: 2025-10-05
-- **Owner / DRI**: Unassigned
+- **Owner / DRI**: Codex & PI (joint)
 - **Reviewers**: Maintainer (PI)
 - **Related docs**: AGENTS.md
 

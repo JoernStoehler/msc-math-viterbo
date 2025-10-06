@@ -2,7 +2,7 @@
 
 - **Status**: Draft
 - **Last updated**: 2025-10-04
-- **Owner / DRI**: Unassigned
+- **Owner / DRI**: Codex & PI (joint)
 - **Related docs**: `docs/tasks/02-task-portfolio.md`, `docs/algorithm-implementation-plan.md`
 
 ## 1. Context and intent
@@ -58,7 +58,8 @@ investigation is needed.
 
 ## 7. Testing, benchmarks, and verification
 
-- Unit tests comparing algorithm variants on known analytic cases.
+- Unit tests comparing algorithm variants on known analytic cases (execute via `just test` smoke
+  tier — 10 s per-test, 60 s session cap — before deep analyses).
 - Integration tests ensuring dataset ingestion works end-to-end.
 - Benchmark medium tier to ensure runtime stays within expectations; long-haul runs optional when
   exploring edge cases.
