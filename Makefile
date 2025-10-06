@@ -2,125 +2,201 @@ UV ?= uv
 JAX_ENABLE_X64 ?= 1
 export JAX_ENABLE_X64
 
+PYTEST := $(UV) run pytest
+PYRIGHT := $(UV) run pyright
+RUFF := $(UV) run ruff
+PRETTIER := npx prettier
+MKDOCS := $(UV) run mkdocs
+
 SMOKE_TEST_TIMEOUT ?= 10
-SMOKE_SUITE_TIMEOUT ?= 60
 TESTMON_CACHE ?= .testmondata
 
-.PHONY: help setup format lint lint-fast typecheck typecheck-fast test test-deep test-longhaul test-all test-incremental bench bench-deep bench-longhaul profile profile-line coverage precommit-fast precommit-slow precommit docs-build docs-serve docs-check-links ci ci-weekly clean clean-artefacts train-logreg evaluate-logreg publish-logreg
+PYTEST_SMOKE_FLAGS := -m "not deep and not longhaul" --timeout=$(SMOKE_TEST_TIMEOUT) --timeout-method=thread
+PYTEST_DEEP_FLAGS := -m "not longhaul"
+PYTEST_LONGHAUL_FLAGS := -m "longhaul"
+BENCHMARK_STORAGE := .benchmarks
+BENCH_FLAGS := --benchmark-only --benchmark-autosave --benchmark-storage=$(BENCHMARK_STORAGE)
+PROFILES_DIR := .profiles
+PRETTIER_PATTERNS := "README.md" "docs/**/*.{md,mdx}" "progress-reports/**/*.md" "**/*.{yml,yaml,json}"
+PRETTIER_IGNORES := "!node_modules/**" "!.benchmarks/**" "!site/**"
 
+.PHONY: help \
+        setup \
+        format \
+        lint \
+        lint-fast \
+        typecheck \
+        typecheck-fast \
+        test \
+        test-deep \
+        test-longhaul \
+        test-all \
+        test-incremental \
+        bench \
+        bench-deep \
+        bench-longhaul \
+        profile \
+        profile-line \
+        coverage \
+        precommit-fast \
+        precommit-slow \
+        precommit \
+        docs-build \
+        docs-serve \
+        docs-check-links \
+        ci \
+        ci-weekly \
+        clean \
+        clean-artefacts \
+        train-logreg \
+        evaluate-logreg \
+        publish-logreg
+
+#------------------------------------------------------------------------------
+# Self-documenting help
+#------------------------------------------------------------------------------
+## help                 Show the frequently used targets.
 help:
 	@echo "Common development commands:"
-	@echo "  make setup     # install the package with development dependencies"
-	@echo "  make format    # format code with ruff"
-	@echo "  make lint      # lint code with ruff"
-	@echo "  make lint-fast # lint essentials (E/F/B006/B008 only)"
-	@echo "  make typecheck # run pyright static analysis"
-	@echo "  make typecheck-fast # quick pyright verifytypes sweep"
-	@echo "  make test      # run smoke-tier pytest suite with enforced timeouts"
-	@echo "  make test-deep # run smoke+deep pytest tiers"
-	@echo "  make test-longhaul # run longhaul pytest tier (manual)"
-	@echo "  make test-all  # run smoke, deep, and longhaul sequentially"
-	@echo "  make test-incremental # run smoke tier using pytest-testmon cache"
-	@echo "  make bench     # run smoke-tier benchmarks"
-	@echo "  make bench-deep # run deep-tier benchmarks"
-	@echo "  make bench-longhaul # run longhaul benchmarks (manual)"
-	@echo "  make profile   # profile deep-tier benchmarks"
-	@echo "  make profile-line # line-profile deep-tier kernel"
-	@echo "  make coverage  # run smoke-tier tests with coverage reports"
-	@echo "  make precommit-fast # lint essentials and incremental smoke tests"
-	@echo "  make precommit-slow # full format/lint/typecheck/smoke"
-	@echo "  make docs-build  # build MkDocs site with strict checks"
-	@echo "  make docs-serve  # serve MkDocs locally on :8000"
-	@echo "  make docs-check-links # build with htmlproofer link checks"
-	@echo "  make ci        # run the CI command set"
-	@echo "  make ci-weekly # run CI plus longhaul tiers"
-	@echo "  make clean     # remove cached tooling outputs"
-	@echo "  make clean-artefacts # remove benchmarking, profiling, and coverage artefacts"
+	@grep -E '^## [a-z]' $(MAKEFILE_LIST) | sed 's/^## //'
 
+#------------------------------------------------------------------------------
+# Core QA workflow
+#------------------------------------------------------------------------------
+## setup                Install the package with development dependencies.
 setup:
 	$(UV) sync --extra dev
 
+## format               Run Ruff formatter and Prettier writes.
 format:
-	$(UV) run ruff format .
-	npx prettier --write "README.md" "docs/**/*.{md,mdx}" "progress-reports/**/*.md" "**/*.{yml,yaml,json}" "!node_modules/**" "!.benchmarks/**" "!site/**"
+	$(RUFF) format .
+	$(PRETTIER) --write $(PRETTIER_PATTERNS) $(PRETTIER_IGNORES)
 
+## lint                 Full Ruff lint and Prettier validation.
 lint:
-	$(UV) run ruff check .
-	npx prettier --check "README.md" "docs/**/*.{md,mdx}" "progress-reports/**/*.md" "**/*.{yml,yaml,json}" "!node_modules/**" "!.benchmarks/**" "!site/**"
+	$(RUFF) check .
+	$(PRETTIER) --check $(PRETTIER_PATTERNS) $(PRETTIER_IGNORES)
 
+## lint-fast            Minimal Ruff diagnostics (E/F/B006/B008).
 lint-fast:
-	$(UV) run ruff check src tests --select E9 --select F --select B006 --select B008
+	$(RUFF) check src tests --select E9 --select F --select B006 --select B008
 
+## typecheck            Run strict Pyright analysis.
 typecheck:
-	$(UV) run pyright
+	$(PYRIGHT)
 
+## typecheck-fast       Quick verifytypes sweep for public API.
 typecheck-fast:
-	$(UV) run pyright --verifytypes viterbo
+	$(PYRIGHT) --verifytypes viterbo
 
+#------------------------------------------------------------------------------
+# Pytest tiers
+#------------------------------------------------------------------------------
+## test                 Smoke-tier pytest with enforced timeouts.
 test:
-	$(UV) run pytest -m "not deep and not longhaul" --timeout=$(SMOKE_TEST_TIMEOUT) --timeout-method=thread
+	$(PYTEST) $(PYTEST_SMOKE_FLAGS)
 
+## test-deep            Smoke + deep tiers.
 test-deep:
-	$(UV) run pytest -m "not longhaul"
+	$(PYTEST) $(PYTEST_DEEP_FLAGS)
 
+## test-longhaul        Longhaul pytest tier (manual).
 test-longhaul:
-	$(UV) run pytest -m "longhaul"
+	$(PYTEST) $(PYTEST_LONGHAUL_FLAGS)
 
+## test-all             Run smoke, deep, and longhaul sequentially.
 test-all: test test-deep test-longhaul
 
+## test-incremental     Smoke tier with pytest-testmon cache.
 test-incremental:
-	$(UV) run pytest --testmon --testmondata $(TESTMON_CACHE) --maxfail=1 -m "not deep and not longhaul" --timeout=$(SMOKE_TEST_TIMEOUT) --timeout-method=thread
+	$(PYTEST) --testmon --testmondata $(TESTMON_CACHE) --maxfail=1 $(PYTEST_SMOKE_FLAGS)
 
+#------------------------------------------------------------------------------
+# Benchmarks and profiling
+#------------------------------------------------------------------------------
+## bench                Smoke-tier benchmarks.
 bench:
-	$(UV) run pytest tests/performance -m "smoke" --benchmark-only --benchmark-autosave --benchmark-storage=.benchmarks
+	$(PYTEST) tests/performance -m "smoke" $(BENCH_FLAGS)
 
+## bench-deep           Deep-tier benchmarks.
 bench-deep:
-	$(UV) run pytest tests/performance -m "deep" --benchmark-only --benchmark-autosave --benchmark-storage=.benchmarks
+	$(PYTEST) tests/performance -m "deep" $(BENCH_FLAGS)
 
+## bench-longhaul       Longhaul benchmarks (manual).
 bench-longhaul:
-	$(UV) run pytest tests/performance -m "longhaul" --benchmark-only --benchmark-autosave --benchmark-storage=.benchmarks
+	$(PYTEST) tests/performance -m "longhaul" $(BENCH_FLAGS)
 
+## profile              Profile deep-tier benchmarks (callgrind + svg).
 profile:
-	@mkdir -p .profiles
-	$(UV) run pytest tests/performance -m "deep" --profile --profile-svg --pstats-dir=.profiles
+	@mkdir -p $(PROFILES_DIR)
+	$(PYTEST) tests/performance -m "deep" --profile --profile-svg --pstats-dir=$(PROFILES_DIR)
 
+## profile-line         Line profile the fast EHZ kernel.
 profile-line:
-	@mkdir -p .profiles
-	$(UV) run pytest tests/performance -m "deep" --line-profile viterbo.symplectic.capacity.facet_normals.fast.compute_ehz_capacity_fast --pstats-dir=.profiles
+	@mkdir -p $(PROFILES_DIR)
+	$(PYTEST) tests/performance -m "deep" --line-profile viterbo.symplectic.capacity.facet_normals.fast.compute_ehz_capacity_fast --pstats-dir=$(PROFILES_DIR)
 
+#------------------------------------------------------------------------------
+# Coverage and pre-commit gates
+#------------------------------------------------------------------------------
+## coverage             Smoke-tier tests with coverage reports.
 coverage:
-	$(UV) run pytest -m "not deep and not longhaul" --timeout=$(SMOKE_TEST_TIMEOUT) --timeout-method=thread --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml
+	$(PYTEST) $(PYTEST_SMOKE_FLAGS) --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml
 
+## precommit-fast       Lint essentials and incremental smoke tests.
 precommit-fast: lint-fast test-incremental
 
+## precommit-slow       Full formatter, lint, typecheck, and smoke tests.
 precommit-slow: format lint typecheck test
 
+## precommit            Alias for precommit-slow.
 precommit: precommit-slow
 
+#------------------------------------------------------------------------------
+# Continuous integration presets
+#------------------------------------------------------------------------------
+## ci                   Run the CI command set locally.
 ci:
 	$(UV) run python scripts/check_waivers.py
-	$(UV) run ruff format --check .
-	$(UV) run ruff check .
-	npx prettier --check "README.md" "docs/**/*.{md,mdx}" "progress-reports/**/*.md" "**/*.{yml,yaml,json}" "!node_modules/**" "!.benchmarks/**" "!site/**"
-	$(UV) run pyright
-	$(UV) run pytest -m "not deep and not longhaul" --timeout=$(SMOKE_TEST_TIMEOUT) --timeout-method=thread --cov=src/viterbo --cov-report=term-missing --cov-report=xml --cov-report=html
+	$(RUFF) format --check .
+	$(RUFF) check .
+	$(PRETTIER) --check $(PRETTIER_PATTERNS) $(PRETTIER_IGNORES)
+	$(PYRIGHT)
+	$(PYTEST) $(PYTEST_SMOKE_FLAGS) --cov=src/viterbo --cov-report=term-missing --cov-report=xml --cov-report=html
 
+## ci-weekly            CI plus longhaul tiers and benchmarks.
 ci-weekly: ci test-longhaul bench bench-longhaul
+
+#------------------------------------------------------------------------------
+# Documentation
+#------------------------------------------------------------------------------
+## docs-build           Build MkDocs site with strict checks.
 docs-build:
-	$(UV) run mkdocs build --strict
+	$(MKDOCS) build --strict
 
+## docs-serve           Serve MkDocs locally on :8000.
 docs-serve:
-	$(UV) run mkdocs serve -a 0.0.0.0:8000
+	$(MKDOCS) serve -a 0.0.0.0:8000
 
+## docs-check-links     Run MkDocs build in strict mode (fails on warnings).
 docs-check-links:
-	$(UV) run mkdocs build --strict
+	$(MKDOCS) build --strict
 
+#------------------------------------------------------------------------------
+# Hygiene
+#------------------------------------------------------------------------------
+## clean                Remove cached tooling outputs.
 clean:
 	rm -rf .pytest_cache .ruff_cache .pyright .pyright_cache build dist *.egg-info
 
+## clean-artefacts      Remove benchmarking, profiling, and coverage artefacts.
 clean-artefacts:
-	rm -rf .benchmarks .profiles htmlcov .coverage* .artefacts
+	rm -rf $(BENCHMARK_STORAGE) $(PROFILES_DIR) htmlcov .coverage* .artefacts
 
+#------------------------------------------------------------------------------
+# Toy logistic regression helpers
+#------------------------------------------------------------------------------
+## train-logreg         Train the toy logistic regression experiment.
 train-logreg:
 	@set -a; \
 	  if [ -f .env ]; then . ./.env; fi; \
@@ -131,6 +207,7 @@ train-logreg:
 	  fi; \
 	  WANDB_API_KEY="$$WANDB_API_KEY" $(UV) run python scripts/train_logreg_toy.py $(ARGS)
 
+## evaluate-logreg      Evaluate a toy logistic regression run.
 evaluate-logreg:
 	@if [ -z "$$RUN_DIR" ]; then \
 	  echo "RUN_DIR must reference the run directory to evaluate." >&2; \
@@ -138,6 +215,7 @@ evaluate-logreg:
 	fi
 	$(UV) run python scripts/evaluate_logreg_toy.py --run-dir "$$RUN_DIR" $(ARGS)
 
+## publish-logreg       Package a toy logistic regression run for sharing.
 publish-logreg:
 	@if [ -z "$$RUN_DIR" ]; then \
 	  echo "RUN_DIR must reference the run directory to publish." >&2; \
