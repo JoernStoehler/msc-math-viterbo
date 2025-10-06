@@ -6,8 +6,8 @@ import math
 
 import jax.numpy as jnp
 import pytest
-
 from tests._utils.baselines import load_baseline
+
 from viterbo.geometry.polytopes import (
     Polytope,
     catalog,
@@ -27,6 +27,7 @@ _BASELINE_CAPACITIES = {
 }
 _POLYTOPE_LOOKUP = {poly.name: poly for poly in catalog()}
 
+@pytest.mark.goal_math
 @pytest.mark.parametrize(
     "polytope_name",
     sorted(_BASELINE_CAPACITIES.keys()),
@@ -41,6 +42,7 @@ def test_capacity_matches_baseline(polytope_name: str) -> None:
     assert math.isclose(capacity, expected, rel_tol=0.0, abs_tol=1e-9)
 
 
+@pytest.mark.goal_math
 def test_capacity_scales_quadratically_under_dilation() -> None:
     r"""Scaling the polytope dilates the capacity by the square factor."""
 
@@ -54,6 +56,7 @@ def test_capacity_scales_quadratically_under_dilation() -> None:
     assert math.isclose(scaled_capacity, (scale**2) * base_capacity, rel_tol=0.0, abs_tol=1e-8)
 
 
+@pytest.mark.goal_math
 def test_capacity_is_translation_invariant() -> None:
     """Rigid translations of the polytope leave ``c_EHZ`` unchanged."""
 
@@ -69,6 +72,7 @@ def test_capacity_is_translation_invariant() -> None:
     assert math.isclose(translated_capacity, base_capacity, rel_tol=0.0, abs_tol=1e-9)
 
 
+@pytest.mark.goal_math
 def test_truncated_simplex_matches_known_subset_action() -> None:
     """Adding an extra facet leaves the optimal action unchanged."""
 
@@ -80,6 +84,7 @@ def test_truncated_simplex_matches_known_subset_action() -> None:
     assert math.isclose(capacity, polytope.reference_capacity, rel_tol=0.0, abs_tol=1e-9)
 
 
+@pytest.mark.goal_math
 def test_two_dimensional_simplex_matches_fast_capacity() -> None:
     """The 2D simplex yields a finite, consistent capacity across implementations."""
 
