@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from viterbo.symplectic.capacity.support_relaxation import kernels as _kernels
 from viterbo.symplectic.capacity.support_relaxation.fast import (
     SupportRelaxationDiagnostics,
     SupportRelaxationResult,
@@ -17,7 +16,4 @@ __all__ = [
     "compute_support_relaxation_capacity_reference",
     "SupportRelaxationDiagnostics",
     "SupportRelaxationResult",
-    "SmoothingMethod",
 ]
-
-SmoothingMethod = _kernels.SmoothingMethod

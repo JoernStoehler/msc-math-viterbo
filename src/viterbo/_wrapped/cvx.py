@@ -1,4 +1,4 @@
-"""Thin wrappers around CVXPy with solver tolerance helpers."""
+"""Thin wrappers around CVXPy with explicit optional-dependency handling."""
 
 from __future__ import annotations
 
@@ -27,15 +27,10 @@ def solve_epigraph_minimum(
     solver: str,
     tolerance: float,
 ) -> float:
-    """Solve ``min t`` subject to ``t >= values_i`` using CVXPy."""
-    array = _np.asarray(values, dtype=float)
-    if array.size == 0:
-        msg = "Epigraph minimum expects at least one value."
-        raise ValueError(msg)
+    """Solve ``min t`` s.t. ``t >= values_i`` using CVXPy."""
     cvxpy = _load_cvxpy()
-
     variable = cvxpy.Variable()
-    constraints = [variable >= float(v) for v in array]
+    constraints = [variable >= float(v) for v in _np.asarray(values, dtype=float)]
     problem = cvxpy.Problem(cvxpy.Minimize(variable), constraints)
     options: dict[str, Any] = {}
     solver_lower = solver.lower()

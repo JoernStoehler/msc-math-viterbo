@@ -14,10 +14,12 @@ from viterbo.geometry.volume import polytope_volume_fast, polytope_volume_refere
 pytestmark = [pytest.mark.smoke, pytest.mark.deep]
 
 
+@pytest.mark.goal_performance
 @pytest.mark.benchmark
 def test_volume_fast_matches_reference(
     benchmark: pytest_benchmark.plugin.BenchmarkFixture,
 ) -> None:
+    """Benchmark the fast volume estimator while asserting parity with the reference."""
     key = jax.random.PRNGKey(314)
     polytope = random_polytope(4, key=key, name="volume-bench")
     B, c = polytope.halfspace_data()

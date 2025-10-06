@@ -7,8 +7,8 @@ import math
 import numpy as np
 import pytest
 from pytest import MonkeyPatch
-
 from tests._utils.polytope_samples import load_polytope_instances
+
 from viterbo.geometry.polytopes import (
     cross_polytope,
     hypercube,
@@ -92,6 +92,7 @@ def fixture_subset_utils_close_records(
     return records
 
 
+@pytest.mark.goal_math
 @pytest.mark.parametrize(("B", "c"), _CAPACITY_CASES)
 def test_fast_matches_reference(B: np.ndarray, c: np.ndarray) -> None:
     """Reference and fast implementations should agree on sample polytopes."""
@@ -106,6 +107,7 @@ def test_fast_matches_reference(B: np.ndarray, c: np.ndarray) -> None:
         assert math.isclose(reference_value, fast_value, rel_tol=1e-10, abs_tol=1e-12)
 
 
+@pytest.mark.goal_math
 def test_symplectic_invariance_square() -> None:
     """A linear symplectic change of coordinates preserves the capacity."""
     B, c = _BASE_INSTANCES[0]
@@ -132,6 +134,7 @@ def test_symplectic_invariance_square() -> None:
     assert math.isclose(float(base), float(transformed), rel_tol=1e-10, abs_tol=1e-12)  # type: ignore[reportUnknownArgumentType]
 
 
+@pytest.mark.goal_code
 def test_rejects_odd_dimension() -> None:
     """Polytopes in odd ambient dimension should raise a ``ValueError``."""
     B = np.eye(3)
@@ -142,6 +145,7 @@ def test_rejects_odd_dimension() -> None:
         compute_ehz_capacity_fast(B, c)  # type: ignore[reportArgumentType]
 
 
+@pytest.mark.goal_code
 def test_prepare_subset_respects_tol(
     subset_utils_close_records: dict[str, float | None],
 ) -> None:

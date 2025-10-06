@@ -2,7 +2,7 @@
 
 - **Status**: Draft
 - **Last updated**: 2025-10-04
-- **Owner / DRI**: Unassigned
+- **Owner / DRI**: Codex & PI (joint)
 - **Related docs**: `docs/tasks/02-task-portfolio.md`, `docs/algorithm-implementation-plan.md`
 
 ## 1. Context and intent
@@ -58,7 +58,8 @@ behaviour, and may reveal candidate counterexamples or new hypotheses.
 
 ## 7. Testing, benchmarks, and verification
 
-- Reuse dataset validation from E1.
+- Reuse dataset validation from E1 and re-run `just test` smoke tier (10 s per-test, 60 s session
+  cap) before publishing derived metrics.
 - Add unit checks for derived metrics (e.g., verifying invariants hold for known shapes).
 - Optional: incorporate lightweight regression tests ensuring notebooks execute via
   `pytest --nbmake` or similar.
