@@ -45,14 +45,24 @@ class SubsetMilpSolution:
 class MilpCertificate:
     """Certificate describing an admissible facet subset and action value."""
 
-    subset_indices: tuple[int, ...]
-    beta: Float[Array, " subset_size"]
-    symplectic_products: Float[Array, " subset_size subset_size"]
+    subset: FacetSubset
     capacity: float
 
     @property
+    def subset_indices(self) -> tuple[int, ...]:
+        return self.subset.indices
+
+    @property
+    def beta(self) -> Float[Array, " subset_size"]:
+        return self.subset.beta
+
+    @property
+    def symplectic_products(self) -> Float[Array, " subset_size subset_size"]:
+        return self.subset.symplectic_products
+
+    @property
     def subset_size(self) -> int:
-        return int(self.beta.shape[0])
+        return int(self.subset.beta.shape[0])
 
 
 @dataclass(frozen=True)
@@ -470,11 +480,7 @@ def build_certificate(
     J = standard_symplectic_matrix(model.dimension)
     symplectic_products = (normals @ J) @ normals.T
 
-    subset = FacetSubset(
-        indices=model.indices,
-        beta=beta,
-        symplectic_products=symplectic_products,
-    )
+    subset = FacetSubset(indices=model.indices, beta=beta, symplectic_products=symplectic_products)
 
     # Evaluate the candidate using the dynamic programming shortcut for robustness.
     from viterbo.symplectic.capacity.facet_normals.subset_utils import (  # local import for cycle
@@ -485,9 +491,4 @@ def build_certificate(
     if candidate is None:
         return None
 
-    return MilpCertificate(
-        subset_indices=model.indices,
-        beta=beta,
-        symplectic_products=symplectic_products,
-        capacity=float(candidate),
-    )
+    return MilpCertificate(subset=subset, capacity=float(candidate))

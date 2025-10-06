@@ -16,6 +16,7 @@ from viterbo.symplectic.capacity import compute_ehz_capacity_reference
 from viterbo.symplectic.capacity.milp.reference import (
     compute_ehz_capacity_reference as compute_ehz_capacity_reference_milp,
 )
+from viterbo.symplectic.capacity.facet_normals.subset_utils import FacetSubset
 
 
 @pytest.fixture(scope="module")
@@ -47,9 +48,13 @@ def test_reference_matches_facet_solution(
     assert 0.0 <= result.gap_ratio <= 1.0
 
     certificate = result.certificate
-    beta = jnp.asarray(certificate.beta)
-    normals = jnp.asarray(B)[jnp.asarray(certificate.subset_indices), :]
-    support = jnp.asarray(c)[jnp.asarray(certificate.subset_indices)]
+    assert isinstance(certificate.subset, FacetSubset)
+    assert math.isclose(certificate.capacity, result.upper_bound, rel_tol=0.0, abs_tol=1e-12)
+
+    subset = certificate.subset
+    beta = jnp.asarray(subset.beta)
+    normals = jnp.asarray(B)[jnp.asarray(subset.indices), :]
+    support = jnp.asarray(c)[jnp.asarray(subset.indices)]
 
     # Verify Reeb-measure feasibility from the certificate.
     assert bool(jnp.all(beta >= -1e-12))
