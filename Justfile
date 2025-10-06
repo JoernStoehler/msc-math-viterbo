@@ -59,7 +59,13 @@ format:
 lint:
     @echo "Running Ruff lint and Prettier check (CI parity)."
     $UV run ruff check .
+    $UV run python scripts/check_test_metadata.py
     {{PRETTIER}} --log-level warn --check {{PRETTIER_PATTERNS}}
+
+# Summarise pytest test metadata (markers + docstrings).
+test-metadata:
+    @echo "Usage: just test-metadata [ARGS='--marker goal_math tests/path']; forwards ARGS to report_test_metadata."
+    $UV run python scripts/report_test_metadata.py {{ARGS}}
 
 # Minimal Ruff diagnostics (E/F/B006/B008).
 # Tip: Catches runtime errors quickly; run `just lint` for policy/doc coverage.

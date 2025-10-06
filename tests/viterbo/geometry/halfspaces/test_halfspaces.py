@@ -6,6 +6,7 @@ from collections.abc import Callable
 
 import jax.numpy as jnp
 import numpy as np
+import pytest
 from jaxtyping import Array, Float
 
 from viterbo.geometry.halfspaces import (
@@ -29,8 +30,9 @@ def _run_enumerator(
     vertices = enumerator(matrix, offsets)
     return np.asarray(vertices, dtype=float)
 
-
+@pytest.mark.goal_math
 def test_reference_enumeration_matches_expected_square() -> None:
+    """Reference enumeration returns the vertices of the canonical unit square."""
     vertices = _run_enumerator(enumerate_vertices_reference)
     expected = np.array(
         [
@@ -44,7 +46,9 @@ def test_reference_enumeration_matches_expected_square() -> None:
     assert np.allclose(_sorted_rows(vertices), _sorted_rows(expected))
 
 
+@pytest.mark.goal_math
 def test_fast_enumerator_matches_reference() -> None:
+    """The fast vertex enumerator matches the reference implementation on the square."""
     ref = _run_enumerator(enumerate_vertices_reference)
     fast = _run_enumerator(enumerate_vertices_fast)
     expected = np.array(
@@ -59,7 +63,9 @@ def test_fast_enumerator_matches_reference() -> None:
     assert np.allclose(_sorted_rows(fast), _sorted_rows(expected))
 
 
+@pytest.mark.goal_code
 def test_remove_redundant_facets_discards_duplicates() -> None:
+    """Redundant facets are removed consistently by reference and fast implementations."""
     matrix, offsets = unit_square_halfspaces()
     matrix = jnp.vstack((matrix, matrix[0:1]))
     offsets = jnp.concatenate((offsets, offsets[0:1]))

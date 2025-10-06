@@ -1,6 +1,6 @@
 - **Status**: In Progress
 - **Last updated**: 2025-10-05
-- **Owner / DRI**: Unassigned
+- **Owner / DRI**: Codex & PI (joint)
 - **Reviewers**: Maintainer
 - **Related docs**: [RFC 002](../../rfc/002-jax-pyright-typing-options.md),
   [Geometry module refactor brief](../completed/2025-10-04-geometry-module-refactor.md)
@@ -9,8 +9,11 @@
 
 Pyright strict mode currently rejects imports and decorators from JAX, blocking further work on the
 geometry quantity variants. RFC 002 recommends providing repository-local type stubs and lightweight
-wrappers so strict type checking remains effective without suppressions. This task schedules the
-stub tree implementation and any supporting helpers needed to make the geometry modules type-clean.
+wrappers so strict type checking remains effective without suppressions. Runtime code stays
+annotated with `jaxtyping` (strict array shapes/dtypes) while the stub layer can use `Any` inputs
+for JAX entry points, keeping production annotations precise without fighting Pyright internals.
+This task schedules the stub tree implementation and any supporting helpers needed to make the
+geometry modules type-clean.
 
 ## 2. Objectives and non-goals
 
@@ -19,7 +22,7 @@ stub tree implementation and any supporting helpers needed to make the geometry 
 - Provide a repository-local stub hierarchy that covers the subset of JAX APIs used in
   `src/viterbo/`.
 - Ensure Pyright strict passes across the repository without inline `type: ignore` directives for
-  JAX usage.
+  JAX usage while maintaining jaxtyping annotations in runtime code (casts or helpers as needed).
 - Document the stub maintenance workflow and integration points in developer-facing docs.
 
 ### Out of scope
@@ -35,6 +38,8 @@ stub tree implementation and any supporting helpers needed to make the geometry 
 - Updated `pyrightconfig.json` to include the stub path (configured as `"stubPath": "typings"`).
 - Passes `uv run pyright` without JAX-related diagnostics.
 - Contributor documentation describing how to extend the stubs when new APIs are adopted.
+- Brief guidance for agents explaining the split: jaxtyping annotations remain in runtime code,
+  while stub signatures may use `Any` for JAX entry points when Pyright lacks coverage.
 
 ## 4. Dependencies and prerequisites
 
@@ -62,8 +67,9 @@ stub tree implementation and any supporting helpers needed to make the geometry 
 
 Next steps:
 
-- Decide bridging strategy for `np.ndarray` vs. JAX array in types (e.g., widen accepted input types
-  in tests/examples or add Protocols/overloads where appropriate).
+- Apply the agreed bridging strategy: keep runtime code annotated with `jaxtyping` arrays, cast
+  boundary inputs/outputs where JAX returns concrete values, and permit `Any` inputs/outputs in the
+  stub layer for JAX-provided callables.
 - Expand stubs for any missing JAX decorators/types encountered during the sweep and re-run Pyright
   to converge to zero JAX-related diagnostics.
 - Capture the maintenance note in contributor docs once the approach stabilises.
@@ -76,7 +82,7 @@ Next steps:
 
 ## 7. Testing, benchmarks, and verification
 
-- Mandatory: `uv run pyright` after stubs integrate.
+- Mandatory: `uv run pyright` after stubs integrate (or `just typecheck`, which mirrors CI).
 - Optional: `uv run pytest tests/geometry -q` to guard against regressions during refactorings that
   introduce typed wrappers.
 - No performance benchmarks required.
