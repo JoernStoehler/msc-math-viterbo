@@ -1,0 +1,76 @@
+site_name: Viterbo MSc Project
+site_description: Numerical experiments and docs for the Viterbo conjecture project
+site_url: https://joernstoehler.github.io/msc-math-viterbo
+repo_url: https://github.com/JoernStoehler/msc-math-viterbo
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - content.code.copy
+    - content.tabs.link
+  language: en
+
+strict: true
+
+plugins:
+  - search
+  - htmlproofer:
+      raise_error: true
+      validate_external_urls: true
+      ignore_urls:
+        - "mailto:*"
+        - "tel:*"
+        - "http://localhost*"
+        - "https://localhost*"
+        - "https://arxiv.org/*"
+        - "https://www.arxiv.org/*"
+        - "https://doi.org/*"
+        - "https://scholar.google.com/*"
+        - "https://www.scholar.google.com/*"
+        - "https://researchgate.net/*"
+        - "https://www.researchgate.net/*"
+        - "https://springer.com/*"
+        - "https://www.springer.com/*"
+        - "https://elsevier.com/*"
+        - "https://www.elsevier.com/*"
+        - "https://jstor.org/*"
+        - "https://www.jstor.org/*"
+        - "*.pdf"
+
+markdown_extensions:
+  - admonition
+  - def_list
+  - footnotes
+  - tables
+  - toc:
+      permalink: true
+  - attr_list
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.highlight
+  - pymdownx.critic
+  - pymdownx.snippets
+
+nav:
+  - Home: index.md
+  - Project:
+      - Overview: 01-project-goal.md
+      - Roadmap: 02-project-roadmap.md
+      - Code Structure: 22-code-structure.md
+      - Symplectic Quantities: 13-symplectic-quantities.md
+  - Tasks & Briefs:
+      - Evaluation Methodology: tasks/01-task-evaluation-methodology.md
+      - Portfolio: tasks/02-task-portfolio.md
+      - RFCs: tasks/rfc/index.md
+      - Scheduled: tasks/scheduled/index.md
+      - Drafts: tasks/draft/index.md
+      - Completed: tasks/completed/index.md
+  - Codex Context:
+      - CLI Context: 94-codex-cli-context.md
+      - IDE Context: 96-codex-ide-context.md
+      - Cloud Context: 98-codex-cloud-context.md
+  - Reference Notes:
+      - Capacities: convex-polytope-cehz-capacities.md
+      - Volumes: convex-polytope-volumes.md

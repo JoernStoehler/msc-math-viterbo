@@ -1,0 +1,10 @@
+node_modules/
+.venv/
+.benchmarks/
+site/
+dist/
+build/
+uv.lock
+*.min.*
+**/*.svg
+docs/100-codex-context-comparison.md
