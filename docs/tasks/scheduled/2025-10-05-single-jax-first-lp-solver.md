@@ -2,7 +2,7 @@
 
 - Status: Scheduled
 - Last updated: 2025-10-05
-- Owner / DRI: Unassigned
+- Owner / DRI: Codex & PI (joint)
 - Reviewers: Maintainer (PI)
 - Related docs: AGENTS.md, docs/tasks/02-task-portfolio.md
 
@@ -80,7 +80,8 @@ Checkpoint: single PR with focused diff (preferably ≤300 LOC) and CI summary i
 
 ## 7. Testing, benchmarks, and verification
 
-- CI: `just ci` (format → lint → typecheck → tests) must pass.
+- CI: `just ci` (format → lint → typecheck → tests) must pass; smoke tests run via `just test`
+  with the standard 10 s per-test timeout and 60 s session cap.
 - Numerical checks use explicit tolerances: `rtol=1e-9`, `atol=1e-8`.
 - Optional local timing vs. previous SciPy path (informational only, not required in CI).
 
