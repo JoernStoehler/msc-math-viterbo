@@ -87,3 +87,11 @@ def test_solver_respects_pairing_overrides() -> None:
             enforce_detection=False,
         )
         assert np.isclose(reduced, baseline, atol=1e-8)
+
+
+def test_canonical_subset_allows_paired_facets() -> None:
+    metadata = FacetPairingMetadata(pairs=((0, 1), (2, 3)), unpaired=())
+
+    assert metadata.is_canonical_subset((0, 1, 2))
+    assert not metadata.is_canonical_subset((1, 2, 3))
+    assert not metadata.is_canonical_subset((1, 0, 2))

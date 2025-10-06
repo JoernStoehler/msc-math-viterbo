@@ -47,16 +47,18 @@ class FacetPairingMetadata:
     def is_canonical_subset(self, indices: Sequence[int]) -> bool:
         """Return ``True`` if ``indices`` respects canonical representatives."""
 
-        index_set = set(int(i) for i in indices)
-        partners = self.partner_lookup
+        ordered = [int(i) for i in indices]
+        positions: dict[int, int] = {}
+        for position, index in enumerate(ordered):
+            if index not in positions:
+                positions[index] = position
+
         for first, second in self.pairs:
-            if second in index_set and first not in index_set:
+            first_present = first in positions
+            second_present = second in positions
+            if second_present and not first_present:
                 return False
-        for idx in index_set:
-            partner = partners.get(idx)
-            if partner is None:
-                continue
-            if partner < idx and partner in index_set:
+            if first_present and second_present and positions[second] < positions[first]:
                 return False
         return True
 
