@@ -31,7 +31,7 @@ documentation, so agents can start their work quickly. If another doc conflicts,
   - Pytest defaults: `pytest.ini` (markers, session timeout, smoke filter).
   - CI: `.github/workflows/ci.yml`.
   - Environment: `.devcontainer/` (`devcontainer.json`, `post-create.sh`, `post-start.sh`).
-  - Golden-path Make targets: `Makefile`.
+- Golden-path task runner: `Justfile` recipes.
 - Policy Waivers: `waivers.toml`.
 - Reference docs: `docs/` (math, architecture, decisions).
 - Task briefs: `docs/tasks/` (drafts, scheduled, completed, dependencies and priorities).
@@ -48,7 +48,7 @@ documentation, so agents can start their work quickly. If another doc conflicts,
 - Verifying locally (only if replicating outside the provisioned env):
   - One‑time: `bash .devcontainer/post-create.sh`
   - Each boot: `bash .devcontainer/post-start.sh`
-  - Install: `make setup`
+  - Install: `just setup`
 
 ## 3) Coding Conventions (facts)
 
@@ -117,7 +117,7 @@ def ehz_capacity(
   `rtol` ~ 1e‑9–1e‑12 and `atol` near 0.0 for well‑conditioned problems, but adjust as needed.
 - Assertions: use clear options such as `pytest.approx`, `numpy.testing.assert_allclose`,
   `numpy.isclose`, or `math.isclose` depending on the case.
-- Makefile toggles for pytest-driven targets:
+- Justfile toggles for pytest-driven targets:
   - Testmon caching is enabled by default. Set `USE_TESTMON=0` to disable for a run.
   - `PYTEST_ARGS="..."` forwards additional selectors/markers (e.g., `PYTEST_ARGS="-k smoke"`).
 - Property‑based tests: welcome when invariants are cleanly expressible (e.g., monotonicity,
@@ -125,9 +125,9 @@ def ehz_capacity(
 - Shape/name validation in tests: enable `jaxtyping` + `beartype`/`jaxtyped` during tests when
   valuable; avoid cluttering library code with repetitive checks.
 - Pytest tiering: layer `smoke`, `deep`, `longhaul` markers on top of `benchmark`,
-  `line_profile`, `slow`. `make test` runs smoke with a 10 s per-test timeout, a hard 60 s session
-  cap, `--maxfail=1`, and a slow-test summary (`--durations=15`). `make test-deep` runs the deep
-  tier; `make test-longhaul` is manual/scheduled. See
+  `line_profile`, `slow`. `just test` runs smoke with a 10 s per-test timeout, a hard 60 s session
+  cap, `--maxfail=1`, and a slow-test summary (`--durations=15`). `just test-deep` runs the deep
+  tier; `just test-longhaul` is manual/scheduled. See
   `docs/testing-decision-criteria.md` for decision guidance and re-tiering criteria.
 - Invariant baselines live under `tests/_baselines/` as JSON; update values only with
   maintainer sign-off and record the rationale in the PR/task brief.
@@ -135,13 +135,13 @@ def ehz_capacity(
 ## 7) Performance (facts)
 
 - Benchmarks live in `tests/performance/` and reuse correctness fixtures. Keep RNG seeds fixed.
-- Run `make bench`; include a brief delta in PRs vs baseline/artifact.
-- Bench tiers: `make bench` (smoke/CI), `make bench-deep` (pre-merge),
-  `make bench-longhaul` (scheduled); archive longhaul runs in reports or
+- Run `just bench`; include a brief delta in PRs vs baseline/artifact.
+- Bench tiers: `just bench` (smoke/CI), `just bench-deep` (pre-merge),
+  `just bench-longhaul` (scheduled); archive longhaul runs in reports or
   task briefs.
-- Scheduled CI runs `make test-longhaul` and `make bench-longhaul` weekly; longhaul failures block
+- Scheduled CI runs `just test-longhaul` and `just bench-longhaul` weekly; longhaul failures block
   merges until resolved or waived.
-- Profiling: `make profile` / `make profile-line` wrap `uv run` and write to
+- Profiling: `just profile` / `just profile-line` wrap `uv run` and write to
   `.profiles/`; notebooks are out of scope.
 - If regression > 10% without justification, add a time‑boxed waiver to `waivers.toml` and open a
   follow‑up issue.
@@ -153,13 +153,13 @@ Daily development (in provisioned env)
 1. Read the task and scan relevant modules/tests.
 2. Plan the minimal change (one feature OR one fix OR one refactor). Write a short plan (≈4–7 steps).
 3. Implement pure functions in `src/viterbo/`; keep I/O at the edges. Add/adjust tests.
-4. Run: `make precommit-fast` during quick loops (wraps `lint-fast` + `test-incremental`); finish with
-   `make precommit` (alias for `make precommit-slow`) before handing off or requesting review. Use
-   `make help` for per-target tips, toggles, and related workflows (testmon caching is on by default;
+4. Run: `just precommit-fast` during quick loops (wraps `lint-fast` + `test-incremental`); finish with
+   `just precommit` (alias for `just precommit-slow`) before handing off or requesting review. Use
+   `just help` for per-target tips, toggles, and related workflows (testmon caching is on by default;
    set `USE_TESTMON=0` to disable, `PYTEST_ARGS="..."` forwards selectors/markers).
-   - Lint tiers: `make lint-fast` runs Ruff E/F/B essentials (ignores jaxtyping F722); `make lint`
+   - Lint tiers: `just lint-fast` runs Ruff E/F/B essentials (ignores jaxtyping F722); `just lint`
      mirrors CI (Ruff policy set + Prettier).
-   - Typechecking tiers: `make typecheck-fast` targets `src/viterbo`; `make typecheck` covers the
+   - Typechecking tiers: `just typecheck-fast` targets `src/viterbo`; `just typecheck` covers the
      entire repo.
 
 Short loops may use direct commands (`uv run pytest path/to/test.py`, custom markers, etc.). Close
@@ -168,13 +168,13 @@ each handoff by re-running the golden-path targets above.
 Pre‑PR checks
 
 - Keep diffs focused and coherent. Ensure types, tests, and docs are updated.
-- Ensure `make ci` is green locally (includes smoke tests with coverage). If the golden path breaks,
+- Ensure `just ci` is green locally (includes smoke tests with coverage). If the golden path breaks,
   do not hand‑tune — escalate.
-- Run `make precommit` (slow tier) before requesting review; `make precommit-fast` is for local
+- Run `just precommit` (slow tier) before requesting review; `just precommit-fast` is for local
   iteration only.
-- Run `make coverage` when you need local HTML reports before requesting review.
-- Before landing performance-sensitive changes, run `make test-deep` and
-  `make bench-deep`; only run the longhaul tiers when maintainer asks.
+- Run `just coverage` when you need local HTML reports before requesting review.
+- Before landing performance-sensitive changes, run `just test-deep` and
+  `just bench-deep`; only run the longhaul tiers when maintainer asks.
 
 PR content
 
@@ -189,7 +189,7 @@ Blocked?
 
 ## 9) CI & Branch Protection (facts)
 
-- `make ci` mirrors GitHub Actions: dedicated jobs run format/lint, typecheck, and smoke+coverage
+- `just ci` mirrors GitHub Actions: dedicated jobs run format/lint, typecheck, and smoke+coverage
   tests while the weekly schedule executes the longhaul tiers.
 - Branch protection: all checks must pass before merge; concurrency cancels in‑progress runs per ref.
 - Enforcement lives in repo configs; contributors need not re‑validate tool configuration.

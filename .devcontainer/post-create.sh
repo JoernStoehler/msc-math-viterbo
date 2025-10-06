@@ -37,6 +37,20 @@ if ! command -v rg >/dev/null 2>&1 && command -v apt-get >/dev/null 2>&1; then
   $SUDO apt-get install -y ripgrep >/dev/null || true
 fi
 
+# Install just (best-effort) so the canonical task runner is available inside the container.
+echo "[post-create] Ensuring just is installed"
+if ! command -v just >/dev/null 2>&1 && command -v apt-get >/dev/null 2>&1; then
+  export DEBIAN_FRONTEND=noninteractive
+  if command -v sudo >/dev/null 2>&1; then SUDO=sudo; else SUDO=""; fi
+  $SUDO apt-get update -y >/dev/null || true
+  $SUDO apt-get install -y just >/dev/null || true
+fi
+if ! command -v just >/dev/null 2>&1; then
+  echo "[post-create] WARNING: just is not available; install manually to use repo recipes." >&2
+else
+  echo "[post-create] just is ready; use it for project automation."
+fi
+
 # Install the Codex CLI if Node/npm is present so collaborators can use familiar tooling.
 if command -v npm >/dev/null 2>&1; then
   echo "[post-create] Installing Codex CLI (@openai/codex)"

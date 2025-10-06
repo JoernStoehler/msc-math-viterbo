@@ -55,7 +55,7 @@ records any decision to add clarifying references (or to confirm that none are r
 - If proceeding with supplemental material, list the concrete topics and references that will make
   it non-redundant; otherwise, close the brief with the decision rationale (“no extra docs
   required”).
-- Any new doc passes lint checks (`make lint`) and links to source configs.
+- Any new doc passes lint checks (`just lint`) and links to source configs.
 
 ## 4. Dependencies and prerequisites
 
@@ -69,7 +69,7 @@ records any decision to add clarifying references (or to confirm that none are r
    2025‑10‑08).
 1. ✅ Update `README.md` with a pointer to `AGENTS.md` so newcomers land on the source of truth.
 1. ✅ Evaluate whether there are real gaps that merit supplemental explanatory docs or diagrams.
-   - Review of `AGENTS.md`, `docs/22-code-structure.md`, task briefs, and CI/Makefile configs found
+   - Review of `AGENTS.md`, `docs/22-code-structure.md`, task briefs, and CI/Justfile configs found
      no missing guidance that would benefit from a standalone architecture note.
 1. ✅ Record the decision:
    - No additional documentation is required. Existing materials already cover architecture, coding
@@ -90,7 +90,7 @@ reopen only if future work uncovers new explanatory requirements.
 
 ## 7. Testing, benchmarks, and verification
 
-- If new docs are written, run `make lint` to validate formatting/linking.
+- If new docs are written, run `just lint` to validate formatting/linking.
 - Manual: ensure any added guidance truly augments `AGENTS.md` instead of copying it (currently
   N/A).
 

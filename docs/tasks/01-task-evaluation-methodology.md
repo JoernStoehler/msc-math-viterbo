@@ -135,7 +135,7 @@ Log costs as tuples `(agent_time, compute, expert_time)` and mark reevaluation p
 - Maintain a **three-tier loop**:
   1. _Inner loop_ (\<2 minutes): format, lint, typecheck, plus targeted smoke tests covering touched
      modules. Agents should run these repeatedly while iterating.
-  1. _CI loop_ (\<5 minutes): `make ci` on every PR. Restrict benchmark coverage here to
+  1. _CI loop_ (\<5 minutes): `just ci` on every PR. Restrict benchmark coverage here to
      deterministic smoke cases (e.g., one small polytope per algorithm family) to keep runtime
      predictable.
   1. _Deep loop_ (5–20 minutes for broader unit/benchmark suites; up to several hours for profiling

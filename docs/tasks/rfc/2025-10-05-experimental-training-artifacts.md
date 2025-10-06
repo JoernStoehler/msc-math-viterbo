@@ -138,7 +138,7 @@ exporting/consuming artefacts in widely supported formats when beneficial. Expor
   gin-config aids declarative architecture definitions.
 - **Sacred + Omniboard**: Combines config management with experiment logging; overlaps with
   MLflow/Aim functionality.
-- **uv + Makefile integration**: Keep golden-path commands (e.g., `make train EXPERIMENT=<name>`)
+- **uv + Justfile integration**: Keep golden-path commands (e.g., `just train EXPERIMENT=<name>`)
   reproducible; optionally emit `run.json` with resolved config.
 
 ## 4. Popular modular stacks
@@ -186,7 +186,7 @@ Maintainer's time is better spent on research than platform admin.
   - Artifact labels: `<YYYYMMDD>-<slug>@<git-sha>` where the slug matches the run name semantics.
   - Use W&B tables for curated evaluation summaries; raw artefacts remain in Git LFS.
 - **Secrets bootstrap**: Track `.env.example` at repo root with a `WANDB_API_KEY` placeholder. Each
-  contributor copies to `.env`, fills their key, and loads it before running Make targets. GitHub
+  contributor copies to `.env`, fills their key, and loads it before running just recipes. GitHub
   credentials continue to come from the provisioned environment per AGENTS.md.
 
 ## 6. Decisions locked in (with rationale)
@@ -250,7 +250,7 @@ scientists who need other formats.
 
 ### 6.5 Automation & retention
 
-| Criterion (weight)                            | Make targets + monthly manual tidy **(selected)** | CI sweeps + automated retention |
+| Criterion (weight)                            | Justfile recipes + monthly manual tidy **(selected)** | CI sweeps + automated retention |
 | --------------------------------------------- | ------------------------------------------------- | ------------------------------- |
 | Implementation effort (0.35)                  | **5**                                             | 3                               |
 | Repeatability for agents (0.30)               | **4**                                             | **5**                           |
@@ -258,7 +258,7 @@ scientists who need other formats.
 | CI cost / compute usage (0.15)                | **5**                                             | 2                               |
 | **Weighted score (0–5)**                      | **4.60**                                          | 3.35                            |
 
-Outcome: Extend the Makefile with `make train`, `make evaluate`, `make publish`, and rely on a
+Outcome: Extend the Justfile with `just train`, `just evaluate`, `just publish`, and rely on a
 monthly reminder (already scheduled) to prune W&B runs and large LFS blobs. CI-driven sweeps remain
 a future option if volume grows.
 
@@ -270,7 +270,7 @@ a future option if volume grows.
    metadata, and push via Git LFS to validate workflow friction.
 1. Finalise the `metadata.json` / `summary.yaml` schema using at least two training scripts (JAX
    baseline + PyTorch reference consumer) to ensure consistency.
-1. Extend the Makefile with `make train`, `make evaluate`, and `make publish`; document W&B usage,
+1. Extend the Justfile with `just train`, `just evaluate`, and `just publish`; document W&B usage,
    tag requirements, and secrets loading steps in the developer guide.
 1. Confirm SaaS account needs (e.g., W&B seats, Git LFS quota) with the Maintainer before
    operationalising.
@@ -291,6 +291,6 @@ a future option if volume grows.
 
 This RFC now locks in the full experiment stack: W&B (`viterbo-experiments`) with mandated tags, Git
 LFS artefact storage, lightweight metadata bundles, GitHub/Codex secrets with `.env` loading,
-Orbax-only checkpoints, and Makefile-driven workflows. The remaining work is execution: implement
-the logging path, finalise the metadata schema, extend the Makefile, and validate the Git LFS
+Orbax-only checkpoints, and Justfile-driven workflows. The remaining work is execution: implement
+the logging path, finalise the metadata schema, extend the Justfile, and validate the Git LFS
 pipeline while keeping contingency options noted if future constraints shift.

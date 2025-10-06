@@ -74,7 +74,7 @@ downstream work.
    JAX-friendly APIs.
 1. **Fixtures and docs (Day 5–6)**: Populate example datasets, update documentation, and write
    contributor notes.
-1. **Final review (Day 7)**: Run `make ci`, ensure benchmarks still point to valid paths, and
+1. **Final review (Day 7)**: Run `just ci`, ensure benchmarks still point to valid paths, and
    request maintainer review with a migration summary.
 
 ## 6. Effort and resource estimates
@@ -86,7 +86,7 @@ downstream work.
 
 ## 7. Testing, benchmarks, and verification
 
-- CI: `make format`, `make lint`, `make typecheck`, and targeted unit suites covering moved modules.
+- CI: `just format`, `just lint`, `just typecheck`, and targeted unit suites covering moved modules.
 - Add or update smoke tests comparing reference vs. fast variants on shared fixtures.
 - Optional local run of the medium benchmark tier (\<20 minutes) to confirm no catastrophic
   regressions.

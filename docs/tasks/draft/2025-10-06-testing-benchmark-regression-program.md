@@ -23,11 +23,11 @@ mathematical drift before large experiment tasks (E-series) consume new datasets
 - **Reliability (0.25)**: Deterministic, reproducible results that surface regressions quickly in CI
   and local loops.
 - **Developer ergonomics (0.15)**: Frictionless workflows for agents; one-command invocations via
-  `make`/`uv run` with clear guidance.
+  `just`/`uv run` with clear guidance.
 - **Observability (0.15)**: Artefacts (baselines, benchmark histories, profiles) that make failures
   diagnosable without bespoke tooling.
 - **Maintainability (0.15)**: Minimal bespoke glue; configurations live in `pyproject.toml`,
-  `Makefile`, or tests with clear ownership.
+  `Justfile`, or tests with clear ownership.
 - **Popularity (0.15)**: Adoption across the ecosystem so new agents arrive with existing intuition
   and community support.
 - **Opinionatedness (0.10)**: Enforces a single golden path so agents do not fragment across multiple
@@ -43,10 +43,10 @@ Weights sum to 1.0 and inform the decision matrices below. Ratings use a 1–5 s
 
 - Consolidate unit tests that compare reference and JAX-first fast implementations using shared
   fixtures and jaxtyping signatures.
-- Define and implement a pytest marker taxonomy aligned with runtime tiers and Make targets.
+- Define and implement a pytest marker taxonomy aligned with runtime tiers and `just` recipes.
 - Curate benchmark suites under `tests/performance/` with autosave, smoke/CI checks, and guidance on
   deep and long-haul cadences.
-- Capture profiling recipes for hot paths with reusable `uv run` commands and Make targets.
+- Capture profiling recipes for hot paths with reusable `uv run` commands and `just` recipes.
 - Codify symplectic invariant regression tests, baselines, and escalation playbooks for failures.
 - Document the full workflow so new agents can follow a single golden path for the next six months.
 
@@ -92,8 +92,8 @@ opinionated enough to steer agents toward consistent extensions while staying di
 
 | Option                                                                                                  | Reliability (0.25) | Dev ergonomics (0.15) | Observability (0.15) | Maintainability (0.15) | Popularity (0.15) | Opinionatedness (0.10) | Implementation effort (0.05) | Weighted score |
 | ------------------------------------------------------------------------------------------------------- | ------------------ | --------------------- | -------------------- | ---------------------- | ----------------- | ----------------------- | ---------------------------- | -------------- |
-| A. `uv run` wrappers with `make profile`/`make profile-line` targets invoking `pyinstrument`/`cProfile` | 4                  | 5                     | 4                    | 4                      | 4               | 5                     | 4                            | 4.25           |
-| B. Direct `pytest --profile` invocation per developer without Make integration                          | 3                  | 3                     | 2                    | 4                      | 3               | 2                     | 5                            | 3.00           |
+| A. `uv run` wrappers with `just profile`/`just profile-line` targets invoking `pyinstrument`/`cProfile` | 4                  | 5                     | 4                    | 4                      | 4               | 5                     | 4                            | 4.25           |
+| B. Direct `pytest --profile` invocation per developer without Justfile integration                          | 3                  | 3                     | 2                    | 4                      | 3               | 2                     | 5                            | 3.00           |
 | C. Notebook-based profiling playbooks                                                                   | 2                  | 2                     | 3                    | 2                      | 2               | 1                     | 2                            | 2.05           |
 
 **Decision (locked 2025-10-06)**: Option A. It balances ergonomics, familiarity, and maintainability, giving a
@@ -102,11 +102,11 @@ clear entry point that matches CI/local environments and discourages ad hoc vari
 ## 5. Recommended direction (summary)
 
 - Locked decision (2025-10-06): adopt the three-tier marker taxonomy (`smoke`, `deep`, `longhaul`) layered atop existing
-  `benchmark`, `line_profile`, and `slow` markers; surface them in `pyproject.toml` and Makefile
-  targets (`make test`, `make test-deep`, `make test-longhaul`).
+  `benchmark`, `line_profile`, and `slow` markers; surface them in `pyproject.toml` and Justfile
+  recipes (`just test`, `just test-deep`, `just test-longhaul`).
 - Locked decision (2025-10-06): store invariant baselines as structured JSON per family, version-controlled under
   `tests/_baselines/`, with helper fixtures to load/compare expected ranges.
-- Locked decision (2025-10-06): provide profiling entry points via `uv run`-backed Make targets that collect reports into
+- Locked decision (2025-10-06): provide profiling entry points via `uv run`-backed `just` recipes that collect reports into
   `.profiles/` and document post-processing steps.
 - Maintain benchmarks in `tests/performance/` with autosave enabled; `smoke` tier runs in CI, `deep`
   tier runs before merging substantial geometry changes, and `longhaul` runs on a scheduled cadence
@@ -121,18 +121,18 @@ clear entry point that matches CI/local environments and discourages ad hoc vari
 - JSON baseline artefacts plus loader utilities and guidance for extending them.
 - Pytest configuration updates (`pyproject.toml`) enumerating marker descriptions and default
   deselection behaviour for CI.
-- Makefile targets and documentation describing how to run smoke/deep/longhaul tests, benchmarks,
+- Justfile recipes and documentation describing how to run smoke/deep/longhaul tests, benchmarks,
   and profiling sessions via `uv run` commands.
 - A README (or doc section) explaining cadence expectations, artefact locations, escalation steps,
   and reporting templates for benchmark/invariant drift.
-- Evidence of validation: `make ci`, `make bench`, and one sampled `make test-deep`
+- Evidence of validation: `just ci`, `just bench`, and one sampled `just test-deep`
   run recorded in the brief before handoff.
 
 ## 7. Execution plan and checkpoints
 
 1. **Fixture and module audit**: inventory reference/fast pairs, shared fixtures, and existing
    invariant tests; identify coverage gaps.
-2. **Marker taxonomy implementation**: define markers in `pyproject.toml`, update Make targets, and
+2. **Marker taxonomy implementation**: define markers in `pyproject.toml`, update `just` recipes, and
    tag representative tests/benchmarks to confirm selection semantics.
 3. **Correctness sweep**: implement or refactor unit tests comparing reference vs fast paths with
    jaxtyping annotations and deterministic seeds.
@@ -140,7 +140,7 @@ clear entry point that matches CI/local environments and discourages ad hoc vari
    artefacts, and wire fixtures that diff results with helpful failure messages.
 5. **Benchmark restructuring**: segment existing `tests/performance/` suite into smoke/deep sets,
    validate runtimes, and document autosave conventions.
-6. **Profiling recipes**: create `uv run` wrappers and Make targets for `pyinstrument` and
+6. **Profiling recipes**: create `uv run` wrappers and `just` recipes for `pyinstrument` and
    line-profiler flows; add documentation.
 7. **Documentation pass**: consolidate instructions, cadence, and escalation details within the task
    brief/README; circulate for maintainer feedback.
@@ -157,12 +157,12 @@ clear entry point that matches CI/local environments and discourages ad hoc vari
 
 ## 9. Testing, benchmarks, and verification
 
-- **CI**: `make ci` runs smoke-tier unit tests; `make bench` executes the CI
+- **CI**: `just ci` runs smoke-tier unit tests; `just bench` executes the CI
   benchmark slice. Failing invariants or capacity comparisons trigger escalation per documentation.
-- **Local deep loop**: Developers run `make test-deep` and `make bench-deep` before
-  landing geometry or optimisation changes; profiling via `make profile` when performance drift is
+- **Local deep loop**: Developers run `just test-deep` and `just bench-deep` before
+  landing geometry or optimisation changes; profiling via `just profile` when performance drift is
   suspected.
-- **Long-haul**: Scheduled (weekly/monthly) `make test-longhaul` and `make bench-longhaul`
+- **Long-haul**: Scheduled (weekly/monthly) `just test-longhaul` and `just bench-longhaul`
   runs capture artefacts stored under `.benchmarks/` and `.profiles/`, with summaries archived in
   progress reports.
 
@@ -207,8 +207,8 @@ clear entry point that matches CI/local environments and discourages ad hoc vari
   for both reference and fast implementations. The random polytope volume comparison is `deep`,
   and the search-space determinism test caps itself at 12 candidates. Re-run timings once the
   remaining smoke cases finish under the enforced 10 s per-test / 60 s session timeout. Added
-  incremental loops via `make test-incremental` and a staged pre-commit workflow
-  (`make precommit-fast` for quick passes, `make precommit-slow` before handoff).
+  incremental loops via `just test-incremental` and a staged pre-commit workflow
+  (`just precommit-fast` for quick passes, `just precommit-slow` before handoff).
 
 ### BOTEC: utility vs cost per representative test suite
 
@@ -230,7 +230,7 @@ Utility heuristic (0–5): 5 = catches high-severity mathematical regressions; 1
 
 #### PI guidance (2025-10-06)
 
-- Enforce per-test wall-time ceilings in the smoke tier (e.g., pytest `timeout` + Makefile-level guards) so runaway cases are caught early; complement with a hard cap on overall `make test` runtime.
+- Enforce per-test wall-time ceilings in the smoke tier (e.g., pytest `timeout` + Justfile-level guards) so runaway cases are caught early; complement with a hard cap on overall `just test` runtime.
 - Profile hotspots to ensure pure math kernels stay ≤500 ms; focus on JAX tracing reuse by stabilising static arguments (loop counts, polytope descriptors, PRNG branching). Check whether unrolled loops rely on static argnums, whether `Polytope` objects participate in pytree registration, and whether per-instance metadata is forcing recompilation—reason through `jax.jit` traces mentally before running them.
 - Capture both compilation and execution durations explicitly—fine-grained profiling should separate XLA compile time from kernel runtime to highlight caching wins and quantify cold-start drag.
 - For manual workflows, keep a warm interpreter (e.g., Jupyter notebook or REPL) to avoid cold-start JAX cost when iterating on tests/profiling.
@@ -241,4 +241,4 @@ Utility heuristic (0–5): 5 = catches high-severity mathematical regressions; 1
 
 ## 13. Agent handoff prompt
 
-Next agent: secure a wall-time allocation that can sustain the long facet-normal suites (or temporarily reclassify them) so a full smoke collection can finish in one pass. Once end-to-end smoke timings are captured, proceed with `make test-deep`, `make bench`, and `make bench-deep`, then propagate the consolidated measurements and any marker adjustments back into §12.
+Next agent: secure a wall-time allocation that can sustain the long facet-normal suites (or temporarily reclassify them) so a full smoke collection can finish in one pass. Once end-to-end smoke timings are captured, proceed with `just test-deep`, `just bench`, and `just bench-deep`, then propagate the consolidated measurements and any marker adjustments back into §12.
