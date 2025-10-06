@@ -24,7 +24,8 @@
     "vscode": {
       "extensions": [
         "ms-python.python",
-        "ms-pyright.pyright",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter",
         "charliermarsh.ruff",
         "tamasfe.even-better-toml",
         "redhat.vscode-yaml",

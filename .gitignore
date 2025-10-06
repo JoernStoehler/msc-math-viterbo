@@ -1,5 +1,7 @@
 # General
 .DS_Store
+# Local environment secrets
+.env
 # Keep workspace settings tracked, ignore other VS Code files
 .vscode/*
 !.vscode/settings.json
@@ -22,13 +24,23 @@ dist/
 .mypy_cache/
 .ruff_cache/
 .pyright/
+.pyright_cache/
+.artefacts/
+.testmondata
+
+# Node tooling
+node_modules/
 
 # Profiling artefacts
 profile.svg
 *.prof
 prof/
+.profiles/
 
 # Coverage reports
 htmlcov/
 .coverage*
 *.lcov
+
+# Documentation build artefacts
+site/

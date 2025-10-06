@@ -72,7 +72,7 @@ def main() -> int:
         try:
             expires = _parse_date(str(waiver["expires"]))
             created = _parse_date(str(waiver["created"]))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             failures.append(f"waiver '{waiver.get('id')}': invalid date format ({exc})")
             continue
         if created > expires:

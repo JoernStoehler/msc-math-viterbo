@@ -9,4 +9,4 @@ This directory contains the LaTeX sources that will be synced with Overleaf.
 - `figures/` — committed figures (keep raw exports elsewhere).
 - `references.bib` — BibTeX database.
 
-Refer to `thesis/AGENTS.md` for detailed conventions.
+Refer to `AGENTS.md` (see “Thesis Authoring”) for detailed conventions.

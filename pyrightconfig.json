@@ -3,5 +3,11 @@
   "include": ["src", "tests"],
   "pythonVersion": "3.12",
   "typeCheckingMode": "strict",
-  "reportMissingImports": "error"
+  "useLibraryCodeForTypes": true,
+  "stubPath": "typings",
+  "reportMissingImports": "error",
+  "reportUnknownParameterType": "error",
+  "reportUnknownVariableType": "error",
+  "reportUnknownMemberType": "error",
+  "reportMissingTypeStubs": "error"
 }

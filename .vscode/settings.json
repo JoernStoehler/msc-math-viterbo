@@ -12,7 +12,7 @@
     "**/.benchmarks": true,
     ".venv": true,
     ".uv": true,
-    "*.egg-info": true,
+    "**/*.egg-info": true,
     ".DS_Store": true
   },
 
@@ -26,4 +26,3 @@
     "**/.benchmarks": true
   }
 }
-

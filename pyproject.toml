@@ -11,25 +11,39 @@ authors = [{ name = "MSc Viterbo Team" }]
 license = { file = "LICENSE" }
 requires-python = ">=3.12"
 dependencies = [
-    "jax>=0.4.31",
-    "jaxtyping>=0.2.29",
-    "numpy>=1.26",
-    "scipy>=1.13",
+    "highspy>=1.11.0",
+    "hypothesis>=6.140.3",
+    "jax>=0.7.2",
+    "jaxopt>=0.8.5",
+    "jaxtyping>=0.3.3",
+    "numpy>=2.3.3",
+    "orbax-checkpoint>=0.11.25",
+    "pyarrow>=21.0.0",
+    "scipy>=1.16.2",
+    "tensorboardx>=2.6.4",
+    "wandb>=0.22.1",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pyright>=1.1.375",
-    "pytest>=8.1",
-    "pytest-xdist>=3.6",
-    "pytest-benchmark>=4.0",
-    "pytest-codspeed>=2.2",
-    "pytest-profiling>=1.7",
-    "pytest-line-profiler>=0.2",
-    "line-profiler>=5.0",
-    "scalene>=1.5",
-    "py-spy>=0.3",
-    "ruff>=0.4.8",
+    "pyright>=1.1.406",
+    "pytest>=8.4.2",
+    "pytest-cov>=5.0.0",
+    "pytest-timeout>=2.3.1",
+    "pytest-xdist>=3.8.0",
+    "pytest-testmon>=2.0.15",
+    "pytest-benchmark>=5.1.0",
+    "pytest-codspeed>=4.0.0",
+    "pytest-profiling>=1.8.1",
+    "pytest-line-profiler>=0.2.1",
+    "line-profiler>=5.0.0",
+    "scalene>=1.5.55",
+    "py-spy>=0.4.1",
+    "ruff>=0.13.3",
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.5.40",
+    "mkdocs-htmlproofer-plugin>=1.2.0",
+    "pymdown-extensions>=10.8.1",
 ]
 
 [tool.setuptools.packages.find]
@@ -38,18 +52,13 @@ where = ["src"]
 [tool.setuptools.package-data]
 "viterbo" = ["py.typed"]
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "-q"
-norecursedirs = ["tests/performance"]
-markers = [
-    "benchmark: marks tests that exercise pytest-benchmark fixtures.",
-    "line_profile: profile annotated tests with line_profiler.",
-]
-
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+extend-exclude = [
+    ".benchmarks",
+    "tmp/",
+]
 
 [tool.ruff.format]
 indent-style = "space"
@@ -57,23 +66,42 @@ line-ending = "lf"
 quote-style = "double"
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "D", "B", "NPY", "TID"]
+# Prioritize correctness and policy; de-emphasize cosmetic style checks.
+select = [
+    "E7", "E9",          # error-class pycodestyle (runtime/syntax)
+    "F",                  # pyflakes (unused/undefined)
+    "I",                  # import sorting (auto-fixable)
+    "D",                  # pydocstyle (Google), with targeted ignores below
+    "TID252",             # ban relative imports (policy)
+    "RUF100",             # prevent stale/noisy noqa
+    "B006", "B008",      # bugbear: mutable defaults; function-call defaults
+    "BLE001",             # bugbear: ban bare except blocks
+    "T20",                # disallow print/debug statements
+]
 ignore = [
     "F722",  # jaxtyping annotations intentionally use string literals for shapes
     "D100",  # module docstring requirement is redundant with README documentation
     "D104",  # package docstring not necessary for __init__.py aggregator
     "D203",  # let formatter manage blank lines before class definitions
     "D212",  # allow summary on second line for multi-line docstrings
+    "D401",  # relax imperative-mood nit
+    "D417",  # argument documentation checks too noisy with Google style
 ]
 typing-modules = ["jaxtyping"]
 future-annotations = true
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*" = ["D"]
+# Re-export aggregators: avoid F401 noise for curated public API.
+"src/viterbo/__init__.py" = ["F401"]
+"src/viterbo/**/__init__.py" = ["F401"]
+# Private helper modules may omit docstrings; still lint formatting/content when present.
+"src/viterbo/**/_*.py" = ["D101", "D102", "D103"]
+# Typing stubs package (`typings/`) may use relative imports internally.
+"typings/**/*" = ["TID252"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
-

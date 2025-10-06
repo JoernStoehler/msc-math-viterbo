@@ -8,11 +8,12 @@ import pstats
 from dataclasses import dataclass
 from typing import Callable, Iterable, Sequence
 
+import jax
 import numpy as np
 
 from viterbo.geometry.polytopes import Polytope, catalog, random_transformations
-from viterbo.symplectic.capacity import compute_ehz_capacity
-from viterbo.symplectic.capacity_fast import compute_ehz_capacity_fast
+from viterbo.symplectic.capacity import compute_ehz_capacity_reference
+from viterbo.symplectic.capacity.facet_normals.fast import compute_ehz_capacity_fast
 
 Algorithm = Callable[[np.ndarray, np.ndarray], float]
 
@@ -27,7 +28,7 @@ class ProfileConfig:
 
 
 ALGORITHMS: dict[str, Algorithm] = {
-    "reference": compute_ehz_capacity,
+    "reference": compute_ehz_capacity_reference,
     "fast": compute_ehz_capacity_fast,
 }
 
@@ -92,13 +93,13 @@ def _build_dataset(
         msg = "Number of transforms must be non-negative."
         raise ValueError(msg)
 
-    rng = np.random.default_rng(seed)
+    key = jax.random.PRNGKey(seed)
     dataset: list[tuple[str, np.ndarray, np.ndarray]] = []
     for poly in polytopes:
         B, c = poly.halfspace_data()
         dataset.append((poly.name, B, c))
         if transforms:
-            variants = random_transformations(poly, rng=rng, count=transforms)
+            variants = random_transformations(poly, key=key, count=transforms)
             for index, variant in enumerate(variants):
                 variant_B, variant_c = variant.halfspace_data()
                 label = f"{poly.name}-variant-{index}"
