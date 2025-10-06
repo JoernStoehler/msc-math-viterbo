@@ -46,11 +46,14 @@ def test_dynamic_program_matches_bruteforce() -> None:
 
 _SMOKE_POLYTOPES = (
     simplex_with_uniform_weights(2, name="simplex-2d-smoke"),
-    hypercube(2, name="hypercube-2d-smoke"),
-    cross_polytope(2, name="cross-polytope-2d-smoke"),
 )
 _SMOKE_FAST_CASES = tuple(
     pytest.param(*poly.halfspace_data(), id=poly.name) for poly in _SMOKE_POLYTOPES
+)
+
+_DEEP_STATIC_FAST_CASES = (
+    pytest.param(*hypercube(2, name="hypercube-2d-smoke").halfspace_data(), id="hypercube-2d", marks=(pytest.mark.deep,)),
+    pytest.param(*cross_polytope(2, name="cross-polytope-2d-smoke").halfspace_data(), id="cross-polytope-2d", marks=(pytest.mark.deep,)),
 )
 
 _POLYTOPE_DATA = load_polytope_instances()
@@ -64,7 +67,7 @@ def _fast_case(index: int) -> pytest.ParameterSet:
     return pytest.param(B, c, id=identifier, marks=(pytest.mark.deep,))
 
 
-_FAST_CASES = _SMOKE_FAST_CASES + tuple(
+_FAST_CASES = _SMOKE_FAST_CASES + _DEEP_STATIC_FAST_CASES + tuple(
     _fast_case(idx) for idx in range(len(_POLYTOPE_INSTANCES))
 )
 

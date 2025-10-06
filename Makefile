@@ -13,11 +13,14 @@ MKDOCS := $(UV) run mkdocs
 SMOKE_TEST_TIMEOUT ?= 10
 TESTMON_CACHE ?= .testmondata
 USE_TESTMON ?= 1
+# Detect whether pytest-testmon is importable in the current environment.
+PYTEST_TESTMON_AVAILABLE := $(shell $(UV) run python -c "import importlib.util, sys; sys.stdout.write('1' if importlib.util.find_spec('pytest_testmon') else '0')")
+USE_TESTMON_ENABLED := $(filter-out 0 false no,$(USE_TESTMON))
 # Supply extra pytest args with e.g. `PYTEST_ARGS="-k pattern" make test`.
 PYTEST_ARGS ?=
 
 # Set USE_TESTMON=0 (or no/false) to disable pytest-testmon caching on standard test targets.
-PYTEST_TESTMON_FLAGS = $(if $(filter-out 0 false no,$(USE_TESTMON)),--testmon --testmondata $(TESTMON_CACHE),)
+PYTEST_TESTMON_FLAGS = $(if $(USE_TESTMON_ENABLED),$(if $(filter 1,$(PYTEST_TESTMON_AVAILABLE)),--testmon --testmondata $(TESTMON_CACHE),),)
 
 # Pytest selector presets mirror pytest.ini markers; extend with PYTEST_ARGS when needed.
 PYTEST_SMOKE_FLAGS := -m "not deep and not longhaul" --timeout=$(SMOKE_TEST_TIMEOUT) --timeout-method=thread
@@ -115,18 +118,21 @@ typecheck-fast:
 ##   Tip: Testmon cache is on by default; set `USE_TESTMON=0` to disable, add selectors via `PYTEST_ARGS`.
 test:
 	@echo "Running smoke-tier pytest (testmon cache: $(USE_TESTMON); set USE_TESTMON=0 to disable)."
+	$(if $(and $(USE_TESTMON_ENABLED),$(filter 0,$(PYTEST_TESTMON_AVAILABLE))),@echo "pytest-testmon not available; continuing without cache.",)
 	$(PYTEST) $(PYTEST_TESTMON_FLAGS) $(PYTEST_SMOKE_FLAGS) $(PYTEST_ARGS)
 
 ## test-deep            Smoke + deep tiers.
 ##   Tip: Ideal before review; combine with `make bench-deep` for performance-sensitive work.
 test-deep:
 	@echo "Running smoke + deep pytest tiers."
+	$(if $(and $(USE_TESTMON_ENABLED),$(filter 0,$(PYTEST_TESTMON_AVAILABLE))),@echo "pytest-testmon not available; continuing without cache.",)
 	$(PYTEST) $(PYTEST_TESTMON_FLAGS) $(PYTEST_DEEP_FLAGS) $(PYTEST_ARGS)
 
 ## test-longhaul        Longhaul pytest tier (manual).
 ##   Tip: Scheduled weekly; coordinate with maintainer before running locally.
 test-longhaul:
 	@echo "Running longhaul pytest tier (expect multi-hour runtime)."
+	$(if $(and $(USE_TESTMON_ENABLED),$(filter 0,$(PYTEST_TESTMON_AVAILABLE))),@echo "pytest-testmon not available; continuing without cache.",)
 	$(PYTEST) $(PYTEST_TESTMON_FLAGS) $(PYTEST_LONGHAUL_FLAGS) $(PYTEST_ARGS)
 
 ## test-all             Run smoke, deep, and longhaul sequentially.
@@ -136,6 +142,10 @@ test-all: test test-deep test-longhaul
 ##   Tip: Keeps testmon warm during tight loops; clear cache by deleting `$(TESTMON_CACHE)`.
 test-incremental:
 	@echo "Running smoke-tier pytest with testmon cache warmup."
+	@if [ "$(PYTEST_TESTMON_AVAILABLE)" = "0" ]; then \
+		echo "pytest-testmon not available; install dev extras or run with USE_TESTMON=0." >&2; \
+		exit 1; \
+	fi
 	$(PYTEST) --testmon --testmondata $(TESTMON_CACHE) --maxfail=1 $(PYTEST_SMOKE_FLAGS) $(PYTEST_ARGS)
 
 #------------------------------------------------------------------------------
@@ -186,7 +196,8 @@ profile-line:
 ##   Tip: Generates HTML at `htmlcov/index.html`; testmon cache is on by default.
 coverage:
 	@echo "Running smoke-tier tests with coverage (HTML + XML reports)."
-	$(PYTEST) $(PYTEST_TESTMON_FLAGS) $(PYTEST_SMOKE_FLAGS) --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml $(PYTEST_ARGS)
+	$(if $(and $(USE_TESTMON_ENABLED),$(filter 0,$(PYTEST_TESTMON_AVAILABLE))),@echo "pytest-testmon not available; continuing without cache.",)
+	$(PYTEST) $(PYTEST_TESTMON_FLAGS) $(PYTEST_SMOKE_FLAGS) --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml --cov-fail-under=80 $(PYTEST_ARGS)
 
 ## precommit-fast       Lint essentials and incremental smoke tests.
 ##   Tip: Use during tight dev loops; relies on the testmon cache.

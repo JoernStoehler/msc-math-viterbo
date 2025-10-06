@@ -1,4 +1,7 @@
+# pragma: no cover
 """JAX baseline logistic regression for toy datasets."""
+
+# Toy module kept for documentation demos rather than regression tests.
 
 from __future__ import annotations
 

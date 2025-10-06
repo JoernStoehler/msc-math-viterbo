@@ -23,11 +23,14 @@ from viterbo.symplectic.core import standard_symplectic_matrix
 
 _SMOKE_POLYTOPES = (
     simplex_with_uniform_weights(2, name="simplex-2d-smoke"),
-    hypercube(2, name="hypercube-2d-smoke"),
-    cross_polytope(2, name="cross-polytope-2d-smoke"),
 )
 _SMOKE_CAPACITY_CASES = tuple(
     pytest.param(*poly.halfspace_data(), id=poly.name) for poly in _SMOKE_POLYTOPES
+)
+
+_DEEP_STATIC_CAPACITY_CASES = (
+    pytest.param(*hypercube(2, name="hypercube-2d-smoke").halfspace_data(), id="hypercube-2d", marks=(pytest.mark.deep,)),
+    pytest.param(*cross_polytope(2, name="cross-polytope-2d-smoke").halfspace_data(), id="cross-polytope-2d", marks=(pytest.mark.deep,)),
 )
 
 _BASE_DATA = load_polytope_instances(variant_count=0)
@@ -41,7 +44,7 @@ def _capacity_case(index: int) -> pytest.ParameterSet:
     return pytest.param(B, c, id=identifier, marks=(pytest.mark.deep,))
 
 
-_CAPACITY_CASES = _SMOKE_CAPACITY_CASES + tuple(
+_CAPACITY_CASES = _SMOKE_CAPACITY_CASES + _DEEP_STATIC_CAPACITY_CASES + tuple(
     _capacity_case(idx) for idx in range(len(_BASE_INSTANCES))
 )
 
