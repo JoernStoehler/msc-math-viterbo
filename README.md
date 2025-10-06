@@ -19,26 +19,26 @@ operate on JAX arrays, with NumPy/SciPy interop isolated in thin adapters under
 
 - The repository ships a devcontainer; agents start with dependencies pre-installed and
   `JAX_ENABLE_X64=1` enabled (see `.devcontainer/post-start.sh`).
-- Dependency management uses `uv`. The `Makefile` wraps common workflows and keeps the golden path
+- Dependency management uses `uv`. The `Justfile` wraps common workflows and keeps the golden path
   in sync with CI.
-- To bootstrap locally, run `make setup` (idempotent) from the repo root.
+- To bootstrap locally, run `just setup` (idempotent) from the repo root.
 
 ## Command Reference
 
 ```
-make setup       # install project and dev dependencies via uv
-make format      # Ruff format + Prettier for Markdown/YAML/JSON
-make lint        # Ruff lint + Prettier --check
-make typecheck   # Pyright strict
-make test        # Pytest suite (unit + integration)
-make bench       # Pytest benchmarks in tests/performance/
-make ci          # Full CI sequence: waivers → format → lint → typecheck → tests
-make docs-build  # Build MkDocs site with strict checks
+just setup       # install project and dev dependencies via uv
+just format      # Ruff format + Prettier for Markdown/YAML/JSON
+just lint        # Ruff lint + Prettier --check
+just typecheck   # Pyright strict
+just test        # Pytest suite (unit + integration)
+just bench       # Pytest benchmarks in tests/performance/
+just ci          # Full CI sequence: waivers → format → lint → typecheck → tests
+just docs-build  # Build MkDocs site with strict checks
 ```
 
-Additional helpers include profiling targets (`make profile`, `make profile-line`) and the logistic
-regression experiment pipeline (`make train-logreg`, `make evaluate-logreg`, `make publish-logreg`).
-The training command expects `WANDB_API_KEY` in your environment (see Makefile for details).
+Additional helpers include profiling targets (`just profile`, `just profile-line`) and the logistic
+regression experiment pipeline (`just train-logreg`, `just evaluate-logreg`, `just publish-logreg`).
+The training command expects `WANDB_API_KEY` in your environment (see the Justfile for details).
 
 ## Typing & Linting
 
@@ -46,7 +46,7 @@ The training command expects `WANDB_API_KEY` in your environment (see Makefile f
   types surface as errors; keep signatures accurate and prefer jaxtyping annotations with explicit
   shape tokens.
 - Ruff enforces the Google docstring convention (with curated exceptions) and bans relative imports.
-- Optional runtime jaxtyping checks can be enabled during tests via `JAXTYPING_CHECKS=1 make test`.
+- Optional runtime jaxtyping checks can be enabled during tests via `JAXTYPING_CHECKS=1 just test`.
 
 ## Tests & Benchmarks
 

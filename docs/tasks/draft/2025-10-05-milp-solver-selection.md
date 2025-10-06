@@ -103,7 +103,7 @@ in the brief and portfolio. Totals are the weighted sum of each solver’s score
 - Use small MILP smoke tests to confirm API parity and determinism.
 - Record runtime metrics (wall-clock, iterations) for comparison, but no exhaustive benchmarking
   required.
-- Ensure prototypes run under `make pyright` and `make test` if committed.
+- Ensure prototypes run under `just typecheck` and `just test` if committed.
 
 ## 10. Risks, mitigations, and escalation triggers
 

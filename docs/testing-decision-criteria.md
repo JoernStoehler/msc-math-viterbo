@@ -160,19 +160,19 @@ contributors.
 To keep quality control predictable across the next months, apply the following conventions in
 addition to the decision criteria above.
 
-- **Golden-path commands**: Before opening a PR or handing off work, run `make precommit`
-  (format/lint/typecheck/full smoke). Use `make precommit-fast` + `make test-incremental` during
-  local iteration, and `make test-deep` before merging performance-sensitive changes. Scheduled
-  changes, `make test-longhaul` for scheduled regression sweeps, and the matching benchmark targets
-  (`make bench`, `make bench-deep`, `make bench-longhaul`) when validating runtime budgets.
+- **Golden-path commands**: Before opening a PR or handing off work, run `just precommit`
+  (format/lint/typecheck/full smoke). Use `just precommit-fast` + `just test-incremental` during
+  local iteration, and `just test-deep` before merging performance-sensitive changes. Schedule
+  `just test-longhaul` for regression sweeps, and the matching benchmark targets
+  (`just bench`, `just bench-deep`, `just bench-longhaul`) when validating runtime budgets.
 - **Pytest markers**: Tag new tests with `@pytest.mark.smoke`, `@pytest.mark.deep`, or
   `@pytest.mark.longhaul` explicitly when their runtime requires it. Leave smoke-only tests unmarked
   if they satisfy the enforced budget (10 s per-test via per-item markers, 60 s session cap). Keep
   benchmark modules under `tests/performance/` and mark them with both `smoke`/`deep` tiers when
   appropriate plus `@pytest.mark.benchmark`.
-- **CI alignment**: `make ci` mirrors the GitHub Actions pipeline (format → lint → typecheck → smoke
+- **CI alignment**: `just ci` mirrors the GitHub Actions pipeline (format → lint → typecheck → smoke
   tests). If a change needs additional tooling (coverage, mutation testing, profiling), wire it in
-  via a Make target first and mirror the invocation in CI only once the cost and signal are proven.
+  via a `just` recipe first and mirror the invocation in CI only once the cost and signal are proven.
 - **Type-first guarding**: When adding runtime tests, audit whether stricter type hints or Ruff rules
   would catch the issue earlier. Prefer tightening `pyright` coverage before introducing slow smoke
   cases.
@@ -181,8 +181,8 @@ addition to the decision criteria above.
   maintainer approval). Capture any manual runs in the relevant task brief (§12 status section).
 - **Timeout policy**: Apply `pytest` `timeout` markers or fixtures to smoke-tier tests that risk
   exceeding per-test budgets. Implement Make-level guards if suite runtime drifts towards the CI
-  ceiling. Keep the pytest-testmon cache warm by running `make test-incremental` frequently and a
-  full `make test` whenever dependencies shift significantly.
+  ceiling. Keep the pytest-testmon cache warm by running `just test-incremental` frequently and a
+  full `just test` whenever dependencies shift significantly.
 - **Re-tiering cadence**: Revisit marker assignments whenever runtime measurements change by more than
   ~20% or new fixtures land. Document adjustments in `docs/tasks/...` so subsequent agents inherit the
   rationale.

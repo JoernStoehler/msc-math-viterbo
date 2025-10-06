@@ -22,8 +22,8 @@ Changes
 
 Testing
 - Commands run locally (paste short summaries):
-  - `make format && make lint && make typecheck && make test`
-  - Optional full: `make ci`
+  - `just format && just lint && just typecheck && just test`
+  - Optional full: `just ci`
 - Add/updated tests: <brief list>
 
 Performance (if perf-critical code)
@@ -40,9 +40,9 @@ Follow-ups (numbered, prioritized H/M/L)
 1. <task> — <H/M/L>
 
 Checklist
-- [ ] `make setup` (first-time env) or environment already prepared
-- [ ] `make format && make lint && make typecheck && make test` pass locally
-- [ ] `make ci` green locally (recommended before merge)
+- [ ] `just setup` (first-time env) or environment already prepared
+- [ ] `just format && just lint && just typecheck && just test` pass locally
+- [ ] `just ci` green locally (recommended before merge)
 - [ ] No secrets in code or logs; configuration via env vars
 
 Reviewer Notes (optional)
