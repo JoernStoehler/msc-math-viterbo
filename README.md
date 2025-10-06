@@ -26,13 +26,16 @@ operate on JAX arrays, with NumPy/SciPy interop isolated in thin adapters under
 ## Command Reference
 
 ```
-just setup       # install project and dev dependencies via uv
-just format      # Ruff format + Prettier for Markdown/YAML/JSON
-just lint        # Ruff lint + Prettier --check
-just typecheck   # Pyright strict
-just test        # Pytest suite (unit + integration)
+just quick       # FAST loop: Ruff format+lint → Pyright basic → pytest (FAST mode)
+just full        # Full loop: Ruff lint → Pyright strict → pytest smoke tier
+just ci          # GitHub Actions parity (sync → waivers → lint → type-strict → pytest)
+just sync        # Install project and dev dependencies via uv
+just fix         # Ruff format+autofix on src/ and tests/
+just lint        # Ruff lint + Prettier --check for policy compliance
+just type        # Pyright basic over src/ (fast loop)
+just type-strict # Pyright strict across the repository
+just test        # Pytest smoke tier (non-FAST)
 just bench       # Pytest benchmarks in tests/performance/
-just ci          # Full CI sequence: waivers → format → lint → typecheck → tests
 just docs-build  # Build MkDocs site with strict checks
 ```
 
@@ -42,9 +45,9 @@ The training command expects `WANDB_API_KEY` in your environment (see the Justfi
 
 ## Typing & Linting
 
-- Pyright runs in strict mode with repository-local stubs under `typings/jax/`. Unknown or missing
-  types surface as errors; keep signatures accurate and prefer jaxtyping annotations with explicit
-  shape tokens.
+- The default Pyright profile (`pyrightconfig.json`) uses basic mode for day-to-day loops; CI flips
+  to strict mode via `pyrightconfig.strict.json`. Repository-local stubs live under
+  `typings/jax/`—keep signatures accurate and prefer jaxtyping annotations with explicit shape tokens.
 - Ruff enforces the Google docstring convention (with curated exceptions) and bans relative imports.
 - Optional runtime jaxtyping checks can be enabled during tests via `JAXTYPING_CHECKS=1 just test`.
 
@@ -52,9 +55,10 @@ The training command expects `WANDB_API_KEY` in your environment (see the Justfi
 
 - Unit and integration tests reside in `tests/viterbo/`; performance benchmarks live in
   `tests/performance/viterbo/`.
-- CI mirrors the golden path (`.github/workflows/ci.yml`): waivers, Ruff format/lint, Prettier,
-  Pyright, and Pytest. A scheduled workflow runs weekly performance benchmarks and uploads
-  `.benchmarks/` artefacts.
+- Export `FAST=1` (or run `just quick`) to force CPU/no-JIT defaults and automatically skip tests
+  marked `slow`, `gpu`, `jit`, or `integration`.
+- CI delegates to `just ci` (see `.github/workflows/ci.yml`) for parity with the local loop. A
+  scheduled workflow runs weekly performance benchmarks and uploads `.benchmarks/` artefacts.
 - Stick to deterministic seeds; tolerances default to `rtol=1e-9`, `atol=0.0` via the shared pytest
   fixture (`tests/conftest.py`).
 

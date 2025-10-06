@@ -14,6 +14,8 @@ import jax
 import pytest
 
 SMOKE_TIMEOUT_SECONDS = 10
+FAST_ENV_FLAG = "FAST"
+FAST_SKIP_MARKERS = {"slow", "gpu", "jit", "integration"}
 
 
 def _maybe_enable_jaxtyping_checks() -> None:
@@ -50,6 +52,21 @@ def _maybe_enable_jaxtyping_checks() -> None:
 _maybe_enable_jaxtyping_checks()
 
 
+def _is_fast_mode() -> bool:
+    return os.getenv(FAST_ENV_FLAG, "0") == "1"
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Configure FAST mode defaults when enabled."""
+
+    if not _is_fast_mode():
+        return
+
+    os.environ.setdefault("JAX_DISABLE_JIT", "true")
+    os.environ.setdefault("JAX_PLATFORM_NAME", "cpu")
+    os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
+
+
 @pytest.fixture
 def rng_key() -> Iterator[jax.Array]:
     """Deterministic JAX PRNG key for tests; split per-test if needed.
@@ -70,7 +87,13 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
 
     smoke_marker = pytest.mark.smoke
     deep_marker = pytest.mark.deep
+    fast_skip = pytest.mark.skip(reason="skipped in FAST mode") if _is_fast_mode() else None
     for item in items:
+        if fast_skip is not None:
+            marker_names = {marker.name for marker in item.iter_markers()}
+            if FAST_SKIP_MARKERS & marker_names:
+                item.add_marker(fast_skip)
+                continue
         if item.get_closest_marker("longhaul"):
             continue
         if item.get_closest_marker("deep"):
