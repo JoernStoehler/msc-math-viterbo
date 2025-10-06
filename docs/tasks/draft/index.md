@@ -10,3 +10,4 @@ Draft proposals and experiments under consideration.
 - [MILP solver selection (E3a)](2025-10-05-milp-solver-selection.md)
 - [Benchmark marker strategy (T2a)](2025-10-05-benchmark-marker-strategy.md)
 - [Testing, benchmarking, and regression program (T2/T2a/T3)](2025-10-06-testing-benchmark-regression-program.md)
+- [Chaidez–Hutchings Reeb-cycle solver implementation](2025-10-06-reeb-cycle-enumeration.md)
