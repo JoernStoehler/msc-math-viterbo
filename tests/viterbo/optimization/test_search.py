@@ -8,7 +8,9 @@ from viterbo.geometry.polytopes import catalog
 from viterbo.optimization.search import enumerate_search_space, iter_search_space
 
 
+@pytest.mark.goal_code
 def test_enumerate_search_space_deterministic() -> None:
+    """Enumerating the search space with identical seeds yields identical sequences."""
     first = enumerate_search_space(
         rng_seed=11,
         max_dimension=4,
@@ -30,7 +32,9 @@ def test_enumerate_search_space_deterministic() -> None:
         assert poly_a.c.shape == poly_b.c.shape
 
 
+@pytest.mark.goal_math
 def test_search_space_contains_catalog() -> None:
+    """The search enumeration includes every canonical polytope from the catalog."""
     search_space = enumerate_search_space(
         rng_seed=5,
         max_dimension=4,
@@ -43,7 +47,9 @@ def test_search_space_contains_catalog() -> None:
     assert catalog_names.issubset(search_names)
 
 
+@pytest.mark.goal_code
 def test_iter_search_space_respects_max_candidates() -> None:
+    """The iterator stops once it yields the requested number of candidates."""
     polytopes = list(
         iter_search_space(
             max_candidates=5,
@@ -55,12 +61,16 @@ def test_iter_search_space_respects_max_candidates() -> None:
     assert len(polytopes) == 5
 
 
+@pytest.mark.goal_code
 def test_iter_search_space_rejects_unknown_kwargs() -> None:
+    """`iter_search_space` raises when callers supply unsupported keyword arguments."""
     with pytest.raises(TypeError, match="Unknown keyword arguments"):
         next(iter_search_space(unknown=1))
 
 
+@pytest.mark.goal_code
 def test_iter_search_space_honours_dimension_cap() -> None:
+    """Generated polytopes do not exceed the requested maximum dimension."""
     polytopes = list(
         iter_search_space(
             max_dimension=3,

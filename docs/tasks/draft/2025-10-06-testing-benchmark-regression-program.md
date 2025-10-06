@@ -2,10 +2,10 @@
 
 - **Status**: Draft
 - **Last updated**: 2025-10-06
-- **Owner / DRI**: Unassigned
-- **Supersedes**: `docs/tasks/scheduled/2025-10-04-testing-benchmark-harness.md`,
-  `docs/tasks/draft/2025-10-05-benchmark-marker-strategy.md`,
-  `docs/tasks/scheduled/2025-10-05-symplectic-invariant-regression-suite.md`
+- **Owner / DRI**: Codex & PI (joint)
+- **Supersedes**: Testing, benchmarking, and profiling harness (T2) scheduled brief;
+  Benchmark marker strategy draft; Symplectic invariants regression suite (T3) scheduled brief —
+  all archived in git history after consolidation into this document
 - **Related docs**: `docs/tasks/02-task-portfolio.md`, `docs/algorithm-implementation-plan.md`,
   `docs/tasks/completed/2025-10-04-geometry-module-refactor.md`
 
@@ -157,8 +157,10 @@ clear entry point that matches CI/local environments and discourages ad hoc vari
 
 ## 9. Testing, benchmarks, and verification
 
-- **CI**: `just ci` runs smoke-tier unit tests; `just bench` executes the CI
-  benchmark slice. Failing invariants or capacity comparisons trigger escalation per documentation.
+- **CI**: `just ci` runs smoke-tier unit tests; `just bench` executes the CI benchmark slice. Smoke
+  uses the standard `just test` recipe (10 s per-test timeout, 60 s session cap) documented in
+  `pytest.ini`/`Justfile`. Failing invariants or capacity comparisons trigger escalation per
+  documentation.
 - **Local deep loop**: Developers run `just test-deep` and `just bench-deep` before
   landing geometry or optimisation changes; profiling via `just profile` when performance drift is
   suspected.
