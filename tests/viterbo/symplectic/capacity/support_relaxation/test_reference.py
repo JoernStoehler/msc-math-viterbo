@@ -4,6 +4,8 @@ import math
 
 import pytest
 
+pytest.importorskip("cvxpy")
+
 from viterbo.symplectic.capacity.support_relaxation.reference import (
     compute_support_relaxation_capacity_reference,
 )
@@ -38,20 +40,11 @@ def test_reference_solver_translation_invariant(unit_disk_vertices) -> None:
     )
 
 
-def test_reference_solver_handles_missing_cvxpy(
-    monkeypatch: pytest.MonkeyPatch, unit_disk_vertices
-) -> None:
-    from viterbo import _wrapped
-
-    monkeypatch.setattr(
-        _wrapped.cvx,
-        "_load_cvxpy",
-        lambda: (_ for _ in ()).throw(ModuleNotFoundError()),
-    )
-
+def test_reference_solver_softmax_schedule(unit_disk_vertices) -> None:
     result = compute_support_relaxation_capacity_reference(
         unit_disk_vertices,
         smoothing_parameters=(0.6, 0.3, 0.0),
         smoothing_method="softmax",
     )
     assert result.capacity_upper_bound > 0.0
+

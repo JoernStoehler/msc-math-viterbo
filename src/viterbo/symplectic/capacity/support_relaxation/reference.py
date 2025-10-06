@@ -50,9 +50,6 @@ def compute_support_relaxation_capacity_reference(
     center_vertices: bool = True,
 ) -> SupportRelaxationResult:
     """Solve the relaxed convex program using CVXPy."""
-    # ``smoothing_method`` mirrors the fast solver to ease cross-checking. When
-    # CVXPy is unavailable we fall back to the closed-form epigraph solution,
-    # keeping the API stable for CI environments without the optional extra.
     vertices = _prepare_vertices(vertices, center_vertices=center_vertices)
 
     smoothing_schedule = kernels.continuation_schedule(smoothing_parameters)
