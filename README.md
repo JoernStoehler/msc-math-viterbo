@@ -63,6 +63,15 @@ The training command expects `WANDB_API_KEY` in your environment (see the Justfi
 - Stick to deterministic seeds; tolerances default to `rtol=1e-9`, `atol=0.0` via the shared pytest
   fixture (`tests/conftest.py`).
 
+### Testing Policy
+
+- Every test declares exactly one goal marker: `@pytest.mark.goal_math`, `@pytest.mark.goal_code`,
+  or `@pytest.mark.goal_performance`.
+- Each test starts with a short docstring stating the invariant or behaviour under test.
+- Quick inspection commands:
+  - `just test-metadata` to list tests with goal markers and docstrings.
+  - `just lint` runs the same metadata check used in CI.
+
 ## Docs & Knowledge Base
 
 - Architecture and module overviews live in `docs/22-code-structure.md` and related notes.

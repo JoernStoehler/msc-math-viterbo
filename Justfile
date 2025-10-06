@@ -43,9 +43,9 @@ setup: sync
 # Run quiet Ruff formatter and Prettier writes.
 # Tip: Safe to run before commits; pairs with `just lint` or `just precommit`.
 fix:
-    @echo "Applying Ruff format and autofix to src/ and tests/."
-    $UV run ruff format src tests
-    $UV run ruff check src tests --fix
+    @echo "Applying Ruff format and autofix to src/, tests/, and scripts/."
+    $UV run ruff format src tests scripts
+    $UV run ruff check src tests scripts --fix
 
 # Run quiet Ruff formatter and Prettier writes.
 # Tip: Safe to run before commits; pairs with `just lint` or `just precommit`.
@@ -71,13 +71,13 @@ test-metadata:
 # Tip: Catches runtime errors quickly; run `just lint` for policy/doc coverage.
 lint-fast:
     @echo "Running Ruff fast lint (E/F/B006/B008, ignores jaxtyping F722)."
-    $UV run ruff check src tests --select E9 --select F --select B006 --select B008 --ignore F722
+    $UV run ruff check src tests scripts --select E9 --select F --select B006 --select B008 --ignore F722
 
 # Lightning-fast developer loop: format+lint, type (basic), pytest FAST with change detection.
 # Tip: Respects USE_TESTMON/PYTEST_ARGS and skips heavy markers automatically.
 quick:
     @echo "Running FAST loop: Ruff format+lint, Pyright basic, pytest (FAST mode with change detection)."
-    @changed_py=$(git status --porcelain=v1 --untracked-files=normal | awk '{print $2}' | grep -E '^(src|tests)/.*\\.py$' || true); \
+    @changed_py=$(git status --porcelain=v1 --untracked-files=normal | awk '{print $2}' | grep -E '^(src|tests|scripts)/.*\\.py$' || true); \
     if [[ -n "$changed_py" ]]; then \
         echo "Formatting changed Python files:" $changed_py; \
         $UV run ruff format $changed_py; \
