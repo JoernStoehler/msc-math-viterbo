@@ -46,6 +46,8 @@ def test_fast_solver_matches_reference(
     assert fast_result.lower_bound is not None
     assert 0.0 <= fast_result.lower_bound <= fast_result.upper_bound
     assert fast_result.explored_subsets >= 1
+    assert fast_result.gap_ratio is not None
+    assert 0.0 <= fast_result.gap_ratio <= 1.0
 
 
 def test_fast_solver_improves_over_facet_fast(four_dimensional_simplex: Polytope) -> None:

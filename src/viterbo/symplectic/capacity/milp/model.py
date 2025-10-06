@@ -63,6 +63,20 @@ class MilpCapacityResult:
     lower_bound: float | None
     certificate: MilpCertificate
     explored_subsets: int
+    gap_ratio: float | None
+
+
+def compute_gap_ratio(*, upper_bound: float, lower_bound: float | None) -> float | None:
+    """Return the relative gap ``(upper-lower)/upper`` when finite bounds are available."""
+
+    if lower_bound is None:
+        return None
+    if upper_bound <= 0.0:
+        return None
+
+    gap = max(0.0, upper_bound - max(0.0, lower_bound))
+    ratio = gap / upper_bound
+    return float(min(1.0, ratio))
 
 
 def build_subset_model(
@@ -198,18 +212,110 @@ def _solve_beta_linear_program(
     return np.asarray(solution.col_value[:num_facets], dtype=np.float64)
 
 
+def _solve_beta_product_linear_program(
+    *,
+    pair: tuple[int, int],
+    normals: np.ndarray,
+    support: np.ndarray,
+    single_bounds: np.ndarray,
+    options: Mapping[str, float] | None,
+) -> float | None:
+    """Return an upper bound on ``beta_i * beta_j`` via a lifted relaxation."""
+
+    i, j = pair
+    upper_i = float(single_bounds[i])
+    upper_j = float(single_bounds[j])
+
+    if upper_i <= 0.0 or upper_j <= 0.0:
+        return None
+
+    resources = load_highs()
+    highs = resources.Highs()
+    highs.setOptionValue("output_flag", False)
+    highs.setOptionValue("random_seed", 0)
+
+    if options is not None:
+        for key, value in options.items():
+            highs.setOptionValue(str(key), float(value))
+
+    num_facets = int(support.size)
+    infinity = highs.getInfinity()
+    total_variables = num_facets + 1
+
+    ub = [float(infinity)] * total_variables
+    for index in range(num_facets):
+        if single_bounds[index] > 0.0:
+            ub[index] = float(single_bounds[index])
+
+    lb = [0.0] * total_variables
+    obj = [0.0] * num_facets + [1.0]
+
+    variables = highs.addVariables(
+        range(total_variables),
+        lb=lb,
+        ub=ub,
+        obj=obj,
+        type=[resources.HighsVarType.kContinuous] * total_variables,
+    )
+
+    w_variable = variables[num_facets]
+
+    for row in normals.T:
+        expression = highs.expr()
+        for column, coefficient in enumerate(row):
+            if coefficient == 0.0:
+                continue
+            expression += float(coefficient) * variables[column]
+        highs.addConstr(expression == 0.0)
+
+    expression = highs.expr()
+    for column, coefficient in enumerate(support):
+        if coefficient == 0.0:
+            continue
+        expression += float(coefficient) * variables[column]
+    highs.addConstr(expression == 1.0)
+
+    expression = highs.expr()
+    expression += 1.0 * w_variable
+    expression += -upper_i * variables[j]
+    highs.addConstr(expression <= 0.0)
+
+    expression = highs.expr()
+    expression += 1.0 * w_variable
+    expression += -upper_j * variables[i]
+    highs.addConstr(expression <= 0.0)
+
+    expression = highs.expr()
+    expression += 1.0 * w_variable
+    expression += -upper_i * variables[j]
+    expression += -upper_j * variables[i]
+    highs.addConstr(expression >= -upper_i * upper_j)
+
+    status = highs.maximize()
+    if status != resources.HighsStatus.kOk:
+        return None
+
+    model_status = highs.getModelStatus()
+    if model_status != resources.HighsModelStatus.kOptimal:
+        return None
+
+    solution = highs.getSolution()
+    return float(solution.col_value[num_facets])
+
+
 def _compute_beta_upper_bounds(
     *,
     normals: np.ndarray,
     support: np.ndarray,
     abs_products: np.ndarray,
     options: Mapping[str, float] | None,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Return per-facet and pairwise bounds for feasible Reeb coefficients."""
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return per-facet, pairwise, and product bounds for Reeb coefficients."""
 
     num_facets = int(support.size)
     single_bounds = np.zeros(num_facets, dtype=np.float64)
     pair_bounds = np.zeros((num_facets, num_facets), dtype=np.float64)
+    product_bounds = np.zeros((num_facets, num_facets), dtype=np.float64)
 
     standard_objective = np.zeros(num_facets, dtype=np.float64)
 
@@ -245,7 +351,18 @@ def _compute_beta_upper_bounds(
             pair_bounds[i, j] = pair_sum
             pair_bounds[j, i] = pair_sum
 
-    return single_bounds, pair_bounds
+            product = _solve_beta_product_linear_program(
+                pair=(i, j),
+                normals=normals,
+                support=support,
+                single_bounds=single_bounds,
+                options=options,
+            )
+            if product is not None:
+                product_bounds[i, j] = product
+                product_bounds[j, i] = product
+
+    return single_bounds, pair_bounds, product_bounds
 
 
 @lru_cache(maxsize=32)
@@ -271,7 +388,7 @@ def estimate_capacity_lower_bound(
     symplectic_products = normals @ J @ normals.T
     abs_products = np.abs(symplectic_products)
 
-    single_bounds, pair_bounds = _compute_beta_upper_bounds(
+    single_bounds, pair_bounds, product_bounds = _compute_beta_upper_bounds(
         normals=normals,
         support=support,
         abs_products=abs_products,
@@ -282,6 +399,13 @@ def estimate_capacity_lower_bound(
         np.multiply.outer(single_bounds, single_bounds),
         0.25 * np.square(pair_bounds),
     )
+    valid_products = product_bounds > 0.0
+    if np.any(valid_products):
+        outer_products = np.where(
+            valid_products,
+            np.minimum(outer_products, product_bounds),
+            outer_products,
+        )
     np.fill_diagonal(outer_products, 0.0)
 
     contribution = abs_products * outer_products
