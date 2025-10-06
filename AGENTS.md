@@ -118,6 +118,8 @@ def ehz_capacity(
   start with a concise docstring that states the invariant or behaviour under test. Docstrings in
   `tests/` may use plain prose (no Google-style sections required) but must mention what the test
   covers and, for math/code markers, which algorithmic surface or property is exercised.
+- To inspect metadata quickly, run `just test-metadata ARGS="--marker goal_math"` (omit `ARGS` to
+  list everything). The script prints a deterministic summary (`LINES:<n>` + `path::test` rows).
 - Tolerances: choose context‑appropriate tolerances; document rationale. Typical float64 ranges are
   `rtol` ~ 1e‑9–1e‑12 and `atol` near 0.0 for well‑conditioned problems, but adjust as needed.
 - Assertions: use clear options such as `pytest.approx`, `numpy.testing.assert_allclose`,
