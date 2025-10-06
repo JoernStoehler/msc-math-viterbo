@@ -1,26 +1,23 @@
-"""
-Numerical building blocks for experimenting with the Viterbo conjecture.
+"""Numerical building blocks for experimenting with the Viterbo conjecture.
 
-This module follows Google docstring style and explicit jaxtyping shapes.
+JAX-first: uses ``jax.numpy`` for array math and Google-style docstrings with
+explicit jaxtyping shapes. All public helpers validate shapes/dtypes and fail
+fast with precise exceptions.
 """
 
 from __future__ import annotations
 
 from typing import Final
 
-import numpy as np
-from jaxtyping import Float
+import jax.numpy as jnp
+from jaxtyping import Array, Float
 
 ZERO_TOLERANCE: Final[float] = 1e-12
-
-_DIMENSION_AXIS: Final[str] = "dimension"
-_VERTEX_MATRIX_AXES: Final[str] = "num_vertices dimension"
-_PAIRS_AXIS: Final[str] = "k"
 
 
 def standard_symplectic_matrix(
     dimension: int,
-) -> Float[np.ndarray, f"{_DIMENSION_AXIS} {_DIMENSION_AXIS}"]:
+) -> Float[Array, " dimension dimension"]:
     r"""
     Return the standard symplectic matrix on R^d.
 
@@ -41,17 +38,17 @@ def standard_symplectic_matrix(
         raise ValueError(msg)
 
     half = dimension // 2
-    upper = np.hstack((np.zeros((half, half)), np.eye(half)))
-    lower = np.hstack((-np.eye(half), np.zeros((half, half))))
-    matrix: Float[np.ndarray, f"{_DIMENSION_AXIS} {_DIMENSION_AXIS}"] = np.vstack((upper, lower))
+    upper = jnp.hstack((jnp.zeros((half, half)), jnp.eye(half)))
+    lower = jnp.hstack((-jnp.eye(half), jnp.zeros((half, half))))
+    matrix: Float[Array, " dimension dimension"] = jnp.vstack((upper, lower))
     return matrix
 
 
 def symplectic_product(
-    first: Float[np.ndarray, _DIMENSION_AXIS],
-    second: Float[np.ndarray, _DIMENSION_AXIS],
+    first: Float[Array, " dimension"],
+    second: Float[Array, " dimension"],
     *,
-    matrix: Float[np.ndarray, f"{_DIMENSION_AXIS} {_DIMENSION_AXIS}"] | None = None,
+    matrix: Float[Array, " dimension dimension"] | None = None,
 ) -> float:
     r"""
     Evaluate the symplectic form of two vectors.
@@ -70,8 +67,8 @@ def symplectic_product(
         ``matrix`` does not match the vector dimension.
 
     """
-    first = np.asarray(first, dtype=float)
-    second = np.asarray(second, dtype=float)
+    first = jnp.asarray(first, dtype=jnp.float64)
+    second = jnp.asarray(second, dtype=jnp.float64)
 
     if first.ndim != 1 or second.ndim != 1:
         msg = "Symplectic product expects one-dimensional input vectors."
@@ -85,7 +82,7 @@ def symplectic_product(
     if matrix is None:
         matrix = standard_symplectic_matrix(dimension)
     else:
-        matrix = np.asarray(matrix, dtype=float)
+        matrix = jnp.asarray(matrix, dtype=jnp.float64)
         if matrix.shape != (dimension, dimension):
             msg = "Symplectic matrix must match the vector dimension."
             raise ValueError(msg)
@@ -95,8 +92,8 @@ def symplectic_product(
 
 
 def support_function(
-    vertices: Float[np.ndarray, _VERTEX_MATRIX_AXES],
-    direction: Float[np.ndarray, _DIMENSION_AXIS],
+    vertices: Float[Array, " num_vertices dimension"],
+    direction: Float[Array, " dimension"],
 ) -> float:
     r"""
     Evaluate the support function of a convex body from its vertices.
@@ -117,8 +114,8 @@ def support_function(
         direction is not one-dimensional.
 
     """
-    vertices = np.asarray(vertices, dtype=float)
-    direction = np.asarray(direction, dtype=float)
+    vertices = jnp.asarray(vertices, dtype=jnp.float64)
+    direction = jnp.asarray(direction, dtype=jnp.float64)
 
     if vertices.ndim != 2 or vertices.shape[0] == 0:
         msg = "Support function requires a non-empty set of vertices."
@@ -132,14 +129,14 @@ def support_function(
         msg = "Vertices and direction must share the same dimension."
         raise ValueError(msg)
 
-    value = float(np.max(vertices @ direction))
+    value = float(jnp.max(vertices @ direction))
     return value
 
 
 def minkowski_sum(
-    first_vertices: Float[np.ndarray, f"m {_DIMENSION_AXIS}"],
-    second_vertices: Float[np.ndarray, f"n {_DIMENSION_AXIS}"],
-) -> Float[np.ndarray, f"{_PAIRS_AXIS} {_DIMENSION_AXIS}"]:
+    first_vertices: Float[Array, " m dimension"],
+    second_vertices: Float[Array, " n dimension"],
+) -> Float[Array, " k dimension"]:
     r"""
     Return vertices of the Minkowski sum ``A + B``.
 
@@ -155,8 +152,8 @@ def minkowski_sum(
       ValueError: If an input is empty or dimensions differ.
 
     """
-    first_vertices = np.asarray(first_vertices, dtype=float)
-    second_vertices = np.asarray(second_vertices, dtype=float)
+    first_vertices = jnp.asarray(first_vertices, dtype=jnp.float64)
+    second_vertices = jnp.asarray(second_vertices, dtype=jnp.float64)
 
     if first_vertices.ndim != 2 or first_vertices.shape[0] == 0:
         msg = "First vertex array must be two-dimensional and non-empty."
@@ -171,15 +168,13 @@ def minkowski_sum(
         raise ValueError(msg)
 
     sums = first_vertices[:, None, :] + second_vertices[None, :, :]
-    result: Float[np.ndarray, f"{_PAIRS_AXIS} {_DIMENSION_AXIS}"] = sums.reshape(
-        -1, first_vertices.shape[1]
-    )
+    result: Float[Array, " k dimension"] = sums.reshape(-1, first_vertices.shape[1])
     return result
 
 
 def normalize_vector(
-    vector: Float[np.ndarray, _DIMENSION_AXIS],
-) -> Float[np.ndarray, _DIMENSION_AXIS]:
+    vector: Float[Array, " dimension"],
+) -> Float[Array, " dimension"]:
     r"""
     Return a unit vector pointing in the same direction.
 
@@ -199,15 +194,15 @@ def normalize_vector(
       array([0.6, 0.8])
 
     """
-    vector = np.asarray(vector, dtype=float)
+    vector = jnp.asarray(vector, dtype=jnp.float64)
 
     if vector.ndim != 1:
         msg = "normalize_vector expects a one-dimensional input vector."
         raise ValueError(msg)
 
-    norm: float = float(np.linalg.norm(vector))
+    norm: float = float(jnp.linalg.norm(vector))
     if norm <= ZERO_TOLERANCE:
         raise ValueError("Cannot normalize a vector with near-zero magnitude.")
 
-    normalized: Float[np.ndarray, _DIMENSION_AXIS] = vector / norm
+    normalized: Float[Array, " dimension"] = vector / norm
     return normalized

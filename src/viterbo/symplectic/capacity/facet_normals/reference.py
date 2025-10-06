@@ -1,14 +1,14 @@
-"""Reference facet-normal EHZ capacity computation (Google style)."""
+"""Reference facet-normal EHZ capacity computation (JAX-first)."""
 
 from __future__ import annotations
 
 from itertools import permutations
-from typing import Final
+from typing import TYPE_CHECKING, overload
 
-import numpy as np
-from jaxtyping import Float
+import jax.numpy as jnp
+from jaxtyping import Array, Float
 
-from viterbo.symplectic.capacity_algorithms._subset_utils import (
+from viterbo.symplectic.capacity.facet_normals.subset_utils import (
     FacetSubset,
     iter_index_combinations,
     prepare_subset,
@@ -16,15 +16,33 @@ from viterbo.symplectic.capacity_algorithms._subset_utils import (
 )
 from viterbo.symplectic.core import standard_symplectic_matrix
 
-_DIMENSION_AXIS: Final[str] = "dimension"
-_FACET_AXIS: Final[str] = "num_facets"
-_M_AXIS: Final[str] = "m"
-_MAX_PERMUTATION_SIZE: Final[int] = 7
+if TYPE_CHECKING:  # type-only import to keep runtime free of NumPy
+    import numpy as np
+
+_MAX_PERMUTATION_SIZE: int = 7
+
+
+@overload
+def compute_ehz_capacity_reference(
+    B_matrix: Float[Array, " num_facets dimension"],
+    c: Float[Array, " num_facets"],
+    *,
+    tol: float = 1e-10,
+) -> float: ...
+
+
+@overload
+def compute_ehz_capacity_reference(
+    B_matrix: Float["np.ndarray", " num_facets dimension"],
+    c: Float["np.ndarray", " num_facets"],
+    *,
+    tol: float = 1e-10,
+) -> float: ...
 
 
 def compute_ehz_capacity_reference(
-    B_matrix: Float[np.ndarray, f"{_FACET_AXIS} {_DIMENSION_AXIS}"],
-    c: Float[np.ndarray, _FACET_AXIS],
+    B_matrix: Float[Array, " num_facets dimension"] | Float[np.ndarray, " num_facets dimension"],
+    c: Float[Array, " num_facets"] | Float[np.ndarray, " num_facets"],
     *,
     tol: float = 1e-10,
 ) -> float:
@@ -49,8 +67,8 @@ def compute_ehz_capacity_reference(
         non-negativity constraints.
 
     """
-    B = np.asarray(B_matrix, dtype=float)
-    c = np.asarray(c, dtype=float)
+    B = jnp.asarray(B_matrix, dtype=jnp.float64)
+    c = jnp.asarray(c, dtype=jnp.float64)
 
     if B.ndim != 2:
         raise ValueError("Facet matrix B must be two-dimensional.")
@@ -59,12 +77,12 @@ def compute_ehz_capacity_reference(
         raise ValueError("Vector c must have length equal to the number of facets.")
 
     num_facets, dimension = B.shape
-    if dimension % 2 != 0 or dimension < 2:
+    if int(dimension) % 2 != 0 or int(dimension) < 2:
         raise ValueError("The ambient dimension must satisfy 2n with n >= 1.")
 
     J = standard_symplectic_matrix(dimension)
     subset_size = dimension + 1
-    best_capacity = np.inf
+    best_capacity = jnp.inf
 
     for indices in iter_index_combinations(num_facets, subset_size):
         subset = prepare_subset(B_matrix=B, c=c, indices=indices, J=J, tol=tol)
@@ -78,40 +96,40 @@ def compute_ehz_capacity_reference(
         if candidate_value < best_capacity:
             best_capacity = candidate_value
 
-    if not np.isfinite(best_capacity):
+    if not bool(jnp.isfinite(best_capacity)):
         raise ValueError("No admissible facet subset satisfied the non-negativity constraints.")
 
-    return best_capacity
+    return float(best_capacity)
 
 
 def _subset_capacity_candidate(subset: FacetSubset, *, tol: float) -> float | None:
-    beta = subset.beta
-    W = subset.symplectic_products
-    m = beta.shape[0]
+    beta = jnp.asarray(subset.beta, dtype=jnp.float64)
+    W = jnp.asarray(subset.symplectic_products, dtype=jnp.float64)
+    m = int(beta.shape[0])
     indices = range(m)
 
     if m > _MAX_PERMUTATION_SIZE:
         return subset_capacity_candidate_dynamic(subset, tol=tol)
 
-    maximal_value = -np.inf
+    maximal_value = float("-inf")
     for ordering in permutations(indices):
         total = 0.0
         for i in range(1, m):
             idx_i = ordering[i]
-            weight_i = beta[idx_i]
-            if weight_i <= tol:
+            weight_i = float(beta[idx_i])
+            if weight_i <= float(tol):
                 continue
             row = W[idx_i]
             for j in range(i):
                 idx_j = ordering[j]
-                weight_j = beta[idx_j]
-                if weight_j <= tol:
+                weight_j = float(beta[idx_j])
+                if weight_j <= float(tol):
                     continue
-                total += weight_i * weight_j * row[idx_j]
+                total += weight_i * weight_j * float(row[idx_j])
 
         maximal_value = max(maximal_value, total)
 
-    if maximal_value <= tol:
+    if maximal_value <= float(tol):
         return None
 
     return 0.5 / maximal_value

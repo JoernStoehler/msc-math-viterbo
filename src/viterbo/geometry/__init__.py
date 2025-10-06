@@ -1,38 +1,32 @@
-"""Geometry primitives and polytope helpers."""
+"""Geometry primitives and polytope helpers (reference + fast variants)."""
 
 from viterbo.geometry.halfspaces import (
     enumerate_vertices as enumerate_vertices,
 )
 from viterbo.geometry.halfspaces import (
-    enumerate_vertices_jax as enumerate_vertices_jax,
+    enumerate_vertices_fast as enumerate_vertices_fast,
 )
 from viterbo.geometry.halfspaces import (
-    enumerate_vertices_optimized as enumerate_vertices_optimized,
+    enumerate_vertices_reference as enumerate_vertices_reference,
 )
 from viterbo.geometry.halfspaces import (
     remove_redundant_facets as remove_redundant_facets,
 )
 from viterbo.geometry.halfspaces import (
-    remove_redundant_facets_jax as remove_redundant_facets_jax,
+    remove_redundant_facets_fast as remove_redundant_facets_fast,
 )
 from viterbo.geometry.halfspaces import (
-    remove_redundant_facets_optimized as remove_redundant_facets_optimized,
+    remove_redundant_facets_reference as remove_redundant_facets_reference,
 )
-from viterbo.geometry.halfspaces import (
-    unit_hypercube_halfspaces as unit_hypercube_halfspaces,
-)
-from viterbo.geometry.halfspaces import (
-    unit_square_halfspaces as unit_square_halfspaces,
-)
+from viterbo.geometry.halfspaces import unit_hypercube_halfspaces as unit_hypercube_halfspaces
+from viterbo.geometry.halfspaces import unit_square_halfspaces as unit_square_halfspaces
 from viterbo.geometry.polytopes import (
     NormalCone as NormalCone,
 )
 from viterbo.geometry.polytopes import (
     Polytope as Polytope,
 )
-from viterbo.geometry.polytopes import (
-    PolytopeCombinatorics as PolytopeCombinatorics,
-)
+from viterbo.geometry.polytopes import PolytopeCombinatorics as PolytopeCombinatorics
 from viterbo.geometry.polytopes import (
     affine_transform as affine_transform,
 )
@@ -48,30 +42,14 @@ from viterbo.geometry.polytopes import (
 from viterbo.geometry.polytopes import (
     haim_kislev_action as haim_kislev_action,
 )
-from viterbo.geometry.polytopes import (
-    halfspaces_from_vertices as halfspaces_from_vertices,
-)
-from viterbo.geometry.polytopes import (
-    halfspaces_from_vertices_jax as halfspaces_from_vertices_jax,
-)
-from viterbo.geometry.polytopes import (
-    halfspaces_from_vertices_optimized as halfspaces_from_vertices_optimized,
-)
+from viterbo.geometry.polytopes import halfspaces_from_vertices as halfspaces_from_vertices
 from viterbo.geometry.polytopes import (
     hypercube as hypercube,
 )
 from viterbo.geometry.polytopes import (
     mirror_polytope as mirror_polytope,
 )
-from viterbo.geometry.polytopes import (
-    polytope_combinatorics as polytope_combinatorics,
-)
-from viterbo.geometry.polytopes import (
-    polytope_combinatorics_jax as polytope_combinatorics_jax,
-)
-from viterbo.geometry.polytopes import (
-    polytope_combinatorics_optimized as polytope_combinatorics_optimized,
-)
+from viterbo.geometry.polytopes import polytope_combinatorics as polytope_combinatorics
 from viterbo.geometry.polytopes import (
     polytope_fingerprint as polytope_fingerprint,
 )
@@ -99,30 +77,10 @@ from viterbo.geometry.polytopes import (
 from viterbo.geometry.polytopes import (
     truncated_simplex_four_dim as truncated_simplex_four_dim,
 )
-from viterbo.geometry.polytopes import (
-    vertices_from_halfspaces as vertices_from_halfspaces,
-)
-from viterbo.geometry.polytopes import (
-    vertices_from_halfspaces_jax as vertices_from_halfspaces_jax,
-)
-from viterbo.geometry.polytopes import (
-    vertices_from_halfspaces_optimized as vertices_from_halfspaces_optimized,
-)
+from viterbo.geometry.polytopes import vertices_from_halfspaces as vertices_from_halfspaces
 from viterbo.geometry.polytopes import (
     viterbo_counterexample as viterbo_counterexample,
 )
-from viterbo.geometry.volume import (
-    hypercube_volume_inputs as hypercube_volume_inputs,
-)
-from viterbo.geometry.volume import (
-    polytope_volume_fast as polytope_volume_fast,
-)
-from viterbo.geometry.volume import (
-    polytope_volume_jax as polytope_volume_jax,
-)
-from viterbo.geometry.volume import (
-    polytope_volume_optimized as polytope_volume_optimized,
-)
-from viterbo.geometry.volume import (
-    polytope_volume_reference as polytope_volume_reference,
-)
+from viterbo.geometry.volume import hypercube_volume_inputs as hypercube_volume_inputs
+from viterbo.geometry.volume import polytope_volume_fast as polytope_volume_fast
+from viterbo.geometry.volume import polytope_volume_reference as polytope_volume_reference

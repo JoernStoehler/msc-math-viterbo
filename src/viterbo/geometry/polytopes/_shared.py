@@ -1,8 +1,7 @@
-"""Shared polytope helpers reused across implementation variants."""
+"""Shared polytope helpers (JAX-first) reused across implementation variants."""
 
 from __future__ import annotations
 
-import hashlib
 import os
 import struct
 import threading
@@ -11,14 +10,10 @@ from dataclasses import dataclass
 from itertools import combinations
 from typing import Final
 
-import numpy as np
-from jaxtyping import Float
+import jax.numpy as jnp
+from jaxtyping import Array, Float
 
-_DIMENSION_AXIS: Final[str] = "dimension"
-_FACET_AXIS: Final[str] = "num_facets"
-_FACET_MATRIX_AXES: Final[str] = f"{_FACET_AXIS} {_DIMENSION_AXIS}"
-_SQUARE_MATRIX_AXES: Final[str] = f"{_DIMENSION_AXIS} {_DIMENSION_AXIS}"
-_VERTEX_MATRIX_AXES: Final[str] = "num_vertices dimension"
+from viterbo._wrapped.numpy_bytes import fingerprint_halfspace
 
 _POLYTOPE_CACHE_MAX_SIZE: Final[int] = 128
 _POLYTOPE_CACHE: "OrderedDict[tuple[str, str], PolytopeCombinatorics]" = OrderedDict()
@@ -29,36 +24,32 @@ _POLYTOPE_CACHE_LOCK = threading.RLock()
 class NormalCone:
     """Normal cone data attached to a polytope vertex."""
 
-    vertex: Float[np.ndarray, _DIMENSION_AXIS]
+    vertex: Float[Array, " dimension"]
     active_facets: tuple[int, ...]
-    normals: Float[np.ndarray, " num_active dimension"]
+    normals: Float[Array, " num_active dimension"]
 
     def __post_init__(self) -> None:
         """Normalise arrays describing the normal cone."""
-        vertex = np.asarray(self.vertex, dtype=float)
-        normals = np.asarray(self.normals, dtype=float)
+        vertex = jnp.asarray(self.vertex, dtype=jnp.float64)
+        normals = jnp.asarray(self.normals, dtype=jnp.float64)
         object.__setattr__(self, "vertex", vertex)
         object.__setattr__(self, "normals", normals)
-        vertex.setflags(write=False)
-        normals.setflags(write=False)
 
 
 @dataclass(frozen=True)
 class PolytopeCombinatorics:
     """Cached combinatorial structure derived from a ``Polytope``."""
 
-    vertices: Float[np.ndarray, _VERTEX_MATRIX_AXES]
-    facet_adjacency: np.ndarray
+    vertices: Float[Array, " num_vertices dimension"]
+    facet_adjacency: Array
     normal_cones: tuple[NormalCone, ...]
 
     def __post_init__(self) -> None:
         """Validate cached arrays for combinatorial reuse."""
-        vertices = np.asarray(self.vertices, dtype=float)
-        adjacency = np.asarray(self.facet_adjacency, dtype=bool)
+        vertices = jnp.asarray(self.vertices, dtype=jnp.float64)
+        adjacency = jnp.asarray(self.facet_adjacency, dtype=bool)
         object.__setattr__(self, "vertices", vertices)
         object.__setattr__(self, "facet_adjacency", adjacency)
-        vertices.setflags(write=False)
-        adjacency.setflags(write=False)
 
 
 @dataclass(frozen=True)
@@ -66,15 +57,15 @@ class Polytope:
     """Immutable container describing a convex polytope via half-space data."""
 
     name: str
-    B: Float[np.ndarray, _FACET_MATRIX_AXES]
-    c: Float[np.ndarray, _FACET_AXIS]
+    B: Float[Array, " num_facets dimension"]
+    c: Float[Array, " num_facets"]
     description: str = ""
     reference_capacity: float | None = None
 
     def __post_init__(self) -> None:
         """Normalize inputs and freeze the underlying arrays."""
-        matrix = np.asarray(self.B, dtype=float)
-        offsets = np.asarray(self.c, dtype=float)
+        matrix = jnp.asarray(self.B, dtype=jnp.float64)
+        offsets = jnp.asarray(self.c, dtype=jnp.float64)
 
         if matrix.ndim != 2:
             msg = "Facet matrix B must be two-dimensional."
@@ -86,9 +77,6 @@ class Polytope:
 
         object.__setattr__(self, "B", matrix)
         object.__setattr__(self, "c", offsets)
-
-        matrix.setflags(write=False)
-        offsets.setflags(write=False)
 
     @property
     def dimension(self) -> int:
@@ -103,11 +91,11 @@ class Polytope:
     def halfspace_data(
         self,
     ) -> tuple[
-        Float[np.ndarray, _FACET_MATRIX_AXES],
-        Float[np.ndarray, _FACET_AXIS],
+        Float[Array, " num_facets dimension"],
+        Float[Array, " num_facets"],
     ]:
         """Return copies of ``(B, c)`` suitable for downstream mutation."""
-        return np.array(self.B, copy=True), np.array(self.c, copy=True)
+        return jnp.array(self.B, copy=True), jnp.array(self.c, copy=True)
 
     def with_metadata(
         self, *, name: str | None = None, description: str | None = None
@@ -129,24 +117,13 @@ def clear_polytope_cache() -> None:
 
 
 def _halfspace_fingerprint(
-    matrix: Float[np.ndarray, _FACET_MATRIX_AXES],
-    offsets: Float[np.ndarray, _FACET_AXIS],
+    matrix: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
     *,
     decimals: int = 12,
 ) -> str:
     """Return a deterministic hash for a half-space description."""
-    rounded_matrix = np.round(np.asarray(matrix, dtype=float), decimals=decimals)
-    rounded_offsets = np.round(np.asarray(offsets, dtype=float), decimals=decimals)
-
-    contiguous_matrix = np.ascontiguousarray(rounded_matrix)
-    contiguous_offsets = np.ascontiguousarray(rounded_offsets)
-
-    hasher = hashlib.sha256()
-    hasher.update(np.array(contiguous_matrix.shape, dtype=np.int64).tobytes())
-    hasher.update(np.array(contiguous_offsets.shape, dtype=np.int64).tobytes())
-    hasher.update(contiguous_matrix.tobytes())
-    hasher.update(contiguous_offsets.tobytes())
-    return hasher.hexdigest()
+    return fingerprint_halfspace(matrix, offsets, decimals=decimals)
 
 
 def polytope_fingerprint(polytope: Polytope, *, decimals: int = 12) -> str:
@@ -191,39 +168,45 @@ def cache_store(key: tuple[str, str], value: PolytopeCombinatorics) -> None:
 
 
 def build_combinatorics(
-    matrix: Float[np.ndarray, _FACET_MATRIX_AXES],
-    offsets: Float[np.ndarray, _FACET_AXIS],
-    vertices: Float[np.ndarray, _VERTEX_MATRIX_AXES],
+    matrix: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
+    vertices: Float[Array, " num_vertices dimension"],
     *,
     atol: float,
 ) -> PolytopeCombinatorics:
     """Construct combinatorial data given facets and enumerated vertices."""
-    facet_count = matrix.shape[0]
-    adjacency = np.zeros((facet_count, facet_count), dtype=bool)
+    m = jnp.asarray(matrix)
+    c = jnp.asarray(offsets)
+    vtx = jnp.asarray(vertices)
+    facet_count = int(m.shape[0])
+    adjacency = jnp.zeros((facet_count, facet_count), dtype=bool)
     normal_cones: list[NormalCone] = []
 
-    for vertex in vertices:
-        residuals = matrix @ vertex - offsets
-        active = np.where(np.abs(residuals) <= atol)[0]
-        if active.size == 0:
+    for k in range(int(vtx.shape[0])):
+        vertex = vtx[k]
+        residuals = m @ vertex - c
+        active = jnp.where(jnp.abs(residuals) <= float(atol))[0]
+        if int(active.size) == 0:
             continue
 
-        for first_index, second_index in combinations(active, 2):
-            adjacency[first_index, second_index] = True
-            adjacency[second_index, first_index] = True
+        # Update adjacency (Python loop with JAX scatter updates for readability).
+        active_list = [int(x) for x in active.tolist()]
+        for first_index, second_index in combinations(active_list, 2):
+            adjacency = adjacency.at[first_index, second_index].set(True)
+            adjacency = adjacency.at[second_index, first_index].set(True)
 
-        normals = matrix[active, :]
+        normals = m[active, :]
         normal_cones.append(
             NormalCone(
                 vertex=vertex,
-                active_facets=tuple(int(index) for index in active),
+                active_facets=tuple(active_list),
                 normals=normals,
             )
         )
 
-    np.fill_diagonal(adjacency, False)
+    adjacency = adjacency.at[jnp.diag_indices(facet_count)].set(False)
     return PolytopeCombinatorics(
-        vertices=np.asarray(vertices, dtype=float),
+        vertices=vtx,
         facet_adjacency=adjacency,
         normal_cones=tuple(normal_cones),
     )

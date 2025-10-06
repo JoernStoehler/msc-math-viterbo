@@ -2,27 +2,27 @@
 
 from __future__ import annotations
 
-import numpy as np
-from jaxtyping import Float
+import jax.numpy as jnp
+from jaxtyping import Array, Float
 
 
 def unit_hypercube_halfspaces(
     dimension: int,
-) -> tuple[Float[np.ndarray, " num_facets dimension"], Float[np.ndarray, " num_facets"]]:
+) -> tuple[Float[Array, " num_facets dimension"], Float[Array, " num_facets"]]:
     """Return ``Bx ≤ c`` for the axis-aligned unit hypercube centered at the origin."""
     if dimension <= 0:
         msg = "dimension must be positive"
         raise ValueError(msg)
 
-    identity = np.eye(dimension, dtype=float)
-    matrix = np.vstack((identity, -identity))
-    offsets = np.ones(2 * dimension, dtype=float)
+    identity = jnp.eye(dimension, dtype=jnp.float64)
+    matrix = jnp.vstack((identity, -identity))
+    offsets = jnp.ones(2 * dimension, dtype=jnp.float64)
     return matrix, offsets
 
 
 def unit_square_halfspaces() -> tuple[
-    Float[np.ndarray, " num_facets dimension"],
-    Float[np.ndarray, " num_facets"],
+    Float[Array, " num_facets dimension"],
+    Float[Array, " num_facets"],
 ]:
     """Return a cached 2D unit square description for convenience."""
     return unit_hypercube_halfspaces(2)

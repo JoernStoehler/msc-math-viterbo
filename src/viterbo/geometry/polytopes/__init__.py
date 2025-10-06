@@ -1,7 +1,5 @@
-"""Polytope quantity package exposing reference, optimised, and JAX variants."""
+"""Polytope helpers and canonical combinatorics (JAX-first)."""
 
-from viterbo.geometry.polytopes import jax as _jax_impl
-from viterbo.geometry.polytopes import optimized as _optimized_impl
 from viterbo.geometry.polytopes import reference as _reference
 from viterbo.geometry.polytopes import samples as _samples
 
@@ -20,22 +18,9 @@ random_transformations = _reference.random_transformations
 rotate_polytope = _reference.rotate_polytope
 translate_polytope = _reference.translate_polytope
 mirror_polytope = _reference.mirror_polytope
-polytope_combinatorics_reference = _reference.polytope_combinatorics
-polytope_combinatorics_optimized = _optimized_impl.polytope_combinatorics
-polytope_combinatorics_jax = _jax_impl.polytope_combinatorics
-
-vertices_from_halfspaces_reference = _reference.vertices_from_halfspaces
-vertices_from_halfspaces_optimized = _optimized_impl.vertices_from_halfspaces
-vertices_from_halfspaces_jax = _jax_impl.vertices_from_halfspaces
-
-halfspaces_from_vertices_reference = _reference.halfspaces_from_vertices
-halfspaces_from_vertices_optimized = _optimized_impl.halfspaces_from_vertices
-halfspaces_from_vertices_jax = _jax_impl.halfspaces_from_vertices
-
-# Backwards-compatible aliases for the legacy API surface.
-polytope_combinatorics = polytope_combinatorics_reference
-vertices_from_halfspaces = vertices_from_halfspaces_reference
-halfspaces_from_vertices = halfspaces_from_vertices_reference
+polytope_combinatorics = _reference.polytope_combinatorics
+vertices_from_halfspaces = _reference.vertices_from_halfspaces
+halfspaces_from_vertices = _reference.halfspaces_from_vertices
 
 catalog = _samples.catalog
 cross_polytope = _samples.cross_polytope

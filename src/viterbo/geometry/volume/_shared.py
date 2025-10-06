@@ -4,16 +4,18 @@ from __future__ import annotations
 
 import math
 
-import numpy as np
-from jaxtyping import Float
+import jax.numpy as jnp
+from jaxtyping import Array, Float
 
 
 def volume_of_simplices(
-    simplex_vertices: Float[np.ndarray, " num_simplices vertices dimension"],
+    simplex_vertices: Float[Array, " num_simplices vertices dimension"],
 ) -> float:
     """Return the total volume of stacked simplices."""
-    base = simplex_vertices[:, 0, :]
-    edges = simplex_vertices[:, 1:, :] - base[:, None, :]
-    determinants = np.linalg.det(edges)
-    dimension = simplex_vertices.shape[2]
-    return float(np.sum(np.abs(determinants)) / math.factorial(int(dimension)))
+    v = jnp.asarray(simplex_vertices)
+    base = v[:, 0, :]
+    edges = v[:, 1:, :] - base[:, None, :]
+    determinants = jnp.linalg.det(edges)
+    dimension = v.shape[2]
+    total = jnp.sum(jnp.abs(determinants)) / math.factorial(int(dimension))
+    return float(total)

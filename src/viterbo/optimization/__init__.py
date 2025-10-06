@@ -16,8 +16,17 @@ from viterbo.optimization.solvers import (
     LinearProgramSolution as LinearProgramSolution,
 )
 from viterbo.optimization.solvers import (
+    MixedIntegerLinearProgram as MixedIntegerLinearProgram,
+)
+from viterbo.optimization.solvers import (
+    MixedIntegerLinearProgramSolution as MixedIntegerLinearProgramSolution,
+)
+from viterbo.optimization.solvers import (
     ScipyLinearProgramBackend as ScipyLinearProgramBackend,
 )
 from viterbo.optimization.solvers import (
     solve_linear_program as solve_linear_program,
+)
+from viterbo.optimization.solvers import (
+    solve_mixed_integer_linear_program as solve_mixed_integer_linear_program,
 )

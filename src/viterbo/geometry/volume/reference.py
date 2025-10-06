@@ -1,23 +1,19 @@
-"""Reference Euclidean volume estimators for convex polytopes."""
+"""Reference Euclidean volume estimators for convex polytopes (trusted)."""
 
 from __future__ import annotations
 
-import numpy as np
-import scipy.spatial as _spatial  # type: ignore[reportMissingTypeStubs]
-from jaxtyping import Float
+from jaxtyping import Array, Float
 
+from viterbo._wrapped.spatial import convex_hull_volume
 from viterbo.geometry.halfspaces import reference as halfspaces_reference
-
-ConvexHull = _spatial.ConvexHull
 
 
 def polytope_volume(
-    B: Float[np.ndarray, " num_facets dimension"],
-    c: Float[np.ndarray, " num_facets"],
+    B: Float[Array, " num_facets dimension"],
+    c: Float[Array, " num_facets"],
     *,
     atol: float = 1e-9,
 ) -> float:
-    """Trusted volume via SciPy's :class:`~scipy.spatial.ConvexHull`."""
+    """Trusted volume via SciPy's ConvexHull (Qhull)."""
     vertices = halfspaces_reference.enumerate_vertices(B, c, atol=atol)
-    hull = ConvexHull(vertices, qhull_options="QJ")
-    return float(hull.volume)
+    return convex_hull_volume(vertices, qhull_options="QJ")

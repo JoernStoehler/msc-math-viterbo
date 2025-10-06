@@ -6,7 +6,8 @@ import math
 from collections.abc import Iterator
 from itertools import combinations, islice
 
-import numpy as np
+import jax
+import jax.numpy as jnp
 
 from viterbo.geometry.polytopes import (
     Polytope,
@@ -26,19 +27,20 @@ def _generate_search_space(
     transforms_per_base: int,
     random_polytopes_per_dimension: int,
 ) -> Iterator[Polytope]:
-    rng = np.random.default_rng(rng_seed)
+    key = jax.random.PRNGKey(rng_seed)
     base_catalog = tuple(catalog())
 
     yield from base_catalog
 
     for polytope in base_catalog:
         for index in range(transforms_per_base):
+            key, subkey = jax.random.split(key)
             matrix, translation = random_affine_map(
                 polytope.dimension,
-                rng=rng,
+                key=subkey,
                 translation_scale=0.2,
             )
-            matrix_inv = np.linalg.inv(matrix)
+            matrix_inv = jnp.linalg.inv(jnp.asarray(matrix))
             yield affine_transform(
                 polytope,
                 matrix,
@@ -64,7 +66,8 @@ def _generate_search_space(
     if max_dimension >= 4:
         for sides_first in range(5, 9):
             for sides_second in range(5, 9):
-                rotation = rng.uniform(0.0, math.pi / 2)
+                key, rkey = jax.random.split(key)
+                rotation = float(jax.random.uniform(rkey, (), minval=0.0, maxval=math.pi / 2))
                 yield regular_polygon_product(
                     sides_first,
                     sides_second,
@@ -76,9 +79,10 @@ def _generate_search_space(
 
     for dimension in range(2, max_dimension + 1):
         for sample_index in range(random_polytopes_per_dimension):
+            key, pkey = jax.random.split(key)
             yield random_polytope(
                 dimension,
-                rng=rng,
+                key=pkey,
                 name=f"random-{dimension}d-{sample_index}",
             )
 
