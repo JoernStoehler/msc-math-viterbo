@@ -8,8 +8,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
-
 from tests._utils.polytope_samples import load_polytope_instances
+
 from viterbo.geometry.polytopes import (
     cross_polytope,
     hypercube,
@@ -24,7 +24,9 @@ from viterbo.symplectic.capacity.facet_normals.subset_utils import (
 )
 
 
+@pytest.mark.goal_math
 def test_dynamic_program_matches_bruteforce() -> None:
+    """The DP relaxation recovers the brute-force optimum for antisymmetric weights."""
     key = jax.random.PRNGKey(0)
     weights = jax.random.normal(key, (5, 5), dtype=jnp.float64)
     weights = weights - weights.T
@@ -73,6 +75,7 @@ _FAST_CASES = _SMOKE_FAST_CASES + _DEEP_STATIC_FAST_CASES + tuple(
 
 
 @pytest.mark.parametrize(("B", "c"), _FAST_CASES)
+@pytest.mark.goal_math
 def test_fast_implementation_matches_reference(B: np.ndarray, c: np.ndarray) -> None:
     """The accelerated implementation matches the reference for diverse polytopes."""
 

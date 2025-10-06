@@ -2,7 +2,7 @@
 
 - **Status**: Draft
 - **Last updated**: 2025-10-04
-- **Owner / DRI**: Unassigned
+- **Owner / DRI**: Codex & PI (joint)
 - **Related docs**: `docs/tasks/02-task-portfolio.md`, `docs/algorithm-implementation-plan.md`
 
 ## 1. Context and intent
@@ -57,7 +57,8 @@ edge cases, and feed improvements back into algorithm design.
 
 ## 7. Testing, benchmarks, and verification
 
-- Ensure CI smoke benchmarks cover at least one support-function scenario.
+- Ensure CI smoke benchmarks cover at least one support-function scenario (run via `just bench`,
+  alongside `just test` smoke tier with the standard 10 s per-test / 60 s session limits).
 - Local deep benchmarks capture performance trends; long-haul runs optional when exploring severe
   perturbations.
 - Add targeted unit tests reproducing discovered bugs or instabilities.

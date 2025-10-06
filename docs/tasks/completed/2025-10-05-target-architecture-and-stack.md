@@ -2,7 +2,7 @@
 
 - Status: Completed
 - Last updated: 2025-10-08
-- Owner / DRI: Unassigned
+- Owner / DRI: Codex & PI (joint)
 - Reviewers: Maintainer (PI), module maintainers
 - Related docs: `AGENTS.md`, `README.md`, `pyproject.toml`, `pyrightconfig.json`,
   `.github/workflows/ci.yml`, `.devcontainer/post-start.sh`,

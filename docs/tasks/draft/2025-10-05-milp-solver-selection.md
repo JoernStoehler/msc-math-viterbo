@@ -2,7 +2,7 @@
 
 - **Status**: Decision recorded (pending maintainer sign-off)
 - **Last updated**: 2025-10-05
-- **Owner / DRI**: Unassigned
+- **Owner / DRI**: Codex & PI (joint)
 - **Chosen solver**: HiGHS via `highspy`
 - **Related docs**: `docs/tasks/02-task-portfolio.md`,
   `docs/tasks/draft/2025-10-04-milp-relaxations.md`, `docs/algorithm-implementation-plan.md`
@@ -103,7 +103,8 @@ in the brief and portfolio. Totals are the weighted sum of each solver’s score
 - Use small MILP smoke tests to confirm API parity and determinism.
 - Record runtime metrics (wall-clock, iterations) for comparison, but no exhaustive benchmarking
   required.
-- Ensure prototypes run under `just typecheck` and `just test` if committed.
+- Ensure prototypes run under `just typecheck` and `just test` (10 s per-test, 60 s session cap)
+  if committed.
 
 ## 10. Risks, mitigations, and escalation triggers
 

@@ -15,14 +15,19 @@ dependencies = [
     "highspy>=1.11.0",
     "hypothesis>=6.140.3",
     "jax>=0.7.2",
-    "jaxopt>=0.8.5",
+    "optax>=0.2.4",
     "jaxtyping>=0.3.3",
     "numpy>=2.3.3",
+    "networkx>=3.2.1",
     "orbax-checkpoint>=0.11.25",
     "pyarrow>=21.0.0",
     "scipy>=1.16.2",
     "tensorboardx>=2.6.4",
     "wandb>=0.22.1",
+    # Planned ML stack once surrogate models ship:
+    # "flax>=0.10.0",  # keep version aligned with optax/jax before enabling.
+    # "diffrax>=0.6.0",  # enable only when ODE-based experiments are scheduled.
+    # "equinox>=0.11.4",  # re-evaluate module system needs with maintainer buy-in.
 ]
 
 [project.optional-dependencies]
