@@ -43,6 +43,7 @@ def compute_support_relaxation_capacity_reference(
     *,
     grid_density: int = 9,
     smoothing_parameters: Iterable[float] = (1.0, 0.7, 0.4, 0.2, 0.0),
+    smoothing_method: kernels.SmoothingMethod = "convex",
     tolerance_sequence: Sequence[float] = (1e-4, 1e-5, 1e-6),
     solver: str = "SCS",
     log_callback: Callable[[SupportRelaxationDiagnostics], None] | None = None,
@@ -52,6 +53,7 @@ def compute_support_relaxation_capacity_reference(
     vertices = _prepare_vertices(vertices, center_vertices=center_vertices)
 
     smoothing_schedule = kernels.continuation_schedule(smoothing_parameters)
+    method = smoothing_method
     tolerance_sequence = tuple(float(t) for t in tolerance_sequence)
     if not tolerance_sequence:
         tolerance_sequence = (0.0,)
@@ -65,7 +67,11 @@ def compute_support_relaxation_capacity_reference(
     for stage, parameter in enumerate(smoothing_schedule):
         strength = kernels.smoothing_strength(parameter)
         tolerance = tolerance_sequence[min(stage, len(tolerance_sequence) - 1)]
-        products = kernels.smooth_support_products(base_products, strength=strength)
+        products = kernels.smooth_support_products_with_method(
+            base_products,
+            strength=strength,
+            method=method,
+        )
         candidate = float(
             jnp.pi
             * _solve_convex_epigraph(

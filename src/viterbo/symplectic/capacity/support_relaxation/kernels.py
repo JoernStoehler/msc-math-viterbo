@@ -1,14 +1,22 @@
 """Direction sampling and smoothing kernels for support relaxations."""
 
+# The module now offers both convex-combination and softmax-based smoothing
+# kernels so solvers can choose between conservative but cheap averaging and a
+# temperature-controlled variant that adapts to anisotropic support functions
+# while retaining monotone upper bounds.
+
 from __future__ import annotations
 
-from typing import Iterable
+from typing import Iterable, Literal
 
+import jax.nn as jnn
 import jax.numpy as jnp
 import numpy as np
 from jaxtyping import Array, Float
 
 from viterbo.symplectic.core import standard_symplectic_matrix
+
+SmoothingMethod = Literal["convex", "softmax"]
 
 
 def validate_vertices(
@@ -93,13 +101,37 @@ def smooth_support_products(
     strength: float,
 ) -> Float[Array, " num_directions"]:
     """Interpolate support products towards their global maximum."""
+    return smooth_support_products_with_method(
+        products, strength=strength, method="convex"
+    )
+
+
+def smooth_support_products_with_method(
+    products: Float[Array, " num_directions"],
+    *,
+    strength: float,
+    method: SmoothingMethod,
+) -> Float[Array, " num_directions"]:
+    """Interpolate support products using the requested smoothing kernel."""
     if not 0.0 <= strength < 1.0:
         msg = "Smoothing strength must lie in [0, 1)."
         raise ValueError(msg)
     products = jnp.asarray(products, dtype=jnp.float64)
     maximum = jnp.max(products)
-    smoothed = (1.0 - strength) * products + strength * maximum
-    return smoothed
+    if method == "convex":
+        smoothed = (1.0 - strength) * products + strength * maximum
+        return smoothed
+    if method == "softmax":
+        temperature = float(max(1e-12, 1.0 - strength))
+        shifted = (products - maximum) / temperature
+        weights = jnn.softmax(shifted)
+        weighted_average = jnp.sum(weights * products)
+        mixture = (1.0 - strength) * products + strength * weighted_average
+        smoothed = jnp.maximum(products, mixture)
+        smoothed = jnp.minimum(smoothed, maximum)
+        return smoothed
+    msg = f"Unknown smoothing method '{method}'."
+    raise ValueError(msg)
 
 
 def continuation_schedule(
