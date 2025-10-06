@@ -128,6 +128,7 @@ jobs:
           --cov-report=term-missing
           --cov-report=xml
           --cov-report=html
+          --cov-fail-under=80
         env:
           SMOKE_TEST_TIMEOUT: "45"
 

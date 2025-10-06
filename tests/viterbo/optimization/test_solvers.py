@@ -11,6 +11,7 @@ import pytest
 from viterbo.optimization.solvers import (
     LinearProgram,
     ScipyLinearProgramBackend,
+    _normalize_bounds,
     MixedIntegerLinearProgram,
     solve_mixed_integer_linear_program,
     solve_linear_program,
@@ -85,3 +86,26 @@ def test_mixed_integer_solver_supports_maximisation() -> None:
     assert np.all(solution.x <= 1.0 + 1e-9)
     assert math.isclose(float(np.sum(solution.x)), 1.5, rel_tol=0.0, abs_tol=1e-9)
     assert math.isclose(solution.objective_value, 1.5, rel_tol=0.0, abs_tol=1e-9)
+
+
+def test_normalize_bounds_expands_scalars() -> None:
+    class DummyBounds:
+        def __init__(self) -> None:
+            self.lb = -1.0
+            self.ub = jnp.array([2.0, jnp.inf, 0.5])
+
+    normalized = _normalize_bounds(DummyBounds(), dimension=3)
+    assert normalized == ((-1.0, 2.0), (-1.0, None), (-1.0, 0.5))
+
+
+def test_normalize_bounds_validates_sequence() -> None:
+    with pytest.raises(ValueError, match="Bounds length must match"):
+        _normalize_bounds([(0.0, 1.0)], dimension=2)
+
+    with pytest.raises(ValueError, match="Lower bound exceeds upper bound"):
+        _normalize_bounds([(0.0, -0.5)], dimension=1)
+
+
+def test_normalize_bounds_rejects_nan_entries() -> None:
+    with pytest.raises(ValueError, match="Bounds must not contain NaN"):
+        _normalize_bounds([(float('nan'), 1.0)], dimension=1)
