@@ -1,12 +1,16 @@
-# Algorithms for Volumes of Convex Polytopes in $\mathbb{R}^d$
+# Algorithms for Volumes of Convex Polytopes in $\\mathbb{R}^d$
 
-This note summarizes algorithmic strategies for computing or approximating the volume of convex polytopes in dimension $d=2n\ge 4$. Each entry states the setting, main idea, pseudo-code level procedure, and literature reference(s) for proofs and complexity guarantees.
+This note summarizes algorithmic strategies for computing or approximating the volume of convex
+polytopes in dimension $d=2n\\ge 4$. Each entry states the setting, main idea, pseudo-code level
+procedure, and literature reference(s) for proofs and complexity guarantees.
 
 ## 1. Lawrence Sign-Decomposition (Exact, Simple/General Polytopes)
 
-**Reference.** J. Lawrence, "Polytope volume computation," *Mathematics of Computation* 57 (1991), 259–271.【F:docs/convex-polytope-volumes.md†L8-L23】
+**Reference.** J. Lawrence, "Polytope volume computation," _Mathematics of Computation_ 57 (1991),
+259–271.【F:docs/convex-polytope-volumes.md†L8-L23】
 
-**Idea.** Decompose the polytope into signed cones at its vertices; integrate the support function of each cone. Works for arbitrary dimension but scales poorly with the number of vertices.
+**Idea.** Decompose the polytope into signed cones at its vertices; integrate the support function
+of each cone. Works for arbitrary dimension but scales poorly with the number of vertices.
 
 ```text
 Input: Polytope P = {x | A x ≤ b}, vertex set V(P)
@@ -21,9 +25,14 @@ Output: Exact volume vol(P)
 
 ## 2. Triangulation via Beneath–Beyond (Exact, Low Dimension Practical)
 
-**References.** D. Avis and K. Fukuda, "A pivoting algorithm for convex hulls and vertex enumeration," *Discrete & Computational Geometry* 8 (1992), 295–313; software `lrs`. Empirical study in R. Bueler, A. Enge, and K. Fukuda, "Exact volume computation for polytopes: A practical study," *Polytopes — Combinatorics and Computation*, DMV Seminar Vol. 29 (2000).【F:docs/convex-polytope-volumes.md†L25-L52】
+**References.** D. Avis and K. Fukuda, "A pivoting algorithm for convex hulls and vertex
+enumeration," _Discrete & Computational Geometry_ 8 (1992), 295–313; software `lrs`. Empirical study
+in R. Bueler, A. Enge, and K. Fukuda, "Exact volume computation for polytopes: A practical study,"
+_Polytopes — Combinatorics and Computation_, DMV Seminar Vol. 29
+(2000).【F:docs/convex-polytope-volumes.md†L25-L52】
 
-**Idea.** Enumerate facets/vertices, triangulate the boundary via incremental insertion, and sum simplex volumes. Reliable up to 6–8 dimensions with exact rational arithmetic.
+**Idea.** Enumerate facets/vertices, triangulate the boundary via incremental insertion, and sum
+simplex volumes. Reliable up to 6–8 dimensions with exact rational arithmetic.
 
 ```text
 Input: Polytope P (H- or V-description)
@@ -37,9 +46,14 @@ Output: Exact volume via triangulation
 
 ## 3. Barvinok’s Short Rational Generating Functions (Exact for Fixed d)
 
-**References.** A. Barvinok, "A polynomial time algorithm for counting integral points in polyhedra when the dimension is fixed," *Mathematics of Operations Research* 19 (1994), 769–779; see also A. Barvinok and J. Pommersheim, "An algorithmic theory of lattice points in polyhedra," in *New Perspectives in Algebraic Combinatorics* (1999).【F:docs/convex-polytope-volumes.md†L54-L79】
+**References.** A. Barvinok, "A polynomial time algorithm for counting integral points in polyhedra
+when the dimension is fixed," _Mathematics of Operations Research_ 19 (1994), 769–779; see also A.
+Barvinok and J. Pommersheim, "An algorithmic theory of lattice points in polyhedra," in _New
+Perspectives in Algebraic Combinatorics_ (1999).【F:docs/convex-polytope-volumes.md†L54-L79】
 
-**Idea.** Express the indicator of the polytope as a short sum of rational generating functions via signed cone decompositions. Integrate the generating functions to obtain exact volume in polynomial time for fixed dimension.
+**Idea.** Express the indicator of the polytope as a short sum of rational generating functions via
+signed cone decompositions. Integrate the generating functions to obtain exact volume in polynomial
+time for fixed dimension.
 
 ```text
 Input: Rational polytope P ⊂ ℝ^d
@@ -52,9 +66,14 @@ Output: Exact volume vol(P)
 
 ## 4. Randomized Approximation via Hit-and-Run (FPRAS, General d)
 
-**References.** M. Dyer, A. Frieze, and R. Kannan, "A random polynomial-time algorithm for approximating the volume of convex bodies," *J. ACM* 38 (1991), 1–17; improved mixing bounds in L. Lovász and S. Vempala, "Simulated annealing in convex bodies and an $O^*(n^4)$ volume algorithm," *J. Comput. System Sci.* 72 (2006), 392–417.【F:docs/convex-polytope-volumes.md†L81-L116】
+**References.** M. Dyer, A. Frieze, and R. Kannan, "A random polynomial-time algorithm for
+approximating the volume of convex bodies," _J. ACM_ 38 (1991), 1–17; improved mixing bounds in L.
+Lovász and S. Vempala, "Simulated annealing in convex bodies and an $O^\*(n^4)$ volume algorithm,"
+_J. Comput. System Sci._ 72 (2006), 392–417.【F:docs/convex-polytope-volumes.md†L81-L116】
 
-**Idea.** Use a sequence of Gaussian (or uniform) samples generated by random walks (hit-and-run or ball walk) over a nested sequence of convex bodies to estimate the ratio of successive volumes, yielding an $(1+\varepsilon)$-approximation with high probability.
+**Idea.** Use a sequence of Gaussian (or uniform) samples generated by random walks (hit-and-run or
+ball walk) over a nested sequence of convex bodies to estimate the ratio of successive volumes,
+yielding an $(1+\\varepsilon)$-approximation with high probability.
 
 ```text
 Input: Polytope P with membership oracle, accuracy ε, failure prob. δ
@@ -69,9 +88,11 @@ Output: Approximate volume Ṽ such that |Ṽ - vol(P)| ≤ ε·vol(P)
 
 ## 5. Moment-Based Relaxations (Approximate, Convex Optimization)
 
-**Reference.** J. B. Lasserre, "Volume of convex bodies and polynomial approximation," *Mathematics of Operations Research* 23 (1998), 696–710.【F:docs/convex-polytope-volumes.md†L118-L140】
+**Reference.** J. B. Lasserre, "Volume of convex bodies and polynomial approximation," _Mathematics
+of Operations Research_ 23 (1998), 696–710.【F:docs/convex-polytope-volumes.md†L118-L140】
 
-**Idea.** Formulate volume as an optimization problem over moments of measures supported on the polytope; solve via semidefinite programming hierarchy to obtain monotone upper/lower bounds.
+**Idea.** Formulate volume as an optimization problem over moments of measures supported on the
+polytope; solve via semidefinite programming hierarchy to obtain monotone upper/lower bounds.
 
 ```text
 Input: Polytope P = {x | A x ≤ b}, relaxation order t
@@ -84,9 +105,12 @@ Output: Upper and lower bounds on vol(P)
 
 ## 6. Four-Dimensional Specialized Exact Computation
 
-**Reference.** A. Gärtner, F. Santos, and B. Ziegler, "Exact volume computation for 4-polytopes with applications," *Computational Geometry* 24 (2003), 143–172.【F:docs/convex-polytope-volumes.md†L142-L165】
+**Reference.** A. Gärtner, F. Santos, and B. Ziegler, "Exact volume computation for 4-polytopes with
+applications," _Computational Geometry_ 24 (2003),
+143–172.【F:docs/convex-polytope-volumes.md†L142-L165】
 
-**Idea.** Exploit facet-ridge graph structure unique to 4-polytopes to build shellings that minimize intermediate complexity. Uses exact arithmetic and carefully ordered facet traversals.
+**Idea.** Exploit facet-ridge graph structure unique to 4-polytopes to build shellings that minimize
+intermediate complexity. Uses exact arithmetic and carefully ordered facet traversals.
 
 ```text
 Input: 4-polytope P with facet-incidence data
@@ -100,4 +124,5 @@ Output: Exact volume vol(P)
 4. Return V.
 ```
 
-*The above method leverages 4-dimensional incidence combinatorics to reduce intermediate simplex counts; it does not generalize straightforwardly to higher dimensions.*
+_The above method leverages 4-dimensional incidence combinatorics to reduce intermediate simplex
+counts; it does not generalize straightforwardly to higher dimensions._

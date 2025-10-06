@@ -1,281 +1,207 @@
 # AGENTS.md
 
-Purpose (fact): This repository uses a **single AGENTS.md** for **all tasks**.  
-Authority (fact): **This file is the source of truth** for conventions and workflows. If any other doc contradicts this file, follow **AGENTS.md**.
+Single authoritative policy. This file distils the important takeaways from configs and reference 
+documentation, so agents can start their work quickly. If another doc conflicts, follow AGENTS.md.
 
-## 0) Roles & scope (facts)
+## 0) Roles & Scope (facts)
 
-- Maintainer (PI):
-  - Spawns/manages Codex agents; writes task briefs; merges PRs.
-  - Owns environment/DevOps (devcontainer, CI, perf infra) and makes research/architecture decisions tied to the thesis.
+- Maintainer (PI)
+  - Approves task briefs (agents draft and iterate with the PI).
+  - Merges PRs; owns environment/DevOps and research/architecture decisions.
   - Approves policy waivers and larger directional changes.
-- Codex agents (ephemeral, per-task):
-  - Implement focused changes (feature/fix/refactor/docs/tests/benchmarks) within the golden path.
-  - Open PRs, respond to review, and iterate until CI is green. Agents do not merge PRs.
-  - May be invoked for reviews via `@codex review` and provide inline suggestions.
-- Scope & decision policy:
-  - Agents avoid reconfiguring the environment or making architectural/research decisions without an explicit brief.
-  - When in doubt, escalate instead of guessing.
-- Escalation triggers (choose one channel: PR description, `Needs-Unblock: <topic>`, or issue):
-  - Ambiguous or missing acceptance criteria; unclear invariants.
+- Codex agents (ephemeral)
+  - Implement focused changes (feature/fix/refactor/docs/tests/benchmarks) on the golden path.
+  - Draft task briefs when useful and escalate uncertainties early.
+  - Open PRs and iterate until CI is green. The PI merges PRs.
+- Escalation triggers (choose one channel: PR description, `Needs-Unblock: <topic>`, or issue)
+  - Ambiguous acceptance criteria, unclear invariants, or competing interpretations.
   - Environment/DevOps changes; policy conflicts; need for a waiver.
-  - Research or architecture choices that affect more than the current task.
-  - Performance regressions beyond accepted thresholds; inability to reproduce CI locally.
-- Lifecycle & context:
-  - Agents run in fresh, ephemeral containers (Codex Cloud) with this AGENTS.md and the task brief. The maintainer merges or closes PRs.
-  - The project targets a 6‑month thesis submission; prioritize reproducibility, small PRs, and deterministic results. See the roadmap docs for details.
+  - Cross‑task research/architecture choices.
+  - Performance regressions beyond thresholds; inability to reproduce CI locally.
 
-### Task briefs (one-liner checklist)
+## 1) Sources of Truth & Reference Materials (facts)
 
-Every task brief should include: scope, acceptance criteria, links to context (files/docs), constraints (perf/interfaces), expected tests/benchmarks, and escalation triggers.
+- AGENTS.md: rules, workflows, basic context.
+- Configuration files:
+  - Dependencies: `pyproject.toml`, `uv.lock` (pinned).
+  - Formatting, Linting: `pyproject.toml` (Ruff format + lint). Lint focuses on correctness and
+    policy, not cosmetic style. Auto‑fixable styling (e.g., import sorting) is allowed; non‑fixable
+    whitespace/empty‑line nags are disabled.
+  - Typing: `pyrightconfig.json` (strict; diagnostics are errors).
+  - Pytest defaults: `pytest.ini` (markers, session timeout, smoke filter).
+  - CI: `.github/workflows/ci.yml`.
+  - Environment: `.devcontainer/` (`devcontainer.json`, `post-create.sh`, `post-start.sh`).
+  - Golden-path Make targets: `Makefile`.
+- Policy Waivers: `waivers.toml`.
+- Reference docs: `docs/` (math, architecture, decisions).
+- Task briefs: `docs/tasks/` (drafts, scheduled, completed, dependencies and priorities).
+- Source code: `src/viterbo/` (library), `tests/viterbo/` (unit/integration tests),
+  `tests/performance/viterbo/` (benchmarks).
+- Thesis: `thesis/` (LaTeX source).
+- Weekly progress reports: `progress-reports/` (drafts, sent mails).
 
-## 1) Facts: Conventions the repo follows
+## 2) Environment & Tooling
 
-- **Language & runtime**: Python **3.12+**.
-- **Package layout**: `src/viterbo/` (library code), `tests/` (unit & perf), `docs/` (overview + references), `.devcontainer/` (container & lifecycle), `.github/` (CI), `tmp/` (ignored scratch).
-- **Dependency manager**: **uv** with `uv sync` (lockfile‑driven). Commit `uv.lock`. Use `uv run`/`uv sync` instead of raw `pip`.
-- **Formatting & lint**: **Ruff** (format + lint). Target line length **100**. No unused imports; no wildcard imports; no reformatting suppression except where strictly necessary.
-- **Type checking**: **Pyright** in **strict** mode (treat warnings as errors). Keep both `src/` and `tests/` type-clean.
-- **Type checking policy**: Strict with zero silent waivers. Inline suppressions require a one-line justification and a TODO to remove.
-- **Docs**: Google docstring style (fact). All public functions/classes carry Google-style docstrings. Include shape tokens from the vocabulary for all array args/returns. Prefer Google docstrings for internal helpers as well; tiny local helpers or throwaway closures can omit. Examples only when they add clarity.
-- **Arrays & shapes**: **jaxtyping** for explicit shapes/dtypes. **No custom array typedefs** (no `Vector`, `FloatMatrix`, etc.). Prefer semantic shape names (`"num_facets"`, `"dimension"`, `"num_polytopes"`).
-- **Ruff + jaxtyping quirk**: Add a leading space inside jaxtyping shape strings (e.g., `Float[np.ndarray, " dimension"]`) so Ruff does not emit false-positive `F821` diagnostics for single tokens. This whitespace convention is required across the codebase.
-- **Dtypes**: Default to **float64** for numeric stability unless a function clearly documents another dtype.
-- **Functional core**: Math code is **pure** (no I/O, no hidden state). Side-effects live in thin adapters (imperative shell).
-- **Errors**: Fail fast with precise exceptions (`ValueError`, `TypeError`). Do not silently coerce incompatible shapes/dtypes.
-- **Logging**: Use `logging` (module loggers). No `print` in library code. No secrets in logs.
-- **Determinism**: Tests are deterministic. If randomness is unavoidable: seed explicitly and assert invariants, not exact bit-patterns.
-- **Numerical testing**: Use explicit tolerances (default `rtol=1e-9`, `atol=0.0` unless a function states otherwise). Choose the most readable assertion for the case: `math.isclose`, `numpy.isclose`, `pytest.approx`, or `numpy.testing.assert_allclose` for arrays.
-- **Environments**: Single golden‑path environment (plus Codex Cloud devcontainer). Required deps include NumPy and SciPy; avoid optional dependency branches.
-- **Imports**: Absolute imports everywhere (no relative imports), including within package submodules and aggregators. No circular imports; refactor to break cycles.
-- **Performance policy**: Micro-optimizations only after correctness. Bench only for code paths tagged performance-critical.
-- **Security**: No secrets in code or logs; config via env vars; avoid echoing env or using `set -x` where secrets may appear.
-- **Branching**: `feat/<scope>`, `fix/<scope>`, `refactor/<scope>`. Small, scoped changes.
-- **Commits**: Conventional Commits style (e.g., `feat: add EHZ estimator for polytopes`).
-- **Releases**: None planned (MSc thesis). Tag milestones only.
+- Provisioned environment: Agents start in a ready‑to‑use devcontainer with deps installed and
+  x64 JAX enabled (`JAX_ENABLE_X64=1`). No manual setup required.
+- Dependency manager: uv. Use `uv run`, `uv sync`, and `uv add`. Commit `uv.lock`.
+- Verifying locally (only if replicating outside the provisioned env):
+  - One‑time: `bash .devcontainer/post-create.sh`
+  - Each boot: `bash .devcontainer/post-start.sh`
+  - Install: `make setup`
 
-**Follow these conventions throughout all tasks.**
+## 3) Coding Conventions (facts)
 
-## 2) Shape vocabulary (facts)
+- Docstrings: Google style for public APIs; prefer Google for non‑trivial internals.
+- JAX‑first: library code uses `jax.numpy`; return JAX arrays from public APIs.
+- Arrays & shapes: jaxtyping with explicit shapes/dtypes.
+  - Import: `from jaxtyping import Array, Float`; annotate as `Float[Array, " <shape>"]`.
+  - Use a leading space in the shape string to avoid erroneous Ruff F821 warnings/errors.
+  - Use shape literals, not constants. No custom typedefs (`Vector`, `FloatMatrix`, …).
+  - Examples of shape tokens: semantic `" num_facets dimension"`, algebraic `" B k n dimension"`.
+- Dtypes: default to float64; document and justify deviations; never downcast silently.
+- Purity: math code is pure (no I/O, no hidden state). Keep side‑effects in thin adapters.
+- Validation philosophy: prefer type/shape clarity and tests over redundant runtime assertions.
+  - Use `jaxtyping` + `beartype`/`jaxtyped` in tests for shape/name validation.
+  - Add explicit checks only for domain constraints that tests can’t reasonably cover.
+- Logging: use `logging` (module loggers). Logs may be elided under JIT; avoid logging patterns
+  that cause tracing errors; prefer logging in non‑jitted paths.
+- Imports & structure: absolute imports; no wildcard imports; no `__all__`. Keep modules modest;
+  split by cohesive concerns. Curate public API in `viterbo/__init__.py` via explicit imports.
+- Security: credentials/config via env vars; never print or log secrets.
+- Branching & commits: `feat/<scope>`, `fix/<scope>`, `refactor/<scope>`; Conventional Commits.
+- API policy (v0.x): breaking changes allowed; update tests/docs in the same PR.
 
-Use the following **shape symbols** consistently in type annotations and docstrings:
+## 4) JAX‑first specifics (facts)
 
-- `"dimension"` — ambient Euclidean dimension (often `2n` for `R^{2n}`).
-- `"num_facets"` — number of facets of a polytope.
-- `"num_vertices"` — number of vertices.
-- `"num_polytopes"` — batch count across multiple polytopes.
-- `"num_samples"` — sample count (generic data).
-- `"k"` / `"m"` / `"n"` — generic axes where semantics are not domain-critical.
+- Two variants when performance matters:
+  - Reference: readable, trusted, JAX‑first; Python control flow allowed; no JIT requirement.
+  - Fast: performance-optimized, jit‑able; prefer `jax.jit`, `vmap`, `lax` instead of Python loops on hot paths.
+- Precision: x64 is mandatory; do not downcast silently.
+- RNG: prefer JAX PRNG keys (`jax.random.PRNGKey`) or integer seeds; split keys locally; avoid
+  hidden global state.
+- Plotting/IO: convert to NumPy (`np.asarray`) at call sites (examples/tests), not within library
+  code.
+- Interop boundary: SciPy/NumPy calls live only under `viterbo/_wrapped/` (e.g., spatial Qhull,
+  scipy.optimize.linprog, byte hashing). Library code stays JAX‑first and should not import SciPy.
 
-If two parameters must share a dimension, **reuse the same symbol** in annotations.
-
-## 3) Code style & typing (facts + one concise example)
-
-- Prefer small, composable, **pure** functions with explicit types.
-- Arrays: use `jaxtyping.Float[np.ndarray, "<shape>"]` (or `Int[...]` etc.).
-- Return scalars as Python `float`/`int` only when the meaning is unambiguous and documented.
-- Document units and coordinate frames when relevant.
-
-#### Minimal example (Google docstring + jaxtyping)
+## 5) Minimal example (Google docstring + jaxtyping)
 
 ```python
-import numpy as np
-from jaxtyping import Float
+import jax.numpy as jnp
+from jaxtyping import Array, Float
 
 def ehz_capacity(
-    facets: Float[np.ndarray, "num_facets dimension"],
-    normals: Float[np.ndarray, "num_facets dimension"],
+    facets: Float[Array, " num_facets dimension"],
+    normals: Float[Array, " num_facets dimension"],
 ) -> float:
     """Estimate EHZ capacity for a convex polytope.
 
     Args:
-      facets: Facet vertex data, shape (num_facets, dimension). Units: coordinates.
+      facets: Facet data, shape (num_facets, dimension). Units: coordinates.
       normals: Outward facet normals, shape (num_facets, dimension). Must align with `facets`.
 
     Returns:
       Scalar capacity estimate.
-
-    Raises:
-      ValueError: If shapes are inconsistent or dimension < 2.
-      TypeError: If arrays are not floating point.
     """
-    if facets.ndim != 2 or normals.ndim != 2:
-        raise ValueError("facets/normals must be 2D arrays: (num_facets, dimension)")
-    if facets.shape != normals.shape:
-        raise ValueError("facets and normals must have identical shapes")
-    if facets.shape[1] < 2:
-        raise ValueError("dimension must be >= 2")
-
-    facets = facets.astype(np.float64, copy=False)
-    normals = normals.astype(np.float64, copy=False)
-
-    # placeholder structure for demonstration:
-    # ... compute support numbers, actions, and minimal closed characteristic ...
-    capacity = float(np.maximum(0.0, np.mean(np.einsum("fd,fd->f", facets, normals))))
-    return capacity
+    facets = jnp.asarray(facets, dtype=jnp.float64)
+    normals = jnp.asarray(normals, dtype=jnp.float64)
+    capacity = jnp.maximum(0.0, jnp.mean(jnp.einsum("fd,fd->f", facets, normals)))
+    return float(capacity)
 ```
 
-## 4) Workflows (imperative, concise)
+## 6) Testing (facts)
 
-### 4.1 Setup (once per environment)
+- Structure: organize by feature/module; explicit fixtures; no hidden I/O; clean up temp files.
+- Tolerances: choose context‑appropriate tolerances; document rationale. Typical float64 ranges are
+  `rtol` ~ 1e‑9–1e‑12 and `atol` near 0.0 for well‑conditioned problems, but adjust as needed.
+- Assertions: use clear options such as `pytest.approx`, `numpy.testing.assert_allclose`,
+  `numpy.isclose`, or `math.isclose` depending on the case.
+- Property‑based tests: welcome when invariants are cleanly expressible (e.g., monotonicity,
+  symmetry). Prefer Hypothesis.
+- Shape/name validation in tests: enable `jaxtyping` + `beartype`/`jaxtyped` during tests when
+  valuable; avoid cluttering library code with repetitive checks.
+- Pytest tiering: layer `smoke`, `deep`, `longhaul` markers on top of `benchmark`,
+  `line_profile`, `slow`. `make test` runs smoke with a 10 s per-test timeout, a hard 60 s session
+  cap, `--maxfail=1`, and a slow-test summary (`--durations=15`). `make test-deep` runs the deep
+  tier; `make test-longhaul` is manual/scheduled. See
+  `docs/testing-decision-criteria.md` for decision guidance and re-tiering criteria.
+- Invariant baselines live under `tests/_baselines/` as JSON; update values only with
+  maintainer sign-off and record the rationale in the PR/task brief.
 
-1. Use the devcontainer.
-2. Run:
+## 7) Performance (facts)
 
-   * `bash .devcontainer/post-create.sh` (one-time)
-   * `bash .devcontainer/post-start.sh` (each boot)
-3. Install deps: `make setup` (uses `uv sync` with a lockfile)
+- Benchmarks live in `tests/performance/` and reuse correctness fixtures. Keep RNG seeds fixed.
+- Run `make bench`; include a brief delta in PRs vs baseline/artifact.
+- Bench tiers: `make bench` (smoke/CI), `make bench-deep` (pre-merge),
+  `make bench-longhaul` (scheduled); archive longhaul runs in reports or
+  task briefs.
+- Scheduled CI runs `make test-longhaul` and `make bench-longhaul` weekly; longhaul failures block
+  merges until resolved or waived.
+- Profiling: `make profile` / `make profile-line` wrap `uv run` and write to
+  `.profiles/`; notebooks are out of scope.
+- If regression > 10% without justification, add a time‑boxed waiver to `waivers.toml` and open a
+  follow‑up issue.
 
-### 4.2 Daily development
+## 8) Workflows (imperative)
 
-1. Read the task and scan relevant modules and tests.
-2. Plan the **minimal** change (one feature OR one fix OR one refactor).
-   - Before edits, write a short, outcome-oriented plan (≈ 4–7 steps). Update it if scope evolves.
-3. Implement small, pure functions in `src/viterbo/`. Keep I/O at the edges.
-4. Add or adjust tests next to the code (deterministic, minimal fixtures).
-5. Run locally: use the commands in Quick reference. `make ci` mirrors CI.
+Daily development (in provisioned env)
 
-### 4.3 Performance-sensitive changes
+1. Read the task and scan relevant modules/tests.
+2. Plan the minimal change (one feature OR one fix OR one refactor). Write a short plan (≈4–7 steps).
+3. Implement pure functions in `src/viterbo/`; keep I/O at the edges. Add/adjust tests.
+4. Run: `make precommit-fast` during quick loops; finish with `make precommit` (alias for
+   `make precommit-slow`) before handing off or requesting review.
 
-1. Only if a change touches a marked fast path.
-2. Run:
+Short loops may use direct commands (`uv run pytest path/to/test.py`, custom markers, etc.). Close
+each handoff by re-running the golden-path targets above.
 
-   * `pytest tests/performance -q --benchmark-only --benchmark-autosave --benchmark-storage=.benchmarks`
-3. Compare autosaved vs. current and record the delta.
-4. If regression > 10%, iterate or document a waiver and open a follow-up issue.
+Pre‑PR checks
 
-### 4.4 Pre-PR checks
+- Keep diffs focused and coherent. Ensure types, tests, and docs are updated.
+- Ensure `make ci` is green locally (includes smoke tests with coverage). If the golden path breaks,
+  do not hand‑tune — escalate.
+- Run `make precommit` (slow tier) before requesting review; `make precommit-fast` is for local
+  iteration only.
+- Run `make coverage` when you need local HTML reports before requesting review.
+- Before landing performance-sensitive changes, run `make test-deep` and
+  `make bench-deep`; only run the longhaul tiers when maintainer asks.
 
-* Keep diffs focused (≈ ≤300 LOC when practical).
-* Ensure types, tests, and docs are updated.
-* Ensure `make ci` is **green locally**.
-* If scope balloons or time or compute budget is tight, land a minimal, correct slice first and list the remainder as follow-ups.
+PR content
 
-### 4.5 Pull request (concise content)
+- Scope, files touched, what you read, what you changed, how you tested (Ruff/Pyright/pytest
+  summaries), perf delta (if applicable), limitations, clarifications (with assumptions), follow‑ups
+  (H/M/L). Include file path references when helpful (e.g., `path/to/file.py:42`).
 
-* State **scope**, **files touched**, **what you read**, **what you changed**, **how you tested** (paste summaries of Ruff/Pyright/pytest), and **perf delta** if applicable.
-* Add an **Executive Summary** (3–6 bullets) and **limitations**.
-* Add **Clarifications Needed** (numbered). For each, note the assumption used to proceed.
-* Add **Follow-ups** (numbered, prioritized H/M/L) for deferred work and nice-to-haves.
-* Where practical, include file path references for claims in the PR description (e.g., `path/to/file.py:42`) to speed review.
-* Keep the PR small; split if needed.
+Blocked?
 
-### 4.6 When blocked
+- After 60–90 minutes of focused effort, open a draft PR `Needs-Unblock: <topic>` with blockers and
+  a proposed fallback.
 
-* If progress stalls after a focused attempt (≈ 60–90 minutes) due to missing invariants, unclear specs, or environment issues, open a **draft PR** titled `Needs-Unblock: <topic>` listing blockers and a proposed fallback.
+## 9) CI & Branch Protection (facts)
 
-## 5) Testing (facts + short rules)
+- `make ci` mirrors GitHub Actions: dedicated jobs run format/lint, typecheck, and smoke+coverage
+  tests while the weekly schedule executes the longhaul tiers.
+- Branch protection: all checks must pass before merge; concurrency cancels in‑progress runs per ref.
+- Enforcement lives in repo configs; contributors need not re‑validate tool configuration.
 
-* Organize by feature/module; prefer small, explicit fixtures.
-* No hidden I/O in tests; temporary files clean up via fixtures.
-* Numerical: use explicit tolerances (default `rtol=1e-9`, `atol=0.0`). Choose the most readable assertion: `math.isclose`, `numpy.isclose`, `pytest.approx`, or `numpy.testing.assert_allclose` for arrays.
-* Property-based tests are welcome where invariants are cleanly expressible (e.g., monotonicity, symmetry).
-* Avoid brittle tests tied to incidental internal representations.
+## 10) Policy Waivers (facts)
 
-## 6) Performance (facts)
+- Deviations live in `waivers.toml` with: `id`, `summary`, `owner`, `scope`, `created`, `expires`
+  (YYYY‑MM‑DD), `justification`, `removal_plan`. CI fails on expiry via `scripts/check_waivers.py`.
 
-* Benchmarks live in `tests/performance/` and **reuse the same fixtures** as correctness tests.
-* Autosave results under `.benchmarks/` for comparisons in PRs.
-* Perf hygiene for fast paths:
-  - Run `make bench` (autosave enabled) and include a short delta summary in the PR (compare against latest artifact or baseline branch).
-  - Keep RNG seeds fixed and note any environment constraints that influence results.
-  - If regression > 10% and not justified, add a time‑boxed waiver entry in `waivers.toml` while investigating.
+## 11) Process: Docs, Thesis, Weekly Mail (facts)
 
-## 7) Numeric stability (facts)
+- Docs authoring (`docs/`): concise Markdown documenting decisions, math references, and overviews;
+  include relative links to modules/tests; avoid committing rendered artefacts unless requested.
+- Thesis authoring (`thesis/`): single entry `thesis/main.tex`; include chapters via
+  `\include{chapters/<name>}`; figures under `thesis/figures/`; prefer vector formats; use
+  `thesis/macros.tex` for recurring notation; commit sources only (no build artefacts).
+- Weekly progress mail (`progress-reports/`): use the scaffold and prompt in that folder; drafts
+  named `YYYY-MM-DD-weekly-mail.md`; British English; short, outcome‑led paragraphs and bullets.
 
-* Prefer operations with predictable conditioning; avoid subtractive cancellation when a stable algebraic form exists.
-* Prefer `@` and `einsum` with explicit indices over ambiguous `dot`.
-* Normalize or rescale inputs when it improves stability; document such preconditions.
-* For tolerance negotiation, bias toward **slightly stricter** thresholds first; relax with justification if necessary.
+## 12) Scope & Enforcement (facts)
 
-## 8) Error handling & validation (facts)
-
-* Validate **shape**, **dtype**, and **domain** constraints at function boundaries; fail early with clear messages.
-* Do not catch and silence exceptions in library code; allow callers to observe errors.
-* Use `NotImplementedError` only for intentionally incomplete optional paths; avoid placeholders elsewhere.
-
-## 9) I/O boundaries & state (facts)
-
-* Library functions are pure; any filesystem, network, or device interaction occurs in thin wrapper modules.
-* No global mutable state. If caching is necessary: keep it explicit and bounded (hard size limit), key by explicit invariants, provide a `clear()` API (or context manager) and a way to disable in tests. Document invalidation rules.
-
-## 10) Imports & structure (facts)
-
-* Absolute imports only across `src/viterbo/` (no relative imports), including aggregators.
-* No `__all__` anywhere. Curate the public API by explicit imports in `viterbo/__init__.py`; avoid wildcard re‑exports within this project.
-* Wildcard imports within this project are disallowed. Wildcard imports from well‑known third‑party packages are discouraged but permitted with an inline justification comment when they materially improve ergonomics.
-* Internal helpers live in private modules (leading underscore) and are not imported into public namespaces.
-* Keep module size modest; split by cohesive concerns.
-
-## 11) Security & privacy (facts)
-
-* Credentials/config via environment variables only.
-* Never print or log secrets.
-* Do not upload private data to third-party services in CI or benchmarks.
-
-## 12) CI & Branch protection (facts)
-
-* `make ci` mirrors GitHub Actions (format check → lint → strict typecheck → tests).
-* **Before opening a PR**, run `make ci` locally and ensure it succeeds; if it fails for reasons you cannot resolve quickly, escalate via the task brief rather than skipping the check.
-* Branch protection requires all checks to pass before merge.
-* Concurrency cancels in-progress runs per ref to save CI time.
-* Perf-critical changes: include a benchmark delta summary or a documented waiver.
-* CI fails on expired policy waivers using `scripts/check_waivers.py` and `waivers.toml`.
-
-## 13) Quick reference: common commands (exact text)
-
-```bash
-# install (dev)
-make setup
-
-# format + lint + typecheck + unit tests (fast loop)
-make format && make lint && make typecheck && make test
-
-# full local mirror of CI
-make ci
-
-# performance (when touching fast paths)
-pytest tests/performance -q --benchmark-only --benchmark-autosave --benchmark-storage=.benchmarks
-```
-
-## 14) What NOT to do (hard nos)
-
-* Do **not** introduce custom array aliases (`Vector`, `FloatMatrix`, …). Use jaxtyping with explicit shapes.
-* Do **not** merge PRs without local `make ci` passing.
-* Do **not** add dependencies without necessity and a clearly documented rationale. Prefer a single golden path over optional backends.
-* Do **not** hide I/O or mutation inside math helpers.
-* Do **not** weaken types/tests to “make CI green”; fix the root cause or raise blockers.
-* Do **not** use relative imports or `__all__` anywhere.
-
-## 15) Scope of this file (fact)
-
-* This AGENTS.md applies to **all tasks** and **all agents**. It is intentionally concise, declarative for conventions, and imperative only for workflows. Maintain consistency with these facts unless this file is updated.
-
-## 16) Environment assurance (facts)
-
-* Maintainers ensure tool configs are correct and pre-baked into the devcontainer, `pyproject.toml`, CI, and `Makefile`.
-* New contributors should rely on the provided commands (`make setup`, `make format`, `make lint`, `make typecheck`, `make test`, `make ci`) without re‑validating tool configuration.
-* If you notice a mismatch (tools disagree or the golden path breaks), do not hand‑tune your local setup. Open an issue or a draft PR (`Needs-Unblock: <topic>`) describing the mismatch; maintainers will fix the environment.
-* Avoid bespoke local tweaks. The project values a single **golden path** that keeps everyone fast and aligned.
-
-## 17) Policy waivers (facts)
-
-* Deviations from this policy are tracked centrally in `waivers.toml` (repo root).
-* Each waiver must include: `id`, `summary`, `owner`, `scope`, `created`, `expires` (YYYY‑MM‑DD), `justification`, and `removal_plan`.
-* Waivers are time‑bounded and should be minimized; prefer fixing root causes quickly.
-
-## 18) Policy enforcement (maintainers)
-
-* Enforcement lives in repo configs; contributors need not re‑validate.
-* Mapping (non-exhaustive):
-  * Google docstrings → Ruff pydocstyle (convention=google).
-  * Absolute imports / no relatives → Ruff tidy-imports (ban-relative-imports=all).
-  * Strict typing → Pyright strict; CI treats diagnostics as errors.
-  * Format/lint → Ruff format + lint gates in CI.
-  * Waiver expiry → scripts/check_waivers.py validates `waivers.toml`.
-
-### Pointers to context (optional reading)
-
-* Roadmap: `docs/02-project-roadmap.md`
-* Symplectic quantities overview: `docs/13-symplectic-quantities.md`
-* Capacity algorithms: `docs/convex-polytope-cehz-capacities.md`
+- This file applies to all tasks and agents. Maintain a single golden path.
+- There must be exactly one `AGENTS.md` at the repository root; do not add per‑folder variants.
+- If tools disagree or the golden path breaks, open `Needs-Unblock` instead of hand‑tuning.

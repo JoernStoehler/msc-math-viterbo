@@ -22,7 +22,8 @@ This document summarizes practices to help Codex agents work productively in thi
 
 ## Continuous Improvement
 
-- When agents encounter surprises or unclear documentation, file an issue with a concrete suggestion.
+- When agents encounter surprises or unclear documentation, file an issue with a concrete
+  suggestion.
 - Prefer small, incremental changes that increase predictability and reduce ambiguity.
 
 ## Short-Form Modes

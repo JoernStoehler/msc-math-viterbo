@@ -1,6 +1,11 @@
 # Codex IDE — Initial Context Snapshot (verbatim)
 
-This file captures the full, verbatim initial context that was present when this session began, grouped by message source. Content is copied exactly as provided by the harness and user.
+> Non‑normative snapshot: This file records a past session’s initial context. Policies and workflows
+> are defined in `AGENTS.md` and repository configs; if anything here conflicts with those sources,
+> prefer `AGENTS.md` and configs.
+
+This file captures the full, verbatim initial context that was present when this session began,
+grouped by message source. Content is copied exactly as provided by the harness and user.
 
 ---
 
@@ -258,7 +263,7 @@ You will be told what filesystem sandboxing, network sandboxing, and approval mo
 
 ## Validating your work
 
-If the codebase has tests or the ability to build or run, consider using them to verify that your work is complete. 
+If the codebase has tests or the ability to build or run, consider using them to verify that your work is complete.
 
 When testing, your philosophy should be to start as specific as possible to the code you changed so that you can catch issues efficiently, then make your way to broader tests as you build confidence. If there's no test for the code you changed, and if the adjacent patterns in the codebases show that there's a logical place for you to add a test, you may do so. However, do not add tests to codebases with no tests.
 
@@ -457,20 +462,24 @@ It is important to remember:
 You can invoke apply_patch like:
 
 ```
-shell {"command":["apply_patch","*** Begin Patch\n*** Add File: hello.txt\n+Hello, world!\n*** End Patch\n"]}
+
+shell {"command":["apply_patch","\*\*\* Begin Patch\\n\*\*\* Add File: hello.txt\\n+Hello,
+world!\\n\*\*\* End Patch\\n"]}
+
 ```
+
 ```
 
 ---
 
 ## 4) User-provided AGENTS.md (inline in message)
 
-```
+````
 <user_instructions>
 
 # AGENTS.md
 
-Purpose (fact): This repository uses a **single AGENTS.md** for **all tasks**.  
+Purpose (fact): This repository uses a **single AGENTS.md** for **all tasks**.
 Authority (fact): **This file is the source of truth** for conventions and workflows. If any other doc contradicts this file, follow **AGENTS.md**.
 
 ## 0) Roles & scope (facts)
@@ -515,7 +524,7 @@ Every task brief should include: scope, acceptance criteria, links to context (f
 - **Logging**: Use `logging` (module loggers). No `print` in library code. No secrets in logs.
 - **Determinism**: Tests are deterministic. If randomness is unavoidable: seed explicitly and assert invariants, not exact bit-patterns.
 - **Numerical testing**: Use explicit tolerances (default `rtol=1e-9`, `atol=0.0` unless a function states otherwise). Choose the most readable assertion for the case: `math.isclose`, `numpy.isclose`, `pytest.approx`, or `numpy.testing.assert_allclose` for arrays.
-- **Environments**: Single golden‑path environment (plus Codex Cloud devcontainer). Required deps include NumPy and SciPy; avoid optional dependency branches.
+- **Environments**: Single golden‑path environment (plus Codex Cloud devcontainer). Required deps include JAX (x64 enabled), NumPy, and SciPy; avoid optional dependency branches.
 - **Imports**: Absolute imports everywhere (no relative imports), including within package submodules and aggregators. No circular imports; refactor to break cycles.
 - **Performance policy**: Micro-optimizations only after correctness. Bench only for code paths tagged performance-critical.
 - **Security**: No secrets in code or logs; config via env vars; avoid echoing env or using `set -x` where secrets may appear.
@@ -541,19 +550,19 @@ If two parameters must share a dimension, **reuse the same symbol** in annotatio
 ## 3) Code style & typing (facts + one concise example)
 
 - Prefer small, composable, **pure** functions with explicit types.
-- Arrays: use `jaxtyping.Float[np.ndarray, "<shape>"]` (or `Int[...]` etc.).
+- Arrays: use `jaxtyping.Float[Array, " <shape>"]` (or `Int[...]` etc.) and prefer JAX arrays by default.
 - Return scalars as Python `float`/`int` only when the meaning is unambiguous and documented.
 - Document units and coordinate frames when relevant.
 
 #### Minimal example (Google docstring + jaxtyping)
 
 ```python
-import numpy as np
-from jaxtyping import Float
+import jax.numpy as jnp
+from jaxtyping import Array, Float
 
 def ehz_capacity(
-    facets: Float[np.ndarray, "num_facets dimension"],
-    normals: Float[np.ndarray, "num_facets dimension"],
+    facets: Float[Array, " num_facets dimension"],
+    normals: Float[Array, " num_facets dimension"],
 ) -> float:
     """Estimate EHZ capacity for a convex polytope.
 
@@ -575,115 +584,137 @@ def ehz_capacity(
     if facets.shape[1] < 2:
         raise ValueError("dimension must be >= 2")
 
-    facets = facets.astype(np.float64, copy=False)
-    normals = normals.astype(np.float64, copy=False)
+    facets = jnp.asarray(facets, dtype=jnp.float64)
+    normals = jnp.asarray(normals, dtype=jnp.float64)
 
     # placeholder structure for demonstration:
     # ... compute support numbers, actions, and minimal closed characteristic ...
     capacity = float(np.maximum(0.0, np.mean(np.einsum("fd,fd->f", facets, normals))))
     return capacity
-```
+````
 
 ## 4) Workflows (imperative, concise)
 
 ### 4.1 Setup (once per environment)
 
 1. Use the devcontainer.
-2. Run:
 
-   * `bash .devcontainer/post-create.sh` (one-time)
-   * `bash .devcontainer/post-start.sh` (each boot)
-3. Install deps: `make setup` (uses `uv sync` with a lockfile)
+1. Run:
+   - `bash .devcontainer/post-create.sh` (one-time)
+   - `bash .devcontainer/post-start.sh` (each boot)
+
+1. Install deps: `make setup` (uses `uv sync` with a lockfile)
 
 ### 4.2 Daily development
 
 1. Read the task and scan relevant modules and tests.
-2. Plan the **minimal** change (one feature OR one fix OR one refactor).
-3. Implement small, pure functions in `src/viterbo/`. Keep I/O at the edges.
-4. Add or adjust tests next to the code (deterministic, minimal fixtures).
-5. Run locally: use the commands in Quick reference. `make ci` mirrors CI.
+1. Plan the **minimal** change (one feature OR one fix OR one refactor).
+1. Implement small, pure functions in `src/viterbo/`. Keep I/O at the edges.
+1. Add or adjust tests next to the code (deterministic, minimal fixtures).
+1. Run locally: use the commands in Quick reference. `make ci` mirrors CI.
 
 ### 4.3 Performance-sensitive changes
 
 1. Only if a change touches a marked fast path.
-2. Run:
 
-   * `pytest tests/performance -q --benchmark-only --benchmark-autosave --benchmark-storage=.benchmarks`
-3. Compare autosaved vs. current and record the delta.
-4. If regression > 10%, iterate or document a waiver and open a follow-up issue.
+1. Run:
+   - `pytest tests/performance -q --benchmark-only --benchmark-autosave --benchmark-storage=.benchmarks`
+
+1. Compare autosaved vs. current and record the delta.
+
+1. If regression > 10%, iterate or document a waiver and open a follow-up issue.
 
 ### 4.4 Pre-PR checks
 
-* Keep diffs focused (≈ ≤300 LOC when practical).
-* Ensure types, tests, and docs are updated.
-* Ensure `make ci` is **green locally**.
+- Keep diffs focused (≈ ≤300 LOC when practical).
+- Ensure types, tests, and docs are updated.
+- Ensure `make ci` is **green locally**.
 
 ### 4.5 Pull request (concise content)
 
-* State **scope**, **files touched**, **what you read**, **what you changed**, **how you tested** (paste summaries of Ruff/Pyright/pytest), and **perf delta** if applicable.
-* Brief **limitations** and **follow-ups**.
-* Keep the PR small; split if needed.
+- State **scope**, **files touched**, **what you read**, **what you changed**, **how you tested**
+  (paste summaries of Ruff/Pyright/pytest), and **perf delta** if applicable.
+- Brief **limitations** and **follow-ups**.
+- Keep the PR small; split if needed.
 
 ### 4.6 When blocked
 
-* If progress stalls after a focused attempt (≈ 60–90 minutes) due to missing invariants, unclear specs, or environment issues, open a **draft PR** titled `Needs-Unblock: <topic>` listing blockers and a proposed fallback.
+- If progress stalls after a focused attempt (≈ 60–90 minutes) due to missing invariants, unclear
+  specs, or environment issues, open a **draft PR** titled `Needs-Unblock: <topic>` listing blockers
+  and a proposed fallback.
 
 ## 5) Testing (facts + short rules)
 
-* Organize by feature/module; prefer small, explicit fixtures.
-* No hidden I/O in tests; temporary files clean up via fixtures.
-* Numerical: use explicit tolerances (default `rtol=1e-9`, `atol=0.0`). Choose the most readable assertion: `math.isclose`, `numpy.isclose`, `pytest.approx`, or `numpy.testing.assert_allclose` for arrays.
-* Property-based tests are welcome where invariants are cleanly expressible (e.g., monotonicity, symmetry).
-* Avoid brittle tests tied to incidental internal representations.
+- Organize by feature/module; prefer small, explicit fixtures.
+- No hidden I/O in tests; temporary files clean up via fixtures.
+- Numerical: use explicit tolerances (default `rtol=1e-9`, `atol=0.0`). Choose the most readable
+  assertion: `math.isclose`, `numpy.isclose`, `pytest.approx`, or `numpy.testing.assert_allclose`
+  for arrays.
+- Property-based tests are welcome where invariants are cleanly expressible (e.g., monotonicity,
+  symmetry).
+- Avoid brittle tests tied to incidental internal representations.
 
 ## 6) Performance (facts)
 
-* Benchmarks live in `tests/performance/` and **reuse the same fixtures** as correctness tests.
-* Autosave results under `.benchmarks/` for comparisons in PRs.
-* Perf hygiene for fast paths:
-  - Run `make bench` (autosave enabled) and include a short delta summary in the PR (compare against latest artifact or baseline branch).
+- Benchmarks live in `tests/performance/` and **reuse the same fixtures** as correctness tests.
+- Autosave results under `.benchmarks/` for comparisons in PRs.
+- Perf hygiene for fast paths:
+  - Run `make bench` (autosave enabled) and include a short delta summary in the PR (compare against
+    latest artifact or baseline branch).
   - Keep RNG seeds fixed and note any environment constraints that influence results.
-  - If regression > 10% and not justified, add a time‑boxed waiver entry in `waivers.toml` while investigating.
+  - If regression > 10% and not justified, add a time‑boxed waiver entry in `waivers.toml` while
+    investigating.
 
 ## 7) Numeric stability (facts)
 
-* Prefer operations with predictable conditioning; avoid subtractive cancellation when a stable algebraic form exists.
-* Prefer `@` and `einsum` with explicit indices over ambiguous `dot`.
-* Normalize or rescale inputs when it improves stability; document such preconditions.
-* For tolerance negotiation, bias toward **slightly stricter** thresholds first; relax with justification if necessary.
+- Prefer operations with predictable conditioning; avoid subtractive cancellation when a stable
+  algebraic form exists.
+- Prefer `@` and `einsum` with explicit indices over ambiguous `dot`.
+- Normalize or rescale inputs when it improves stability; document such preconditions.
+- For tolerance negotiation, bias toward **slightly stricter** thresholds first; relax with
+  justification if necessary.
 
 ## 8) Error handling & validation (facts)
 
-* Validate **shape**, **dtype**, and **domain** constraints at function boundaries; fail early with clear messages.
-* Do not catch and silence exceptions in library code; allow callers to observe errors.
-* Use `NotImplementedError` only for intentionally incomplete optional paths; avoid placeholders elsewhere.
+- Validate **shape**, **dtype**, and **domain** constraints at function boundaries; fail early with
+  clear messages.
+- Do not catch and silence exceptions in library code; allow callers to observe errors.
+- Use `NotImplementedError` only for intentionally incomplete optional paths; avoid placeholders
+  elsewhere.
 
 ## 9) I/O boundaries & state (facts)
 
-* Library functions are pure; any filesystem, network, or device interaction occurs in thin wrapper modules.
-* No global mutable state. If caching is necessary: keep it explicit and bounded (hard size limit), key by explicit invariants, provide a `clear()` API (or context manager) and a way to disable in tests. Document invalidation rules.
+- Library functions are pure; any filesystem, network, or device interaction occurs in thin wrapper
+  modules.
+- No global mutable state. If caching is necessary: keep it explicit and bounded (hard size limit),
+  key by explicit invariants, provide a `clear()` API (or context manager) and a way to disable in
+  tests. Document invalidation rules.
 
 ## 10) Imports & structure (facts)
 
-* Absolute imports only across `src/viterbo/` (no relative imports), including aggregators.
-* No `__all__` anywhere. Curate the public API by explicit imports in `viterbo/__init__.py`; avoid wildcard re‑exports within this project.
-* Wildcard imports within this project are disallowed. Wildcard imports from well‑known third‑party packages are discouraged but permitted with an inline justification comment when they materially improve ergonomics.
-* Internal helpers live in private modules (leading underscore) and are not imported into public namespaces.
-* Keep module size modest; split by cohesive concerns.
+- Absolute imports only across `src/viterbo/` (no relative imports), including aggregators.
+- No `__all__` anywhere. Curate the public API by explicit imports in `viterbo/__init__.py`; avoid
+  wildcard re‑exports within this project.
+- Wildcard imports within this project are disallowed. Wildcard imports from well‑known third‑party
+  packages are discouraged but permitted with an inline justification comment when they materially
+  improve ergonomics.
+- Internal helpers live in private modules (leading underscore) and are not imported into public
+  namespaces.
+- Keep module size modest; split by cohesive concerns.
 
 ## 11) Security & privacy (facts)
 
-* Credentials/config via environment variables only.
-* Never print or log secrets.
-* Do not upload private data to third-party services in CI or benchmarks.
+- Credentials/config via environment variables only.
+- Never print or log secrets.
+- Do not upload private data to third-party services in CI or benchmarks.
 
 ## 12) CI & Branch protection (facts)
 
-* `make ci` mirrors GitHub Actions (format check → lint → strict typecheck → tests).
-* Branch protection requires all checks to pass before merge.
-* Concurrency cancels in-progress runs per ref to save CI time.
-* Perf-critical changes: include a benchmark delta summary or a documented waiver.
-* CI fails on expired policy waivers using `scripts/check_waivers.py` and `waivers.toml`.
+- `make ci` mirrors GitHub Actions (format check → lint → strict typecheck → tests).
+- Branch protection requires all checks to pass before merge.
+- Concurrency cancels in-progress runs per ref to save CI time.
+- Perf-critical changes: include a benchmark delta summary or a documented waiver.
+- CI fails on expired policy waivers using `scripts/check_waivers.py` and `waivers.toml`.
 
 ## 13) Quick reference: common commands (exact text)
 
@@ -703,48 +734,58 @@ pytest tests/performance -q --benchmark-only --benchmark-autosave --benchmark-st
 
 ## 14) What NOT to do (hard nos)
 
-* Do **not** introduce custom array aliases (`Vector`, `FloatMatrix`, …). Use jaxtyping with explicit shapes.
-* Do **not** merge PRs without local `make ci` passing.
-* Do **not** add dependencies without necessity and a clearly documented rationale. Prefer a single golden path over optional backends.
-* Do **not** hide I/O or mutation inside math helpers.
-* Do **not** weaken types/tests to “make CI green”; fix the root cause or raise blockers.
-* Do **not** use relative imports or `__all__` anywhere.
+- Do **not** introduce custom array aliases (`Vector`, `FloatMatrix`, …). Use jaxtyping with
+  explicit shapes.
+- Do **not** merge PRs without local `make ci` passing.
+- Do **not** add dependencies without necessity and a clearly documented rationale. Prefer a single
+  golden path over optional backends.
+- Do **not** hide I/O or mutation inside math helpers.
+- Do **not** weaken types/tests to “make CI green”; fix the root cause or raise blockers.
+- Do **not** use relative imports or `__all__` anywhere.
 
 ## 15) Scope of this file (fact)
 
-* This AGENTS.md applies to **all tasks** and **all agents**. It is intentionally concise, declarative for conventions, and imperative only for workflows. Maintain consistency with these facts unless this file is updated.
+- This AGENTS.md applies to **all tasks** and **all agents**. It is intentionally concise,
+  declarative for conventions, and imperative only for workflows. Maintain consistency with these
+  facts unless this file is updated.
 
 ## 16) Environment assurance (facts)
 
-* Maintainers ensure tool configs are correct and pre-baked into the devcontainer, `pyproject.toml`, CI, and `Makefile`.
-* New contributors should rely on the provided commands (`make setup`, `make format`, `make lint`, `make typecheck`, `make test`, `make ci`) without re‑validating tool configuration.
-* If you notice a mismatch (tools disagree or the golden path breaks), do not hand‑tune your local setup. Open an issue or a draft PR (`Needs-Unblock: <topic>`) describing the mismatch; maintainers will fix the environment.
-* Avoid bespoke local tweaks. The project values a single **golden path** that keeps everyone fast and aligned.
+- Maintainers ensure tool configs are correct and pre-baked into the devcontainer, `pyproject.toml`,
+  CI, and `Makefile`.
+- New contributors should rely on the provided commands (`make setup`, `make format`, `make lint`,
+  `make typecheck`, `make test`, `make ci`) without re‑validating tool configuration.
+- If you notice a mismatch (tools disagree or the golden path breaks), do not hand‑tune your local
+  setup. Open an issue or a draft PR (`Needs-Unblock: <topic>`) describing the mismatch; maintainers
+  will fix the environment.
+- Avoid bespoke local tweaks. The project values a single **golden path** that keeps everyone fast
+  and aligned.
 
 ## 17) Policy waivers (facts)
 
-* Deviations from this policy are tracked centrally in `waivers.toml` (repo root).
-* Each waiver must include: `id`, `summary`, `owner`, `scope`, `created`, `expires` (YYYY‑MM‑DD), `justification`, and `removal_plan`.
-* Waivers are time‑bounded and should be minimized; prefer fixing root causes quickly.
+- Deviations from this policy are tracked centrally in `waivers.toml` (repo root).
+- Each waiver must include: `id`, `summary`, `owner`, `scope`, `created`, `expires` (YYYY‑MM‑DD),
+  `justification`, and `removal_plan`.
+- Waivers are time‑bounded and should be minimized; prefer fixing root causes quickly.
 
 ## 18) Policy enforcement (maintainers)
 
-* Enforcement lives in repo configs; contributors need not re‑validate.
-* Mapping (non-exhaustive):
-  * Google docstrings → Ruff pydocstyle (convention=google).
-  * Absolute imports / no relatives → Ruff tidy-imports (ban-relative-imports=all).
-  * Strict typing → Pyright strict; CI treats diagnostics as errors.
-  * Format/lint → Ruff format + lint gates in CI.
-  * Waiver expiry → scripts/check_waivers.py validates `waivers.toml`.
+- Enforcement lives in repo configs; contributors need not re‑validate.
+- Mapping (non-exhaustive):
+  - Google docstrings → Ruff pydocstyle (convention=google).
+  - Absolute imports / no relatives → Ruff tidy-imports (ban-relative-imports=all).
+  - Strict typing → Pyright strict; CI treats diagnostics as errors.
+  - Format/lint → Ruff format + lint gates in CI.
+  - Waiver expiry → scripts/check_waivers.py validates `waivers.toml`.
 
 ### Pointers to context (optional reading)
 
-* Roadmap: `docs/02-project-roadmap.md`
-* Symplectic quantities overview: `docs/13-symplectic-quantities.md`
-* Capacity algorithms: `docs/convex-polytope-cehz-capacities.md`
+- Roadmap: `docs/02-project-roadmap.md`
+- Symplectic quantities overview: `docs/13-symplectic-quantities.md`
+- Capacity algorithms: `docs/convex-polytope-cehz-capacities.md`
 
+\</user_instructions>
 
-</user_instructions>
 ```
 
 ---
@@ -752,13 +793,11 @@ pytest tests/performance -q --benchmark-only --benchmark-autosave --benchmark-st
 ## 5) Environment context (user-provided)
 
 ```
-<environment_context>
-  <cwd>/workspaces/msc-math-viterbo</cwd>
-  <approval_policy>never</approval_policy>
-  <sandbox_mode>danger-full-access</sandbox_mode>
-  <network_access>enabled</network_access>
-  <shell>bash</shell>
-</environment_context>
+
+\<environment_context> <cwd>/workspaces/msc-math-viterbo</cwd>
+\<approval_policy>never\</approval_policy> \<sandbox_mode>danger-full-access\</sandbox_mode>
+\<network_access>enabled\</network_access> <shell>bash</shell> \</environment_context>
+
 ```
 
 ---
@@ -766,16 +805,23 @@ pytest tests/performance -q --benchmark-only --benchmark-autosave --benchmark-st
 ## 6) User request (task brief)
 
 ```
+
 # Context from my IDE setup:
 
 ## My request for Codex:
+
 <USER MESSAGE>
 I suspect there are a few bugs in your system prompt, or adjacent places. Please take note of the initial context at the time you start working. What parts does it consist of, in-as-so-far as you can distinguish the parts? E.g. system prompt, tool syntax, environment creation, this user message, etc.
 
-Please write the full verbatim initial context into docs/96-codex-ide-context.md and an explanation, e.g the parts, and your interpretation of the context, into docs/97-codex-ide-context-discussion.md
+Please write the full verbatim initial context into docs/96-codex-ide-context.md and an explanation,
+e.g the parts, and your interpretation of the context, into docs/97-codex-ide-context-discussion.md
 
-Point out if I am mistaken about how your context works here, potentially there's been some version drift I'm not thinking of right now.
+Point out if I am mistaken about how your context works here, potentially there's been some version
+drift I'm not thinking of right now.
 
-I encapsulated my message in XML Tags to make it easier to distinguish them from system generated messages.
-</USER MESSAGE>
+I encapsulated my message in XML Tags to make it easier to distinguish them from system generated
+messages. \</USER MESSAGE>
+
+```
+
 ```
