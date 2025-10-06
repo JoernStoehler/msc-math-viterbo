@@ -26,16 +26,20 @@ operate on JAX arrays, with NumPy/SciPy interop isolated in thin adapters under
 ## Command Reference
 
 ```
-just quick       # FAST loop: Ruff format+lint → Pyright basic → pytest (FAST mode)
-just full        # Full loop: Ruff lint → Pyright strict → pytest smoke tier
-just ci          # GitHub Actions parity (sync → waivers → lint → type-strict → pytest)
-just sync        # Install project and dev dependencies via uv
-just fix         # Ruff format+autofix on src/ and tests/
-just lint        # Ruff lint + Prettier --check for policy compliance
+just checks      # Fast loop: lint-fast → type → test-fast
+just test        # Smoke-tier tests (parallel unless testmon enabled)
+just test-fast   # FAST-mode tests (CPU/no-JIT; single-process with testmon)
 just type        # Pyright basic over src/ (fast loop)
 just type-strict # Pyright strict across the repository
-just test        # Pytest smoke tier (non-FAST)
-just bench       # Pytest benchmarks in tests/performance/
+just lint        # Ruff lint + metadata + Prettier check (CI parity)
+just format      # Ruff format + Prettier write
+just fix         # Ruff format + autofix
+just sync        # Install project and dev dependencies via uv
+just ci          # CI parity (sync → waivers → lint → type-strict → pytest)
+just build       # Build sdist/wheel into dist/
+just publish     # Publish dist/* to index (requires PYPI_TOKEN)
+just release L   # Bump semver (patch|minor|major), commit, tag
+just bench       # Benchmarks (smoke tier)
 just docs-build  # Build MkDocs site with strict checks
 ```
 

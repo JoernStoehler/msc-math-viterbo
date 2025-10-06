@@ -1,7 +1,7 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
 set export := true
 
-default: quick
+default: checks
 
 UV := env_var_or_default("UV", "uv")
 PRETTIER := 'npx --yes prettier@3.3.3'
@@ -82,24 +82,12 @@ lint-fast:
     @echo "Running Ruff fast lint (E/F/B006/B008, ignores jaxtyping F722)."
     $UV run ruff check src tests scripts --select E9 --select F --select B006 --select B008 --ignore F722
 
-# Lightning-fast developer loop: format+lint, type (basic), pytest FAST with change detection.
-# Tip: Respects USE_TESTMON/PYTEST_ARGS and skips heavy markers automatically.
-quick:
-    @echo "Running FAST loop: Ruff format+lint, Pyright basic, pytest (FAST mode with change detection)."
-    @changed_py=$(git status --porcelain=v1 --untracked-files=normal | awk '{print $2}' | grep -E '^(src|tests|scripts)/.*\\.py$' || true); \
-    if [[ -n "$changed_py" ]]; then \
-        echo "Formatting changed Python files:" $changed_py; \
-        $UV run ruff format $changed_py; \
-        $UV run ruff check $changed_py; \
-    else \
-        echo "No changed Python files detected; skipping Ruff checks for speed."; \
-    fi; \
-    $UV run pyright -p pyrightconfig.json; \
-    if [[ -n "$changed_py" ]]; then \
-        TESTMONDATA="{{TESTMON_CACHE}}" {{FAST_ENV}} scripts/pytest_changed.sh {{PYTEST_SMOKE_FLAGS}} -p no:xdist --session-timeout=600 {{PYTEST_ARGS}}; \
-    else \
-        echo "No changed Python files detected; skipping pytest for FAST loop."; \
-    fi
+# Quick, sensible defaults: fast lint → fast type → FAST tests.
+checks:
+    @echo "Running checks: lint-fast → type → test (parallel)."
+    just lint-fast
+    just type
+    USE_TESTMON=0 just test
 
 # Quick test run using FAST settings (no JIT/GPU, single-process when testmon is enabled).
 test-fast:
@@ -119,33 +107,17 @@ test-watch:
 
 # Full repository loop: strict lint/type and full pytest tier (no FAST env overrides).
 # Tip: Run before reviews or when validating significant refactors.
-full:
-    @echo "Running full loop: Ruff lint, Pyright strict, pytest (full tier)."
-    $UV run ruff check src tests
-    $UV run pyright -p pyrightconfig.strict.json
-    $UV run pytest {{PYTEST_SMOKE_FLAGS}} -n auto --durations=20 {{PYTEST_ARGS}}
-
-# File watcher for the FAST loop.
-# Tip: Requires watchexec to be installed on PATH.
-watch:
-    command -v watchexec >/dev/null 2>&1 || { echo "Install watchexec for watch mode"; exit 1; }
-    watchexec -e py -r -- 'just quick'
+# (legacy) full-loop use case is covered by `ci` below.
 
 # Run strict Pyright analysis.
 # Tip: Full repository sweep; matches CI `just ci`.
-typecheck:
-    @echo "Running Pyright across the entire repository."
-    $UV run pyright -p pyrightconfig.strict.json
-
-# Quick library-only Pyright pass.
-# Tip: Focuses on `src/viterbo`; run `just typecheck` before review.
-typecheck-fast:
-    @echo "Running Pyright against src/viterbo only."
+type:
+    @echo "Running Pyright (basic) against src/viterbo."
     $UV run pyright -p pyrightconfig.json src/viterbo
 
-# Convenience aliases matching the fast/strict tier split.
-type: typecheck-fast
-type-strict: typecheck
+type-strict:
+    @echo "Running Pyright across the entire repository (strict)."
+    $UV run pyright -p pyrightconfig.strict.json
 
 # Smoke-tier pytest with enforced timeouts.
 # Tip: Testmon cache is on by default; set `USE_TESTMON=0` to disable, add selectors via `PYTEST_ARGS`.
@@ -184,7 +156,7 @@ test-longhaul:
     TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_LONGHAUL_FLAGS}} "${parallel_flags[@]}" {{PYTEST_ARGS}}
 
 # Run smoke, deep, and longhaul sequentially.
-test-all: test test-deep test-longhaul
+# Removed `test-all` in favor of explicit invocations.
 
 # Smoke tier with pytest-testmon cache.
 # Tip: Keeps testmon warm during tight loops; clear cache by deleting `{{TESTMON_CACHE}}`.
@@ -288,7 +260,7 @@ precommit-fast: lint-fast test-incremental
 
 # Full formatter, lint, typecheck, and smoke tests.
 # Tip: Run before review or handoff; matches the golden-path expectation.
-precommit-slow: format lint typecheck test
+precommit-slow: format lint type-strict test
 
 # Alias for precommit-slow.
 # Tip: Convenience alias for the slow gate.
