@@ -30,6 +30,15 @@ help:
     @echo "Common development commands (tips follow their primary description):"
     @just --list
 
+# Run an arbitrary command inside the project environment (uv run).
+run *ARGS:
+    $UV run {{ARGS}}
+
+# Open an interactive shell with the project environment on PATH.
+# Note: exits when the shell session ends.
+shell:
+    bash -l
+
 # Sync project dependencies (dev extras included).
 # Tip: Run after pulling dependency changes; idempotent under uv.
 sync:
@@ -91,6 +100,22 @@ quick:
     else \
         echo "No changed Python files detected; skipping pytest for FAST loop."; \
     fi
+
+# Quick test run using FAST settings (no JIT/GPU, single-process when testmon is enabled).
+test-fast:
+    @echo "Running quick pytest (FAST mode)."
+    @testmon_flags=(); parallel_flags=(); \
+    if [[ "${USE_TESTMON,,}" != "0" && "${USE_TESTMON,,}" != "false" && "${USE_TESTMON,,}" != "no" ]]; then \
+        testmon_flags=(--testmon); parallel_flags=(-p no:xdist); \
+    else \
+        parallel_flags=(-n auto); \
+    fi; \
+    {{FAST_ENV}} TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_SMOKE_FLAGS}} "${parallel_flags[@]}" {{PYTEST_ARGS}}
+
+# Watch tests on change (requires watchexec).
+test-watch:
+    command -v watchexec >/dev/null 2>&1 || { echo "Install watchexec for watch mode"; exit 1; }
+    watchexec -e py -r -- 'just test-fast'
 
 # Full repository loop: strict lint/type and full pytest tier (no FAST env overrides).
 # Tip: Run before reviews or when validating significant refactors.
@@ -167,6 +192,13 @@ test-incremental:
     @echo "Running smoke-tier pytest with testmon cache warmup."
     TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest --testmon --maxfail=1 {{PYTEST_SMOKE_FLAGS}} -p no:xdist {{PYTEST_ARGS}}
 
+# Unit vs integration convenience selectors.
+test-unit:
+    $UV run pytest -m "not integration and not deep and not longhaul" {{PYTEST_ARGS}}
+
+test-integration:
+    $UV run pytest -m "integration and not deep and not longhaul" {{PYTEST_ARGS}}
+
 # Smoke-tier benchmarks.
 # Tip: Use `PYTEST_ARGS="-k case"` to focus on a specific benchmark.
 bench:
@@ -198,6 +230,46 @@ profile-line:
     @echo "Running line profiler for compute_ehz_capacity_fast into {{PROFILES_DIR}}."
     $UV run pytest tests/performance -m "deep" --line-profile viterbo.symplectic.capacity.facet_normals.fast.compute_ehz_capacity_fast --pstats-dir="{{PROFILES_DIR}}" {{PYTEST_ARGS}}
 
+# Package build & publish
+build:
+    @echo "Building source distribution and wheel into dist/."
+    $UV build
+
+publish:
+    @echo "Publishing distributions from dist/ to package index. Set PYPI_TOKEN or configure uv index."
+    @if [ -z "${PYPI_TOKEN:-}" ]; then \
+        echo "PYPI_TOKEN not set. Configure uv index in pyproject or export PYPI_TOKEN." >&2; \
+        exit 1; \
+    fi
+    $UV publish --token "${PYPI_TOKEN}" ${PUBLISH_INDEX:+--index ${PUBLISH_INDEX}}
+
+# Bump semantic version and tag a release. Usage: just release patch|minor|major
+release LEVEL:
+    @echo "Bumping version: {{LEVEL}}"
+    $UV version --bump {{LEVEL}}
+    @new_ver=$($UV version --short); \
+    echo "New version: $$new_ver"; \
+    git add pyproject.toml uv.lock || true; \
+    git commit -m "chore(release): v$$new_ver" || true; \
+    git tag -a "v$$new_ver" -m "Release v$$new_ver" || true; \
+    echo "Created tag v$$new_ver";
+
+# Dependency helpers
+dep-add *PKGS:
+    @if [ -z "{{PKGS}}" ]; then echo "Usage: just dep-add PKG[ PKG2 ...]" >&2; exit 2; fi
+    $UV add {{PKGS}}
+
+dep-rm *PKGS:
+    @if [ -z "{{PKGS}}" ]; then echo "Usage: just dep-rm PKG[ PKG2 ...]" >&2; exit 2; fi
+    $UV remove {{PKGS}}
+
+dep-upgrade:
+    @echo "Upgrading lockfile to latest compatible versions and syncing environment."
+    $UV lock --upgrade
+    $UV sync --extra dev
+
+lock:
+    $UV lock
 # Smoke-tier tests with coverage reports.
 # Tip: Generates HTML at `htmlcov/index.html`; testmon cache is on by default.
 coverage:
@@ -255,6 +327,10 @@ clean:
 # Remove benchmarking, profiling, and coverage artefacts.
 clean-artefacts:
     rm -rf "{{BENCHMARK_STORAGE}}" "{{PROFILES_DIR}}" htmlcov .coverage* .artefacts
+
+# Clean virtual environment and caches (CAUTION: removes .venv).
+distclean:
+    rm -rf .venv .pytest_cache .ruff_cache .pyright .pyright_cache "{{BENCHMARK_STORAGE}}" "{{PROFILES_DIR}}" htmlcov .coverage* .artefacts
 
 # Train the toy logistic regression experiment.
 train-logreg:
