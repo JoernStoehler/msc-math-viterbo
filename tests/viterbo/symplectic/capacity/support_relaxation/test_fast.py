@@ -15,7 +15,9 @@ def _assert_monotone(history: list[float]) -> None:
         assert left + 1e-12 >= right
 
 
+@pytest.mark.goal_math
 def test_fast_solver_converges_on_unit_disk(unit_disk_vertices) -> None:
+    """Fast solver's capacity upper bound decreases and nears pi on unit disk."""
     logs: list[SupportRelaxationDiagnostics] = []
     result = compute_support_relaxation_capacity_fast(
         unit_disk_vertices,
@@ -33,7 +35,9 @@ def test_fast_solver_converges_on_unit_disk(unit_disk_vertices) -> None:
     assert result.capacity_upper_bound == pytest.approx(math.pi, rel=7e-2)
 
 
+@pytest.mark.goal_math
 def test_fast_solver_translation_invariant(unit_disk_vertices) -> None:
+    """Capacity estimate is invariant under translations of the vertex set."""
     base = compute_support_relaxation_capacity_fast(unit_disk_vertices, jit_compile=False)
     translated = compute_support_relaxation_capacity_fast(
         unit_disk_vertices + 0.75,
@@ -42,7 +46,9 @@ def test_fast_solver_translation_invariant(unit_disk_vertices) -> None:
     assert translated.capacity_upper_bound == pytest.approx(base.capacity_upper_bound, rel=1e-9)
 
 
+@pytest.mark.goal_math
 def test_fast_solver_supports_softmax_kernel(unit_disk_vertices) -> None:
+    """Fast solver supports softmax smoothing and returns nonnegative bounds."""
     result = compute_support_relaxation_capacity_fast(
         unit_disk_vertices,
         smoothing_method="softmax",

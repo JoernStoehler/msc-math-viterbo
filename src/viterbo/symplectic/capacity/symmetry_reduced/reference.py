@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable, Sequence
+from typing import Any, Iterable, Sequence, cast
 
 import cvxpy as cp
 import jax.numpy as jnp
@@ -120,6 +120,10 @@ class _GroupCache:
         return self._cache[key]
 
 
+# Public aliases for use in other modules without triggering private-usage checks.
+GroupCache = _GroupCache
+
+
 def _enforce_pair_constraints(
     *,
     subset: FacetSubset,
@@ -169,8 +173,8 @@ def _enforce_pair_constraints(
     rhs[0] = 1.0
 
     variable = cp.Variable(len(positions_groups))
-    constraints = [A @ variable == rhs, variable >= 0]
-    problem = cp.Problem(cp.Minimize(0), constraints)
+    constraints: list[cp.Constraint] = [A @ variable == rhs, variable >= 0]
+    problem = cast(Any, cp.Problem(cp.Minimize(0), constraints))
     try:
         problem.solve()
     except cp.SolverError:
@@ -204,3 +208,15 @@ def _enforce_pair_constraints(
         beta=jnp.asarray(beta, dtype=jnp.float64),
         symplectic_products=subset.symplectic_products,
     )
+
+
+def enforce_pair_constraints(
+    *,
+    subset: FacetSubset,
+    B_matrix: Float[Array, " num_facets dimension"],
+    c: Float[Array, " num_facets"],
+    groups: Sequence[Sequence[int]],
+    tol: float,
+) -> FacetSubset | None:
+    """Public wrapper for enforcing symmetry pair constraints."""
+    return _enforce_pair_constraints(subset=subset, B_matrix=B_matrix, c=c, groups=groups, tol=tol)

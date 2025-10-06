@@ -42,6 +42,7 @@ _TABLE_GEOMETRY_PAIRS = [
 _TABLE_GEOMETRY_IDS = [entry[0] for entry in _TABLE_GEOMETRY_PAIRS]
 
 
+@pytest.mark.goal_performance
 @pytest.mark.benchmark(group="minkowski_billiards")
 @pytest.mark.parametrize("label, table, geometry", _TABLE_GEOMETRY_PAIRS, ids=_TABLE_GEOMETRY_IDS)
 def test_fast_solver_matches_reference_with_benchmark(

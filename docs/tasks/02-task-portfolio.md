@@ -7,18 +7,18 @@ prioritisation visible at a glance.
 
 ## 1. Portfolio snapshot
 
-| ID  | Brief                                                                                                    | Status      | Expected utility | Cost (agent / compute / expert) | Priority | Notes                                                                                            |
-| --- | -------------------------------------------------------------------------------------------------------- | ----------- | ---------------- | ------------------------------- | -------- | ------------------------------------------------------------------------------------------------ |
-| T1  | [Geometry quantity module restructure & JAX baselines](completed/2025-10-04-geometry-module-refactor.md) | Completed   | **+3.15**        | Medium / Low / Low              | —        | Root of SWE work; enables all downstream experiments.                                            |
-| T2  | [Testing, benchmarking, and regression program](draft/2025-10-06-testing-benchmark-regression-program.md)        | In Progress | **+2.30**        | Medium / Low / Low              | 0.5      | Benchmarks and profiling hooks present; documentation and tiering remain.                        |
-| T3  | [Symplectic invariants regression suite](draft/2025-10-06-testing-benchmark-regression-program.md)  | In Progress | **+2.50**        | Medium / Low / Medium           | 0.75     | Several invariants covered; baseline artefacts and docs pending.                                 |
-| T4  | [JAX Pyright stub integration](scheduled/2025-10-06-jax-pyright-stubs.md)                                | In Progress | **+2.10**        | Medium / Low / Low              | 0.60     | Local stubs integrated; resolve JAX/NumPy type bridging to go green.                             |
-| T5  | [Single JAX‑first LP solver](scheduled/2025-10-05-single-jax-first-lp-solver.md)                         | Scheduled   | **+2.00**        | Low / Low / Low                 | 0.55     | Simplifies onboarding; aligns with JAX‑first policy; replaces SciPy LP wrapper and abstractions. |
-| E1  | [Facet-normal validation & dataset build](draft/2025-10-04-facet-dataset.md)                             | Draft       | **+2.70**        | Medium / Low / Low              | 1        | First numerical experiment; seeds data for the rest.                                             |
-| E2  | [Reeb orbit cross-check](draft/2025-10-04-reeb-cross-check.md)                                           | Draft       | **+2.10**        | Medium / Low / Low              | 2        | Tests numerical agreement across methods.                                                        |
-| E3  | [MILP relaxation bounds](draft/2025-10-04-milp-relaxations.md)                                           | Draft       | **+1.40**        | Medium / Medium / Medium        | 3        | Evaluates feasibility of open-source MILP tooling.                                               |
-| E4  | [Capacity–volume correlation study](draft/2025-10-04-capacity-volume-study.md)                           | Draft       | **+1.80**        | Medium / Medium / Medium        | 4        | Mines dataset for trends and outliers.                                                           |
-| E5  | [Support-function relaxation stress test](draft/2025-10-04-support-function-stress.md)                   | Draft       | **+0.90**        | Medium / Medium / Low           | 5        | Probes robustness of relaxation techniques.                                                      |
+| ID  | Brief                                                                                                     | Status      | Expected utility | Cost (agent / compute / expert) | Priority | Notes                                                                                            |
+| --- | --------------------------------------------------------------------------------------------------------- | ----------- | ---------------- | ------------------------------- | -------- | ------------------------------------------------------------------------------------------------ |
+| T1  | [Geometry quantity module restructure & JAX baselines](completed/2025-10-04-geometry-module-refactor.md)  | Completed   | **+3.15**        | Medium / Low / Low              | —        | Root of SWE work; enables all downstream experiments.                                            |
+| T2  | [Testing, benchmarking, and regression program](draft/2025-10-06-testing-benchmark-regression-program.md) | In Progress | **+2.30**        | Medium / Low / Low              | 0.5      | Benchmarks and profiling hooks present; documentation and tiering remain.                        |
+| T3  | [Symplectic invariants regression suite](draft/2025-10-06-testing-benchmark-regression-program.md)        | In Progress | **+2.50**        | Medium / Low / Medium           | 0.75     | Several invariants covered; baseline artefacts and docs pending.                                 |
+| T4  | [JAX Pyright stub integration](scheduled/2025-10-06-jax-pyright-stubs.md)                                 | In Progress | **+2.10**        | Medium / Low / Low              | 0.60     | Local stubs integrated; resolve JAX/NumPy type bridging to go green.                             |
+| T5  | [Single JAX‑first LP solver](scheduled/2025-10-05-single-jax-first-lp-solver.md)                          | Scheduled   | **+2.00**        | Low / Low / Low                 | 0.55     | Simplifies onboarding; aligns with JAX‑first policy; replaces SciPy LP wrapper and abstractions. |
+| E1  | [Facet-normal validation & dataset build](draft/2025-10-04-facet-dataset.md)                              | Draft       | **+2.70**        | Medium / Low / Low              | 1        | First numerical experiment; seeds data for the rest.                                             |
+| E2  | [Reeb orbit cross-check](draft/2025-10-04-reeb-cross-check.md)                                            | Draft       | **+2.10**        | Medium / Low / Low              | 2        | Tests numerical agreement across methods.                                                        |
+| E3  | [MILP relaxation bounds](draft/2025-10-04-milp-relaxations.md)                                            | Draft       | **+1.40**        | Medium / Medium / Medium        | 3        | Evaluates feasibility of open-source MILP tooling.                                               |
+| E4  | [Capacity–volume correlation study](draft/2025-10-04-capacity-volume-study.md)                            | Draft       | **+1.80**        | Medium / Medium / Medium        | 4        | Mines dataset for trends and outliers.                                                           |
+| E5  | [Support-function relaxation stress test](draft/2025-10-04-support-function-stress.md)                    | Draft       | **+0.90**        | Medium / Medium / Low           | 5        | Probes robustness of relaxation techniques.                                                      |
 
 Expected utilities remain the sum of probability-weighted utilities captured in the owning briefs.
 Priorities reflect the qualitative ordering: complete T1–T3 before launching the dataset or analysis
@@ -59,15 +59,19 @@ Update this graph whenever briefs change status or new items enter the queue.
 
 - **Brief**:
   [`docs/tasks/draft/2025-10-06-testing-benchmark-regression-program.md`](draft/2025-10-06-testing-benchmark-regression-program.md)
-- **Why it matters**: merges the harness, marker taxonomy, and invariant coverage into one playbook so downstream experiments inherit trusted performance and correctness checks.
-- **Next checkpoint**: fix the affine-map determinism test, confirm smoke runtime <3 min, then validate deep/longhaul tiers.
+- **Why it matters**: merges the harness, marker taxonomy, and invariant coverage into one playbook
+  so downstream experiments inherit trusted performance and correctness checks.
+- **Next checkpoint**: fix the affine-map determinism test, confirm smoke runtime <3 min, then
+  validate deep/longhaul tiers.
 
 ### T3 — Symplectic invariants regression suite
 
 - **Brief**:
   [`docs/tasks/draft/2025-10-06-testing-benchmark-regression-program.md`](draft/2025-10-06-testing-benchmark-regression-program.md)
-- **Why it matters**: shares the same consolidated program as T2, focusing on invariant baselines and regression coverage for downstream datasets.
-- **Next checkpoint**: after smoke timing stabilises, extend baseline coverage and document escalation steps.
+- **Why it matters**: shares the same consolidated program as T2, focusing on invariant baselines
+  and regression coverage for downstream datasets.
+- **Next checkpoint**: after smoke timing stabilises, extend baseline coverage and document
+  escalation steps.
 
 ### T4 — JAX Pyright stub integration
 

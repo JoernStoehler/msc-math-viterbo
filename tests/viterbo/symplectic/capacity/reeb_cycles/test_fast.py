@@ -18,6 +18,7 @@ from viterbo.symplectic.capacity.reeb_cycles.reference import (
 )
 
 
+@pytest.mark.goal_math
 @pytest.mark.parametrize(
     "polytope_factory",
     [
@@ -26,6 +27,7 @@ from viterbo.symplectic.capacity.reeb_cycles.reference import (
     ],
 )
 def test_fast_matches_reference(polytope_factory) -> None:
+    """Optimized solver matches the reference enumeration on 4D cases."""
     polytope = polytope_factory()
     B, c = polytope.halfspace_data()
     fast_value = compute_ehz_capacity_fast(B, c)

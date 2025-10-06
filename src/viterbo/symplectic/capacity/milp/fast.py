@@ -73,7 +73,7 @@ def compute_ehz_capacity_fast(
                 best_certificate = certificate
             continue
 
-        if node_limit is not None and expanded_nodes >= node_limit and best_certificate is not None:
+        if expanded_nodes >= node_limit and best_certificate is not None:
             continue
 
         max_start = int(num_facets) - remaining
@@ -81,7 +81,7 @@ def compute_ehz_capacity_fast(
             new_prefix = prefix + (position,)
             stack.append((new_prefix, position + 1))
             expanded_nodes += 1
-            if node_limit is not None and expanded_nodes >= node_limit:
+            if expanded_nodes >= node_limit:
                 break
 
     lower_bound = estimate_capacity_lower_bound(

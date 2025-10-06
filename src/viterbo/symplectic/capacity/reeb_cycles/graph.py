@@ -30,7 +30,7 @@ class OrientedEdge:
 class OrientedEdgeGraph:
     """Container bundling the oriented-edge graph with metadata."""
 
-    graph: nx.DiGraph
+    graph: nx.DiGraph[int]
     edges: tuple[OrientedEdge, ...]
     dimension: int
 
@@ -98,7 +98,7 @@ def build_oriented_edge_graph(
             missing_facets[(triple, vertex_index)] = remainder[0]
 
     oriented_edges: list[OrientedEdge] = []
-    graph = nx.DiGraph()
+    graph: nx.DiGraph[int] = nx.DiGraph()
 
     for triple, vertices in triple_vertices.items():
         if len(vertices) != 2:

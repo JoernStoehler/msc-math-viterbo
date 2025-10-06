@@ -3,16 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass(frozen=True)
 class HighsResources:
     """Expose the HiGHS classes required by callers."""
 
-    Highs: type
-    HighsStatus: type
-    HighsModelStatus: type
-    HighsVarType: type
+    Highs: Any
+    HighsStatus: Any
+    HighsModelStatus: Any
+    HighsVarType: Any
 
 
 def load_highs() -> HighsResources:

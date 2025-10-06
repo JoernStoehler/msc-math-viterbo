@@ -17,8 +17,9 @@ def benchmark_polytope():
     return simplex_with_uniform_weights(4, name="milp-benchmark-simplex")
 
 
+@pytest.mark.goal_performance
 def test_reference_solver_benchmark(benchmark, benchmark_polytope) -> None:
-    """Record runtime for the MILP reference solver on a small instance."""
+    """Benchmark MILP reference solver runtime on a small instance."""
 
     B, c = benchmark_polytope.halfspace_data()
 

@@ -13,6 +13,7 @@ import jax.nn as jnn
 import jax.numpy as jnp
 import numpy as np
 from jaxtyping import Array, Float
+from numpy.typing import NDArray
 
 from viterbo.symplectic.core import standard_symplectic_matrix
 
@@ -47,12 +48,14 @@ def grid_directions(
         raise ValueError(msg)
 
     axes = [np.linspace(-1.0, 1.0, density, dtype=np.float64) for _ in range(dimension)]
-    mesh = np.stack(np.meshgrid(*axes, indexing="ij"), axis=-1).reshape(-1, dimension)
-    norms = np.linalg.norm(mesh, axis=1)
+    mesh: NDArray[np.float64] = np.stack(np.meshgrid(*axes, indexing="ij"), axis=-1).reshape(
+        -1, dimension
+    )
+    norms: NDArray[np.float64] = np.linalg.norm(mesh, axis=1)
     mask = norms > 1e-12
-    filtered = mesh[mask]
+    filtered: NDArray[np.float64] = mesh[mask]
     norms = norms[mask][:, None]
-    normalised = filtered / norms
+    normalised: NDArray[np.float64] = filtered / norms
     # Remove duplicate rows caused by the projection of antipodal points.
     normalised = np.unique(np.round(normalised, decimals=12), axis=0)
     result: Float[Array, " num_directions dimension"] = jnp.asarray(normalised, dtype=jnp.float64)

@@ -19,6 +19,7 @@ _POLYTOPE_INSTANCES = _POLYTOPES[0]
 _POLYTOPE_IDS = _POLYTOPES[1]
 
 
+@pytest.mark.goal_performance
 @pytest.mark.benchmark(group="reeb-cycles")
 @pytest.mark.parametrize(("B", "c"), _POLYTOPE_INSTANCES, ids=_POLYTOPE_IDS)
 def test_fast_matches_reference(

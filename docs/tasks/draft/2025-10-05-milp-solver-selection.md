@@ -103,8 +103,8 @@ in the brief and portfolio. Totals are the weighted sum of each solver’s score
 - Use small MILP smoke tests to confirm API parity and determinism.
 - Record runtime metrics (wall-clock, iterations) for comparison, but no exhaustive benchmarking
   required.
-- Ensure prototypes run under `just typecheck` and `just test` (10 s per-test, 60 s session cap)
-  if committed.
+- Ensure prototypes run under `just typecheck` and `just test` (10 s per-test, 60 s session cap) if
+  committed.
 
 ## 10. Risks, mitigations, and escalation triggers
 

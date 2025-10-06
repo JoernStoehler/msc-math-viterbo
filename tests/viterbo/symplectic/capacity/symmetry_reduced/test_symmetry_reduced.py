@@ -25,22 +25,28 @@ _CENTRAL_POLYTOPES = tuple(
 )
 
 
+@pytest.mark.goal_code
 def test_detect_opposite_pairs_hypercube() -> None:
+    """Detector finds two opposite-facet pairs for a 2D hypercube (square)."""
     B, c = hypercube(2, name="hypercube-detection").halfspace_data()
     metadata = detect_opposite_facet_pairs(B, c)
     assert len(metadata.pairs) == 2
     assert metadata.unpaired == ()
 
 
+@pytest.mark.goal_code
 def test_detect_opposite_pairs_cross_polytope() -> None:
+    """Detector finds two opposite-facet pairs for a 2D cross-polytope (diamond)."""
     B, c = cross_polytope(2, name="cross-polytope-detection").halfspace_data()
     metadata = detect_opposite_facet_pairs(B, c)
     assert len(metadata.pairs) == 2
     assert metadata.unpaired == ()
 
 
+@pytest.mark.goal_math
 @pytest.mark.parametrize("B, c, name", _CENTRAL_POLYTOPES)
 def test_reference_symmetry_matches_full(B: np.ndarray, c: np.ndarray, name: str) -> None:
+    """Symmetry-reduced reference equals the full solver on central polytopes."""
     try:
         reference = compute_ehz_capacity_reference(B, c)  # type: ignore[reportArgumentType]
     except ValueError:
@@ -51,8 +57,10 @@ def test_reference_symmetry_matches_full(B: np.ndarray, c: np.ndarray, name: str
         assert np.isclose(reference, reduced, atol=1e-8)
 
 
+@pytest.mark.goal_math
 @pytest.mark.parametrize("B, c, name", _CENTRAL_POLYTOPES)
 def test_fast_symmetry_matches_full(B: np.ndarray, c: np.ndarray, name: str) -> None:
+    """Symmetry-reduced fast solver equals the full fast solver on central polytopes."""
     try:
         fast = compute_ehz_capacity_fast(B, c)  # type: ignore[reportArgumentType]
     except ValueError:
@@ -63,7 +71,9 @@ def test_fast_symmetry_matches_full(B: np.ndarray, c: np.ndarray, name: str) -> 
         assert np.isclose(fast, reduced, atol=1e-8)
 
 
+@pytest.mark.goal_code
 def test_solver_respects_pairing_overrides() -> None:
+    """Explicit pairing overrides are applied and preserve baseline capacity."""
     poly = hypercube(2, name="hypercube-override")
     B, c = poly.halfspace_data()
     metadata = FacetPairingMetadata(pairs=((2, 0), (3, 1)), unpaired=())
@@ -88,7 +98,9 @@ def test_solver_respects_pairing_overrides() -> None:
         assert np.isclose(reduced, baseline, atol=1e-8)
 
 
+@pytest.mark.goal_code
 def test_canonical_subset_allows_paired_facets() -> None:
+    """Canonical subset permits paired facets and rejects reversed-order duplicates."""
     metadata = FacetPairingMetadata(pairs=((0, 1), (2, 3)), unpaired=())
 
     assert metadata.is_canonical_subset((0, 1, 2))

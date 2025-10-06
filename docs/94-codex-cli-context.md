@@ -720,6 +720,7 @@ def ehz_capacity(
 1. Use the devcontainer.
 
 1. Run:
+
    - `bash .devcontainer/post-create.sh` (one-time)
    - `bash .devcontainer/post-start.sh` (each boot)
 
@@ -738,6 +739,7 @@ def ehz_capacity(
 1. Only if a change touches a marked fast path.
 
 1. Run:
+
    - `pytest tests/performance -q --benchmark-only --benchmark-autosave --benchmark-storage=.benchmarks`
 
 1. Compare autosaved vs. current and record the delta.

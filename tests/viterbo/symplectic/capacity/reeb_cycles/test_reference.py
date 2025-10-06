@@ -18,6 +18,7 @@ from viterbo.symplectic.capacity.reeb_cycles.reference import (
 )
 
 
+@pytest.mark.goal_math
 @pytest.mark.parametrize(
     "polytope_factory",
     [
@@ -26,6 +27,7 @@ from viterbo.symplectic.capacity.reeb_cycles.reference import (
     ],
 )
 def test_reference_matches_facet_normals(polytope_factory) -> None:
+    """Reference Reeb-cycle capacity equals facet-normal capacity."""
     polytope = polytope_factory()
     B, c = polytope.halfspace_data()
     reeb_capacity = compute_ehz_capacity_reference(B, c)
@@ -33,7 +35,9 @@ def test_reference_matches_facet_normals(polytope_factory) -> None:
     assert math.isclose(reeb_capacity, facet_capacity, rel_tol=0.0, abs_tol=1e-8)
 
 
+@pytest.mark.goal_math
 def test_reference_agrees_with_polytope_metadata() -> None:
+    """Reference capacity matches the known metadata baseline for the polytope."""
     polytope = truncated_simplex_four_dim()
     assert polytope.reference_capacity is not None
     B, c = polytope.halfspace_data()

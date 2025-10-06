@@ -59,3 +59,22 @@ from viterbo.symplectic.capacity.symmetry_reduced import (
 from viterbo.symplectic.capacity.symmetry_reduced import (
     detect_opposite_facet_pairs as detect_opposite_facet_pairs,
 )
+
+__all__ = [
+    "compute_ehz_capacity_reference",
+    "compute_ehz_capacity_fast",
+    "compute_ehz_capacity_reference_milp",
+    "compute_ehz_capacity_fast_milp",
+    "compute_ehz_capacity_reeb_reference",
+    "compute_ehz_capacity_reeb_fast",
+    "MinkowskiNormalFan",
+    "build_normal_fan",
+    "compute_minkowski_billiard_length_reference",
+    "compute_minkowski_billiard_length_fast",
+    "compute_support_relaxation_capacity_reference",
+    "compute_support_relaxation_capacity_fast",
+    "FacetPairingMetadata",
+    "detect_opposite_facet_pairs",
+    "compute_ehz_capacity_reference_symmetry_reduced",
+    "compute_ehz_capacity_fast_symmetry_reduced",
+]

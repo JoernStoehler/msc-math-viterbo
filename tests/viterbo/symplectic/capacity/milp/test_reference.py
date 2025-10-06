@@ -29,6 +29,7 @@ def truncated_simplex() -> Polytope:
     return truncated_simplex_four_dim()
 
 
+@pytest.mark.goal_math
 @pytest.mark.parametrize("polytope_fixture", ["simplex_polytope", "truncated_simplex"])
 def test_reference_matches_facet_solution(
     polytope_fixture: str, request: pytest.FixtureRequest
@@ -65,8 +66,9 @@ def test_reference_matches_facet_solution(
     assert math.isclose(float(support @ beta), 1.0, rel_tol=0.0, abs_tol=1e-9)
 
 
+@pytest.mark.goal_code
 def test_reference_explores_all_subsets(simplex_polytope: Polytope) -> None:
-    """Reference MILP solver enumerates all subsets of size d+1."""
+    """Reference MILP solver enumerates all d+1-sized facet subsets."""
 
     B, c = simplex_polytope.halfspace_data()
     num_facets = int(B.shape[0])

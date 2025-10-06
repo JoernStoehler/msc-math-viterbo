@@ -75,6 +75,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             entries.append(f"{testcase.path}::{testcase.name} [{marker_display}] - {summary}")
 
     import sys
+
     entries.sort()
     sys.stdout.write(f"LINES:{len(entries)}\n")
     if entries:

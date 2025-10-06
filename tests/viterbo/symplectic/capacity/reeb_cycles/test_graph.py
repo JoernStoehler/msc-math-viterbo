@@ -15,6 +15,7 @@ def _assert_bidirectional(graph) -> None:
         assert successors or predecessors
 
 
+@pytest.mark.goal_code
 @pytest.mark.parametrize(
     "polytope_factory",
     [
@@ -23,6 +24,7 @@ def _assert_bidirectional(graph) -> None:
     ],
 )
 def test_graph_has_edges(polytope_factory) -> None:
+    """Constructed graph has nonzero nodes/edges and bidirectional links."""
     polytope = polytope_factory()
     B, c = polytope.halfspace_data()
     graph = build_oriented_edge_graph(B, c)
@@ -31,7 +33,9 @@ def test_graph_has_edges(polytope_factory) -> None:
     _assert_bidirectional(graph)
 
 
+@pytest.mark.goal_code
 def test_graph_requires_four_dimensions() -> None:
+    """Graph construction rejects non-4D polytopes with a clear error."""
     from viterbo.geometry.polytopes import simplex_with_uniform_weights
 
     polytope = simplex_with_uniform_weights(2, name="triangle")

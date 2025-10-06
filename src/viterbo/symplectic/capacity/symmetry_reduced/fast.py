@@ -18,8 +18,10 @@ from viterbo.symplectic.capacity.symmetry_reduced.pairs import (
     detect_opposite_facet_pairs,
 )
 from viterbo.symplectic.capacity.symmetry_reduced.reference import (
-    _enforce_pair_constraints,
-    _GroupCache,
+    GroupCache as _GroupCache,
+)
+from viterbo.symplectic.capacity.symmetry_reduced.reference import (
+    enforce_pair_constraints as _enforce_pair_constraints,
 )
 from viterbo.symplectic.core import standard_symplectic_matrix
 

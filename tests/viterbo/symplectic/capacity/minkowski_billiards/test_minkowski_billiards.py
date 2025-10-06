@@ -24,6 +24,7 @@ from viterbo.symplectic.capacity.minkowski_billiards.reference import (
 )
 
 
+@pytest.mark.goal_math
 @pytest.mark.smoke
 @pytest.mark.parametrize("dimension", [2, 3])
 def test_normal_fan_vertex_adjacency_for_hypercube(dimension: int) -> None:
@@ -38,6 +39,7 @@ def test_normal_fan_vertex_adjacency_for_hypercube(dimension: int) -> None:
         assert len(neighbors) == expected_degree
 
 
+@pytest.mark.goal_math
 @pytest.mark.smoke
 def test_reference_minkowski_length_matches_hanner_bound() -> None:
     """Hypercube × cross-polytope trajectories minimise at four bounces."""
@@ -55,6 +57,7 @@ def test_reference_minkowski_length_matches_hanner_bound() -> None:
     assert length_fast <= milp_upper + 1e-10
 
 
+@pytest.mark.goal_math
 @pytest.mark.smoke
 @pytest.mark.parametrize(
     "sides",
@@ -77,8 +80,9 @@ def test_fast_solver_matches_reference_on_polygon_products(sides: tuple[int, int
 
 
 @pytest.mark.smoke
+@pytest.mark.goal_math
 def test_product_decomposition_matches_block_sum() -> None:
-    """Product detection matches the block trajectory length per factor."""
+    """Product detection equals the sum over block trajectory lengths."""
 
     table_block = hypercube(2)
     geometry_block = cross_polytope(2)
@@ -95,8 +99,9 @@ def test_product_decomposition_matches_block_sum() -> None:
     assert math.isclose(length_reference, length_fast, rel_tol=1e-9, abs_tol=1e-9)
 
 
+@pytest.mark.goal_code
 def test_cycle_enumeration_avoids_duplicate_orientations() -> None:
-    """Johnson-style cycle enumeration yields unique canonical cycles."""
+    """Johnson cycle enumeration yields unique canonical orientations."""
 
     fan = build_normal_fan(hypercube(2))
     cycles = list(_enumerate_cycles(fan, max_length=4))
@@ -105,8 +110,9 @@ def test_cycle_enumeration_avoids_duplicate_orientations() -> None:
     assert len(cycles) == len(canonical_cycles)
 
 
+@pytest.mark.goal_code
 def test_cycle_enumeration_excludes_two_bounce_paths() -> None:
-    """Cycles shorter than three bounces are pruned from enumeration."""
+    """Enumerated cycles exclude disallowed two-bounce paths (len<3)."""
 
     fan = build_normal_fan(hypercube(3))
     cycles = list(_enumerate_cycles(fan, max_length=4))

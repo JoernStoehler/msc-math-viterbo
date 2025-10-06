@@ -44,8 +44,8 @@ algorithm variants, and produces artefacts for downstream analyses (E2–E5).
 - Completion of Task 2025-10-04-geometry-module-refactor — satisfied via the
   [completed brief](../completed/2025-10-04-geometry-module-refactor.md).
 - Execution of the consolidated testing, benchmarking, and regression program
-  ([draft brief](2025-10-06-testing-benchmark-regression-program.md)) to lock in regression
-  coverage and benchmark markers.
+  ([draft brief](2025-10-06-testing-benchmark-regression-program.md)) to lock in regression coverage
+  and benchmark markers.
 - Agreement on dataset storage location and format.
 - Git LFS configured for the repository and `.gitattributes` patterns added for dataset files.
 - Benchmark cadence guidance from methodology to monitor runtime.
@@ -69,8 +69,8 @@ algorithm variants, and produces artefacts for downstream analyses (E2–E5).
 
 ## 7. Testing, benchmarks, and verification
 
-- Use unit tests from T2 harness to guard algorithm correctness (run via `just test` smoke tier —
-  10 s per-test, 60 s session cap — before promoting dataset updates).
+- Use unit tests from T2 harness to guard algorithm correctness (run via `just test` smoke tier — 10
+  s per-test, 60 s session cap — before promoting dataset updates).
 - Add dataset-specific checks (schema validation, invariance tests) to CI if runtime permits;
   otherwise document manual steps.
 - Record runtime metrics and store under `.benchmarks/` to inform future scaling.

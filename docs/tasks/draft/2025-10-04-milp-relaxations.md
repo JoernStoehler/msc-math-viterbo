@@ -71,8 +71,8 @@ relaxations and baseline capacities, and determine whether tighter formulations 
 ## 7. Testing, benchmarks, and verification
 
 - Unit tests for MILP encoding functions to ensure constraint matrices match expectations.
-- Small smoke problems executed in CI (`just test` smoke tier — 10 s per-test, 60 s session cap)
-  to guarantee formulations remain feasible.
+- Small smoke problems executed in CI (`just test` smoke tier — 10 s per-test, 60 s session cap) to
+  guarantee formulations remain feasible.
 - Local deep runs for more complex instances; document runtime and solver diagnostics.
 
 ## 8. Risks, mitigations, and escalation triggers

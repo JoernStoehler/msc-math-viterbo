@@ -24,6 +24,7 @@ jax_config.update("jax_enable_x64", True)
 @dataclass(frozen=True)
 class GaussianBlob:
     """Parameters of an axis-aligned Gaussian used to sample points."""
+
     mean: tuple[float, float]
     cov_diag: tuple[float, float]
 
@@ -53,6 +54,7 @@ def _write_parquet(path: Path, features: jnp.ndarray, labels: jnp.ndarray) -> No
 @dataclass(frozen=True)
 class DatasetConfig:
     """Configuration for the toy dataset generation."""
+
     version: str = "v1"
     train_size: int = 800
     test_size: int = 200

@@ -38,7 +38,8 @@ We will standardize on JAXopt’s OSQP as the JAX‑first solver. LPs are a spec
 ## 3. Deliverables and exit criteria
 
 - Code:
-  - `viterbo.optimization.linprog_jax` implemented (JAX-first solver with a maintained OSQP-compatible backend).
+  - `viterbo.optimization.linprog_jax` implemented (JAX-first solver with a maintained
+    OSQP-compatible backend).
   - Deleted files and APIs:
     - `src/viterbo/optimization/solvers.py` (all LP abstractions)
     - `src/viterbo/_wrapped/optimize.py` (SciPy linprog wrapper)
@@ -56,14 +57,16 @@ We will standardize on JAXopt’s OSQP as the JAX‑first solver. LPs are a spec
 
 ## 4. Dependencies and prerequisites
 
-- Select a maintained JAX-first solver dependency (JAXopt replacement) and add it deliberately once chosen; current golden path keeps the slot empty.
+- Select a maintained JAX-first solver dependency (JAXopt replacement) and add it deliberately once
+  chosen; current golden path keeps the slot empty.
 - No change to SciPy usage elsewhere (`_wrapped/spatial.py` remains).
 
 Blocking prerequisites: none; defer execution until currently queued PRs land.
 
 ## 5. Execution plan and checkpoints
 
-1. Implement `linprog_jax` (JAX arrays in/out, shape checks, constraint builder to `A, l, u`, call into the chosen maintained solver with sensible defaults, clear status mapping).
+1. Implement `linprog_jax` (JAX arrays in/out, shape checks, constraint builder to `A, l, u`, call
+   into the chosen maintained solver with sensible defaults, clear status mapping).
 1. Delete LP abstractions and SciPy wrapper; remove all re‑exports.
 1. Update `optimization/__init__.py` and package `__init__.py` to export only `linprog_jax`.
 1. Replace solver tests with `test_linprog_jax.py` and adjust assertions.
@@ -80,8 +83,8 @@ Checkpoint: single PR with focused diff (preferably ≤300 LOC) and CI summary i
 
 ## 7. Testing, benchmarks, and verification
 
-- CI: `just ci` (format → lint → typecheck → tests) must pass; smoke tests run via `just test`
-  with the standard 10 s per-test timeout and 60 s session cap.
+- CI: `just ci` (format → lint → typecheck → tests) must pass; smoke tests run via `just test` with
+  the standard 10 s per-test timeout and 60 s session cap.
 - Numerical checks use explicit tolerances: `rtol=1e-9`, `atol=1e-8`.
 - Optional local timing vs. previous SciPy path (informational only, not required in CI).
 

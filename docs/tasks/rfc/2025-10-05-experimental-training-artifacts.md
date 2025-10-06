@@ -251,12 +251,12 @@ scientists who need other formats.
 ### 6.5 Automation & retention
 
 | Criterion (weight)                            | Justfile recipes + monthly manual tidy **(selected)** | CI sweeps + automated retention |
-| --------------------------------------------- | ------------------------------------------------- | ------------------------------- |
-| Implementation effort (0.35)                  | **5**                                             | 3                               |
-| Repeatability for agents (0.30)               | **4**                                             | **5**                           |
-| Risk of accidental deletion / over-run (0.20) | **5**                                             | 3                               |
-| CI cost / compute usage (0.15)                | **5**                                             | 2                               |
-| **Weighted score (0–5)**                      | **4.60**                                          | 3.35                            |
+| --------------------------------------------- | ----------------------------------------------------- | ------------------------------- |
+| Implementation effort (0.35)                  | **5**                                                 | 3                               |
+| Repeatability for agents (0.30)               | **4**                                                 | **5**                           |
+| Risk of accidental deletion / over-run (0.20) | **5**                                                 | 3                               |
+| CI cost / compute usage (0.15)                | **5**                                                 | 2                               |
+| **Weighted score (0–5)**                      | **4.60**                                              | 3.35                            |
 
 Outcome: Extend the Justfile with `just train`, `just evaluate`, `just publish`, and rely on a
 monthly reminder (already scheduled) to prune W&B runs and large LFS blobs. CI-driven sweeps remain

@@ -32,6 +32,7 @@ def truncated_simplex() -> Polytope:
     return truncated_simplex_four_dim()
 
 
+@pytest.mark.goal_math
 @pytest.mark.parametrize("polytope_fixture", ["four_dimensional_simplex", "truncated_simplex"])
 def test_fast_solver_matches_reference(
     polytope_fixture: str, request: pytest.FixtureRequest
@@ -54,8 +55,9 @@ def test_fast_solver_matches_reference(
     assert 0.0 <= fast_result.gap_absolute <= fast_result.upper_bound
 
 
+@pytest.mark.goal_math
 def test_fast_solver_improves_over_facet_fast(four_dimensional_simplex: Polytope) -> None:
-    """MILP heuristic matches or improves the JAX-first fast solver's action."""
+    """MILP heuristic matches or improves the facet-fast action value."""
 
     B, c = four_dimensional_simplex.halfspace_data()
     facet_value = compute_ehz_capacity_fast_facet(B, c)

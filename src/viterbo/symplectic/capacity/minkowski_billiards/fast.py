@@ -206,7 +206,7 @@ def _try_product_decomposition(
         return None
 
     total = 0.0
-    for index, (sub_table, sub_geom) in enumerate(zip(sub_tables, sub_geometry)):
+    for _, (sub_table, sub_geom) in enumerate(zip(sub_tables, sub_geometry)):
         block_max = None
         if max_bounces is not None:
             block_max = max(3, min(max_bounces, sub_table.dimension + 2))

@@ -16,7 +16,9 @@ def _assert_monotone(history: list[float]) -> None:
         assert left + 1e-12 >= right
 
 
+@pytest.mark.goal_math
 def test_reference_solver_converges_on_unit_disk(unit_disk_vertices) -> None:
+    """Reference solver's bound sequence decreases and approaches pi."""
     result = compute_support_relaxation_capacity_reference(
         unit_disk_vertices,
         grid_density=15,
@@ -30,7 +32,9 @@ def test_reference_solver_converges_on_unit_disk(unit_disk_vertices) -> None:
     assert result.capacity_upper_bound == pytest.approx(math.pi, rel=5e-2)
 
 
+@pytest.mark.goal_math
 def test_reference_solver_translation_invariant(unit_disk_vertices) -> None:
+    """Capacity estimate is invariant under translations of vertices."""
     base = compute_support_relaxation_capacity_reference(unit_disk_vertices)
     translated = compute_support_relaxation_capacity_reference(
         unit_disk_vertices + 0.25,
@@ -38,7 +42,9 @@ def test_reference_solver_translation_invariant(unit_disk_vertices) -> None:
     assert translated.capacity_upper_bound == pytest.approx(base.capacity_upper_bound, rel=1e-9)
 
 
+@pytest.mark.goal_math
 def test_reference_solver_softmax_schedule(unit_disk_vertices) -> None:
+    """Softmax smoothing schedule computes a positive capacity bound."""
     result = compute_support_relaxation_capacity_reference(
         unit_disk_vertices,
         smoothing_parameters=(0.6, 0.3, 0.0),

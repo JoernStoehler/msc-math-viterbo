@@ -7,8 +7,6 @@
   "useLibraryCodeForTypes": true,
   "stubPath": "typings",
   "extraPaths": ["src", "tests"],
-  "executionEnvironments": [
-    { "root": "src" }
-  ],
+  "executionEnvironments": [{ "root": "src" }],
   "reportMissingImports": "error"
 }

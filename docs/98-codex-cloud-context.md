@@ -112,10 +112,10 @@ When you make code changes, your final answer should look like this: <GUIDELINES
 
 \<EXAMPLE_FINAL_ANSWER> **Summary**
 
-- Changed `src/main.rs` to add a new function `add_two` that adds two to a given
-  number. 【F:src/main.rs†L21-L31】
-- Changed `src/lib.rs` to add a new function `add_two` that adds two to a given
-  number. 【F:src/lib.rs†L12-L22】
+- Changed `src/main.rs` to add a new function `add_two` that adds two to a given number.
+  【F:src/main.rs†L21-L31】
+- Changed `src/lib.rs` to add a new function `add_two` that adds two to a given number.
+  【F:src/lib.rs†L12-L22】
 
 **Testing**
 

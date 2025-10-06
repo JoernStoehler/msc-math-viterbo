@@ -47,7 +47,8 @@ The training command expects `WANDB_API_KEY` in your environment (see the Justfi
 
 - The default Pyright profile (`pyrightconfig.json`) uses basic mode for day-to-day loops; CI flips
   to strict mode via `pyrightconfig.strict.json`. Repository-local stubs live under
-  `typings/jax/`—keep signatures accurate and prefer jaxtyping annotations with explicit shape tokens.
+  `typings/jax/`—keep signatures accurate and prefer jaxtyping annotations with explicit shape
+  tokens.
 - Ruff enforces the Google docstring convention (with curated exceptions) and bans relative imports.
 - Optional runtime jaxtyping checks can be enabled during tests via `JAXTYPING_CHECKS=1 just test`.
 

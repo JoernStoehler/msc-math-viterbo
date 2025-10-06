@@ -89,13 +89,14 @@ Output: c_EHZ(K × T)
 4. Return minimal ℓ_T(γ) over admissible closed paths.
 ```
 
-_Calibration._ For centrally symmetric factors the extremal trajectories appear at four
-reflections. Rudolf works out the square–diamond Hanner pair, exhibiting a four-bounce
-$(K,T)$-orbit of $\ell_T$-length $8$ that realises $c_{\mathrm{EHZ}}([-1,1]^2 \times B_1^2)$ and
-matches the Artstein-Avidan–Ostrover bounds.【F:docs/convex-polytope-cehz-capacities.md†L111-L121】
-We use this configuration as the canonical baseline when validating the reference and fast
-solvers and enforce a minimum of three distinct reflections in the enumeration to exclude
-degenerate two-bounce paths.【F:tests/viterbo/symplectic/capacity/minkowski_billiards/test_minkowski_billiards.py†L27-L65】【F:src/viterbo/symplectic/capacity/minkowski_billiards/reference.py†L20-L46】
+_Calibration._ For centrally symmetric factors the extremal trajectories appear at four reflections.
+Rudolf works out the square–diamond Hanner pair, exhibiting a four-bounce $(K,T)$-orbit of
+$\ell_T$-length $8$ that realises $c_{\mathrm{EHZ}}([-1,1]^2 \times B_1^2)$ and matches the
+Artstein-Avidan–Ostrover bounds.【F:docs/convex-polytope-cehz-capacities.md†L111-L121】We use this
+configuration as the canonical baseline when validating the reference and fast solvers and enforce a
+minimum of three distinct reflections in the enumeration to exclude degenerate two-bounce
+paths.【F:tests/viterbo/symplectic/capacity/minkowski_billiards/test_minkowski_billiards.py†L27-L65】
+【F:src/viterbo/symplectic/capacity/minkowski_billiards/reference.py†L20-L46】
 
 ## 5. Convex Programming Relaxations via Support Functions (General Dimension)
 

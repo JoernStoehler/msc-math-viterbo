@@ -6,15 +6,18 @@ highlights any potential sources of confusion or drift.
 ## Parts of the Context
 
 - System message
+
   - Global runtime facts and constraints: knowledge cutoff, date, channel rules (`analysis`,
     `commentary`, `final`), verbosity default, image capability.
   - Applies to the entire session with highest precedence.
 
 - Tool definitions (namespace `functions`)
+
   - Declares available tools: `shell`, `update_plan`, `view_image` with their parameter shapes.
   - These are the concrete APIs the agent can call.
 
 - Developer message (Codex CLI agent guide)
+
   - Defines how to behave in this harness: preambles, planning, execution, validating work,
     approvals, formatting of final answers, tool usage (`apply_patch` via shell), and safety
     constraints.
@@ -23,12 +26,14 @@ highlights any potential sources of confusion or drift.
     shallower ones for files in their scope).
 
 - Repository policy (AGENTS.md) — provided inline by the user and also present at repo root
+
   - Project-wide conventions for Python code, docs, testing, performance, and CI. Applies to all
     tasks and files touched in this repo.
   - Emphasizes determinism, purity for math code, strict typing, Google-style docstrings, jaxtyping
     shapes, Ruff/Pyright gates, and `uv` for deps.
 
 - Environment context (user-provided)
+
   - cwd: `/workspaces/msc-math-viterbo`
   - approvals: `never`
   - sandbox: `danger-full-access`
@@ -44,12 +49,14 @@ highlights any potential sources of confusion or drift.
 ## Precedence and Interaction
 
 - Order of precedence for behavior:
+
   1. System instructions
   1. Developer (Codex CLI) instructions
   1. User instructions/request for this task
   1. Repo `AGENTS.md` (policy) for code/style/testing when touching repo files
 
 - Tooling and edits:
+
   - The harness exposes `functions.shell` (which can run `apply_patch`), `functions.update_plan`,
     and `functions.view_image`.
   - File edits are performed by invoking the `apply_patch` command via `shell` as documented.
@@ -70,22 +77,26 @@ highlights any potential sources of confusion or drift.
 ## Potential Confusions, Drift, or Minor Gotchas
 
 - apply_patch invocation
+
   - The developer guide says “Use the apply_patch tool,” but there is no separate
     `functions.apply_patch`; instead, `apply_patch` is a shell command invoked via
     `functions.shell`. This is expected for Codex CLI, but can be confusing if you look only at the
     tool list.
 
 - Approvals guidance vs. current mode
+
   - The developer guide describes multiple approval modes (untrusted/on-failure/on-request/never)
     with escalation scenarios. In this session the mode is `never`, so the escalation guidance does
     not apply; we proceed without requesting approvals.
 
 - Formatting guidance vs. minimal formatting
+
   - The system message discourages heavy formatting in chat unless needed; the developer guide
     contains detailed formatting rules for chat answers. These coexist: keep chat succinct and
     structured when helpful; heavy formatting is fine in repo docs (like these files).
 
 - AGENTS.md duplication
+
   - You supplied AGENTS.md inline, and the repo also contains `AGENTS.md`. Treat the repository file
     as the source of truth for code changes. The inline copy appears consistent with the repo
     version.

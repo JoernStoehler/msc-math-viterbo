@@ -54,7 +54,7 @@ def _enumerate_cycles(
     max_length: int,
 ) -> Iterable[tuple[int, ...]]:
     """Enumerate simple cycles using a Johnson-style search with pruning."""
-    neighbor_lists = [sorted(neighbors) for neighbors in fan.neighbors]
+    neighbor_lists: list[list[int]] = [sorted(neighbors) for neighbors in fan.neighbors]
     vertex_count = fan.vertex_count
     seen: set[tuple[int, ...]] = set()
 
@@ -129,7 +129,7 @@ def _enumerate_cycles(
             continue
 
         blocked = [False] * vertex_count
-        block_map = [set() for _ in range(vertex_count)]
+        block_map: list[set[int]] = [set() for _ in range(vertex_count)]
 
         for cycle in circuit(start, start, component, blocked, block_map):
             yield cycle
@@ -211,7 +211,7 @@ def _canonical_cycle(sequence: tuple[int, ...]) -> tuple[int, ...]:
     if length == 0:
         return sequence
 
-    candidates = []
+    candidates: list[tuple[int, ...]] = []
     for shift in range(length):
         rotated = tuple(sequence[(shift + offset) % length] for offset in range(length))
         candidates.append(rotated)
