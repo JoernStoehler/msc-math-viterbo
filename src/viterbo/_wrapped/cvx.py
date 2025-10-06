@@ -27,10 +27,19 @@ def solve_epigraph_minimum(
     solver: str,
     tolerance: float,
 ) -> float:
-    """Solve ``min t`` s.t. ``t >= values_i`` using CVXPy."""
-    cvxpy = _load_cvxpy()
+    """Solve ``min t`` s.t. ``t >= values_i`` using CVXPy when available."""
+    array = _np.asarray(values, dtype=float)
+    if array.size == 0:
+        msg = "Epigraph minimum expects at least one value."
+        raise ValueError(msg)
+    try:
+        cvxpy = _load_cvxpy()
+    except ModuleNotFoundError:
+        # Fallback: the epigraph problem reduces to ``max(values)``.
+        return float(array.max())
+
     variable = cvxpy.Variable()
-    constraints = [variable >= float(v) for v in _np.asarray(values, dtype=float)]
+    constraints = [variable >= float(v) for v in array]
     problem = cvxpy.Problem(cvxpy.Minimize(variable), constraints)
     options: dict[str, Any] = {}
     solver_lower = solver.lower()
