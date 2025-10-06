@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Iterable, Mapping
+from typing import Iterable, Mapping, Tuple
 
 import jax.numpy as jnp
 import numpy as np
@@ -381,8 +381,48 @@ def estimate_capacity_lower_bound(
 ) -> float | None:
     """Return a relaxation-based lower bound for the EHZ capacity."""
 
-    normals = np.asarray(B_matrix, dtype=np.float64)
-    support = np.asarray(c, dtype=np.float64)
+    normals = np.ascontiguousarray(B_matrix, dtype=np.float64)
+    support = np.ascontiguousarray(c, dtype=np.float64)
+
+    options_key = _normalise_options(options)
+    upper_estimate = _cached_relaxation_upper_estimate(
+        normals_shape=tuple(normals.shape),
+        normals_bytes=normals.tobytes(),
+        support_size=int(support.size),
+        support_bytes=support.tobytes(),
+        options_key=options_key,
+    )
+
+    if upper_estimate <= float(tol):
+        return None
+
+    return 0.5 / upper_estimate
+
+
+def _normalise_options(options: Mapping[str, float] | None) -> Tuple[Tuple[str, float], ...]:
+    """Return a deterministic tuple encoding HiGHS options for caching."""
+
+    if options is None:
+        return ()
+    return tuple(sorted((str(key), float(value)) for key, value in options.items()))
+
+
+@lru_cache(maxsize=64)
+def _cached_relaxation_upper_estimate(
+    *,
+    normals_shape: Tuple[int, ...],
+    normals_bytes: bytes,
+    support_size: int,
+    support_bytes: bytes,
+    options_key: Tuple[Tuple[str, float], ...],
+) -> float:
+    """Return the cached lifted-relaxation contribution sum for ``B`` and ``c``."""
+
+    normals = np.frombuffer(normals_bytes, dtype=np.float64).reshape(normals_shape)
+    support = np.frombuffer(support_bytes, dtype=np.float64).reshape((support_size,))
+
+    options = None if len(options_key) == 0 else {key: value for key, value in options_key}
+
     dimension = int(normals.shape[1])
     J = _standard_symplectic_matrix_cached(dimension)
     symplectic_products = normals @ J @ normals.T
@@ -409,12 +449,7 @@ def estimate_capacity_lower_bound(
     np.fill_diagonal(outer_products, 0.0)
 
     contribution = abs_products * outer_products
-    upper_estimate = float(np.sum(np.triu(contribution, k=1)))
-
-    if upper_estimate <= float(tol):
-        return None
-
-    return 0.5 / upper_estimate
+    return float(np.sum(np.triu(contribution, k=1)))
 
 
 def build_certificate(
