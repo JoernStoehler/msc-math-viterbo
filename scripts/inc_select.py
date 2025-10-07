@@ -400,8 +400,12 @@ def main() -> int:
     selected: list[str] = []
     # Order buckets: changed test files (distance 0), direct importers (distance 1), indirect (>=2)
     changed_tests = [p for p in selected_test_files if p in (added | modified)]
-    direct_tests = [p for p in selected_test_files if p not in changed_tests and dist.get(p, 99) == 1]
-    indirect_tests = [p for p in selected_test_files if p not in changed_tests and p not in direct_tests]
+    direct_tests = [
+        p for p in selected_test_files if p not in changed_tests and dist.get(p, 99) == 1
+    ]
+    indirect_tests = [
+        p for p in selected_test_files if p not in changed_tests and p not in direct_tests
+    ]
     for bucket in (sorted(changed_tests), sorted(direct_tests), sorted(indirect_tests)):
         selected.extend(bucket)
 
@@ -431,7 +435,9 @@ def main() -> int:
             "hash": h,
             "is_test": is_test_file(p),
         }
-    edges_out: dict[str, list[str]] = {k.as_posix(): [t.as_posix() for t in v] for k, v in edges_cur.items()}
+    edges_out: dict[str, list[str]] = {
+        k.as_posix(): [t.as_posix() for t in v] for k, v in edges_cur.items()
+    }
     save_graph({"nodes": nodes_out, "edges": edges_out})
 
     return 0

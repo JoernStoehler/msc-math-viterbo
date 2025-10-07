@@ -4,7 +4,6 @@ set export := true
 default: checks
 
 UV := env_var_or_default("UV", "uv")
-PRETTIER := 'npx --yes prettier@3.3.3'
 
 SMOKE_TEST_TIMEOUT := env_var_or_default("SMOKE_TEST_TIMEOUT", "10")
 PYTEST_ARGS := env_var_or_default("PYTEST_ARGS", "")
@@ -15,7 +14,7 @@ PYTEST_SMOKE_FLAGS := "-m \"not deep and not longhaul\" --timeout=$SMOKE_TEST_TI
 PYTEST_DEEP_FLAGS := "-m \"not longhaul\""
 PYTEST_LONGHAUL_FLAGS := "-m \"longhaul\""
 
-PRETTIER_PATTERNS := '"README.md" "docs/**/*.{md,mdx}" "progress-reports/**/*.md" "**/*.{yml,yaml,json}"'
+
 
 BENCHMARK_STORAGE := ".benchmarks"
 BENCH_FLAGS := "--benchmark-only --benchmark-autosave --benchmark-storage={{BENCHMARK_STORAGE}}"
@@ -46,27 +45,25 @@ sync:
 # Tip: Backwards-compatible alias for `just sync`.
 setup: sync
 
-# Run quiet Ruff formatter and Prettier writes.
+# Run quiet Ruff formatter and autofixes.
 # Tip: Safe to run before commits; pairs with `just lint` or `just precommit`.
 fix:
     @echo "Applying Ruff format and autofix to src/, tests/, and scripts/."
     $UV run ruff format src tests scripts
     $UV run ruff check src tests scripts --fix
 
-# Run quiet Ruff formatter and Prettier writes.
+# Run quiet Ruff formatter across the repo.
 # Tip: Safe to run before commits; pairs with `just lint` or `just precommit`.
 format:
-    @echo "Formatting source and docs with Ruff + Prettier."
+    @echo "Formatting source with Ruff."
     $UV run ruff format --quiet .
-    {{PRETTIER}} --log-level warn --write {{PRETTIER_PATTERNS}}
 
-# Full Ruff lint and Prettier validation.
-# Tip: Mirrors CI linting; use when editing Markdown alongside Python.
+# Full Ruff lint and metadata validation.
+# Tip: Mirrors CI linting.
 lint:
-    @echo "Running Ruff lint and Prettier check (CI parity)."
+    @echo "Running Ruff lint and metadata check (CI parity)."
     $UV run ruff check .
     $UV run python scripts/check_test_metadata.py
-    {{PRETTIER}} --log-level warn --check {{PRETTIER_PATTERNS}}
 
 # Summarise pytest test metadata (markers + docstrings).
 test-metadata:
@@ -233,7 +230,6 @@ ci:
     $UV sync --extra dev
     $UV run python scripts/check_waivers.py
     $UV run ruff check .
-    {{PRETTIER}} --log-level warn --check {{PRETTIER_PATTERNS}}
     $UV run pyright -p pyrightconfig.strict.json
     $UV run pytest {{PYTEST_SMOKE_FLAGS}} -q --durations=20 -n auto {{PYTEST_ARGS}}
 
