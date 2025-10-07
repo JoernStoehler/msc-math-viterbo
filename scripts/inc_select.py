@@ -26,8 +26,8 @@ What this script does (in plain terms)
          so fixes surface immediately without re‑running whole files
   5) Write the selection to stdout, one entry per line, for consumption by pytest's
      "@argsfile" syntax. If there is nothing to run because there are no Python changes and
-     there were no prior failures, print a clear skip message to stderr and write a sentinel
-     file ``.cache/impacted_none`` so the runner can skip invoking pytest entirely.
+     there were no prior failures, print a clear skip message to stderr and return a dedicated
+     exit code so the runner can skip invoking pytest entirely.
 
 Guardrails (correctness first)
   - "Plumbing" changes advise a full run: any ``conftest.py``, ``pytest.ini``, pytest settings
@@ -38,7 +38,8 @@ Guardrails (correctness first)
 Input/Output contract
   - Input: current working tree only. Optional prior failures read from ``.cache/last-junit.xml``.
   - Output: list of test file paths and nodeids on stdout; informational messages on stderr.
-  - Exit status: 0 in all cases — callers detect "skip" via the sentinel file.
+  - Exit status: 0 = selection emitted; 2 = skip (no changes/no failures); 3 = advise full run
+    (large impact). Any other non‑zero is treated as fallback to full by the caller.
 
 Notes on precision and limits
   - This is intentionally coarse (module‑level). It will over‑select if a module is imported but
@@ -67,6 +68,7 @@ from xml.etree import ElementTree as ET
 
 ROOT = Path.cwd()
 CACHE_DIR = ROOT / ".cache"
+GRAPH_JSON = CACHE_DIR / "inc_graph.json"
 LAST_JUNIT = CACHE_DIR / "last-junit.xml"
 
 EXCLUDE_DIRS = {".git", ".venv", "node_modules", ".cache", "build", "dist", "site"}
@@ -217,8 +219,29 @@ def parse_imports(files: list[Path], idx: dict[str, Path]) -> dict[Path, list[Pa
 
 
 def load_graph() -> dict:
-    """Deprecated: this selector is stateless and does not read/write graphs."""
-    return {"nodes": {}, "edges": {}}
+    """Load the previous graph JSON, or an empty structure if missing/invalid."""
+    try:
+        data = json.loads(GRAPH_JSON.read_text())
+        if not isinstance(data, dict):
+            return {"nodes": {}, "edges": {}}
+        # ensure shape
+        data.setdefault("nodes", {})
+        data.setdefault("edges", {})
+        return data
+    except OSError:
+        return {"nodes": {}, "edges": {}}
+    except json.JSONDecodeError:
+        return {"nodes": {}, "edges": {}}
+
+
+def save_graph(graph: dict) -> None:
+    """Persist the current graph JSON under ``.cache/`` (baseline upgrade)."""
+    try:
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        GRAPH_JSON.write_text(json.dumps(graph, indent=2))
+    except OSError:
+        # Non-fatal: selector remains usable even if persisting fails
+        pass
 
 
 def parse_junit_failures(path: Path) -> set[str]:
@@ -251,20 +274,25 @@ def main() -> int:
       - On "no changes and no prior failures" prints a skip message and writes a
         sentinel so callers can skip invoking pytest.
     """
-    # Stateless operation: no previous graph is read.
+    prev = load_graph()
+    prev_nodes: dict[str, dict] = prev.get("nodes", {})
+    prev_edges: dict[str, list[str]] = prev.get("edges", {})
 
     files = walk_py_files()
     # compute hashes and classify
     current_hash: dict[Path, str] = {p: sha256_of_file(p) for p in files}
     current_set = {p.as_posix() for p in files}
 
-    # Determine "changed" files using JUnit mtime as a baseline. If JUnit is
-    # absent, treat everything as changed (first run).
-    try:
-        last_time = LAST_JUNIT.stat().st_mtime
-    except OSError:
-        last_time = 0.0
-    changed = {p.as_posix() for p in files if p.stat().st_mtime > last_time}
+    # Determine changed set by comparing against previous graph hashes.
+    current_set = {p.as_posix() for p in files}
+    added = current_set - set(prev_nodes.keys())
+    deleted = set(prev_nodes.keys()) - current_set
+    modified = {
+        p.as_posix()
+        for p, h in current_hash.items()
+        if prev_nodes.get(p.as_posix(), {}).get("hash") not in {None, h}
+    }
+    changed = set(added | deleted | modified)
 
     # Invalidation: plumbing
     plumbing_patterns = ["pytest.ini", "pyproject.toml", "uv.lock", "scripts/inc_select.py"]
@@ -282,7 +310,13 @@ def main() -> int:
     # If imports moved since the last run, unioning avoids missing dependency paths
     # and under‑selecting. This keeps the bias conservative and the code simple.
     all_edges: dict[str, list[str]] = {}
-    # no previous edges: use only current edges
+    # Seed with previous edges
+    for k, v in prev_edges.items():
+        all_edges.setdefault(k, [])
+        for t in v:
+            if t not in all_edges[k]:
+                all_edges[k].append(t)
+    # Add current edges
     for k, v in edges_cur.items():
         ks = k.as_posix()
         all_edges.setdefault(ks, [])

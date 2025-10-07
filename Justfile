@@ -97,11 +97,10 @@ type-strict:
 test:
     @mkdir -p .cache
     @echo "Running smoke-tier pytest (incremental selection with fallback)."
-    @rm -f .cache/impacted_none
-    $UV run --script scripts/inc_select.py > .cache/impacted_nodeids.txt || true
-    @if [ -s .cache/impacted_nodeids.txt ]; then \
+    @sel_status=0; $UV run --script scripts/inc_select.py > .cache/impacted_nodeids.txt || sel_status=$?; \
+    if [ -s .cache/impacted_nodeids.txt ] && [ "$sel_status" = "0" ]; then \
         $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --junitxml .cache/last-junit.xml @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
-    elif [ -f .cache/impacted_none ]; then \
+    elif [ "$sel_status" = "2" ]; then \
         echo "Selector: no changes and no prior failures — skipping pytest run."; \
     else \
         $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}; \
@@ -297,12 +296,11 @@ publish-logreg:
 test-xdist-incremental:
     @mkdir -p .cache
     @echo "Selecting incremental tests (xdist)."
-    @rm -f .cache/impacted_none
-    $UV run --script scripts/inc_select.py > .cache/impacted_nodeids.txt || true
-    @if [ -s .cache/impacted_nodeids.txt ]; then \
-        echo "Running impacted tests (-n auto)"; \
+    @sel_status=0; $UV run --script scripts/inc_select.py > .cache/impacted_nodeids.txt || sel_status=$?; \
+    if [ -s .cache/impacted_nodeids.txt ] && [ "$sel_status" = "0" ]; then \
+        echo "Running incremental tests (-n auto)"; \
         $UV run pytest -q -n auto --junitxml .cache/last-junit.xml @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
-    elif [ -f .cache/impacted_none ]; then \
+    elif [ "$sel_status" = "2" ]; then \
         echo "Selector: no changes and no prior failures — skipping pytest run."; \
     else \
         echo "Fallback: running full test suite (-n auto)"; \
