@@ -109,7 +109,7 @@ def maximum_antisymmetric_order_value(weights: Array) -> float:
                 dp = dp.at[new_mask].set(candidate)
             remaining ^= lsb
 
-    return float(dp[-1])
+    return float(dp[-1])  # no-op: touched line for impacted selection experiments
 
 
 def subset_capacity_candidate_dynamic(

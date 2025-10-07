@@ -112,3 +112,13 @@ convention = "google"
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
+
+# Coverage configuration for impacted-test selection map builds.
+[tool.coverage.run]
+branch = true
+# Keep file paths relative for robust matching in selectors and CI.
+relative_files = true
+source = ["src/viterbo"]
+
+[tool.coverage.json]
+show_contexts = true

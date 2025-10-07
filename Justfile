@@ -312,3 +312,40 @@ publish-logreg:
     fi
     @mkdir -p artefacts/published/logreg-toy
     @tar czf artefacts/published/logreg-toy/$(basename "${RUN_DIR}").tar.gz -C "$(dirname "${RUN_DIR}")" "$(basename "${RUN_DIR}")"
+
+# --- Impacted tests via coverage contexts (additive) ---
+# Build a per-test coverage map on the current branch (serial by default).
+cov-map:
+    @echo "Building coverage map with per-test contexts (serial)."
+    $UV run pytest -q --cov=src/viterbo --cov-context=test
+
+# Export JSON with contexts for the selector.
+cov-json:
+    @mkdir -p .cache
+    $UV run coverage json -o .cache/coverage.json --show-contexts
+
+# Run only impacted tests (serial). Falls back to full run if selection is empty/invalid.
+impacted-serial:
+    @mkdir -p .cache
+    @echo "Selecting impacted tests via coverage contexts (serial)."
+    $UV run --script scripts/impacted_cov.py --base ${IMPACTED_BASE:-origin/main} --map .cache/coverage.json > .cache/impacted_nodeids.txt || true
+    @if [ -s .cache/impacted_nodeids.txt ]; then \
+        echo "Running impacted tests (serial)"; \
+        $UV run pytest -q @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
+    else \
+        echo "Fallback: running full test suite (serial)"; \
+        $UV run pytest -q {{PYTEST_ARGS}}; \
+    fi
+
+# Optional: impacted tests with xdist (may increase memory usage under JAX).
+impacted-xdist:
+    @mkdir -p .cache
+    @echo "Selecting impacted tests via coverage contexts (xdist)."
+    $UV run --script scripts/impacted_cov.py --base ${IMPACTED_BASE:-origin/main} --map .cache/coverage.json > .cache/impacted_nodeids.txt || true
+    @if [ -s .cache/impacted_nodeids.txt ]; then \
+        echo "Running impacted tests (-n auto)"; \
+        $UV run pytest -q -n auto @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
+    else \
+        echo "Fallback: running full test suite (-n auto)"; \
+        $UV run pytest -q -n auto {{PYTEST_ARGS}}; \
+    fi

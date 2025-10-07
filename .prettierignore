@@ -4,6 +4,7 @@ node_modules/
 site/
 dist/
 build/
+.cache/
 uv.lock
 *.min.*
 **/*.svg
