@@ -287,7 +287,7 @@ def _should_invalidate(changed_files: Iterable[str]) -> tuple[bool, str | None]:
 def main(argv: list[str] | None = None) -> int:
     """CLI entry point: emit impacted nodeids or signal fallback (exit 2)."""
     parser = argparse.ArgumentParser(description="Select impacted pytest nodeids from coverage JSON contexts map.")
-    parser.add_argument("--base", default=os.environ.get("IMPACTED_BASE", "origin/main"), help="Git base ref for diff (default: origin/main)")
+    parser.add_argument("--base", default=None, help="Git base ref for diff (overrides env/cache/default)")
     parser.add_argument("--map", dest="map_path", default=os.environ.get("IMPACTED_MAP", ".cache/coverage.json"), help="Path to coverage JSON with contexts")
     parser.add_argument("--threshold", type=float, default=float(os.environ.get("IMPACTED_THRESHOLD", 0.4)), help="Max impacted fraction before falling back to full (default: 0.4)")
     parser.add_argument("--strict-paths", action="store_true", help="Require exact path equality (no suffix matching)")
@@ -295,12 +295,32 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--verbose", action="store_true", default=os.environ.get("IMPACTED_VERBOSE", "0") not in {"", "0", "false", "no"}, help="Emit selector metrics to stderr")
     parser.add_argument("--junit", default=os.environ.get("IMPACTED_LAST_JUNIT", ".cache/last-junit.xml"), help="Path to last JUnit XML for status-aware selection")
     parser.add_argument("--skip-prev-fail-unaffected", action="store_true", default=os.environ.get("IMPACTED_SKIP_PREV_FAIL_UNAFFECTED", "0") not in {"", "0", "false", "no"}, help="Skip previously failing tests when unaffected by the diff")
+    parser.add_argument("--prefer-cached-base", action="store_true", default=os.environ.get("IMPACTED_PREFER_CACHED_BASE", "1") not in {"", "0", "false", "no"}, help="Prefer base ref cached by last coverage run when --base/env not set")
 
     args = parser.parse_args(argv)
 
     t0 = time.perf_counter()
-    changed_files = _iter_changed_files(args.base)
-    changed_hunks = _parse_changed_hunks(args.base)
+    # Determine diff base: CLI > env > cached coverage base > origin/main
+    coverage_base_file = Path(".cache/coverage_base.txt")
+    env_base = os.environ.get("IMPACTED_BASE")
+    # Local mini helper to avoid a larger refactor
+    def _pick_base() -> str:
+        if args.base:
+            return args.base
+        if env_base:
+            return env_base
+        if args.prefer_cached_base and coverage_base_file.exists():
+            try:
+                text = coverage_base_file.read_text().strip().splitlines()[0].strip()
+                if text:
+                    return text
+            except OSError:
+                pass
+        return "origin/main"
+
+    base_ref = _pick_base()
+    changed_files = _iter_changed_files(base_ref)
+    changed_hunks = _parse_changed_hunks(base_ref)
 
     # Early exit if git diff failed or there are no changes in .py files
     if not changed_files or not changed_hunks:

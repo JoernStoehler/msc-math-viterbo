@@ -214,6 +214,7 @@ coverage:
     @mkdir -p .cache
     $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --cov=src/viterbo --cov-context=test --cov-report=term-missing --cov-report=html --cov-report=xml --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}
     $UV run coverage json -o .cache/coverage.json --show-contexts
+    git rev-parse HEAD > .cache/coverage_base.txt
 
 precommit-fast: checks
 
