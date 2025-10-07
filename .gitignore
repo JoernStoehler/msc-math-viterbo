@@ -42,6 +42,8 @@ prof/
 htmlcov/
 .coverage*
 *.lcov
+.cache/
+coverage.xml
 
 # Documentation build artefacts
 site/

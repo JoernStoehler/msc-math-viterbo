@@ -97,22 +97,25 @@ type-strict:
 test:
     @mkdir -p .cache
     @echo "Running smoke-tier pytest (impacted selection with fallback)."
-    $UV run --script scripts/impacted_cov.py --map .cache/coverage.json > .cache/impacted_nodeids.txt || true
+    @rm -f .cache/impacted_none
+    $UV run --script scripts/inc_select.py > .cache/impacted_nodeids.txt || true
     @if [ -s .cache/impacted_nodeids.txt ]; then \
-        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
+        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --junitxml .cache/last-junit.xml @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
+    elif [ -f .cache/impacted_none ]; then \
+        echo "Selector: no changes and no prior failures — skipping pytest run."; \
     else \
-        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} {{PYTEST_ARGS}}; \
+        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}; \
     fi
 
 # Full smoke-tier run (serial, no impacted selection).
 test-full:
     @echo "Running full smoke-tier pytest (serial)."
-    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} {{PYTEST_ARGS}}
+    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}
 
 # Full smoke-tier run with xdist (parallel).
 test-xdist:
     @echo "Running full smoke-tier pytest (-n auto)."
-    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} -n auto {{PYTEST_ARGS}}
+    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} -n auto --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}
 
 # Smoke + deep tiers (full serial).
 # Tip: Ideal before review; combine with `just bench-deep` for performance-sensitive work.
@@ -210,11 +213,9 @@ lock:
 # Smoke-tier tests with coverage reports.
 # Tip: Generates HTML at `htmlcov/index.html`; testmon cache is on by default.
 coverage:
-    @echo "Running smoke-tier tests with coverage (HTML + XML reports, serial) and refreshing contexts map."
+    @echo "Running smoke-tier tests with coverage (HTML + XML reports, serial)."
     @mkdir -p .cache
-    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --cov=src/viterbo --cov-context=test --cov-report=term-missing --cov-report=html --cov-report=xml --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}
-    $UV run coverage json -o .cache/coverage.json --show-contexts
-    git rev-parse HEAD > .cache/coverage_base.txt
+    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}
 
 precommit-fast: checks
 
@@ -322,10 +323,13 @@ impacted-serial:
 impacted-xdist:
     @mkdir -p .cache
     @echo "Selecting impacted tests via coverage contexts (xdist)."
-    $UV run --script scripts/impacted_cov.py --map .cache/coverage.json > .cache/impacted_nodeids.txt || true
+    @rm -f .cache/impacted_none
+    $UV run --script scripts/inc_select.py > .cache/impacted_nodeids.txt || true
     @if [ -s .cache/impacted_nodeids.txt ]; then \
         echo "Running impacted tests (-n auto)"; \
         $UV run pytest -q -n auto @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
+    elif [ -f .cache/impacted_none ]; then \
+        echo "Selector: no changes and no prior failures — skipping pytest run."; \
     else \
         echo "Fallback: running full test suite (-n auto)"; \
         $UV run pytest -q -n auto {{PYTEST_ARGS}}; \
