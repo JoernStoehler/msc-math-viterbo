@@ -31,8 +31,8 @@ just test        # Smoke-tier tests (parallel unless testmon enabled)
 just test-fast   # FAST-mode tests (CPU/no-JIT; single-process with testmon)
 just type        # Pyright basic over src/ (fast loop)
 just type-strict # Pyright strict across the repository
-just lint        # Ruff lint + metadata + Prettier check (CI parity)
-just format      # Ruff format + Prettier write
+just lint        # Ruff lint + metadata check (CI parity)
+just format      # Ruff format
 just fix         # Ruff format + autofix
 just sync        # Install project and dev dependencies via uv
 just ci          # CI parity (sync → waivers → lint → type-strict → pytest)

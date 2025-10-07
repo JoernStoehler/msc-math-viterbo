@@ -165,7 +165,7 @@ Daily development (in provisioned env)
    `just help` for per-target tips, toggles, and related workflows (testmon caching is on by default;
    set `USE_TESTMON=0` to disable, `PYTEST_ARGS="..."` forwards selectors/markers).
    - Lint tiers: `just lint-fast` runs Ruff E/F/B essentials (ignores jaxtyping F722); `just lint`
-     mirrors CI (Ruff policy set + Prettier).
+     mirrors CI (Ruff policy set).
    - Typechecking tiers: `just typecheck-fast` targets `src/viterbo`; `just typecheck` covers the
      entire repo.
 
