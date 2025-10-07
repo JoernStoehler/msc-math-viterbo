@@ -210,8 +210,10 @@ lock:
 # Smoke-tier tests with coverage reports.
 # Tip: Generates HTML at `htmlcov/index.html`; testmon cache is on by default.
 coverage:
-    @echo "Running smoke-tier tests with coverage (HTML + XML reports, serial)."
-    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}
+    @echo "Running smoke-tier tests with coverage (HTML + XML reports, serial) and refreshing contexts map."
+    @mkdir -p .cache
+    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --cov=src/viterbo --cov-context=test --cov-report=term-missing --cov-report=html --cov-report=xml --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}
+    $UV run coverage json -o .cache/coverage.json --show-contexts
 
 precommit-fast: checks
 

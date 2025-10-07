@@ -17,7 +17,8 @@ Decision
 
 - Adopt the coverage-contexts selector as the golden path for smoke-tier tests via `just test`
   (impacted by default, serial fallback to full).
-- Keep the selector script `scripts/impacted_cov.py` and map build targets (`cov-map`, `cov-json`).
+- Keep the selector script `scripts/impacted_cov.py`. The `coverage` target refreshes the contexts
+  map (`.cache/coverage.json`) inline, so no separate map-refresh step is required.
 - Provide explicit full-run variants: `just test-full` (serial) and `just test-xdist` (parallel).
 - Prefer serial impacted runs by default; enable xdist on demand.
 - Maintain strict invalidation rules; prefer safety over under-testing.
@@ -71,17 +72,9 @@ test-xdist:
     $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} -n auto {{PYTEST_ARGS}}
 
 coverage:
-    @echo "Running smoke-tier tests with coverage (HTML + XML reports, serial)."
-    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}
-
-map-refresh: cov-map cov-json
-
-cov-map:
-    @echo "Building coverage map with per-test contexts (serial)."
-    $UV run pytest -q --cov=src/viterbo --cov-context=test
-
-cov-json:
+    @echo "Running smoke-tier tests with coverage (HTML + XML reports, serial) and refreshing contexts map."
     @mkdir -p .cache
+    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --cov=src/viterbo --cov-context=test --cov-report=term-missing --cov-report=html --cov-report=xml --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}
     $UV run coverage json -o .cache/coverage.json --show-contexts
 
 impacted-xdist:
@@ -110,8 +103,8 @@ with N≥5 for robust medians.
 Commands Used
 
 ```bash
-# 1) Build per-test coverage map and export JSON
-just cov-map && just cov-json
+# 1) Refresh coverage reports + contexts JSON + last JUnit
+just coverage
 
 # 2) Simulate a tiny source change (edit a single line); later revert with git
 $EDITOR src/viterbo/symplectic/capacity/facet_normals/subset_utils.py
@@ -126,9 +119,8 @@ uv run pytest -q                                         # full serial (~74.6 s)
 uv run pytest -q -n auto                                 # full xdist (~36.4 s)
 uv run pytest -q -n auto @.cache/impacted_nodeids.txt    # impacted xdist (~25.6 s)
 
-# Map build vs coverage timing
-just cov-map && just cov-json                             # contexts map + export
-just coverage                                             # coverage reports (no contexts)
+# Coverage timing (includes contexts map export)
+just coverage
 
 # Impacted with/without coverage timing
 uv run pytest -q @.cache/impacted_nodeids.txt            # impacted (no coverage)
