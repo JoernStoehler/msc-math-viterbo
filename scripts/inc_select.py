@@ -3,20 +3,56 @@
 # requires-python = ">=3.12"
 # ///
 """
-Incremental test selector (module-graph + hashes, KISS).
+Incremental test selector — module import graph + file hashes (KISS).
 
-Outputs on stdout one entry per line for pytest to consume:
-- test file paths to run (changed/dirty tests)
-- plus nodeids of previously failing tests (from last JUnit), if any
+Why this exists
+  - Keep local feedback loops fast by running only the tests that plausibly
+    depend on files changed since the last run.
+  - Do not rely on Git history or coverage contexts; operate directly on the
+    working tree with a simple, portable heuristic.
 
-Exit code: always 0. Prints a clear message to stderr and creates
-`.cache/impacted_none` when there's nothing to run (no Python changes
-and no prior failures).
+What this script does (in plain terms)
+  1) Walk the repo and find all Python files (``**/*.py``), excluding cache/vendor dirs.
+  2) Compute a static import graph via AST: edges point from a file to the files it imports
+     within the repo (third‑party imports are ignored).
+  3) Compute content hashes for all files and determine a set of "dirty" files:
+       - added, removed, or content‑changed files are considered dirty
+       - dirtiness is then propagated to importers (reverse edges) until fixpoint
+       - test files that import any dirty module become dirty, even if the test itself
+         did not change
+  4) Compose the selection to run as:
+       - all dirty test files (emit the file path so pytest runs the file)
+       - plus previously failing nodeids from ``.cache/last-junit.xml`` (if available),
+         so fixes surface immediately without re‑running whole files
+  5) Write the selection to stdout, one entry per line, for consumption by pytest's
+     "@argsfile" syntax. If there is nothing to run because there are no Python changes and
+     there were no prior failures, print a clear skip message to stderr and write a sentinel
+     file ``.cache/impacted_none`` so the runner can skip invoking pytest entirely.
 
-Guardrails:
-- Full run suggested (selector returns empty and no sentinel) if
-  plumbing changed: conftest.py, pytest.ini, pyproject.toml (pytest blocks),
-  uv.lock, or this script itself.
+Guardrails (correctness first)
+  - "Plumbing" changes advise a full run: any ``conftest.py``, ``pytest.ini``, pytest settings
+    in ``pyproject.toml``, ``uv.lock``, or changes to this selector file.
+  - Large or controversial dependency patterns (e.g., heavy dynamic imports, plugin loaders)
+    should be handled conservatively by the caller (fall back to full run if in doubt).
+
+Input/Output contract
+  - Input: current working tree only. Optional prior failures read from ``.cache/last-junit.xml``.
+  - Output: list of test file paths and nodeids on stdout; informational messages on stderr.
+  - Exit status: 0 in all cases — callers detect "skip" via the sentinel file.
+
+Notes on precision and limits
+  - This is intentionally coarse (module‑level). It will over‑select if a module is imported but
+    unused along the exercised code path; that bias is safe and inexpensive.
+  - Dynamic imports and monkey‑patching are not modeled; if such files change, prefer a full run.
+  - The import resolver is a best‑effort heuristic for internal modules; third‑party imports are
+    ignored (they are outside the repo and assumed stable in local loops).
+
+Usage
+  - Called by the Justfile target ``just test`` roughly as:
+        uv run --script scripts/inc_select.py > .cache/impacted_nodeids.txt || true
+        pytest -q @.cache/impacted_nodeids.txt  # when selection is non‑empty
+  - Any pytest run (impacted or fallback) should use ``--junitxml .cache/last-junit.xml`` so that
+    previously failing nodeids are tracked between runs without requiring a coverage run.
 """
 
 from __future__ import annotations
@@ -33,6 +69,7 @@ ROOT = Path.cwd()
 CACHE_DIR = ROOT / ".cache"
 GRAPH_JSON = CACHE_DIR / "inc_graph.json"
 LAST_JUNIT = CACHE_DIR / "last-junit.xml"
+SENTINEL_SKIP = CACHE_DIR / "impacted_none"
 
 EXCLUDE_DIRS = {".git", ".venv", "node_modules", ".cache", "build", "dist", "site"}
 
@@ -42,7 +79,11 @@ def _stderr(msg: str) -> None:
 
 
 def is_test_file(p: Path) -> bool:
-    """Return True if `p` looks like a pytest test module under tests/."""
+    """Return True if ``p`` looks like a pytest test module under ``tests/``.
+
+    This intentionally avoids guessing outside the canonical ``tests/**/test_*.py``
+    and ``tests/**/*_test.py`` patterns.
+    """
     s = p.as_posix()
     if "/tests/" in s or s.startswith("tests/"):
         name = p.name
@@ -51,7 +92,7 @@ def is_test_file(p: Path) -> bool:
 
 
 def walk_py_files() -> list[Path]:
-    """Return all Python files under the repo excluding cache/vendor dirs."""
+    """Return all Python files under the repo, excluding cache/vendor dirs."""
     files: list[Path] = []
     for dirpath, dirnames, filenames in os.walk(ROOT):
         # prune excluded dirs
@@ -63,7 +104,7 @@ def walk_py_files() -> list[Path]:
 
 
 def sha256_of_file(p: Path) -> str:
-    """Compute sha256 hex digest of a file."""
+    """Compute the SHA‑256 hex digest of a file without loading it all at once."""
     h = hashlib.sha256()
     with p.open("rb") as fh:
         for chunk in iter(lambda: fh.read(262_144), b""):
@@ -72,11 +113,15 @@ def sha256_of_file(p: Path) -> str:
 
 
 def build_module_index(files: list[Path]) -> dict[str, Path]:
-    """Map plausible dotted names to paths (heuristic, KISS).
+    """Build a best‑effort map from dotted module names to repo paths.
 
-    - For path like src/viterbo/a/b.py → dotted names include viterbo.a.b
-    - For package __init__.py → viterbo.a
-    - Also index tests as dotted-ish (tests.pkg.mod)
+    Rationale
+      - Static import nodes carry dotted names; we need to map those back to
+        files in the repo to build edges.
+      - We normalize common layouts: stripping a leading ``src/``, collapsing
+        ``__init__.py`` to the package name, and indexing both full and tail
+        dotted names (``viterbo.a.b`` and ``a.b``) so imports within the
+        package resolve.
     """
     idx: dict[str, Path] = {}
     for p in files:
@@ -98,7 +143,16 @@ def build_module_index(files: list[Path]) -> dict[str, Path]:
 
 
 def resolve_import(from_path: Path, node: ast.AST, idx: dict[str, Path]) -> list[Path]:
-    """Resolve an import node to repo-internal module paths, best-effort."""
+    """Resolve an import node to internal module paths.
+
+    We handle two cases:
+      - ``import a.b`` → look up ``a.b`` in the index
+      - ``from .x import y`` with levels → compute a base dotted path relative
+        to the file's package and attempt both ``base.y`` and ``base``
+
+    This is deliberately simple; it is fine to miss third‑party modules — we only
+    care about edges within the repo.
+    """
     rel = from_path.relative_to(ROOT)
     # compute base dotted path
     parts = list(rel.parts)
@@ -136,7 +190,11 @@ def resolve_import(from_path: Path, node: ast.AST, idx: dict[str, Path]) -> list
 
 
 def parse_imports(files: list[Path], idx: dict[str, Path]) -> dict[Path, list[Path]]:
-    """Parse imports for each file and return edges mapping file->deps."""
+    """Parse imports for each file and return a mapping ``file -> deps``.
+
+    Any parse or decode error yields an empty dependency list — failing closed is
+    acceptable because changes to such a file will mark it dirty by content hash.
+    """
     edges: dict[Path, list[Path]] = {}
     for p in files:
         try:
@@ -161,7 +219,13 @@ def parse_imports(files: list[Path], idx: dict[str, Path]) -> dict[Path, list[Pa
 
 
 def load_graph() -> dict:
-    """Load graph JSON if present, otherwise an empty structure."""
+    """Load the previous graph JSON, or return an empty structure.
+
+    The stored graph is used only to provide "union" edges with the current
+    graph during the transition where imports move between files. This bias is
+    conservative by design: we prefer to over‑select tests rather than miss
+    a dependency edge that was present last run but not yet observed now.
+    """
     if GRAPH_JSON.exists():
         try:
             return json.loads(GRAPH_JSON.read_text())
@@ -171,13 +235,13 @@ def load_graph() -> dict:
 
 
 def save_graph(graph: dict) -> None:
-    """Persist graph JSON under .cache/."""
+    """Persist the current graph JSON under ``.cache/``."""
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     GRAPH_JSON.write_text(json.dumps(graph, indent=2))
 
 
 def parse_junit_failures(path: Path) -> set[str]:
-    """Return nodeids that last failed from a JUnit XML file (best-effort)."""
+    """Return nodeids that last failed from a JUnit XML file (best‑effort)."""
     if not path.exists():
         return set()
     try:
@@ -198,7 +262,14 @@ def parse_junit_failures(path: Path) -> set[str]:
 
 
 def main() -> int:
-    """Entry point: compute dirty tests and emit selection."""
+    """Compute dirty tests, emit selection, and persist the updated graph.
+
+    Behavior
+      - Advises a full run (by emitting no selection) if plumbing changed.
+      - Emits file paths of dirty test modules and previously failing nodeids.
+      - On "no changes and no prior failures" prints a skip message and writes a
+        sentinel so callers can skip invoking pytest.
+    """
     prev = load_graph()
     prev_nodes: dict[str, dict] = prev.get("nodes", {})
     prev_edges: dict[str, list[str]] = prev.get("edges", {})
@@ -210,7 +281,11 @@ def main() -> int:
 
     added = current_set - set(prev_nodes.keys())
     deleted = set(prev_nodes.keys()) - current_set
-    modified = {p.as_posix() for p, h in current_hash.items() if prev_nodes.get(p.as_posix(), {}).get("hash") not in {None, h}}
+    modified = {
+        p.as_posix()
+        for p, h in current_hash.items()
+        if prev_nodes.get(p.as_posix(), {}).get("hash") not in {None, h}
+    }
 
     # Invalidation: plumbing
     plumbing_patterns = ["pytest.ini", "pyproject.toml", "uv.lock", "scripts/inc_select.py"]
@@ -224,7 +299,9 @@ def main() -> int:
     # Build import graph from current files
     idx = build_module_index(files)
     edges_cur = parse_imports(files, idx)
-    # reverse edges use union of prev and current for safety
+    # Build reverse edges; use the union of previous and current edges for safety.
+    # If imports moved since the last run, unioning avoids missing dependency paths
+    # and under‑selecting. This keeps the bias conservative and the code simple.
     all_edges: dict[str, list[str]] = {}
     for k, v in prev_edges.items():
         all_edges.setdefault(k, [])
@@ -246,14 +323,29 @@ def main() -> int:
 
     # initial dirty set: added, deleted, modified
     dirty = set(added | deleted | modified)
-    # propagate to importers (tests or code)
+    # dynamic import heuristic (simple): if changed code file mentions importlib/__import__, advise full
+    try:
+        for p_str in list(modified):
+            pp = Path(p_str)
+            if is_test_file(pp):
+                continue
+            txt = pp.read_text(encoding="utf-8")
+            if "importlib." in txt or "__import__(" in txt:
+                _stderr(f"[inc] dynamic import detected in {pp.as_posix()}; advise full run")
+                return 0
+    except OSError:
+        pass
+
+    # propagate to importers (tests or code), and compute distance levels
     queue = list(dirty)
     seen = set(queue)
+    dist: dict[str, int] = {n: 0 for n in queue}
     while queue:
         n = queue.pop()
         for up in rev.get(n, []):
             if up not in seen:
                 seen.add(up)
+                dist[up] = dist.get(n, 0) + 1
                 queue.append(up)
     all_dirty = seen
 
@@ -272,20 +364,65 @@ def main() -> int:
     # previous failures
     prev_fail = parse_junit_failures(LAST_JUNIT)
 
+    # Gather totals for threshold decisions
+    total_tests = sum(1 for p in files if is_test_file(p)) or 1
+
     # No changes fast-path
     if not dirty_tests and not prev_fail:
         _stderr("[inc] no Python changes and no prior failures; skipping test run")
         try:
             CACHE_DIR.mkdir(parents=True, exist_ok=True)
-            (CACHE_DIR / "impacted_none").write_text("skip\n")
+            SENTINEL_SKIP.write_text("skip\n")
         except OSError:
             pass
         # still persist current graph below
 
-    # emit selection: test files + failing nodeids
-    selected: set[str] = set(dirty_tests) | set(prev_fail)
-    for it in sorted(selected):
+    # Large-change fallback: if selection would be too large, advise full run
+    # Compute selection size in terms of test files only.
+    selected_test_files = set(dirty_tests)
+    try:
+        threshold = float(os.environ.get("INC_THRESHOLD", "0.4"))
+    except ValueError:
+        threshold = 0.4
+    fraction = (len(selected_test_files) / total_tests) if total_tests else 1.0
+    if selected_test_files and fraction > threshold:
+        _stderr(
+            f"[inc] large impact: selected_test_files={len(selected_test_files)}/"
+            f"{total_tests} (p={fraction:.2f}) — advise full run"
+        )
+        # Persist current graph and return without selection; caller will fall back
+        nodes_out = {p.as_posix(): {"hash": h, "is_test": is_test_file(p)} for p, h in current_hash.items()}
+        edges_out = {k.as_posix(): [t.as_posix() for t in v] for k, v in edges_cur.items()}
+        save_graph({"nodes": nodes_out, "edges": edges_out})
+        return 0
+
+    # emit selection: order test files by relevance and add failing nodeids whose files aren't selected
+    selected: list[str] = []
+    # Order buckets: changed test files (distance 0), direct importers (distance 1), indirect (>=2)
+    changed_tests = [p for p in selected_test_files if p in (added | modified)]
+    direct_tests = [p for p in selected_test_files if p not in changed_tests and dist.get(p, 99) == 1]
+    indirect_tests = [p for p in selected_test_files if p not in changed_tests and p not in direct_tests]
+    for bucket in (sorted(changed_tests), sorted(direct_tests), sorted(indirect_tests)):
+        selected.extend(bucket)
+
+    # Include failing nodeids whose files are not already selected as files
+    failing_extra = []
+    for nid in sorted(prev_fail):
+        file_part = nid.split("::", 1)[0]
+        if file_part not in selected_test_files:
+            failing_extra.append(nid)
+
+    if selected or failing_extra:
+        _stderr(
+            f"[inc] module-graph selection: dirty_test_files={len(selected_test_files)} "
+            f"prior_failures={len(prev_fail)} selected={len(selected) + len(failing_extra)} — "
+            "pytest will only run these; absent tests were skipped as unaffected"
+        )
+    # Print selection: test files (ordered) then failing nodeids for non-selected files
+    for it in selected:
         sys.stdout.write(it + "\n")
+    for nid in failing_extra:
+        sys.stdout.write(nid + "\n")
 
     # persist current graph (hashes + current edges)
     nodes_out: dict[str, dict] = {}
