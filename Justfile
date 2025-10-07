@@ -76,16 +76,10 @@ test-metadata:
     @echo "Usage: just test-metadata [ARGS='--marker goal_math tests/path']; forwards ARGS to report_test_metadata."
     $UV run python scripts/report_test_metadata.py {{ARGS}}
 
-# Minimal Ruff diagnostics (E/F/B006/B008).
-# Tip: Catches runtime errors quickly; run `just lint` for policy/doc coverage.
-lint-fast:
-    @echo "Running Ruff fast lint (E/F/B006/B008, ignores jaxtyping F722)."
-    $UV run ruff check src tests scripts --select E9 --select F --select B006 --select B008 --ignore F722
-
-# Quick, sensible defaults: fast lint → fast type → FAST tests.
+# Quick, sensible defaults: full lint → fast type → parallel tests.
 checks:
-    @echo "Running checks: lint-fast → type → test (parallel)."
-    just lint-fast
+    @echo "Running checks: lint → type → test (parallel)."
+    just lint
     just type
     USE_TESTMON=0 just test
 
@@ -99,11 +93,6 @@ test-fast:
         parallel_flags=(-n auto); \
     fi; \
     {{FAST_ENV}} TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_SMOKE_FLAGS}} "${parallel_flags[@]}" {{PYTEST_ARGS}}
-
-# Watch tests on change (requires watchexec).
-test-watch:
-    command -v watchexec >/dev/null 2>&1 || { echo "Install watchexec for watch mode"; exit 1; }
-    watchexec -e py -r -- 'just test-fast'
 
 # Full repository loop: strict lint/type and full pytest tier (no FAST env overrides).
 # Tip: Run before reviews or when validating significant refactors.
@@ -158,11 +147,7 @@ test-longhaul:
 # Run smoke, deep, and longhaul sequentially.
 # Removed `test-all` in favor of explicit invocations.
 
-# Smoke tier with pytest-testmon cache.
-# Tip: Keeps testmon warm during tight loops; clear cache by deleting `{{TESTMON_CACHE}}`.
-test-incremental:
-    @echo "Running smoke-tier pytest with testmon cache warmup."
-    TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest --testmon --maxfail=1 {{PYTEST_SMOKE_FLAGS}} -p no:xdist {{PYTEST_ARGS}}
+## (Removed) test-incremental: prefer `just test` or `just test-fast`.
 
 # Unit vs integration convenience selectors.
 test-unit:
@@ -204,16 +189,14 @@ profile-line:
 
 # Package build & publish
 build:
-    @echo "Building source distribution and wheel into dist/."
-    $UV build
+    @echo "[skip] Build disabled: research project is not published as a package."
+    @echo "      If you need a wheel/sdist for local experiments, run: uv build"
+    @true
 
 publish:
-    @echo "Publishing distributions from dist/ to package index. Set PYPI_TOKEN or configure uv index."
-    @if [ -z "${PYPI_TOKEN:-}" ]; then \
-        echo "PYPI_TOKEN not set. Configure uv index in pyproject or export PYPI_TOKEN." >&2; \
-        exit 1; \
-    fi
-    $UV publish --token "${PYPI_TOKEN}" ${PUBLISH_INDEX:+--index ${PUBLISH_INDEX}}
+    @echo "[skip] Publish disabled: research project is not published to PyPI/TestPyPI."
+    @echo "      For internal sharing, use artefact tarballs or Git tags."
+    @true
 
 # Bump semantic version and tag a release. Usage: just release patch|minor|major
 release LEVEL:
@@ -254,9 +237,7 @@ coverage:
     fi; \
     TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_SMOKE_FLAGS}} "${parallel_flags[@]}" --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml {{PYTEST_ARGS}}
 
-# Lint essentials and incremental smoke tests.
-# Tip: Use during tight dev loops; relies on the testmon cache.
-precommit-fast: lint-fast test-incremental
+precommit-fast: checks
 
 # Full formatter, lint, typecheck, and smoke tests.
 # Tip: Run before review or handoff; matches the golden-path expectation.
@@ -269,10 +250,10 @@ precommit: precommit-slow
 # Run the CI command set locally.
 # Tip: Mirrors GitHub Actions; expect coverage artefacts and longer runtime.
 ci:
-    @echo "Running CI parity: sync deps, lint, typecheck strict, pytest (durations summary)."
+    @echo "Running CI parity: sync deps, lint, type-strict, pytest (durations summary)."
     $UV sync --extra dev
     $UV run python scripts/check_waivers.py
-    $UV run ruff check src tests
+    $UV run ruff check .
     {{PRETTIER}} --log-level warn --check {{PRETTIER_PATTERNS}}
     $UV run pyright -p pyrightconfig.strict.json
     $UV run pytest {{PYTEST_SMOKE_FLAGS}} -n auto --durations=20 {{PYTEST_ARGS}}
