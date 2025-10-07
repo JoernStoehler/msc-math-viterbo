@@ -67,9 +67,7 @@ from xml.etree import ElementTree as ET
 
 ROOT = Path.cwd()
 CACHE_DIR = ROOT / ".cache"
-GRAPH_JSON = CACHE_DIR / "inc_graph.json"
 LAST_JUNIT = CACHE_DIR / "last-junit.xml"
-SENTINEL_SKIP = CACHE_DIR / "impacted_none"
 
 EXCLUDE_DIRS = {".git", ".venv", "node_modules", ".cache", "build", "dist", "site"}
 
@@ -219,25 +217,8 @@ def parse_imports(files: list[Path], idx: dict[str, Path]) -> dict[Path, list[Pa
 
 
 def load_graph() -> dict:
-    """Load the previous graph JSON, or return an empty structure.
-
-    The stored graph is used only to provide "union" edges with the current
-    graph during the transition where imports move between files. This bias is
-    conservative by design: we prefer to over‑select tests rather than miss
-    a dependency edge that was present last run but not yet observed now.
-    """
-    if GRAPH_JSON.exists():
-        try:
-            return json.loads(GRAPH_JSON.read_text())
-        except (OSError, json.JSONDecodeError, ValueError):
-            return {"nodes": {}, "edges": {}}
+    """Deprecated: this selector is stateless and does not read/write graphs."""
     return {"nodes": {}, "edges": {}}
-
-
-def save_graph(graph: dict) -> None:
-    """Persist the current graph JSON under ``.cache/``."""
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    GRAPH_JSON.write_text(json.dumps(graph, indent=2))
 
 
 def parse_junit_failures(path: Path) -> set[str]:
@@ -270,22 +251,20 @@ def main() -> int:
       - On "no changes and no prior failures" prints a skip message and writes a
         sentinel so callers can skip invoking pytest.
     """
-    prev = load_graph()
-    prev_nodes: dict[str, dict] = prev.get("nodes", {})
-    prev_edges: dict[str, list[str]] = prev.get("edges", {})
+    # Stateless operation: no previous graph is read.
 
     files = walk_py_files()
     # compute hashes and classify
     current_hash: dict[Path, str] = {p: sha256_of_file(p) for p in files}
     current_set = {p.as_posix() for p in files}
 
-    added = current_set - set(prev_nodes.keys())
-    deleted = set(prev_nodes.keys()) - current_set
-    modified = {
-        p.as_posix()
-        for p, h in current_hash.items()
-        if prev_nodes.get(p.as_posix(), {}).get("hash") not in {None, h}
-    }
+    # Determine "changed" files using JUnit mtime as a baseline. If JUnit is
+    # absent, treat everything as changed (first run).
+    try:
+        last_time = LAST_JUNIT.stat().st_mtime
+    except OSError:
+        last_time = 0.0
+    changed = {p.as_posix() for p in files if p.stat().st_mtime > last_time}
 
     # Invalidation: plumbing
     plumbing_patterns = ["pytest.ini", "pyproject.toml", "uv.lock", "scripts/inc_select.py"]
@@ -303,11 +282,7 @@ def main() -> int:
     # If imports moved since the last run, unioning avoids missing dependency paths
     # and under‑selecting. This keeps the bias conservative and the code simple.
     all_edges: dict[str, list[str]] = {}
-    for k, v in prev_edges.items():
-        all_edges.setdefault(k, [])
-        for t in v:
-            if t not in all_edges[k]:
-                all_edges[k].append(t)
+    # no previous edges: use only current edges
     for k, v in edges_cur.items():
         ks = k.as_posix()
         all_edges.setdefault(ks, [])
@@ -321,11 +296,11 @@ def main() -> int:
         for t in tgts:
             rev.setdefault(t, []).append(src)
 
-    # initial dirty set: added, deleted, modified
-    dirty = set(added | deleted | modified)
+    # initial dirty set: changed files
+    dirty = set(changed)
     # dynamic import heuristic (simple): if changed code file mentions importlib/__import__, advise full
     try:
-        for p_str in list(modified):
+        for p_str in list(changed):
             pp = Path(p_str)
             if is_test_file(pp):
                 continue
@@ -357,7 +332,7 @@ def main() -> int:
             dirty_tests.add(p_str)
 
     # tests that changed themselves are definitely dirty
-    for p_str in (added | modified):
+    for p_str in changed:
         if is_test_file(Path(p_str)):
             dirty_tests.add(p_str)
 
@@ -370,12 +345,7 @@ def main() -> int:
     # No changes fast-path
     if not dirty_tests and not prev_fail:
         _stderr("[inc] no Python changes and no prior failures; skipping test run")
-        try:
-            CACHE_DIR.mkdir(parents=True, exist_ok=True)
-            SENTINEL_SKIP.write_text("skip\n")
-        except OSError:
-            pass
-        # still persist current graph below
+        return 2
 
     # Large-change fallback: if selection would be too large, advise full run
     # Compute selection size in terms of test files only.
@@ -390,11 +360,7 @@ def main() -> int:
             f"[inc] large impact: selected_test_files={len(selected_test_files)}/"
             f"{total_tests} (p={fraction:.2f}) — advise full run"
         )
-        # Persist current graph and return without selection; caller will fall back
-        nodes_out = {p.as_posix(): {"hash": h, "is_test": is_test_file(p)} for p, h in current_hash.items()}
-        edges_out = {k.as_posix(): [t.as_posix() for t in v] for k, v in edges_cur.items()}
-        save_graph({"nodes": nodes_out, "edges": edges_out})
-        return 0
+        return 3
 
     # emit selection: order test files by relevance and add failing nodeids whose files aren't selected
     selected: list[str] = []

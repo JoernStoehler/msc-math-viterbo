@@ -113,7 +113,7 @@ convention = "google"
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
 
-# Coverage configuration for impacted-test selection map builds.
+# Coverage configuration for local coverage reports.
 [tool.coverage.run]
 branch = true
 source = ["src/viterbo"]

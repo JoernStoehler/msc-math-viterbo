@@ -73,9 +73,9 @@ test-metadata:
     @echo "Usage: just test-metadata [ARGS='--marker goal_math tests/path']; forwards ARGS to report_test_metadata."
     $UV run python scripts/report_test_metadata.py {{ARGS}}
 
-# Quick, sensible defaults: lint → type → impacted tests (serial).
+# Quick, sensible defaults: lint → type → incremental tests (serial).
 checks:
-    @echo "Running checks: lint → type → test (impacted, serial)."
+    @echo "Running checks: lint → type → test (incremental, serial)."
     just lint
     just type
     just test
