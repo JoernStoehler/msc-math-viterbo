@@ -38,7 +38,7 @@ documentation, so agents can start their work quickly. If another doc conflicts,
 - Source code: `src/viterbo/` (library), `tests/viterbo/` (unit/integration tests),
   `tests/performance/viterbo/` (benchmarks).
 - Thesis: `thesis/` (LaTeX source).
-- Weekly progress reports: `progress-reports/` (drafts, sent mails).
+- Weekly progress reports: `mail/` (drafts, sent mails).
 
 ## 2) Environment & Tooling
 
@@ -213,8 +213,9 @@ Blocked?
 - Thesis authoring (`thesis/`): single entry `thesis/main.tex`; include chapters via
   `\include{chapters/<name>}`; figures under `thesis/figures/`; prefer vector formats; use
   `thesis/macros.tex` for recurring notation; commit sources only (no build artefacts).
-- Weekly progress mail (`progress-reports/`): use the scaffold and prompt in that folder; drafts
-  named `YYYY-MM-DD-weekly-mail.md`; British English; short, outcome‑led paragraphs and bullets.
+- Weekly progress mail (`mail/`): use the scaffold in that folder; each week lives in
+  `mail/<YYYY-MM-DD>/` with `curated-takeaways.md`, `gathered-changes.md`, and `mail.md`;
+  British English; short, outcome-led paragraphs and bullets.
 
 ## 12) Scope & Enforcement (facts)
 
