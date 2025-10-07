@@ -32,6 +32,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
+from xml.etree import ElementTree as ET
 
 
 @dataclass
@@ -43,6 +44,15 @@ class SelectorMetrics:
     fraction: float
     millis: int
     reason: str | None = None
+
+
+@dataclass
+class LastStatus:
+    """Prior test statuses parsed from a JUnit XML report."""
+
+    passed: set[str]
+    failed: set[str]
+    skipped: set[str]
 
 
 def _stderr(msg: str) -> None:
@@ -58,6 +68,23 @@ def _run(cmd: list[str]) -> subprocess.CompletedProcess:
 def _posix(p: str | Path) -> str:
     """Normalize a path to POSIX-style separators."""
     return Path(p).as_posix()
+
+
+def _read_last_selected(path: Path) -> set[str]:
+    if not path.exists():
+        return set()
+    try:
+        return {line.strip() for line in path.read_text().splitlines() if line.strip()}
+    except OSError:
+        return set()
+
+
+def _write_last_selected(path: Path, nodeids: set[str]) -> None:
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("\n".join(sorted(nodeids)) + "\n")
+    except OSError:
+        pass
 
 
 def _path_suffix_match(a: str, b: str) -> bool:
@@ -194,6 +221,50 @@ def _select_nodeids(
     return nodeids
 
 
+def _parse_junit(path: Path) -> LastStatus | None:
+    """Parse pytest JUnit XML into nodeid→status sets.
+
+    Construct nodeids as "file::name" when the `file` attribute is present. This
+    aligns with pytest nodeids and coverage contexts. Falls back to classname.
+    """
+    if not path.exists():
+        return None
+    try:
+        tree = ET.parse(str(path))
+    except (ET.ParseError, OSError, ValueError):
+        return None
+    root = tree.getroot()
+    passed: set[str] = set()
+    failed: set[str] = set()
+    skipped: set[str] = set()
+
+    for case in root.iter("testcase"):
+        name = case.attrib.get("name")
+        file_attr = case.attrib.get("file")
+        if not name:
+            continue
+        if file_attr:
+            nodeid = f"{_posix(file_attr)}::{name}"
+        else:
+            classname = case.attrib.get("classname") or ""
+            path_guess = _posix(Path(classname.replace(".", "/") + ".py")) if classname else ""
+            if not path_guess:
+                continue
+            nodeid = f"{path_guess}::{name}"
+        nodeid = nodeid.split("|", 1)[0]
+
+        has_fail = any(child.tag in {"failure", "error"} for child in case)
+        has_skip = any(child.tag == "skipped" for child in case)
+        if has_skip and not has_fail:
+            skipped.add(nodeid)
+        elif has_fail:
+            failed.add(nodeid)
+        else:
+            passed.add(nodeid)
+
+    return LastStatus(passed=passed, failed=failed, skipped=skipped)
+
+
 def _should_invalidate(changed_files: Iterable[str]) -> tuple[bool, str | None]:
     """Return (True, reason) if changes require falling back to full run."""
     risky_patterns = [
@@ -218,10 +289,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Select impacted pytest nodeids from coverage JSON contexts map.")
     parser.add_argument("--base", default=os.environ.get("IMPACTED_BASE", "origin/main"), help="Git base ref for diff (default: origin/main)")
     parser.add_argument("--map", dest="map_path", default=os.environ.get("IMPACTED_MAP", ".cache/coverage.json"), help="Path to coverage JSON with contexts")
-    parser.add_argument("--threshold", type=float, default=float(os.environ.get("IMPACTED_THRESHOLD", 0.4)), help="Max fraction of tests to allow before falling back to full (default: 0.4)")
+    parser.add_argument("--threshold", type=float, default=float(os.environ.get("IMPACTED_THRESHOLD", 0.4)), help="Max impacted fraction before falling back to full (default: 0.4)")
     parser.add_argument("--strict-paths", action="store_true", help="Require exact path equality (no suffix matching)")
     parser.add_argument("--ignore-invalidation", action="store_true", help="Ignore invalidation rules (for local experiments only)")
     parser.add_argument("--verbose", action="store_true", default=os.environ.get("IMPACTED_VERBOSE", "0") not in {"", "0", "false", "no"}, help="Emit selector metrics to stderr")
+    parser.add_argument("--junit", default=os.environ.get("IMPACTED_LAST_JUNIT", ".cache/last-junit.xml"), help="Path to last JUnit XML for status-aware selection")
+    parser.add_argument("--skip-prev-fail-unaffected", action="store_true", default=os.environ.get("IMPACTED_SKIP_PREV_FAIL_UNAFFECTED", "0") not in {"", "0", "false", "no"}, help="Skip previously failing tests when unaffected by the diff")
 
     args = parser.parse_args(argv)
 
@@ -255,22 +328,41 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     total_contexts = _collect_total_contexts(files_meta)
-    selected = _select_nodeids(files_meta, changed_hunks, strict_paths=args.strict_paths)
+    impacted = _select_nodeids(files_meta, changed_hunks, strict_paths=args.strict_paths)
 
     # Post-filter obvious non-nodeid contexts (best-effort): require pattern '::'
-    selected = {nid for nid in selected if "::" in nid}
+    impacted = {nid for nid in impacted if "::" in nid}
 
-    impacted_count = len(selected)
     total_in_map = max(1, len(total_contexts))
-    fraction = impacted_count / total_in_map
+    impacted_fraction = (len(impacted) / total_in_map) if total_in_map else 1.0
+
+    # Augment selection with last failing tests
+    last = _parse_junit(Path(args.junit))
+    prev_pass = last.passed if last else set()
+    prev_fail = last.failed if last else set()
+    prev_skip = last.skipped if last else set()
+
+    selected = set(impacted)
+    # Include previously failing tests by default (unless skipping unaffected failures)
+    if args.skip_prev_fail_unaffected:
+        selected.update(prev_fail & impacted)
+    else:
+        selected.update(prev_fail)
+
+    unaffected = total_contexts - impacted
+    rerun_impacted_pass = impacted & prev_pass
+    rerun_impacted_fail = impacted & prev_fail
+    rerun_prev_fail_unaffected = (prev_fail & unaffected) if not args.skip_prev_fail_unaffected else set()
+    skip_unaffected_pass = unaffected & prev_pass
+    unknown_status_impacted = impacted - (prev_pass | prev_fail | prev_skip)
 
     t1 = time.perf_counter()
     metrics = SelectorMetrics(
-        impacted_count=impacted_count,
+        impacted_count=len(impacted),
         total_in_map=total_in_map,
-        fraction=fraction,
+        fraction=impacted_fraction,
         millis=int((t1 - t0) * 1000),
-        reason=None if impacted_count > 0 else "empty_selection",
+        reason=None if len(impacted) > 0 else "empty_selection",
     )
 
     if args.verbose:
@@ -279,14 +371,25 @@ def main(argv: list[str] | None = None) -> int:
             f"p={metrics.fraction:.3f} time_ms={metrics.millis}"
             + (f" reason={metrics.reason}" if metrics.reason else "")
         )
+        _stderr(
+            "[impacted] selection: "
+            f"rerun_impacted_pass={len(rerun_impacted_pass)} "
+            f"rerun_impacted_fail={len(rerun_impacted_fail)} "
+            f"rerun_prev_fail_unaffected={len(rerun_prev_fail_unaffected)} "
+            f"skip_unaffected_pass={len(skip_unaffected_pass)} "
+            f"unknown_impacted={len(unknown_status_impacted)}"
+        )
 
-    if impacted_count == 0 or fraction > args.threshold:
+    if len(impacted) == 0 or impacted_fraction > args.threshold:
         # Signal fallback to full run
         return 2
 
     # Emit nodeids to stdout, sorted for determinism
     for nid in sorted(selected):
         sys.stdout.write(nid + "\n")
+
+    # Persist last selection for optional diffing by users/tools
+    _write_last_selected(Path(".cache/last-selected.txt"), selected)
 
     return 0
 

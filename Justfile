@@ -211,7 +211,7 @@ lock:
 # Tip: Generates HTML at `htmlcov/index.html`; testmon cache is on by default.
 coverage:
     @echo "Running smoke-tier tests with coverage (HTML + XML reports, serial)."
-    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml {{PYTEST_ARGS}}
+    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}
 
 precommit-fast: checks
 
@@ -226,19 +226,13 @@ precommit: precommit-slow
 # Run the CI command set locally.
 # Tip: Mirrors GitHub Actions; expect coverage artefacts and longer runtime.
 ci:
-    @echo "Running CI parity: sync deps, lint, type-strict, impacted tests (serial, durations summary)."
+    @echo "Running CI parity: sync deps, lint, type-strict, full smoke-tier tests (durations summary)."
     $UV sync --extra dev
     $UV run python scripts/check_waivers.py
     $UV run ruff check .
     {{PRETTIER}} --log-level warn --check {{PRETTIER_PATTERNS}}
     $UV run pyright -p pyrightconfig.strict.json
-    @mkdir -p .cache
-    $UV run --script scripts/impacted_cov.py --base ${IMPACTED_BASE:-origin/main} --map .cache/coverage.json > .cache/impacted_nodeids.txt || true
-    @if [ -s .cache/impacted_nodeids.txt ]; then \
-        $UV run pytest {{PYTEST_SMOKE_FLAGS}} -q --durations=20 @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
-    else \
-        $UV run pytest {{PYTEST_SMOKE_FLAGS}} -q --durations=20 {{PYTEST_ARGS}}; \
-    fi
+    $UV run pytest {{PYTEST_SMOKE_FLAGS}} -q --durations=20 -n auto {{PYTEST_ARGS}}
 
 # CI plus longhaul tiers and benchmarks.
 # Tip: Reserved for scheduled runs; coordinate with the maintainer before executing.
@@ -305,6 +299,8 @@ cov-map:
 cov-json:
     @mkdir -p .cache
     $UV run coverage json -o .cache/coverage.json --show-contexts
+
+map-refresh: cov-map cov-json
 
 # Run only impacted tests (serial). Falls back to full run if selection is empty/invalid.
 impacted-serial:

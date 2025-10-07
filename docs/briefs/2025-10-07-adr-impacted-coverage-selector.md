@@ -72,7 +72,9 @@ test-xdist:
 
 coverage:
     @echo "Running smoke-tier tests with coverage (HTML + XML reports, serial)."
-    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml {{PYTEST_ARGS}}
+    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}
+
+map-refresh: cov-map cov-json
 
 cov-map:
     @echo "Building coverage map with per-test contexts (serial)."
@@ -100,7 +102,7 @@ Measurement (Pilot)
 Warning: single-run measurements on a warm environment; use as directional guidance only. Repeat
 with N≥5 for robust medians.
 
-- Map build (serial, with contexts): ~106.1 s
+- Map build (serial, with contexts): ~105.8 s; JSON export: ~1.7 s
 - Simulated tiny diff: touched one line in
   `src/viterbo/symplectic/capacity/facet_normals/subset_utils.py` to trigger impacted selection.
 - Selector outcome: `impacted=21`, `total≈100`, `p≈0.21`, `selector≈120 ms`.
@@ -123,6 +125,26 @@ uv run pytest -q @.cache/impacted_nodeids.txt            # impacted serial (~32.
 uv run pytest -q                                         # full serial (~74.6 s)
 uv run pytest -q -n auto                                 # full xdist (~36.4 s)
 uv run pytest -q -n auto @.cache/impacted_nodeids.txt    # impacted xdist (~25.6 s)
+
+# Map build vs coverage timing
+just cov-map && just cov-json                             # contexts map + export
+just coverage                                             # coverage reports (no contexts)
+
+# Impacted with/without coverage timing
+uv run pytest -q @.cache/impacted_nodeids.txt            # impacted (no coverage)
+uv run pytest -q --cov=src/viterbo @.cache/impacted_nodeids.txt
+uv run pytest -q --cov=src/viterbo --cov-context=test @.cache/impacted_nodeids.txt
+
+Status-aware selection policy
+
+- Inputs: latest contexts map `.cache/coverage.json` and last JUnit `.cache/last-junit.xml` (from
+  `just coverage`).
+- Run set = impacted_by_diff ∪ previously_failing ∪ new_tests (if detected).
+- Skip set = previously_passing ∩ unaffected_by_diff.
+- Threshold/fallback: if impacted fraction `p > 0.4`, treat as full run (no selection). Any
+  invalidation (tests changed, fixtures, config, etc.) also forces full run.
+- Messaging: the selector prints counts for rerun_impacted_pass, rerun_impacted_fail,
+  rerun_prev_fail_unaffected, skip_unaffected_pass, unknown_impacted.
 
 # 5) Optional FAST runs (JIT off)
 FAST=1 JAX_DISABLE_JIT=true JAX_PLATFORM_NAME=cpu XLA_PYTHON_CLIENT_PREALLOCATE=false \
