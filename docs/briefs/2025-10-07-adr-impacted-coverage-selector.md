@@ -132,7 +132,7 @@ Status-aware selection policy
 
 - Inputs: latest contexts map `.cache/coverage.json` and last JUnit `.cache/last-junit.xml` (from
   `just coverage`).
-  Baseline ref for diffs defaults to `.cache/coverage_base.txt` written by `just coverage` (overridable via `--base` or `IMPACTED_BASE`).
+  Baseline ref for diffs defaults to `.cache/coverage_base.txt` written by `just coverage`.
 - Run set = impacted_by_diff ∪ previously_failing ∪ new_tests (if detected).
 - Skip set = previously_passing ∩ unaffected_by_diff.
 - Threshold/fallback: if impacted fraction `p > 0.4`, treat as full run (no selection). Any
@@ -190,4 +190,13 @@ Future Work
 Rollback Plan
 
 - Delete `scripts/impacted_cov.py` and the four Justfile targets; remove coverage JSON cache from
-  CI. Existing workflows remain unaffected.
+  CI. Existing workflows remain unaffected. Feature Simplification (2025-10-07)
+
+- Removed base-ref overrides from the selector CLI and env (previously: `--base`, `IMPACTED_BASE`,
+  and `--prefer-cached-base`). The selector now always diffs against the commit recorded by the most
+  recent `just coverage`, falling back to `origin/main` if missing.
+- Removed `--ignore-invalidation` experimental flag; invalidations always force a full run.
+- Behaviour on no-diff: re-run only previously failing tests (from `.cache/last-junit.xml`); if no
+  prior failures exist, the selector signals fallback and `just test` runs the full suite.
+
+These features can be restored if needed; see pre-simplification commits in history for reference.

@@ -6,7 +6,7 @@
 """Select impacted pytest nodeids from a coverage contexts map.
 
 Usage (prints nodeids to stdout; metrics to stderr when verbose):
-  uv run --script scripts/impacted_cov.py --base origin/main --map .cache/coverage.json \
+  uv run --script scripts/impacted_cov.py --map .cache/coverage.json \
       > .cache/impacted_nodeids.txt || true
 
 Exit codes:
@@ -68,15 +68,6 @@ def _run(cmd: list[str]) -> subprocess.CompletedProcess:
 def _posix(p: str | Path) -> str:
     """Normalize a path to POSIX-style separators."""
     return Path(p).as_posix()
-
-
-def _read_last_selected(path: Path) -> set[str]:
-    if not path.exists():
-        return set()
-    try:
-        return {line.strip() for line in path.read_text().splitlines() if line.strip()}
-    except OSError:
-        return set()
 
 
 def _write_last_selected(path: Path, nodeids: set[str]) -> None:
@@ -287,49 +278,48 @@ def _should_invalidate(changed_files: Iterable[str]) -> tuple[bool, str | None]:
 def main(argv: list[str] | None = None) -> int:
     """CLI entry point: emit impacted nodeids or signal fallback (exit 2)."""
     parser = argparse.ArgumentParser(description="Select impacted pytest nodeids from coverage JSON contexts map.")
-    parser.add_argument("--base", default=None, help="Git base ref for diff (overrides env/cache/default)")
     parser.add_argument("--map", dest="map_path", default=os.environ.get("IMPACTED_MAP", ".cache/coverage.json"), help="Path to coverage JSON with contexts")
     parser.add_argument("--threshold", type=float, default=float(os.environ.get("IMPACTED_THRESHOLD", 0.4)), help="Max impacted fraction before falling back to full (default: 0.4)")
     parser.add_argument("--strict-paths", action="store_true", help="Require exact path equality (no suffix matching)")
-    parser.add_argument("--ignore-invalidation", action="store_true", help="Ignore invalidation rules (for local experiments only)")
     parser.add_argument("--verbose", action="store_true", default=os.environ.get("IMPACTED_VERBOSE", "0") not in {"", "0", "false", "no"}, help="Emit selector metrics to stderr")
     parser.add_argument("--junit", default=os.environ.get("IMPACTED_LAST_JUNIT", ".cache/last-junit.xml"), help="Path to last JUnit XML for status-aware selection")
     parser.add_argument("--skip-prev-fail-unaffected", action="store_true", default=os.environ.get("IMPACTED_SKIP_PREV_FAIL_UNAFFECTED", "0") not in {"", "0", "false", "no"}, help="Skip previously failing tests when unaffected by the diff")
-    parser.add_argument("--prefer-cached-base", action="store_true", default=os.environ.get("IMPACTED_PREFER_CACHED_BASE", "1") not in {"", "0", "false", "no"}, help="Prefer base ref cached by last coverage run when --base/env not set")
 
     args = parser.parse_args(argv)
 
     t0 = time.perf_counter()
-    # Determine diff base: CLI > env > cached coverage base > origin/main
+    # Determine diff base strictly from last coverage run; fallback to origin/main if missing.
     coverage_base_file = Path(".cache/coverage_base.txt")
-    env_base = os.environ.get("IMPACTED_BASE")
-    # Local mini helper to avoid a larger refactor
-    def _pick_base() -> str:
-        if args.base:
-            return args.base
-        if env_base:
-            return env_base
-        if args.prefer_cached_base and coverage_base_file.exists():
-            try:
-                text = coverage_base_file.read_text().strip().splitlines()[0].strip()
-                if text:
-                    return text
-            except OSError:
-                pass
-        return "origin/main"
+    if coverage_base_file.exists():
+        try:
+            base_ref = coverage_base_file.read_text().strip().splitlines()[0].strip() or "origin/main"
+        except OSError:
+            base_ref = "origin/main"
+    else:
+        base_ref = "origin/main"
 
-    base_ref = _pick_base()
     changed_files = _iter_changed_files(base_ref)
     changed_hunks = _parse_changed_hunks(base_ref)
 
-    # Early exit if git diff failed or there are no changes in .py files
+    # Parse last JUnit early for no-diff fallback behaviour
+    last = _parse_junit(Path(args.junit))
+    prev_pass = last.passed if last else set()
+    prev_fail = last.failed if last else set()
+    prev_skip = last.skipped if last else set()
+
+    # If no Python changes, re-run only previously failing tests (if any); else fallback.
     if not changed_files or not changed_hunks:
+        if prev_fail:
+            for nid in sorted(prev_fail):
+                sys.stdout.write(nid + "\n")
+            _write_last_selected(Path(".cache/last-selected.txt"), set(prev_fail))
+            return 0
         if args.verbose:
-            _stderr("[impacted] no Python changes detected or diff failed; fallback to full")
+            _stderr("[impacted] no Python changes and no prior failures; fallback to full")
         return 2
 
     inv, reason = _should_invalidate(changed_files)
-    if inv and not args.ignore_invalidation:
+    if inv:
         if args.verbose:
             _stderr(f"[impacted] invalidation triggered: {reason}")
         return 2
@@ -357,10 +347,6 @@ def main(argv: list[str] | None = None) -> int:
     impacted_fraction = (len(impacted) / total_in_map) if total_in_map else 1.0
 
     # Augment selection with last failing tests
-    last = _parse_junit(Path(args.junit))
-    prev_pass = last.passed if last else set()
-    prev_fail = last.failed if last else set()
-    prev_skip = last.skipped if last else set()
 
     selected = set(impacted)
     # Include previously failing tests by default (unless skipping unaffected failures)

@@ -97,7 +97,7 @@ type-strict:
 test:
     @mkdir -p .cache
     @echo "Running smoke-tier pytest (impacted selection with fallback)."
-    $UV run --script scripts/impacted_cov.py --base ${IMPACTED_BASE:-origin/main} --map .cache/coverage.json > .cache/impacted_nodeids.txt || true
+    $UV run --script scripts/impacted_cov.py --map .cache/coverage.json > .cache/impacted_nodeids.txt || true
     @if [ -s .cache/impacted_nodeids.txt ]; then \
         $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
     else \
@@ -322,7 +322,7 @@ impacted-serial:
 impacted-xdist:
     @mkdir -p .cache
     @echo "Selecting impacted tests via coverage contexts (xdist)."
-    $UV run --script scripts/impacted_cov.py --base ${IMPACTED_BASE:-origin/main} --map .cache/coverage.json > .cache/impacted_nodeids.txt || true
+    $UV run --script scripts/impacted_cov.py --map .cache/coverage.json > .cache/impacted_nodeids.txt || true
     @if [ -s .cache/impacted_nodeids.txt ]; then \
         echo "Running impacted tests (-n auto)"; \
         $UV run pytest -q -n auto @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
