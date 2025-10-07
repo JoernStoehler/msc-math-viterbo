@@ -78,10 +78,10 @@ test-metadata:
 
 # Quick, sensible defaults: full lint → fast type → parallel tests.
 checks:
-    @echo "Running checks: lint → type → test (parallel)."
+    @echo "Running checks: lint → type → test-fast (FAST, single-process)."
     just lint
     just type
-    USE_TESTMON=0 just test
+    just test-fast
 
 # Quick test run using FAST settings (no JIT/GPU, single-process when testmon is enabled).
 test-fast:
@@ -92,7 +92,7 @@ test-fast:
     else \
         parallel_flags=(-n auto); \
     fi; \
-    {{FAST_ENV}} TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_SMOKE_FLAGS}} "${parallel_flags[@]}" {{PYTEST_ARGS}}
+    TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_SMOKE_FLAGS}} "${parallel_flags[@]}" {{PYTEST_ARGS}}
 
 # Full repository loop: strict lint/type and full pytest tier (no FAST env overrides).
 # Tip: Run before reviews or when validating significant refactors.
@@ -118,7 +118,7 @@ test:
     else \
         parallel_flags=(-n auto); \
     fi; \
-    TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_SMOKE_FLAGS}} "${parallel_flags[@]}" {{PYTEST_ARGS}}
+    {{FAST_ENV}} TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_SMOKE_FLAGS}} "${parallel_flags[@]}" {{PYTEST_ARGS}}
 
 # Smoke + deep tiers.
 # Tip: Ideal before review; combine with `just bench-deep` for performance-sensitive work.
