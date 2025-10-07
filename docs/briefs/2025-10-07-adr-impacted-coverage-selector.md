@@ -1,7 +1,7 @@
 ---
-title: Impacted Tests via Coverage Contexts — Pilot ADR
+title: Impacted Tests via Coverage Contexts — ADR
 date: 2025-10-07
-status: pilot-adopted
+status: adopted
 owner: Core Eng
 reviewers: Maintainer
 tags: [testing, coverage, impacted, devops, xdist, jax]
@@ -15,10 +15,11 @@ Summary
 
 Decision
 
-- Implement and keep, as an optional path, a coverage-contexts selector: `scripts/impacted_cov.py`.
-- Add Justfile targets to build the map (`cov-map`, `cov-json`) and to run impacted tests
-  (`impacted-serial`, optional `impacted-xdist`).
-- Use serial impacted runs by default in local loops; enable xdist on demand.
+- Adopt the coverage-contexts selector as the golden path for smoke-tier tests via `just test`
+  (impacted by default, serial fallback to full).
+- Keep the selector script `scripts/impacted_cov.py` and map build targets (`cov-map`, `cov-json`).
+- Provide explicit full-run variants: `just test-full` (serial) and `just test-xdist` (parallel).
+- Prefer serial impacted runs by default; enable xdist on demand.
 - Maintain strict invalidation rules; prefer safety over under-testing.
 
 Context
@@ -51,30 +52,36 @@ show_contexts = true
 - Justfile targets (at time of writing): `Justfile`
 
 ```make
-# Build a per-test coverage map on the current branch (serial by default).
+test:
+    @mkdir -p .cache
+    @echo "Running smoke-tier pytest (impacted selection with fallback)."
+    $UV run --script scripts/impacted_cov.py --base ${IMPACTED_BASE:-origin/main} --map .cache/coverage.json > .cache/impacted_nodeids.txt || true
+    @if [ -s .cache/impacted_nodeids.txt ]; then \
+        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
+    else \
+        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} {{PYTEST_ARGS}}; \
+    fi
+
+test-full:
+    @echo "Running full smoke-tier pytest (serial)."
+    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} {{PYTEST_ARGS}}
+
+test-xdist:
+    @echo "Running full smoke-tier pytest (-n auto)."
+    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} -n auto {{PYTEST_ARGS}}
+
+coverage:
+    @echo "Running smoke-tier tests with coverage (HTML + XML reports, serial)."
+    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml {{PYTEST_ARGS}}
+
 cov-map:
     @echo "Building coverage map with per-test contexts (serial)."
     $UV run pytest -q --cov=src/viterbo --cov-context=test
 
-# Export JSON with contexts for the selector.
 cov-json:
     @mkdir -p .cache
     $UV run coverage json -o .cache/coverage.json --show-contexts
 
-# Run only impacted tests (serial). Falls back to full run if selection is empty/invalid.
-impacted-serial:
-    @mkdir -p .cache
-    @echo "Selecting impacted tests via coverage contexts (serial)."
-    $UV run --script scripts/impacted_cov.py --base ${IMPACTED_BASE:-origin/main} --map .cache/coverage.json > .cache/impacted_nodeids.txt || true
-    @if [ -s .cache/impacted_nodeids.txt ]; then \
-        echo "Running impacted tests (serial)"; \
-        $UV run pytest -q @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
-    else \
-        echo "Fallback: running full test suite (serial)"; \
-        $UV run pytest -q {{PYTEST_ARGS}}; \
-    fi
-
-# Optional: impacted tests with xdist (may increase memory usage under JAX).
 impacted-xdist:
     @mkdir -p .cache
     @echo "Selecting impacted tests via coverage contexts (xdist)."
@@ -114,7 +121,6 @@ uv run --script scripts/impacted_cov.py \
 # 4) Run impacted vs baselines (serial / xdist)
 uv run pytest -q @.cache/impacted_nodeids.txt            # impacted serial (~32.5 s)
 uv run pytest -q                                         # full serial (~74.6 s)
-uv run pytest -q --testmon                               # testmon serial (~97.5 s)
 uv run pytest -q -n auto                                 # full xdist (~36.4 s)
 uv run pytest -q -n auto @.cache/impacted_nodeids.txt    # impacted xdist (~25.6 s)
 

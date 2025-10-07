@@ -7,12 +7,9 @@ UV := env_var_or_default("UV", "uv")
 PRETTIER := 'npx --yes prettier@3.3.3'
 
 SMOKE_TEST_TIMEOUT := env_var_or_default("SMOKE_TEST_TIMEOUT", "10")
-TESTMON_CACHE := env_var_or_default("TESTMON_CACHE", ".testmondata")
-USE_TESTMON := env_var_or_default("USE_TESTMON", "1")
 PYTEST_ARGS := env_var_or_default("PYTEST_ARGS", "")
 ARGS := env_var_or_default("ARGS", "")
 RUN_DIR := env_var_or_default("RUN_DIR", "")
-FAST_ENV := "FAST=1 JAX_DISABLE_JIT=true JAX_PLATFORM_NAME=cpu XLA_PYTHON_CLIENT_PREALLOCATE=false"
 
 PYTEST_SMOKE_FLAGS := "-m \"not deep and not longhaul\" --timeout=$SMOKE_TEST_TIMEOUT --timeout-method=thread"
 PYTEST_DEEP_FLAGS := "-m \"not longhaul\""
@@ -76,27 +73,14 @@ test-metadata:
     @echo "Usage: just test-metadata [ARGS='--marker goal_math tests/path']; forwards ARGS to report_test_metadata."
     $UV run python scripts/report_test_metadata.py {{ARGS}}
 
-# Quick, sensible defaults: full lint → fast type → parallel tests.
+# Quick, sensible defaults: lint → type → impacted tests (serial).
 checks:
-    @echo "Running checks: lint → type → test-fast (FAST, single-process)."
+    @echo "Running checks: lint → type → test (impacted, serial)."
     just lint
     just type
-    just test-fast
+    just test
 
-# Quick test run using FAST settings (no JIT/GPU, single-process when testmon is enabled).
-test-fast:
-    @echo "Running quick pytest (FAST mode)."
-    @testmon_flags=(); parallel_flags=(); \
-    if [[ "${USE_TESTMON,,}" != "0" && "${USE_TESTMON,,}" != "false" && "${USE_TESTMON,,}" != "no" ]]; then \
-        testmon_flags=(--testmon); parallel_flags=(-p no:xdist); \
-    else \
-        parallel_flags=(-n auto); \
-    fi; \
-    TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_SMOKE_FLAGS}} "${parallel_flags[@]}" {{PYTEST_ARGS}}
-
-# Full repository loop: strict lint/type and full pytest tier (no FAST env overrides).
-# Tip: Run before reviews or when validating significant refactors.
-# (legacy) full-loop use case is covered by `ci` below.
+# Full repository loop: strict lint/type and full pytest tier handled by `ci`.
 
 # Run strict Pyright analysis.
 # Tip: Full repository sweep; matches CI `just ci`.
@@ -109,40 +93,38 @@ type-strict:
     $UV run pyright -p pyrightconfig.strict.json
 
 # Smoke-tier pytest with enforced timeouts.
-# Tip: Testmon cache is on by default; set `USE_TESTMON=0` to disable, add selectors via `PYTEST_ARGS`.
+# Default: impacted (serial). Falls back to full serial.
 test:
-    @echo "Running smoke-tier pytest (testmon cache: {{USE_TESTMON}}; set USE_TESTMON=0 to disable)."
-    @testmon_flags=(); parallel_flags=(); \
-    if [[ "${USE_TESTMON,,}" != "0" && "${USE_TESTMON,,}" != "false" && "${USE_TESTMON,,}" != "no" ]]; then \
-        testmon_flags=(--testmon); parallel_flags=(-p no:xdist); \
+    @mkdir -p .cache
+    @echo "Running smoke-tier pytest (impacted selection with fallback)."
+    $UV run --script scripts/impacted_cov.py --base ${IMPACTED_BASE:-origin/main} --map .cache/coverage.json > .cache/impacted_nodeids.txt || true
+    @if [ -s .cache/impacted_nodeids.txt ]; then \
+        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
     else \
-        parallel_flags=(-n auto); \
-    fi; \
-    {{FAST_ENV}} TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_SMOKE_FLAGS}} "${parallel_flags[@]}" {{PYTEST_ARGS}}
+        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} {{PYTEST_ARGS}}; \
+    fi
 
-# Smoke + deep tiers.
+# Full smoke-tier run (serial, no impacted selection).
+test-full:
+    @echo "Running full smoke-tier pytest (serial)."
+    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} {{PYTEST_ARGS}}
+
+# Full smoke-tier run with xdist (parallel).
+test-xdist:
+    @echo "Running full smoke-tier pytest (-n auto)."
+    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} -n auto {{PYTEST_ARGS}}
+
+# Smoke + deep tiers (full serial).
 # Tip: Ideal before review; combine with `just bench-deep` for performance-sensitive work.
 test-deep:
-    @echo "Running smoke + deep pytest tiers."
-    @testmon_flags=(); parallel_flags=(); \
-    if [[ "${USE_TESTMON,,}" != "0" && "${USE_TESTMON,,}" != "false" && "${USE_TESTMON,,}" != "no" ]]; then \
-        testmon_flags=(--testmon); parallel_flags=(-p no:xdist); \
-    else \
-        parallel_flags=(-n auto); \
-    fi; \
-    TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_DEEP_FLAGS}} "${parallel_flags[@]}" {{PYTEST_ARGS}}
+    @echo "Running smoke + deep pytest tiers (serial)."
+    $UV run pytest -q {{PYTEST_DEEP_FLAGS}} {{PYTEST_ARGS}}
 
-# Longhaul pytest tier (manual).
+# Longhaul pytest tier (manual, full serial).
 # Tip: Scheduled weekly; coordinate with maintainer before running locally.
 test-longhaul:
-    @echo "Running longhaul pytest tier (expect multi-hour runtime)."
-    @testmon_flags=(); parallel_flags=(); \
-    if [[ "${USE_TESTMON,,}" != "0" && "${USE_TESTMON,,}" != "false" && "${USE_TESTMON,,}" != "no" ]]; then \
-        testmon_flags=(--testmon); parallel_flags=(-p no:xdist); \
-    else \
-        parallel_flags=(-n auto); \
-    fi; \
-    TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_LONGHAUL_FLAGS}} "${parallel_flags[@]}" {{PYTEST_ARGS}}
+    @echo "Running longhaul pytest tier (serial; expect multi-hour runtime)."
+    $UV run pytest -q {{PYTEST_LONGHAUL_FLAGS}} {{PYTEST_ARGS}}
 
 # Run smoke, deep, and longhaul sequentially.
 # Removed `test-all` in favor of explicit invocations.
@@ -228,14 +210,8 @@ lock:
 # Smoke-tier tests with coverage reports.
 # Tip: Generates HTML at `htmlcov/index.html`; testmon cache is on by default.
 coverage:
-    @echo "Running smoke-tier tests with coverage (HTML + XML reports)."
-    @testmon_flags=(); parallel_flags=(); \
-    if [[ "${USE_TESTMON,,}" != "0" && "${USE_TESTMON,,}" != "false" && "${USE_TESTMON,,}" != "no" ]]; then \
-        testmon_flags=(--testmon); parallel_flags=(-p no:xdist); \
-    else \
-        parallel_flags=(-n auto); \
-    fi; \
-    TESTMONDATA="{{TESTMON_CACHE}}" $UV run pytest "${testmon_flags[@]}" {{PYTEST_SMOKE_FLAGS}} "${parallel_flags[@]}" --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml {{PYTEST_ARGS}}
+    @echo "Running smoke-tier tests with coverage (HTML + XML reports, serial)."
+    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml {{PYTEST_ARGS}}
 
 precommit-fast: checks
 
@@ -250,13 +226,19 @@ precommit: precommit-slow
 # Run the CI command set locally.
 # Tip: Mirrors GitHub Actions; expect coverage artefacts and longer runtime.
 ci:
-    @echo "Running CI parity: sync deps, lint, type-strict, pytest (durations summary)."
+    @echo "Running CI parity: sync deps, lint, type-strict, impacted tests (serial, durations summary)."
     $UV sync --extra dev
     $UV run python scripts/check_waivers.py
     $UV run ruff check .
     {{PRETTIER}} --log-level warn --check {{PRETTIER_PATTERNS}}
     $UV run pyright -p pyrightconfig.strict.json
-    $UV run pytest {{PYTEST_SMOKE_FLAGS}} -n auto --durations=20 {{PYTEST_ARGS}}
+    @mkdir -p .cache
+    $UV run --script scripts/impacted_cov.py --base ${IMPACTED_BASE:-origin/main} --map .cache/coverage.json > .cache/impacted_nodeids.txt || true
+    @if [ -s .cache/impacted_nodeids.txt ]; then \
+        $UV run pytest {{PYTEST_SMOKE_FLAGS}} -q --durations=20 @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
+    else \
+        $UV run pytest {{PYTEST_SMOKE_FLAGS}} -q --durations=20 {{PYTEST_ARGS}}; \
+    fi
 
 # CI plus longhaul tiers and benchmarks.
 # Tip: Reserved for scheduled runs; coordinate with the maintainer before executing.
