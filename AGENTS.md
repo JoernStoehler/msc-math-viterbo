@@ -33,8 +33,13 @@ documentation, so agents can start their work quickly. If another doc conflicts,
   - Environment: `.devcontainer/` (`devcontainer.json`, `post-create.sh`, `post-start.sh`).
 - Golden-path task runner: `Justfile` recipes.
 - Policy Waivers: `waivers.toml`.
-- Reference docs: `docs/` (math, architecture, decisions).
-- Task briefs: `docs/tasks/` (drafts, scheduled, completed, dependencies and priorities).
+- Reference docs: `docs/` (math references, key context notes).
+- Briefs & workflow notes: `docs/briefs/` (date-prefixed Markdown with YAML front matter capturing
+  `status`, `workflow`, `summary`, and `created`). Keep briefs flat—no nested subfolders. Use the
+  naming pattern `YYYY-MM-DD-workflow-slug.md` and embed dependency call-outs inline. Place any
+  situational guidance or long-form execution notes in additional briefs rather than resurrecting
+  the old `docs/tasks/` hierarchy. Follow the layout conventions in
+  `docs/briefs/2025-10-08-workflow-brief-authoring.md` when drafting new briefs or workflow notes.
 - Source code: `src/viterbo/` (library), `tests/viterbo/` (unit/integration tests),
   `tests/performance/viterbo/` (benchmarks).
 - Thesis: `thesis/` (LaTeX source).
@@ -135,7 +140,8 @@ def ehz_capacity(
   `line_profile`, `slow`. `just test` runs smoke with a 10 s per-test timeout, a hard 60 s session
   cap, `--maxfail=1`, and a slow-test summary (`--durations=15`). `just test-deep` runs the deep
   tier; `just test-longhaul` is manual/scheduled. See
-  `docs/testing-decision-criteria.md` for decision guidance and re-tiering criteria.
+  `docs/briefs/2025-10-07-workflow-task-evaluation.md` for evaluation guidance and test/benchmark
+  cadence expectations.
 - Invariant baselines live under `tests/_baselines/` as JSON; update values only with
   maintainer sign-off and record the rationale in the PR/task brief.
 

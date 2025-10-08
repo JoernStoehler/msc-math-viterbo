@@ -54,19 +54,24 @@ markdown_extensions:
   - pymdownx.snippets
 
 nav:
-  - Home: index.md
-  - Project:
-      - Overview: 01-project-goal.md
-      - Roadmap: 02-project-roadmap.md
-      - Code Structure: 22-code-structure.md
+  - Project Goal: 01-project-goal.md
+  - Collaboration: 05-working-with-codex.md
+  - Reference:
+      - Reading List: 12-math-reading-list.md
       - Symplectic Quantities: 13-symplectic-quantities.md
-  - Tasks & Briefs:
-      - Evaluation Methodology: tasks/01-task-evaluation-methodology.md
-      - Portfolio: tasks/02-task-portfolio.md
-      - RFCs: tasks/rfc/index.md
-      - Scheduled: tasks/scheduled/index.md
-      - Drafts: tasks/draft/index.md
-      - Completed: tasks/completed/index.md
-  - Reference Notes:
       - Capacities: convex-polytope-cehz-capacities.md
       - Volumes: convex-polytope-volumes.md
+      - Thesis Topics Placeholder: 11-math-thesis-topics.md
+      - Papers Index: papers/README.md
+  - Briefs & Workflows:
+      - Exploration Overview: briefs/2025-10-07-task-systolic-overview.md
+      - Baselines: briefs/2025-10-07-task-systolic-baselines.md
+      - Combinatorial Reeb Formalization: briefs/2025-10-07-task-combinatorial-reeb-formalization.md
+      - Systolic Pipeline: briefs/2025-10-07-task-systolic-pipeline.md
+      - Landscape Scans: briefs/2025-10-07-task-systolic-landscape-scans.md
+      - Certificates: briefs/2025-10-07-task-systolic-certificates.md
+      - ML Program: briefs/2025-10-07-task-systolic-ml-program.md
+      - Advanced Directions: briefs/2025-10-07-task-systolic-advanced-directions.md
+      - Impacted Coverage Selector ADR: briefs/2025-10-07-adr-impacted-coverage-selector.md
+      - Brief Authoring Guidelines: briefs/2025-10-08-workflow-brief-authoring.md
+      - Task Evaluation Methodology: briefs/2025-10-07-workflow-task-evaluation.md
