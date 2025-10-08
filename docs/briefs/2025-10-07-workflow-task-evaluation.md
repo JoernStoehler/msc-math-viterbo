@@ -1,16 +1,22 @@
+---
+status: adopted
+created: 2025-10-07
+workflow: policy
+summary: Methodology for evaluating, scoring, and communicating task and experiment proposals within the current briefs system.
+---
+
 # Task & Experiment Evaluation Methodology
 
 This methodology guides Codex research and engineering agents when scoping, assessing, and
 prioritising work on the MSc project for Viterbo's conjecture. It unifies research experiments and
 software-engineering tasks because both feed the same decision queue and rely on the shared brief
-structure under `docs/tasks/`.
+structure under `docs/briefs/`.
 
 ## 1. Mental model and workflow
 
 1. **Collect context**
-   - Re-read the relevant task briefs, roadmap notes, algorithm implementation plan, and the latest
-     progress reports before scoring any proposal. Note the conjectures, code modules, datasets, or
-     infrastructure the work touches.
+   - Re-read the relevant briefs, recent PRs, and weekly mail notes before scoring any proposal. Note
+     the conjectures, code modules, datasets, or infrastructure the work touches.
 1. **Clarify the task nucleus**
    - State the core question or capability the work should deliver and the artefacts produced
      (datasets, counterexamples, refactored modules, benchmark harnesses, etc.). Keep the proposal
@@ -49,17 +55,16 @@ structure under `docs/tasks/`.
      dominates.
 1. **Document dependencies**
    - Record prerequisites (datasets, lemmas, module refactors) and downstream tasks whose priority
-     depends on this work. Express dependencies visually via Mermaid graphs in
-     `docs/tasks/02-task-portfolio.md`.
+     depends on this work. Express dependencies inline within briefs (e.g., "Depends on:", "Unlocks:")
+     or via lightweight diagrams embedded directly in the relevant brief.
 1. **Decide and communicate**
    - Prioritise work with high expected value, manageable risk, and limited dependencies. Log open
-     questions or blockers directly inside the owning task brief so future agents inherit the
-     context.
+     questions or blockers directly inside the owning brief so future agents inherit the context.
 
 ## 2. Outcome taxonomy
 
-| Category                       | Description                                                          | Typical next steps                                    |
-| ------------------------------ | -------------------------------------------------------------------- | ----------------------------------------------------- |
+| Category                       | Description                                                          | Typical next steps                 |
+| ------------------------------ | -------------------------------------------------------------------- | ---------------------------------- |
 | Success                        | Work delivers the intended artefact or insight.                      | Trigger follow-on briefs; integrate code or datasets. |
 | Rich partial                   | Results differ from expectations yet surface new leads.              | Draft follow-up proposals; refine conjectures.        |
 | Inconclusive                   | Signal drowned in noise or evaluation insufficient.                  | Collect more data; improve diagnostics.               |
@@ -94,10 +99,10 @@ Use this taxonomy before customising finer-grained outcomes for individual brief
 
 ## 5. Cost estimation bins
 
-| Cost level | Definition                                                 | Examples                                                     |
-| ---------- | ---------------------------------------------------------- | ------------------------------------------------------------ |
-| Low        | ≤ 0.5 agent-weeks; CPU only; no expert help.               | Deterministic reference algorithms, documentation passes.    |
-| Medium     | 0.5–2 agent-weeks; may need GPU or moderate refactors.     | Dataset generation, adaptive relaxations, JAX ports.         |
+| Cost level | Definition                                                 | Examples                               |
+| ---------- | ---------------------------------------------------------- | -------------------------------------- |
+| Low        | ≤ 0.5 agent-weeks; CPU only; no expert help.               | Deterministic reference algorithms, documentation passes. |
+| Medium     | 0.5–2 agent-weeks; may need GPU or moderate refactors.     | Dataset generation, adaptive relaxations, JAX ports.        |
 | High       | ≥ 2 agent-weeks or expert/PI time or specialised hardware. | Large MILP sweeps, transformer training, sweeping refactors. |
 
 Log costs as tuples `(agent_time, compute, expert_time)` and mark reevaluation points.
@@ -108,18 +113,19 @@ Log costs as tuples `(agent_time, compute, expert_time)` and mark reevaluation p
   non-decision-relevant.
 - Prefer cheaper or prerequisite tasks that unlock expensive ones.
 - Flag tasks that can run in parallel versus those that must stay serial.
-- Update the Mermaid dependency graph whenever outcomes change ordering so the queue stays accurate.
+- Update dependency call-outs inside briefs whenever outcomes change ordering so the queue stays
+  accurate.
 
 ## 7. Communication norms
 
-- Write evaluations in full sentences referencing the source documents informing your belief
-  (algorithm plan sections, prior PRs, benchmarks).
+- Write evaluations in full sentences referencing the source documents informing your belief (briefs,
+  prior PRs, benchmarks).
 - Use tables to compare multiple tasks when practical.
-- Capture subjective confidence levels; "high variance" or "needs PI review" is acceptable
-  shorthand.
+- Capture subjective confidence levels; "high variance" or "needs PI review" is acceptable shorthand.
 - Keep documents living: append dated updates when new evidence shifts odds or utilities.
-- Store full briefs under `docs/tasks/` using `template.md`; link to them from the portfolio so
-  execution notes live with their owning document.
+- Store briefs under `docs/briefs/` with front matter describing status, workflow, and origin; link
+  to them from PR descriptions or follow-up briefs so execution notes live with their owning
+  document.
 
 ## 8. Integrating software-engineering-first work
 
@@ -133,27 +139,27 @@ Log costs as tuples `(agent_time, compute, expert_time)` and mark reevaluation p
 ## 9. Testing and benchmarking cadence
 
 - Maintain a **three-tier loop**:
-  1. _Inner loop_ (\<2 minutes): format, lint, typecheck, plus targeted smoke tests covering touched
+  1. _Inner loop_ (<2 minutes): format, lint, typecheck, plus targeted smoke tests covering touched
      modules. Agents should run these repeatedly while iterating.
-  1. _CI loop_ (\<5 minutes): `just ci` on every PR. Restrict benchmark coverage here to
+  1. _CI loop_ (<5 minutes): `just ci` on every PR. Restrict benchmark coverage here to
      deterministic smoke cases (e.g., one small polytope per algorithm family) to keep runtime
      predictable.
   1. _Deep loop_ (5–20 minutes for broader unit/benchmark suites; up to several hours for profiling
      or HPC/ML experiments). Run these locally before making performance claims or when touching hot
-     paths. Document commands and summaries in PR descriptions or task notes.
+     paths. Document commands and summaries in PR descriptions or briefs.
 - Schedule **long-haul (>1 hour) benchmark or profiling passes roughly monthly** (align with roadmap
-  milestones or completion of major infrastructure tasks such as T1/T2). Record results by:
+  milestones or completion of major infrastructure tasks). Record results by:
   - Saving raw metrics using `pytest --benchmark-autosave` (stored under `.benchmarks/`), and
   - Adding a short narrative summary (command, hardware, notable deltas) to the relevant progress
-    report or task brief. No separate logbook is required—the autosaved artefacts plus the
-    brief-level notes keep history auditable.
+    report or brief. No separate logbook is required—the autosaved artefacts plus the brief-level
+    notes keep history auditable.
 - For HPC or ML experiments, capture: dataset size, hardware, precision, and any reproducibility
   seeds. Prefer comparing against the latest `.benchmarks/` artefact or a dedicated baseline branch
   rather than ad-hoc spreadsheets.
 - Use pytest markers to distinguish smoke vs. deep benchmark sets so CI can stay fast while longer
   runs remain opt-in.
 - Prefer selective execution over skipping suites; when a benchmark is temporarily too slow,
-  document a follow-up task or waiver.
+  document a follow-up brief or waiver.
 
 Following this methodology keeps prioritisation reproducible while leaving room for expert judgement
 and future revisions.

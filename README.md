@@ -11,8 +11,10 @@ operate on JAX arrays, with NumPy/SciPy interop isolated in thin adapters under
 
 - `AGENTS.md` is the single source of truth for roles, conventions, and workflows. Treat this README
   as a convenience overview and defer to `AGENTS.md` whenever guidance differs.
-- Task briefs, RFCs, and background notes live in `docs/`. Start with `docs/02-project-roadmap.md`
-  and `docs/tasks/02-task-portfolio.md` for current priorities.
+- Task briefs and background notes live in `docs/`. Start with
+  `docs/briefs/2025-10-07-task-systolic-overview.md` for the current exploration programme and use
+  the neighbouring briefs for execution details. Draft new briefs using the conventions described in
+  `docs/briefs/2025-10-08-workflow-brief-authoring.md`.
 - A MkDocs site is published from the `docs/` tree; the badge above links to the latest build.
 
 ## Environment
@@ -78,9 +80,10 @@ The training command expects `WANDB_API_KEY` in your environment (see the Justfi
 
 ## Docs & Knowledge Base
 
-- Architecture and module overviews live in `docs/22-code-structure.md` and related notes.
-- Experiment briefs follow the templates in `docs/tasks/`; drafts and scheduled work appear under
-  the corresponding subdirectories.
+- Core references live in `docs/` (project goal, reading list, symplectic quantity catalogues, and
+  capacity/volume surveys).
+- Planning, ADRs, and workflow notes live under `docs/briefs/` as dated Markdown files with YAML
+  front matter (see `docs/briefs/2025-10-08-workflow-brief-authoring.md`).
 - `waivers.toml` tracks approved policy exceptions. CI runs `scripts/check_waivers.py` before other
   checks.
 
@@ -89,7 +92,8 @@ The training command expects `WANDB_API_KEY` in your environment (see the Justfi
 - Scripts under `scripts/` coordinate reproducible experiments (e.g., the logistic regression toy
   pipeline). Prefer `uv run python scripts/<name>.py` when invoking them directly.
 - ML experiment tracking defaults to Weights & Biases; ensure secrets are sourced via `.env` or your
-  environment. See `docs/tasks/rfc/2025-10-05-experimental-training-artifacts.md` for conventions.
+  environment. Capture reproducibility details inside the relevant brief (e.g.,
+  `docs/briefs/2025-10-07-workflow-task-evaluation.md`).
 
 ## License
 

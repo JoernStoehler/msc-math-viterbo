@@ -43,5 +43,5 @@ isoperimetric-type inequalities.
 Documentation pointers:
 
 - Reading list: `docs/12-math-reading-list.md`
-- Thesis topics and implementation notes: `docs/11-math-thesis-topics.md` Refer to
-  `docs/02-project-roadmap.md` for concrete milestones and tasks.
+- Current exploration programme: `docs/briefs/2025-10-07-task-systolic-overview.md`
+- Thesis topic transcription placeholder: `docs/11-math-thesis-topics.md`
