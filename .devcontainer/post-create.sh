@@ -28,13 +28,16 @@ fi
 echo "[post-create] Syncing project dependencies with uv (lockfile-driven)"
 uv sync --extra dev >/dev/null
 
-# Install ripgrep (best-effort) because many workflows rely on it for search.
-echo "[post-create] Ensuring ripgrep is installed"
-if ! command -v rg >/dev/null 2>&1 && command -v apt-get >/dev/null 2>&1; then
+# Install ripgrep, tmux, and terminfo (best-effort) because workflows rely on them.
+echo "[post-create] Ensuring ripgrep, tmux, and terminfo are installed"
+if command -v apt-get >/dev/null 2>&1; then
   export DEBIAN_FRONTEND=noninteractive
   if command -v sudo >/dev/null 2>&1; then SUDO=sudo; else SUDO=""; fi
   $SUDO apt-get update -y >/dev/null || true
-  $SUDO apt-get install -y ripgrep >/dev/null || true
+  if ! command -v rg >/dev/null 2>&1; then $SUDO apt-get install -y ripgrep >/dev/null || true; fi
+  if ! command -v tmux >/dev/null 2>&1; then $SUDO apt-get install -y tmux >/dev/null || true; fi
+  # Install extra terminfo entries (tmux-256color) for proper color support
+  $SUDO apt-get install -y ncurses-term >/dev/null || true
 fi
 
 # Install just (best-effort) so the canonical task runner is available inside the container.

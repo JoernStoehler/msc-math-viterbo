@@ -31,6 +31,8 @@ if ! grep -q 'export JAX_ENABLE_X64=1' "$HOME/.bashrc" 2>/dev/null; then
   } >> "$HOME/.bashrc"
 fi
 
+
+
 if [ ! -f "$HOME/.bash_profile" ]; then touch "$HOME/.bash_profile"; fi
 if ! grep -q '\\.bashrc' "$HOME/.bash_profile" 2>/dev/null; then
   echo 'test -f ~/.bashrc && . ~/.bashrc' >> "$HOME/.bash_profile"
@@ -69,3 +71,24 @@ if [ "${LOCAL_DEVCONTAINER:-}" = "1" ]; then
 fi
 
 echo "[post-start] Environment ready."
+
+# Install/update convenience symlinks for agent tooling and ensure local bin precedence.
+REPO_ROOT="$(pwd)"
+mkdir -p "$HOME/.local/bin"
+# Prepend repo-local bin to PATH for this session
+export PATH="$REPO_ROOT/.devcontainer/bin:$HOME/.local/bin:$PATH"
+if ! grep -q "\.devcontainer/bin" "$HOME/.bashrc" 2>/dev/null; then
+  {
+    echo ''
+    echo '# Add repo-local agent tools to PATH'
+    echo "export PATH=\"$REPO_ROOT/.devcontainer/bin:\$HOME/.local/bin:\$PATH\""
+  } >> "$HOME/.bashrc"
+fi
+
+# Symlink stable entrypoint so it works from any worktree
+ln -sf "$REPO_ROOT/.devcontainer/bin/agent" "$HOME/.local/bin/agent" || true
+
+# Install shell completion (idempotent)
+"$REPO_ROOT/.devcontainer/bin/agent" install-completion >/dev/null 2>&1 || true
+
+:

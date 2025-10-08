@@ -9,6 +9,8 @@
     "LOCAL_DEVCONTAINER": "1"
   },
   "mounts": [
+    // Bind-mount the host parent directory so sibling worktrees persist
+    "type=bind,source=${localWorkspaceFolder}/..,target=/workspaces,consistency=cached",
     // GitHub CLI auth/config persistence
     "source=gh_auth,target=/home/codespace/.config/gh,type=volume",
     // Codex CLI auth/config persistence
