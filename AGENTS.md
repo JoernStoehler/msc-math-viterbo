@@ -57,7 +57,16 @@ documentation, so agents can start their work quickly. If another doc conflicts,
 
 ## 3) Coding Conventions (facts)
 
-- Docstrings: Google style for public APIs; prefer Google for non‑trivial internals.
+- Docstrings: keep Google style, but focus on semantics over shapes.
+  - Public, stable APIs: include concise docstrings that explain semantics, invariants,
+    error behavior, units, and algorithmic intent. Do not restate shapes/dtypes already
+    covered by jaxtyping.
+  - Experimental code (e.g., `src/viterbo/exp1/**`): docstrings are optional during
+    incubation to keep iteration fast. Before promoting APIs to the main namespace,
+    add proper docstrings.
+  - Private helpers (`_*.py` or names starting with `_`): docstrings optional.
+- Half‑spaces naming: prefer semantic names `normals` and `offsets` for ``Bx ≤ c`` in public
+  APIs and docs; reserve short algebraic symbols for small local math blocks only.
 - JAX‑first: library code uses `jax.numpy`; return JAX arrays from public APIs.
 - Arrays & shapes: jaxtyping with explicit shapes/dtypes.
   - Import: `from jaxtyping import Array, Float`; annotate as `Float[Array, " <shape>"]`.
@@ -72,7 +81,7 @@ documentation, so agents can start their work quickly. If another doc conflicts,
 - Logging: use `logging` (module loggers). Logs may be elided under JIT; avoid logging patterns
   that cause tracing errors; prefer logging in non‑jitted paths.
 - Imports & structure: absolute imports; no wildcard imports; no `__all__`. Keep modules modest;
-  split by cohesive concerns. Curate public API in `viterbo/__init__.py` via explicit imports.
+  split by cohesive concerns. Avoid re‑export indirection; prefer explicit import paths in code.
 - Security: credentials/config via env vars; never print or log secrets.
 - Branching & commits: `feat/<scope>`, `fix/<scope>`, `refactor/<scope>`; Conventional Commits.
 - API policy (v0.x): breaking changes allowed; update tests/docs in the same PR.
@@ -123,6 +132,10 @@ def ehz_capacity(
   start with a concise docstring that states the invariant or behaviour under test. Docstrings in
   `tests/` may use plain prose (no Google-style sections required) but must mention what the test
   covers and, for math/code markers, which algorithmic surface or property is exercised.
+- Suite markers: every test must declare exactly one suite marker
+  (`@pytest.mark.smoke`, `@pytest.mark.deep`, or `@pytest.mark.longhaul`). The developer loop
+  (“just checks”) and default CI run select only `smoke` (positive whitelist). Deeper tiers are
+  opt‑in.
 - To inspect metadata quickly, run `just test-metadata ARGS="--marker goal_math"` (omit `ARGS` to
   list everything). The script prints a deterministic summary (`LINES:<n>` + `path::test` rows).
 - Tolerances: choose context‑appropriate tolerances; document rationale. Typical float64 ranges are

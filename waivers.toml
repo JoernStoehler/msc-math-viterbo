@@ -12,3 +12,12 @@
 # justification = "Incremental conversion to Google style to keep PRs small"
 # removal_plan = "Convert remaining docstrings; remove waiver when Ruff passes"
 
+[[waiver]]
+id = "exp1-docstrings-incubation"
+summary = "Relax docstring requirements for experimental exp1 modules during incubation"
+owner = "@maintainer"
+scope = "src/viterbo/exp1/**"
+created = "2025-10-09"
+expires = "2025-10-23"
+justification = "Fast iteration on algorithm design; docstrings focus on semantics and will be added before promotion to stable namespace"
+removal_plan = "Add concise Google-style docstrings to exported symbols in exp1 and remove the per-file ignore + waiver"

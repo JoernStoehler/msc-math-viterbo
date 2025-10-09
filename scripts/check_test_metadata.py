@@ -31,7 +31,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Ensure each pytest test has a goal marker (goal_math, goal_code, or "
-            "goal_performance) and a descriptive docstring."
+            "goal_performance), a descriptive docstring, and optionally a suite marker "
+            "(smoke, deep, longhaul)."
         )
     )
     parser.add_argument(
@@ -40,11 +41,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=["tests"],
         help="File or directory roots to scan (default: tests).",
     )
+    parser.add_argument(
+        "--require-suite",
+        action="store_true",
+        help="Also require exactly one suite marker (smoke/deep/longhaul).",
+    )
     args = parser.parse_args(argv)
 
     issues: list[str] = []
     total_tests = 0
     files_scanned = 0
+
+    from scripts._test_metadata_helpers import SUITE_MARKERS  # type: ignore
 
     for path in iter_test_files(args.paths):
         files_scanned += 1
@@ -62,6 +70,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                     f"{testcase.path}:{testcase.lineno}: "
                     f"multiple goal markers detected ({joined}); choose exactly one."
                 )
+
+            if args.require_suite:
+                suite_markers = testcase.markers & SUITE_MARKERS
+                if not suite_markers:
+                    issues.append(f"{testcase.path}:{testcase.lineno}: missing suite marker (use exactly one of smoke, deep, longhaul).")
+                elif len(suite_markers) > 1:
+                    joined = ", ".join(sorted(suite_markers))
+                    issues.append(f"{testcase.path}:{testcase.lineno}: multiple suite markers detected ({joined}); choose exactly one.")
 
             if testcase.docstring is None or not testcase.docstring.strip():
                 issues.append(

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Iterable, Iterator, Sequence
 
 GOAL_MARKERS = {"goal_math", "goal_code", "goal_performance"}
+SUITE_MARKERS = {"smoke", "deep", "longhaul"}
 
 
 @dataclass
@@ -22,7 +23,7 @@ class TestCase:
 
 
 def _marker_from_decorator(decorator: ast.AST) -> str | None:
-    """Extract the pytest marker name if the decorator is a goal marker."""
+    """Extract a pytest marker name if present (``pytest.mark.<name>``)."""
     target = decorator
     if isinstance(target, ast.Call):
         target = target.func
@@ -34,8 +35,7 @@ def _marker_from_decorator(decorator: ast.AST) -> str | None:
                 and target.value.value.id == "pytest"
                 and target.value.attr == "mark"
             ):
-                if target.attr in GOAL_MARKERS:
-                    return target.attr
+                return target.attr
     return None
 
 

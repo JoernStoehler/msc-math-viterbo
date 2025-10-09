@@ -4,5 +4,6 @@
   "typeCheckingMode": "strict",
   "reportMissingTypeStubs": "error",
   "reportUnknownMemberType": "error",
-  "reportUnknownVariableType": "error"
+  "reportUnknownVariableType": "error",
+  "reportUnnecessaryIsInstance": "warning"
 }

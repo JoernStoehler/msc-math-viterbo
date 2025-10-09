@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.13' and sys_platform == 'linux'",
@@ -189,6 +189,23 @@ wheels = [
 ]
 
 [[package]]
+name = "chex"
+version = "0.1.91"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "absl-py" },
+    { name = "jax" },
+    { name = "jaxlib" },
+    { name = "numpy" },
+    { name = "toolz" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5b/7d/812f01e7b2ddf28a0caa8dde56bd951a2c8f691c9bbfce38d469458d1502/chex-0.1.91.tar.gz", hash = "sha256:65367a521415ada905b8c0222b0a41a68337fcadf79a1fb6fc992dbd95dd9f76", size = 90302, upload-time = "2025-09-01T21:49:32.834Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/12/0c/96102c01dd02ae740d4afc3644d5c7d7fc51d3feefd67300a2aa1ddbf7cb/chex-0.1.91-py3-none-any.whl", hash = "sha256:6fc4cbfc22301c08d4a7ef706045668410100962eba8ba6af03fa07f4e5dcf9b", size = 100965, upload-time = "2025-09-01T21:49:31.141Z" },
+]
+
+[[package]]
 name = "clarabel"
 version = "0.11.1"
 source = { registry = "https://pypi.org/simple" }
@@ -204,23 +221,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/2b/9e/7af10d2b540b39f1a05d1ebba604fce933cc9bc0e65e88ec3b7a84976425/clarabel-0.11.1-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e4837b9d0db01e98239f04b1e3526a6cf568529d3c19a8b3f591befdc467f9bb", size = 1079226, upload-time = "2025-06-11T16:49:00.987Z" },
     { url = "https://files.pythonhosted.org/packages/6b/a9/c76edf781ca3283186ff4b54a9a4fb51367fd04313a68e2b09f062407439/clarabel-0.11.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c8c41aaa6f3f8c0f3bd9d86c3e568dcaee079562c075bd2ec9fb3a80287380ef", size = 1164345, upload-time = "2025-06-11T16:49:02.675Z" },
     { url = "https://files.pythonhosted.org/packages/41/e6/4eee3062088c221e5a18b054e51c69f616e0bb0dc1b0a1a5e0fe90dfa18e/clarabel-0.11.1-cp39-abi3-win_amd64.whl", hash = "sha256:557d5148a4377ae1980b65d00605ae870a8f34f95f0f6a41e04aa6d3edf67148", size = 887310, upload-time = "2025-06-11T16:49:04.277Z" },
-]
-
-[[package]]
-name = "chex"
-version = "0.1.91"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "absl-py" },
-    { name = "jax" },
-    { name = "jaxlib" },
-    { name = "numpy" },
-    { name = "toolz" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/5b/7d/812f01e7b2ddf28a0caa8dde56bd951a2c8f691c9bbfce38d469458d1502/chex-0.1.91.tar.gz", hash = "sha256:65367a521415ada905b8c0222b0a41a68337fcadf79a1fb6fc992dbd95dd9f76", size = 90302, upload-time = "2025-09-01T21:49:32.834Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/12/0c/96102c01dd02ae740d4afc3644d5c7d7fc51d3feefd67300a2aa1ddbf7cb/chex-0.1.91-py3-none-any.whl", hash = "sha256:6fc4cbfc22301c08d4a7ef706045668410100962eba8ba6af03fa07f4e5dcf9b", size = 100965, upload-time = "2025-09-01T21:49:31.141Z" },
 ]
 
 [[package]]
@@ -350,6 +350,21 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/48/55/1542a643403cd57adf83e27243dc2a057fb4fab03f38f5de3cb0327e468a/cvxpy-1.7.3-cp313-cp313-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:cfed5afe3d53fc7835ea8cc9e281d0bbf3b4edcc625e8a1162c42cb807b8830d", size = 1204232, upload-time = "2025-09-22T18:22:27.222Z" },
     { url = "https://files.pythonhosted.org/packages/f8/bf/9b5b5abcf06038eea8826d440c5c24c1f32c7339c750f0b705d2fe4cdafc/cvxpy-1.7.3-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2d8b2213296478478d267537681f96ea7d9941d5bb1fa61717797f9fabd3b747", size = 1233261, upload-time = "2025-09-22T18:22:28.709Z" },
     { url = "https://files.pythonhosted.org/packages/02/ca/4648ad361e0060834104672c2ce0d6a96996f374e83615fc69a87b1e3841/cvxpy-1.7.3-cp313-cp313-win_amd64.whl", hash = "sha256:d1def84c970a8a5765849e225732c6308c1bba8900bbfa7d4a17ea955e82ce80", size = 1131760, upload-time = "2025-09-22T18:01:04.595Z" },
+]
+
+[[package]]
+name = "equinox"
+version = "0.13.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jax" },
+    { name = "jaxtyping" },
+    { name = "typing-extensions" },
+    { name = "wadler-lindig" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c8/43/2b7b3895f910f2335ade18a261b3f77ce9466605adbb211c4e254ad14b25/equinox-0.13.1.tar.gz", hash = "sha256:e90f11cfe66b2f73f5c172260a17c48851794a0f243dd2cbe4ea70f4c90cbd07", size = 139339, upload-time = "2025-09-20T15:21:40.199Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1f/10/9c0687024ce9e478a667262d111fb15502828d28c93482b48446e3558efd/equinox-0.13.1-py3-none-any.whl", hash = "sha256:3c6e9043352c9a63216b40e3f3cdd1d1452f82a0175cfe322f79630ebdb80d71", size = 179254, upload-time = "2025-09-20T15:21:38.679Z" },
 ]
 
 [[package]]
@@ -1077,6 +1092,32 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f9/e2/3e91f31a7d2b083fe6ef3fa267035b518369d9511ffab804f839851d2779/pluggy-1.6.0.tar.gz", hash = "sha256:7dcc130b76258d33b90f61b658791dede3486c3e6bfb003ee5c9bfb396dd22f3", size = 69412, upload-time = "2025-05-15T12:30:07.975Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/54/20/4d324d65cc6d9205fabedc306948156824eb9f0ee1633355a8f7ec5c66bf/pluggy-1.6.0-py3-none-any.whl", hash = "sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746", size = 20538, upload-time = "2025-05-15T12:30:06.134Z" },
+]
+
+[[package]]
+name = "polars"
+version = "1.34.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "polars-runtime-32" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a1/3e/35fcf5bf51404371bb172b289a5065778dc97adca4416e199c294125eb05/polars-1.34.0.tar.gz", hash = "sha256:5de5f871027db4b11bcf39215a2d6b13b4a80baf8a55c5862d4ebedfd5cd4013", size = 684309, upload-time = "2025-10-02T18:31:04.396Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6b/80/1791ac226bb989bef30fe8fde752b2021b6ec5dfd6e880262596aedf4c05/polars-1.34.0-py3-none-any.whl", hash = "sha256:40d2f357b4d9e447ad28bd2c9923e4318791a7c18eb68f31f1fbf11180f41391", size = 772686, upload-time = "2025-10-02T18:29:59.492Z" },
+]
+
+[[package]]
+name = "polars-runtime-32"
+version = "1.34.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/02/10/1189afb14cc47ed215ccf7fbd00ed21c48edfd89e51c16f8628a33ae4b1b/polars_runtime_32-1.34.0.tar.gz", hash = "sha256:ebe6f865128a0d833f53a3f6828360761ad86d1698bceb22bef9fd999500dc1c", size = 2634491, upload-time = "2025-10-02T18:31:05.502Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/97/35/bc4f1a9dcef61845e8e4e5d2318470b002b93a3564026f0643f562761ecb/polars_runtime_32-1.34.0-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:2878f9951e91121afe60c25433ef270b9a221e6ebf3de5f6642346b38cab3f03", size = 39655423, upload-time = "2025-10-02T18:30:02.846Z" },
+    { url = "https://files.pythonhosted.org/packages/a6/bb/d655a103e75b7c81c47a3c2d276be0200c0c15cfb6fd47f17932ddcf7519/polars_runtime_32-1.34.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:fbc329c7d34a924228cc5dcdbbd4696d94411a3a5b15ad8bb868634c204e1951", size = 35986049, upload-time = "2025-10-02T18:30:05.848Z" },
+    { url = "https://files.pythonhosted.org/packages/9e/ce/11ca850b7862cb43605e5d86cdf655614376e0a059871cf8305af5406554/polars_runtime_32-1.34.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:93fa51d88a2d12ea996a5747aad5647d22a86cce73c80f208e61f487b10bc448", size = 40261269, upload-time = "2025-10-02T18:30:08.48Z" },
+    { url = "https://files.pythonhosted.org/packages/d8/25/77d12018c35489e19f7650b40679714a834effafc25d61e8dcee7c4fafce/polars_runtime_32-1.34.0-cp39-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:79e4d696392c6d8d51f4347f0b167c52eef303c9d87093c0c68e8651198735b7", size = 37049077, upload-time = "2025-10-02T18:30:11.162Z" },
+    { url = "https://files.pythonhosted.org/packages/e2/75/c30049d45ea1365151f86f650ed5354124ff3209f0abe588664c8eb13a31/polars_runtime_32-1.34.0-cp39-abi3-win_amd64.whl", hash = "sha256:2501d6b29d9001ea5ea2fd9b598787e10ddf45d8c4a87c2bead75159e8a15711", size = 40105782, upload-time = "2025-10-02T18:30:14.597Z" },
+    { url = "https://files.pythonhosted.org/packages/a3/31/84efa27aa3478c8670bac1a720c8b1aee5c58c9c657c980e5e5c47fde883/polars_runtime_32-1.34.0-cp39-abi3-win_arm64.whl", hash = "sha256:f9ed1765378dfe0bcd1ac5ec570dd9eab27ea728bbc980cc9a76eebc55586559", size = 35873216, upload-time = "2025-10-02T18:30:17.439Z" },
 ]
 
 [[package]]
@@ -1809,6 +1850,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "cvxpy" },
+    { name = "equinox" },
     { name = "highspy" },
     { name = "hypothesis" },
     { name = "jax" },
@@ -1817,6 +1859,7 @@ dependencies = [
     { name = "numpy" },
     { name = "optax" },
     { name = "orbax-checkpoint" },
+    { name = "polars" },
     { name = "pyarrow" },
     { name = "scipy" },
     { name = "tensorboardx" },
@@ -1848,6 +1891,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "cvxpy", specifier = ">=1.7.3" },
+    { name = "equinox", specifier = ">=0.13.1" },
     { name = "highspy", specifier = ">=1.11.0" },
     { name = "hypothesis", specifier = ">=6.140.3" },
     { name = "jax", specifier = ">=0.7.2" },
@@ -1860,6 +1904,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.3.3" },
     { name = "optax", specifier = ">=0.2.4" },
     { name = "orbax-checkpoint", specifier = ">=0.11.25" },
+    { name = "polars", specifier = ">=1.34.0" },
     { name = "py-spy", marker = "extra == 'dev'", specifier = ">=0.4.1" },
     { name = "pyarrow", specifier = ">=21.0.0" },
     { name = "pymdown-extensions", marker = "extra == 'dev'", specifier = ">=10.8.1" },
