@@ -111,14 +111,18 @@ def _enumerate_cycles(
         neighbor_lists[start] = []
 
 
-def _component_containing(start: int, neighbor_lists: list[list[int]], min_vertex: int) -> set[int] | None:
+def _component_containing(
+    start: int, neighbor_lists: list[list[int]], min_vertex: int
+) -> set[int] | None:
     for comp in _strongly_connected_components(neighbor_lists, min_vertex):
         if start in comp:
             return comp
     return None
 
 
-def _strongly_connected_components(neighbor_lists: list[list[int]], min_vertex: int) -> list[set[int]]:
+def _strongly_connected_components(
+    neighbor_lists: list[list[int]], min_vertex: int
+) -> list[set[int]]:
     n = len(neighbor_lists)
     index = 0
     stack: list[int] = []
@@ -197,12 +201,10 @@ def _support_function(
     return float(jnp.max(V @ jnp.asarray(d, dtype=jnp.float64)))
 
 
-
 # Public aliases to avoid private import in callers under strict typing.
-def enumerate_cycles(
-    fan: MinkowskiNormalFan, *, max_length: int
-) -> Iterable[tuple[int, ...]]:
+def enumerate_cycles(fan: MinkowskiNormalFan, *, max_length: int) -> Iterable[tuple[int, ...]]:
     return _enumerate_cycles(fan, max_length=max_length)
+
 
 def cycle_length(
     cycle: tuple[int, ...],

@@ -36,4 +36,3 @@ def test_to_lagrangian_product_rejects_mixed_support_facets() -> None:
         from viterbo.exp1.polytopes import to_lagrangian_product
 
         _ = to_lagrangian_product(H_mixed)
-

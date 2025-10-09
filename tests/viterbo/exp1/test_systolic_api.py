@@ -23,4 +23,3 @@ def test_systolic_ratio_invariant_under_scaling_for_product() -> None:
     assert math.isfinite(base) and math.isfinite(val)
     assert math.isclose(base, val, rel_tol=1e-9, abs_tol=1e-12)
     assert base > 0.0
-

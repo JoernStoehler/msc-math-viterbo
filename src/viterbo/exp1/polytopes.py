@@ -27,11 +27,14 @@ class HalfspacePolytope:
       - ``offsets`` are the right-hand sides (``c``)
       - Row normalization is not required; redundant facets may be present.
     """
+
     normals: Float[Array, " m dim"]
     offsets: Float[Array, " m"]
 
     def as_tuple(self) -> tuple[Float[Array, " m dim"], Float[Array, " m"]]:
-        return jnp.asarray(self.normals, dtype=jnp.float64), jnp.asarray(self.offsets, dtype=jnp.float64)
+        return jnp.asarray(self.normals, dtype=jnp.float64), jnp.asarray(
+            self.offsets, dtype=jnp.float64
+        )
 
     @property
     def dim(self) -> int:
@@ -46,6 +49,7 @@ class VertexPolytope:
       - The vertex list need not be ordered; duplicate points may appear before cleanup.
       - Prefer converting to half-spaces for algorithms that operate on facets.
     """
+
     v: Float[Array, " k dim"]
 
     def as_tuple(self) -> tuple[Float[Array, " k dim"]]:
@@ -63,6 +67,7 @@ class LagrangianProductPolytope:
     Fields use (p, q) to reflect the usual ``R^{2n} = R^n_p × R^n_q`` split.
     Encodes both half-spaces (normals/offsets) and vertices for each 2D factor.
     """
+
     normals_p: Float[Array, " m1 2"]
     offsets_p: Float[Array, " m1"]
     verts_p: Float[Array, " k1 2"]
@@ -110,7 +115,9 @@ def to_vertices(P: Polytope, *, atol: float = 1e-9) -> VertexPolytope:
         right = jnp.asarray(P.verts_q, dtype=jnp.float64)
         k1 = int(left.shape[0])
         k2 = int(right.shape[0])
-        verts = jnp.concatenate((jnp.repeat(left, repeats=k2, axis=0), jnp.tile(right, (k1, 1))), axis=1)
+        verts = jnp.concatenate(
+            (jnp.repeat(left, repeats=k2, axis=0), jnp.tile(right, (k1, 1))), axis=1
+        )
         return VertexPolytope(v=verts)
     raise TypeError("Unsupported polytope type for to_vertices")
 
@@ -127,7 +134,8 @@ def to_halfspaces(P: Polytope) -> HalfspacePolytope:
         (verts,) = P.as_tuple()
         normals, offsets = _halfspaces_from_vertices(verts)
         return HalfspacePolytope(
-            normals=jnp.asarray(normals, dtype=jnp.float64), offsets=jnp.asarray(offsets, dtype=jnp.float64)
+            normals=jnp.asarray(normals, dtype=jnp.float64),
+            offsets=jnp.asarray(offsets, dtype=jnp.float64),
         )
     if isinstance(P, LagrangianProductPolytope):
         # Embed blocks into R^4 half-spaces
@@ -136,7 +144,8 @@ def to_halfspaces(P: Polytope) -> HalfspacePolytope:
         normals = jnp.vstack((normals_left, normals_right))
         offsets = jnp.concatenate((P.offsets_p, P.offsets_q))
         return HalfspacePolytope(
-            normals=jnp.asarray(normals, dtype=jnp.float64), offsets=jnp.asarray(offsets, dtype=jnp.float64)
+            normals=jnp.asarray(normals, dtype=jnp.float64),
+            offsets=jnp.asarray(offsets, dtype=jnp.float64),
         )
     raise TypeError("Unsupported polytope type for to_halfspaces")
 
@@ -199,7 +208,8 @@ def matmul(mat: Float[Array, " dim dim"], P: T) -> T:
         mat_inv = jnp.linalg.inv(mat)
         A_new = jnp.asarray(P.normals) @ mat_inv
         return HalfspacePolytope(
-            normals=jnp.asarray(A_new, dtype=jnp.float64), offsets=jnp.asarray(P.offsets, dtype=jnp.float64)
+            normals=jnp.asarray(A_new, dtype=jnp.float64),
+            offsets=jnp.asarray(P.offsets, dtype=jnp.float64),
         )  # type: ignore[return-value]
     if isinstance(P, VertexPolytope):
         if mat.shape != (P.dim, P.dim):
@@ -214,7 +224,8 @@ def scale(c: Float[Array, ""], P: Polytope) -> Polytope:
     c = jnp.asarray(c, dtype=jnp.float64)
     if isinstance(P, HalfspacePolytope):
         return HalfspacePolytope(
-            normals=jnp.asarray(P.normals, dtype=jnp.float64) / c, offsets=jnp.asarray(P.offsets, dtype=jnp.float64)
+            normals=jnp.asarray(P.normals, dtype=jnp.float64) / c,
+            offsets=jnp.asarray(P.offsets, dtype=jnp.float64),
         )
     if isinstance(P, VertexPolytope):
         return VertexPolytope(v=jnp.asarray(P.v, dtype=jnp.float64) * c)

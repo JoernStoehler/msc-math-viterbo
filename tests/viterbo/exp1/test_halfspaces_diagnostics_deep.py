@@ -41,4 +41,3 @@ def test_hypercube_high_dim_has_stable_conditioning() -> None:
     assert math.isclose(float(rep.condition_number), 1.0, rel_tol=1e-12, abs_tol=1e-12)
     assert float(rep.duplicate_facet_fraction) == 0.0
     assert float(rep.max_abs_row_correlation) <= 1.0
-

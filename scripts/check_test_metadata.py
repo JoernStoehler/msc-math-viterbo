@@ -74,10 +74,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             if args.require_suite:
                 suite_markers = testcase.markers & SUITE_MARKERS
                 if not suite_markers:
-                    issues.append(f"{testcase.path}:{testcase.lineno}: missing suite marker (use exactly one of smoke, deep, longhaul).")
+                    issues.append(
+                        f"{testcase.path}:{testcase.lineno}: missing suite marker (use exactly one of smoke, deep, longhaul)."
+                    )
                 elif len(suite_markers) > 1:
                     joined = ", ".join(sorted(suite_markers))
-                    issues.append(f"{testcase.path}:{testcase.lineno}: multiple suite markers detected ({joined}); choose exactly one.")
+                    issues.append(
+                        f"{testcase.path}:{testcase.lineno}: multiple suite markers detected ({joined}); choose exactly one."
+                    )
 
             if testcase.docstring is None or not testcase.docstring.strip():
                 issues.append(

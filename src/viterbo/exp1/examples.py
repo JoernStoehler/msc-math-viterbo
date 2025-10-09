@@ -19,7 +19,7 @@ def regular_ngon2d(n: int) -> VertexPolytope:
     # Circumradius 1 polygon with evenly spaced vertices.
     if n < 3:
         raise ValueError("n must be >= 3")
-    angles = (jnp.arange(n, dtype=jnp.float64) * (2.0 * math.pi / float(n)))
+    angles = jnp.arange(n, dtype=jnp.float64) * (2.0 * math.pi / float(n))
     verts = jnp.stack((jnp.cos(angles), jnp.sin(angles)), axis=1)
     return VertexPolytope(v=jnp.asarray(verts, dtype=jnp.float64))
 
@@ -35,6 +35,7 @@ def hypercube(dim: int) -> HalfspacePolytope:
 def crosspolytope(dim: int) -> HalfspacePolytope:
     """Cross-polytope (L1 ball) of radius 1 in ``R^dim`` (half-spaces)."""
     import itertools
+
     rows = jnp.asarray(list(itertools.product((-1.0, 1.0), repeat=dim)), dtype=jnp.float64)
     A = rows
     b = jnp.ones(A.shape[0], dtype=jnp.float64)

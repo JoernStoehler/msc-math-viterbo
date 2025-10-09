@@ -19,4 +19,3 @@ def test_reeb_reference_capacity_and_cycle_on_counterexample_product() -> None:
     cap, cycle = compute_ehz_capacity_and_cycle_reference(A, b, atol=1e-9)
     assert np.isfinite(cap)
     assert cycle.shape[1] == 4 and cycle.shape[0] >= 3
-

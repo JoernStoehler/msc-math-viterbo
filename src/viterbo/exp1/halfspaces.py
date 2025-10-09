@@ -191,4 +191,3 @@ def halfspace_degeneracy_metrics(
         min_simple_vertex_sigma=v_smin,
         max_simple_vertex_condition=v_cond,
     )
-

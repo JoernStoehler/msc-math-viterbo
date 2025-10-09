@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from jaxtyping import Array, Float
@@ -12,6 +11,7 @@ def _find_simple_cycle(graph: dict[int, set[int]]) -> list[int] | None:
     visited: set[int] = set()
     stack: list[int] = []
     in_stack: set[int] = set()
+
     def dfs(u: int) -> list[int] | None:
         visited.add(u)
         stack.append(u)
@@ -28,6 +28,7 @@ def _find_simple_cycle(graph: dict[int, set[int]]) -> list[int] | None:
         stack.pop()
         in_stack.discard(u)
         return None
+
     for start in list(graph.keys()):
         if start not in visited:
             cyc = dfs(start)
@@ -76,5 +77,6 @@ def compute_ehz_capacity_and_cycle_reference(
     ids = cyc_ids[:-1]
     pts = [verts[og.edges[eid].tail_vertex] for eid in ids]
     import jax.numpy as jnp
+
     cycle_points = jnp.stack(pts, axis=0) if pts else jnp.zeros((0, 4), dtype=jnp.float64)
     return cap, cycle_points

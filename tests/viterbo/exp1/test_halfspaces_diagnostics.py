@@ -33,4 +33,7 @@ def test_halfspace_degeneracy_metrics_with_vertices() -> None:
     assert rep.vertex_count is not None and rep.vertex_count >= 3
     assert rep.simple_vertex_count is not None and rep.simple_vertex_count >= 3
     assert rep.min_simple_vertex_sigma is not None and float(rep.min_simple_vertex_sigma) > 0.0
-    assert rep.max_simple_vertex_condition is not None and float(rep.max_simple_vertex_condition) >= 1.0
+    assert (
+        rep.max_simple_vertex_condition is not None
+        and float(rep.max_simple_vertex_condition) >= 1.0
+    )

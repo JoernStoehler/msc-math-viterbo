@@ -18,7 +18,6 @@ from viterbo.exp1.polytopes import (
 )
 
 
-
 def _halfspaces_for(P: Polytope) -> tuple[Float[Array, " m dim"], Float[Array, " m"]]:
     if isinstance(P, HalfspacePolytope):
         return P.as_tuple()

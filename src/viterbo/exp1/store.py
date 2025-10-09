@@ -66,7 +66,6 @@ def ensure_dataset(path: str) -> None:
     Implementations may write an empty Parquet with the MVP schema or defer
     schema materialization until first append.
     """
-
     ...
 
 
@@ -75,7 +74,6 @@ def append_rows(path: str, rows: Iterable[MvpRow]) -> None:
 
     MVP semantics may read existing rows, concatenate, and rewrite the file.
     """
-
     ...
 
 
@@ -85,7 +83,6 @@ def scan_lazy(path: str) -> Any:
     Intended to be a Polars ``LazyFrame`` via the `_wrapped.polars_io` module.
     The return type is ``Any`` to avoid hard dependency in the exp1 layer.
     """
-
     ...
 
 
@@ -94,13 +91,10 @@ def load_rows(path: str, columns: Sequence[str] | None = None) -> Any:
 
     Should delegate to the Polars wrapper read function.
     """
-
     ...
 
 
-def select_halfspaces_volume_capacity(
-    path: str, polytope_ids: Sequence[str] | None = None
-) -> Any:
+def select_halfspaces_volume_capacity(path: str, polytope_ids: Sequence[str] | None = None) -> Any:
     """Return halfspace data, volume, and capacity for selected polytopes.
 
     Args:
@@ -111,7 +105,6 @@ def select_halfspaces_volume_capacity(
       A DataFrame-like object or an iterable of dicts with keys:
       ``hrep_normals``, ``hrep_offsets``, ``volume``, ``capacity_ehz``.
     """
-
     ...
 
 
@@ -140,5 +133,4 @@ def log_row(poly: Any, quantities: Mapping[str, Any]) -> MvpRow:
     Returns:
       A dictionary (``MvpRow``) ready to append to the dataset.
     """
-
     ...

@@ -10,6 +10,7 @@ from typing import Any, Iterable, Mapping, Sequence
 
 import polars as pl  # type: ignore[import-not-found]
 
+
 def rows_to_polars(rows: Iterable[Mapping[str, Any]]) -> pl.DataFrame:
     """Convert an iterable of row dicts to a Polars ``DataFrame``.
 
@@ -19,8 +20,8 @@ def rows_to_polars(rows: Iterable[Mapping[str, Any]]) -> pl.DataFrame:
     Returns:
       A Polars ``DataFrame`` with best-effort column types.
     """
-
     ...
+
 
 def read_parquet(path: str, columns: Sequence[str] | None = None) -> pl.DataFrame:
     """Read a Parquet dataset into a Polars ``DataFrame``.
@@ -29,7 +30,6 @@ def read_parquet(path: str, columns: Sequence[str] | None = None) -> pl.DataFram
       path: Parquet file path.
       columns: Optional subset of columns to read.
     """
-
     ...
 
 
@@ -38,7 +38,6 @@ def write_parquet(df: "pl.DataFrame", path: str) -> None:
 
     Overwrite semantics are acceptable in the current MVP.
     """
-
     ...
 
 
@@ -47,7 +46,6 @@ def scan_parquet(path: str) -> pl.LazyFrame:
 
     Useful for predicates and column projection without loading full data.
     """
-
     ...
 
 
@@ -61,6 +59,4 @@ def materialize_to_jnp(lf: "pl.LazyFrame", columns: Sequence[str]) -> tuple[Any,
     Returns:
       Tuple of JAX arrays (float64 by convention for numeric columns).
     """
-
     ...
-

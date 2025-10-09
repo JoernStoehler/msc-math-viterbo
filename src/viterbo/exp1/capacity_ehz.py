@@ -17,14 +17,23 @@ from viterbo.exp1.minkowski_billiards.fan import build_normal_fan as _build_fan
 from viterbo.exp1.minkowski_billiards.reference import cycle_length, enumerate_cycles
 
 
-def capacity(P: Polytope, method: str = "auto", *, geometry: LagrangianProductPolytope | None = None, max_bounces: int | None = None, tol: float = 1e-10) -> Float[Array, ""]:
+def capacity(
+    P: Polytope,
+    method: str = "auto",
+    *,
+    geometry: LagrangianProductPolytope | None = None,
+    max_bounces: int | None = None,
+    tol: float = 1e-10,
+) -> Float[Array, ""]:
     """Compute capacity via Minkowski or facet-normal (exp1 scope).
 
     - "minkowski_reference": 2×2 product only; returns Minkowski billiard length.
     - "facet_reference": Haim–Kislev facet-normal formula (small dims; m<=7).
     - "auto": choose Minkowski for Lagrangian products; otherwise facet_reference.
     """
-    if method.startswith("minkowski") or (method == "auto" and isinstance(P, LagrangianProductPolytope)):
+    if method.startswith("minkowski") or (
+        method == "auto" and isinstance(P, LagrangianProductPolytope)
+    ):
         if not isinstance(P, LagrangianProductPolytope):
             raise ValueError("Minkowski method requires a LagrangianProductPolytope")
         val, _ = capacity_minkowski_billiard(P, geometry=geometry, max_bounces=max_bounces, tol=tol)
@@ -180,7 +189,7 @@ def _prepare_subset(
     J: Float[Array, " D D"],
     *,
     tol: float,
-) -> tuple[Float[Array, " m" ] | None, Float[Array, " m m"] | None]:
+) -> tuple[Float[Array, " m"] | None, Float[Array, " m m"] | None]:
     idx = jnp.asarray(tuple(rows), dtype=int)
     Bsub = B[idx]
     csub = c[idx]
