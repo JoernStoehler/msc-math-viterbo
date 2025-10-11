@@ -95,8 +95,7 @@ $\ell_T$-length $8$ that realises $c_{\mathrm{EHZ}}([-1,1]^2 \times B_1^2)$ and 
 Artstein-Avidan–Ostrover bounds.【F:docs/convex-polytope-cehz-capacities.md†L111-L121】We use this
 configuration as the canonical baseline when validating the reference and fast solvers and enforce a
 minimum of three distinct reflections in the enumeration to exclude degenerate two-bounce
-paths.【F:tests/viterbo/symplectic/capacity/minkowski_billiards/test_minkowski_billiards.py†L27-L65】
-【F:src/viterbo/symplectic/capacity/minkowski_billiards/reference.py†L20-L46】
+paths.【F:tests/viterbo/modern/test_capacity_solvers.py†L132-L141】【F:src/viterbo/modern/capacity/minkowski_billiards.py†L129-L220】
 
 ## 5. Convex Programming Relaxations via Support Functions (General Dimension)
 

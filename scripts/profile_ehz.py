@@ -10,11 +10,12 @@ from dataclasses import dataclass
 from typing import Callable, Iterable, Sequence
 
 import jax
+import jax.numpy as jnp
 import numpy as np
 
 from viterbo.geometry.polytopes import Polytope, catalog, random_transformations
-from viterbo.symplectic.capacity import compute_ehz_capacity_reference
-from viterbo.symplectic.capacity.facet_normals.fast import compute_ehz_capacity_fast
+from viterbo.modern.capacity import ehz_capacity_fast, ehz_capacity_reference
+from viterbo.modern.types import Polytope as ModernPolytope
 
 Algorithm = Callable[[np.ndarray, np.ndarray], float]
 
@@ -28,9 +29,18 @@ class ProfileConfig:
     repeats: int
 
 
+def _bundle_from_halfspaces(B: np.ndarray, c: np.ndarray) -> ModernPolytope:
+    normals = jnp.asarray(B, dtype=jnp.float64)
+    offsets = jnp.asarray(c, dtype=jnp.float64)
+    dimension = normals.shape[1] if normals.ndim == 2 else 0
+    vertices = jnp.empty((0, dimension), dtype=jnp.float64)
+    incidence = jnp.empty((0, normals.shape[0]), dtype=bool)
+    return ModernPolytope(normals=normals, offsets=offsets, vertices=vertices, incidence=incidence)
+
+
 ALGORITHMS: dict[str, Algorithm] = {
-    "reference": compute_ehz_capacity_reference,
-    "fast": compute_ehz_capacity_fast,
+    "reference": lambda B, c: float(ehz_capacity_reference(_bundle_from_halfspaces(B, c))),
+    "fast": lambda B, c: float(ehz_capacity_fast(_bundle_from_halfspaces(B, c))),
 }
 
 

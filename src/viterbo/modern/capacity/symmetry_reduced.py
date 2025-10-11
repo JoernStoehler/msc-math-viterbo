@@ -74,11 +74,15 @@ def ehz_capacity_reference_symmetry_reduced(
     *,
     pairing: FacetPairingMetadata | None = None,
 ) -> float:
-    """Reference symmetry-reduced capacity using averaged paired radii."""
-    effective_radii = _reduced_radii(bundle, pairing or detect_opposite_facet_pairs(bundle))
-    if effective_radii.size == 0:
-        return 0.0
-    return float(4.0 * jnp.min(effective_radii))
+    """Reference symmetry-reduced capacity delegating to the facet solver."""
+
+    try:
+        return float(facet_normals.ehz_capacity_reference_facet_normals(bundle))
+    except ValueError:
+        effective_radii = _reduced_radii(bundle, pairing or detect_opposite_facet_pairs(bundle))
+        if effective_radii.size == 0:
+            return 0.0
+        return float(4.0 * jnp.min(effective_radii))
 
 
 def ehz_capacity_fast_symmetry_reduced(

@@ -26,13 +26,18 @@ from jaxtyping import Array, Float
 from viterbo._wrapped.spatial import convex_hull_equations
 from viterbo.geometry.halfspaces import enumerate_vertices, remove_redundant_facets
 from viterbo.geometry.polytopes import _shared
-from viterbo.symplectic.core import standard_symplectic_matrix
 
 NormalCone = _shared.NormalCone
 Polytope = _shared.Polytope
 PolytopeCombinatorics = _shared.PolytopeCombinatorics
 clear_polytope_cache = _shared.clear_polytope_cache
 polytope_fingerprint = _shared.polytope_fingerprint
+
+
+def _standard_symplectic_matrix(dimension: int) -> Float[Array, " dimension dimension"]:
+    from viterbo.modern.symplectic import standard_symplectic_matrix as _modern_standard_symplectic_matrix
+
+    return _modern_standard_symplectic_matrix(dimension)
 
 
 def vertices_from_halfspaces(
@@ -404,7 +409,7 @@ def haim_kislev_action(
         raise ValueError(msg)
 
     dimension = matrix.shape[1]
-    J = standard_symplectic_matrix(dimension)
+    J = _standard_symplectic_matrix(dimension)
 
     rows = jnp.asarray(tuple(subset), dtype=int)
     B_subset = matrix[rows]

@@ -17,6 +17,8 @@ from viterbo.modern.capacity.facet_normals import (
 )
 from viterbo.modern.capacity.milp import MilpCapacityResult
 from viterbo.modern.capacity.minkowski_billiards import (
+    MinkowskiNormalFan,
+    build_normal_fan,
     minkowski_billiard_length_fast,
     minkowski_billiard_length_reference,
 )
@@ -36,21 +38,8 @@ from viterbo.modern.capacity.symmetry_reduced import (
     ehz_capacity_fast_symmetry_reduced,
     ehz_capacity_reference_symmetry_reduced,
 )
+from viterbo.modern.numerics import FACET_SOLVER_TOLERANCE
 from viterbo.modern.types import Polytope
-
-
-def _polygon_area(vertices: Float[Array, " num_vertices 2"]) -> float:
-    if vertices.shape[0] < 3:
-        return 0.0
-    centroid = jnp.mean(vertices, axis=0)
-    rel = vertices - centroid
-    angles = jnp.arctan2(rel[:, 1], rel[:, 0])
-    order = jnp.argsort(angles)
-    ordered = vertices[order]
-    x = ordered[:, 0]
-    y = ordered[:, 1]
-    area = 0.5 * jnp.abs(jnp.sum(x * jnp.roll(y, -1) - y * jnp.roll(x, -1)))
-    return float(area)
 
 
 def available_solvers() -> tuple[str, ...]:
@@ -75,24 +64,28 @@ def available_solvers() -> tuple[str, ...]:
     )
 
 
-def ehz_capacity_reference(bundle: Polytope) -> float:
-    """Reference EHZ capacity heuristic."""
-    dimension = int(bundle.vertices.shape[1]) if bundle.vertices.ndim else 0
-    if dimension == 2 and bundle.vertices.size:
-        return _polygon_area(bundle.vertices)
-    radii = support_radii(bundle)
-    if radii.size == 0:
-        return 0.0
-    return float(4.0 * jnp.min(radii))
+def ehz_capacity_reference(
+    bundle: Polytope,
+    *,
+    tol: float = FACET_SOLVER_TOLERANCE,
+) -> float:
+    """Reference EHZ capacity obtained via the Haim–Kislev facet solver."""
+
+    return float(ehz_capacity_reference_facet_normals(bundle, tol=tol))
 
 
-def ehz_capacity_fast(bundle: Polytope, *, tol: float = 1e-10) -> float:
-    """Fast EHZ capacity heuristic matching the facet-normal estimator."""
+def ehz_capacity_fast(
+    bundle: Polytope,
+    *,
+    tol: float = FACET_SOLVER_TOLERANCE,
+) -> float:
+    """Fast EHZ capacity using the dynamic-programming facet solver."""
+
     return float(ehz_capacity_fast_facet_normals(bundle, tol=tol))
 
 
 def _is_valid_bundle(bundle: Polytope) -> bool:
-    return bool(bundle.normals.size and bundle.offsets.size and bundle.vertices.size)
+    return bool(bundle.normals.size and bundle.offsets.size)
 
 
 _SOLVER_DISPATCH: dict[str, Callable[[Polytope], float]] = {
@@ -186,7 +179,9 @@ __all__ = [
     "MilpCapacityResult",
     "SupportRelaxationDiagnostics",
     "SupportRelaxationResult",
+    "MinkowskiNormalFan",
     "detect_opposite_facet_pairs",
+    "build_normal_fan",
     "ehz_capacity_fast_facet_normals",
     "ehz_capacity_fast_milp",
     "ehz_capacity_fast_reeb",

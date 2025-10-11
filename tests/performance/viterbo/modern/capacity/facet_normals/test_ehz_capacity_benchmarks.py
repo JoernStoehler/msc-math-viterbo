@@ -17,8 +17,13 @@ pytestmark = [pytest.mark.smoke, pytest.mark.deep]
 
 from tests._utils.polytope_samples import load_polytope_instances
 
-from viterbo.symplectic.capacity import compute_ehz_capacity_reference
-from viterbo.symplectic.capacity.facet_normals.fast import compute_ehz_capacity_fast
+import jax.numpy as jnp
+
+from viterbo.modern.capacity import (
+    ehz_capacity_fast_facet_normals,
+    ehz_capacity_reference_facet_normals,
+)
+from viterbo.modern.types import Polytope
 
 # Reuse the exact same catalog of polytopes as the regression tests so that any
 # deviation caught here points to a performance-only issue rather than a change
@@ -46,16 +51,26 @@ def test_fast_ehz_capacity_matches_reference_and_tracks_speed(
     of truth for both performance and accuracy checks.
     """
 
+    bundle = Polytope(
+        normals=jnp.asarray(B, dtype=jnp.float64),
+        offsets=jnp.asarray(c, dtype=jnp.float64),
+        vertices=jnp.empty((0, B.shape[1]), dtype=jnp.float64),
+        incidence=jnp.empty((0, B.shape[0]), dtype=bool),
+    )
+
     try:
-        reference = compute_ehz_capacity_reference(B, c)
+        reference = ehz_capacity_reference_facet_normals(bundle)
     except ValueError as error:
         # When the reference rejects an instance (e.g. infeasible constraints)
         # we still run the optimized variant through the benchmark harness so
         # the failure is visible in timing reports. Pytest-benchmark re-raises
         # the underlying exception, letting us assert on parity of the message.
         with pytest.raises(ValueError) as caught:
-            benchmark(lambda: compute_ehz_capacity_fast(B, c))  # type: ignore[reportArgumentType]
+            benchmark(lambda: ehz_capacity_fast_facet_normals(bundle))  # type: ignore[reportArgumentType]
         assert str(caught.value) == str(error)
     else:
-        optimized = cast(float, benchmark(lambda: compute_ehz_capacity_fast(B, c)))  # type: ignore[reportArgumentType]
+        optimized = cast(
+            float,
+            benchmark(lambda: ehz_capacity_fast_facet_normals(bundle)),  # type: ignore[reportArgumentType]
+        )
         assert np.isclose(optimized, reference, atol=1e-8)

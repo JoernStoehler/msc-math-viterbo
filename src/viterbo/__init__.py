@@ -49,25 +49,25 @@ from viterbo.optimization import solve_linear_program as solve_linear_program
 from viterbo.optimization import (
     solve_mixed_integer_linear_program as solve_mixed_integer_linear_program,
 )
-from viterbo.symplectic.capacity import (
+from viterbo.modern.capacity import (
     MinkowskiNormalFan as MinkowskiNormalFan,
 )
-from viterbo.symplectic.capacity import (
+from viterbo.modern.capacity import (
     build_normal_fan as build_normal_fan,
 )
-from viterbo.symplectic.capacity import (
-    compute_ehz_capacity_reference as compute_ehz_capacity_reference,
+from viterbo.modern.capacity import (
+    ehz_capacity_reference as compute_ehz_capacity_reference,
 )
-from viterbo.symplectic.capacity import (
-    compute_minkowski_billiard_length_fast as compute_minkowski_billiard_length_fast,
+from viterbo.modern.capacity import (
+    minkowski_billiard_length_fast as compute_minkowski_billiard_length_fast,
 )
-from viterbo.symplectic.capacity import (
-    compute_minkowski_billiard_length_reference as compute_minkowski_billiard_length_reference,
+from viterbo.modern.capacity import (
+    minkowski_billiard_length_reference as compute_minkowski_billiard_length_reference,
 )
-from viterbo.symplectic.core import ZERO_TOLERANCE as ZERO_TOLERANCE
-from viterbo.symplectic.core import minkowski_sum as minkowski_sum
-from viterbo.symplectic.core import normalize_vector as normalize_vector
-from viterbo.symplectic.core import standard_symplectic_matrix as standard_symplectic_matrix
-from viterbo.symplectic.core import support_function as support_function
-from viterbo.symplectic.core import symplectic_product as symplectic_product
-from viterbo.symplectic.systolic import systolic_ratio as systolic_ratio
+from viterbo.modern.symplectic import ZERO_TOLERANCE as ZERO_TOLERANCE
+from viterbo.modern.symplectic import minkowski_sum as minkowski_sum
+from viterbo.modern.symplectic import normalize_vector as normalize_vector
+from viterbo.modern.symplectic import standard_symplectic_matrix as standard_symplectic_matrix
+from viterbo.modern.symplectic import support_function as support_function
+from viterbo.modern.symplectic import symplectic_product as symplectic_product
+from viterbo.modern.systolic import systolic_ratio as systolic_ratio

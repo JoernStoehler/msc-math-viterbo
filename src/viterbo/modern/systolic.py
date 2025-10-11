@@ -1,7 +1,4 @@
-"""Helper to evaluate the polytope systolic ratio.
-
-JAX-first implementation accepting either a ``Polytope`` or raw half-spaces.
-"""
+"""Systolic ratio helpers wired to the modern capacity implementations."""
 
 from __future__ import annotations
 
@@ -11,16 +8,14 @@ from typing import overload
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-from viterbo.geometry.polytopes import Polytope
+from viterbo.geometry.polytopes import Polytope as GeometryPolytope
 from viterbo.geometry.volume import polytope_volume_fast
-from viterbo.symplectic.capacity.facet_normals.fast import compute_ehz_capacity_fast
-from viterbo.symplectic.capacity.facet_normals.reference import (
-    compute_ehz_capacity_reference,
-)
+from viterbo.modern.capacity import ehz_capacity_fast, ehz_capacity_reference
+from viterbo.modern.types import Polytope
 
 
 @overload
-def systolic_ratio(polytope: Polytope, /) -> float: ...
+def systolic_ratio(polytope: Polytope | GeometryPolytope, /) -> float: ...
 
 
 @overload
@@ -32,12 +27,18 @@ def systolic_ratio(
 
 
 def systolic_ratio(
-    arg: Polytope | Float[Array, " num_facets dimension"],
+    arg: Polytope | GeometryPolytope | Float[Array, " num_facets dimension"],
     c: Float[Array, " num_facets"] | None = None,
 ) -> float:
     """Return ``sys(K) = c_EHZ(K)^n / (n! vol_{2n}(K))`` for a ``2n``-polytope."""
+
     if isinstance(arg, Polytope):
+        B_matrix = jnp.asarray(arg.normals, dtype=jnp.float64)
+        offsets = jnp.asarray(arg.offsets, dtype=jnp.float64)
+    elif isinstance(arg, GeometryPolytope):
         B_matrix, offsets = arg.halfspace_data()
+        B_matrix = jnp.asarray(B_matrix, dtype=jnp.float64)
+        offsets = jnp.asarray(offsets, dtype=jnp.float64)
     else:
         if c is None:
             msg = "Both B and c must be supplied for raw half-space input."
@@ -64,12 +65,31 @@ def systolic_ratio(
 
     n = dimension // 2
     try:
-        capacity = compute_ehz_capacity_fast(B_matrix, offsets)
+        capacity = ehz_capacity_fast(
+            Polytope(
+                normals=B_matrix,
+                offsets=offsets,
+                vertices=jnp.empty((0, dimension), dtype=jnp.float64),
+                incidence=jnp.empty((0, B_matrix.shape[0]), dtype=bool),
+            )
+        )
     except ValueError:
-        capacity = compute_ehz_capacity_reference(B_matrix, offsets)
+        capacity = ehz_capacity_reference(
+            Polytope(
+                normals=B_matrix,
+                offsets=offsets,
+                vertices=jnp.empty((0, dimension), dtype=jnp.float64),
+                incidence=jnp.empty((0, B_matrix.shape[0]), dtype=bool),
+            )
+        )
+
     volume = polytope_volume_fast(B_matrix, offsets)
     denominator = math.factorial(n) * volume
     if denominator <= 0:
         msg = "Volume must be positive."
         raise ValueError(msg)
+
     return float((capacity**n) / denominator)
+
+
+__all__ = ["systolic_ratio"]
