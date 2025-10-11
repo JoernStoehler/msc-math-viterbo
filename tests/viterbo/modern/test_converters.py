@@ -1,24 +1,42 @@
-"""Ensure converter helpers remain stubbed."""
+"""Atlas conversion helpers for rows to modern types."""
 
 from __future__ import annotations
 
-import polars as pl
+import jax.numpy as jnp
 import pytest
 
-from viterbo.modern import converters
-from viterbo.modern.types import PolytopeBundle, QuantityRecord
+from viterbo.modern import atlas
 
 
 @pytest.mark.goal_code
 @pytest.mark.smoke
-def test_converter_stubs_raise_not_implemented() -> None:
-    """Row conversion helpers should raise NotImplementedError for now."""
+def test_as_polytope_and_as_cycle_shapes_and_dtypes() -> None:
+    """as_polytope/as_cycle return JAX arrays with float64 points and boolean incidence."""
 
-    row = pl.Series("dummy", [1])
-    bundle = PolytopeBundle(halfspaces=None, vertices=None)
-    quantities = QuantityRecord()
+    dimension = 2
+    normals = [jnp.array([1.0, 0.0]), jnp.array([-1.0, 0.0]), jnp.array([0.0, 1.0]), jnp.array([0.0, -1.0])]
+    offsets = [1.0, 1.0, 1.0, 1.0]
+    vertices = [jnp.array([1.0, 1.0]), jnp.array([1.0, -1.0]), jnp.array([-1.0, 1.0]), jnp.array([-1.0, -1.0])]
 
-    with pytest.raises(NotImplementedError):
-        converters.bundle_from_row(row)
-    with pytest.raises(NotImplementedError):
-        converters.row_from_bundle_and_quantities(bundle, quantities)
+    poly = atlas.as_polytope(
+        dimension=dimension,
+        num_facets=len(normals),
+        num_vertices=len(vertices),
+        normals=normals,
+        offsets=offsets,
+        vertices=vertices,
+    )
+    assert poly.normals.dtype == jnp.float64
+    assert poly.vertices.dtype == jnp.float64
+    assert poly.offsets.dtype == jnp.float64
+    assert poly.incidence.dtype == jnp.bool_
+
+    points = [jnp.array([1.0, 0.0]), jnp.array([0.0, 1.0])]
+    cyc = atlas.as_cycle(
+        dimension=dimension,
+        num_points=len(points),
+        points=points,
+        polytope=poly,
+    )
+    assert cyc.points.dtype == jnp.float64
+    assert cyc.incidence.dtype == jnp.bool_

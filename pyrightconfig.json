@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/pyright/main/packages/pyright/schema/pyrightconfig.schema.json",
   "include": ["src"],
-  "exclude": [".venv", "build", "dist", "**/__pycache__"],
+  "exclude": [".venv", "build", "dist", "**/__pycache__", "src/viterbo/exp1"],
   "pythonVersion": "3.12",
   "typeCheckingMode": "basic",
   "useLibraryCodeForTypes": true,

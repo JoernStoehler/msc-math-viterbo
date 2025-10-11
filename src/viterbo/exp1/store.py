@@ -37,6 +37,9 @@ Notes on types
 """
 
 from typing import Any, Iterable, Mapping, Sequence, TypedDict
+import os
+import polars as pl
+from viterbo._wrapped import polars_io as _plio
 
 
 class MvpRow(TypedDict, total=False):
@@ -66,7 +69,11 @@ def ensure_dataset(path: str) -> None:
     Implementations may write an empty Parquet with the MVP schema or defer
     schema materialization until first append.
     """
-    ...
+    if os.path.exists(path):
+        return
+    # Minimal empty schema with a single string column to satisfy Parquet writer.
+    df = pl.DataFrame({"polytope_id": pl.Series("polytope_id", [], dtype=pl.String)})
+    _plio.write_parquet(df, path)
 
 
 def append_rows(path: str, rows: Iterable[MvpRow]) -> None:
@@ -74,7 +81,19 @@ def append_rows(path: str, rows: Iterable[MvpRow]) -> None:
 
     MVP semantics may read existing rows, concatenate, and rewrite the file.
     """
-    ...
+    rows_list = list(rows)
+    if len(rows_list) == 0:
+        return
+    df_new = _plio.rows_to_polars(rows_list)
+    if os.path.exists(path):
+        try:
+            df_old = _plio.read_parquet(path)
+            df_all = pl.concat([df_old, df_new], how="diagonal_relaxed")
+        except pl.exceptions.PolarsError:
+            df_all = df_new
+    else:
+        df_all = df_new
+    _plio.write_parquet(df_all, path)
 
 
 def scan_lazy(path: str) -> Any:
@@ -83,7 +102,7 @@ def scan_lazy(path: str) -> Any:
     Intended to be a Polars ``LazyFrame`` via the `_wrapped.polars_io` module.
     The return type is ``Any`` to avoid hard dependency in the exp1 layer.
     """
-    ...
+    return _plio.scan_parquet(path)
 
 
 def load_rows(path: str, columns: Sequence[str] | None = None) -> Any:
@@ -91,7 +110,7 @@ def load_rows(path: str, columns: Sequence[str] | None = None) -> Any:
 
     Should delegate to the Polars wrapper read function.
     """
-    ...
+    return _plio.read_parquet(path, columns=columns)
 
 
 def select_halfspaces_volume_capacity(path: str, polytope_ids: Sequence[str] | None = None) -> Any:
@@ -133,4 +152,8 @@ def log_row(poly: Any, quantities: Mapping[str, Any]) -> MvpRow:
     Returns:
       A dictionary (``MvpRow``) ready to append to the dataset.
     """
-    ...
+    # Minimal implementation: forward provided quantities as the row payload.
+    # Callers are responsible for populating MVP keys where available.
+    row: MvpRow = {}
+    row.update(quantities)
+    return row

@@ -1,27 +1,20 @@
-"""Ensure dataset helpers remain stubbed."""
+"""Atlas schema contract for modern dataset adapters."""
 
 from __future__ import annotations
 
 import polars as pl
 import pytest
 
-from viterbo.modern import datasets
-from viterbo.modern.types import GeneratorMetadata, PolytopeBundle, QuantityRecord
+from viterbo.modern import atlas
 
 
 @pytest.mark.goal_code
 @pytest.mark.smoke
-def test_dataset_stubs_raise_not_implemented() -> None:
-    """Dataset conversion helpers should raise NotImplementedError."""
-
-    bundle = PolytopeBundle(halfspaces=None, vertices=None)
-    metadata = GeneratorMetadata(identifier="dummy", parameters={})
-    quantities = QuantityRecord()
-    frame = pl.DataFrame({"dummy": [1]})
-
-    with pytest.raises(NotImplementedError):
-        datasets.atlas_schema()
-    with pytest.raises(NotImplementedError):
-        datasets.records_to_dataframe([(bundle, metadata, quantities)])
-    with pytest.raises(NotImplementedError):
-        datasets.merge_results(frame, frame, conflict_policy="overwrite")
+def test_atlas_pl_schema_has_expected_columns() -> None:
+    """atlas_pl_schema returns a Polars Schema including normals/offsets/vertices."""
+    dim = 3
+    schema = atlas.atlas_pl_schema(dim)
+    assert isinstance(schema, pl.Schema)
+    required = {"polytope_id", "dimension", "num_facets", "num_vertices", "normals", "offsets", "vertices"}
+    for col in required:
+        assert col in schema

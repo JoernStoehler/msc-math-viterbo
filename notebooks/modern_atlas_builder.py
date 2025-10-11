@@ -13,7 +13,7 @@ from pathlib import Path
 
 import polars as pl
 
-from viterbo.modern import basic_generators, datasets, polytopes, volume
+from viterbo.modern import atlas, basic_generators, volume
 
 # ----------------------------------------------------------------------------
 # Configuration knobs a practitioner might toggle when (re)building the atlas.
@@ -43,7 +43,9 @@ records: list[tuple] = []
 if generator is not None:
     for bundle, metadata in generator:
         try:
-            enriched_bundle = polytopes.complete_incidence(bundle)
+            # In the modern API, bundles are `Polytope` instances; incidence can
+            # be derived when needed via `polytopes.incidence_matrix`.
+            enriched_bundle = bundle
             volume_estimate = volume.volume_reference(enriched_bundle)
         except NotImplementedError:
             break
@@ -54,8 +56,9 @@ if generator is not None:
 # Step 3: Materialise a Polars dataframe matching the atlas schema.
 # ----------------------------------------------------------------------------
 try:
-    schema = datasets.atlas_schema()
-    dataframe = datasets.records_to_dataframe([])
+    schema = atlas.atlas_pl_schema(GENERATOR_DIMENSION)
+    # TODO: Convert records into a dataframe via atlas helpers once added.
+    dataframe = None
 except NotImplementedError:
     schema = None
     dataframe = None
@@ -68,7 +71,7 @@ if dataframe is not None and schema is not None:
     try:
         if ATLAS_PATH.exists():
             existing = pl.read_parquet(ATLAS_PATH)
-            merged = datasets.merge_results(existing, dataframe, conflict_policy="overwrite")
+            merged = existing
         else:
             merged = dataframe
         merged.write_parquet(ATLAS_PATH)

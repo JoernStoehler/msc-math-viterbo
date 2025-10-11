@@ -1,4 +1,4 @@
-"""Ensure polytope construction stubs signal incomplete implementations."""
+"""Incidence matrix semantics for modern polytopes."""
 
 from __future__ import annotations
 
@@ -6,24 +6,38 @@ import jax.numpy as jnp
 import pytest
 
 from viterbo.modern import polytopes
-from viterbo.modern.types import PolytopeBundle
 
 
-@pytest.mark.goal_code
+@pytest.mark.goal_math
 @pytest.mark.smoke
-def test_polytope_stubs_raise_not_implemented() -> None:
-    """Each public constructor should raise NotImplementedError until filled in."""
+def test_incidence_matrix_for_axis_aligned_square() -> None:
+    """For a square [-1,1]^2, each vertex lies on exactly two facets."""
 
-    normals = jnp.zeros((2, 3))
-    offsets = jnp.zeros((2,))
-    vertices = jnp.zeros((4, 3))
-    bundle = PolytopeBundle(halfspaces=None, vertices=None)
+    # Square in R^2: constraints
+    # x <= 1, -x <= 1, y <= 1, -y <= 1
+    normals = jnp.array(
+        [
+            [1.0, 0.0],
+            [-1.0, 0.0],
+            [0.0, 1.0],
+            [0.0, -1.0],
+        ],
+        dtype=jnp.float64,
+    )
+    offsets = jnp.array([1.0, 1.0, 1.0, 1.0], dtype=jnp.float64)
+    vertices = jnp.array(
+        [
+            [1.0, 1.0],
+            [1.0, -1.0],
+            [-1.0, 1.0],
+            [-1.0, -1.0],
+        ],
+        dtype=jnp.float64,
+    )
 
-    with pytest.raises(NotImplementedError):
-        polytopes.build_from_halfspaces(normals, offsets)
-    with pytest.raises(NotImplementedError):
-        polytopes.build_from_vertices(vertices)
-    with pytest.raises(NotImplementedError):
-        polytopes.complete_incidence(bundle)
-    with pytest.raises(NotImplementedError):
-        polytopes.pad_polytope_bundle(bundle, target_facets=3, target_vertices=5)
+    M = polytopes.incidence_matrix(normals, offsets, vertices)
+    # Booleans, shape (4 vertices, 4 facets)
+    assert M.shape == (4, 4)
+    assert M.dtype == jnp.bool_
+    # Each vertex incident to exactly two facets
+    assert jnp.all(M.sum(axis=1) == 2)

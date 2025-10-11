@@ -43,6 +43,7 @@ htmlcov/
 .coverage*
 *.lcov
 .cache/
+.hypothesis/
 coverage.xml
 
 # Documentation build artefacts

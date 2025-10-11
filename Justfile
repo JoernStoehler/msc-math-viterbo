@@ -65,7 +65,7 @@ lint:
     $UV run ruff check .
     $UV run python scripts/check_test_metadata.py
     # TODO(expand): enforce suite markers repo-wide when suites are standardized beyond exp1
-    $UV run python scripts/check_test_metadata.py --require-suite tests/viterbo/exp1
+    $UV run python scripts/check_test_metadata.py --require-suite tests/viterbo/modern
 
 # Summarise pytest test metadata (markers + docstrings).
 test-metadata:

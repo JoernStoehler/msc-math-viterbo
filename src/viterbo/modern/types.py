@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from jaxtyping import Array, Float
+from jaxtyping import Array, Float, Bool
 
 
 @dataclass(slots=True)
@@ -32,20 +32,23 @@ class VertexGeometry:
     """Vertex representation of a convex polytope."""
 
     vertices: Float[Array, " num_vertices dimension"]
-    incidence: Float[Array, " num_vertices num_facets"] | None = None
 
 
 @dataclass(slots=True)
-class PolytopeBundle:
+class Polytope:
     """Aggregated geometric description of a polytope.
-
+    
     Attributes:
-      halfspaces: Optional half-space data, when available.
-      vertices: Optional vertex data, when available.
+        normals: Outward normals of the facets.
+        offsets: Right-hand side offsets aligned with ``normals``.
+        vertices: Vertices of the polytope.
+        incidence: Vertex-facet incidence matrix.
     """
-
-    halfspaces: HalfspaceGeometry | None
-    vertices: VertexGeometry | None
+    
+    normals: Float[Array, " num_facets dimension"]
+    offsets: Float[Array, " num_facets"]
+    vertices: Float[Array, " num_vertices dimension"]
+    incidence: Bool[Array, " num_vertices num_facets"]
 
 
 @dataclass(slots=True)
@@ -55,12 +58,14 @@ class GeneratorMetadata:
     identifier: str
     parameters: dict[str, Any]
 
-
 @dataclass(slots=True)
-class QuantityRecord:
-    """Collection of computed quantities for a single polytope."""
+class Cycle:
+    """A representative periodic Reeb orbit (cycle) on the polytope boundary.
 
-    volume: float | None = None
-    capacity_ehz: float | None = None
-    spectrum_ehz: tuple[float, ...] | None = None
-    cycle_path: Float[Array, " num_points dimension"] | None = None
+    Attributes:
+        points: Points that define the piecewise-linear cycle.
+        incidence: Incidence of points to facets.
+    """
+
+    points: Float[Array, " num_points dimension"]
+    incidence: Bool[Array, " num_points num_facets"]

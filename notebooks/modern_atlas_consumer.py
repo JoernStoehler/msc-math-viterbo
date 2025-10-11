@@ -12,15 +12,13 @@ from pathlib import Path
 
 import polars as pl
 
-from viterbo.modern import converters, datasets
-from viterbo.modern.types import QuantityRecord
+from viterbo.modern import atlas
 
 ATLAS_PATH = Path("artefacts/modern_atlas.parquet")
 
 
 def _load_atlas() -> pl.DataFrame | None:
     """Load the atlas snapshot if present."""
-
     if not ATLAS_PATH.exists():
         return None
     return pl.read_parquet(ATLAS_PATH)
@@ -30,13 +28,12 @@ try:
     atlas = _load_atlas()
     if atlas is None:
         raise FileNotFoundError("atlas snapshot missing")
-    schema = datasets.atlas_schema()
+    schema = atlas.atlas_pl_schema(dimension=3)  # example dimension
     print("Loaded atlas with schema:", schema)
 
     head_row = atlas.row(0, named=True)
     series = pl.Series("row", [head_row])
-    bundle = converters.bundle_from_row(series)
-    quantities = converters.row_from_bundle_and_quantities(bundle, QuantityRecord())
-    print("Prepared bundle and quantities:", bundle, quantities)
+    # TODO: Use atlas.as_polytope/as_cycle once rows are materialized
+    print("Loaded schema:", schema)
 except (FileNotFoundError, NotImplementedError):
     print("Atlas consumer executed placeholder workflow.")
