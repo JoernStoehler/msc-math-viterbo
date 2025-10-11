@@ -12,7 +12,7 @@ from pathlib import Path
 
 import polars as pl
 
-from viterbo.modern import atlas
+from viterbo.modern import atlas, capacity
 
 ATLAS_PATH = Path("artefacts/modern_atlas.parquet")
 
@@ -30,6 +30,7 @@ try:
         raise FileNotFoundError("atlas snapshot missing")
     schema = atlas.atlas_pl_schema(dimension=3)  # example dimension
     print("Loaded atlas with schema:", schema)
+    print("Modern capacity solvers:", capacity.available_solvers())
 
     head_row = atlas.row(0, named=True)
     series = pl.Series("row", [head_row])

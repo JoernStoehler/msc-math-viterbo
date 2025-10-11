@@ -13,7 +13,7 @@ from pathlib import Path
 
 import polars as pl
 
-from viterbo.modern import atlas, basic_generators, volume
+from viterbo.modern import atlas, basic_generators, capacity, volume
 
 # ----------------------------------------------------------------------------
 # Configuration knobs a practitioner might toggle when (re)building the atlas.
@@ -47,9 +47,10 @@ if generator is not None:
             # be derived when needed via `polytopes.incidence_matrix`.
             enriched_bundle = bundle
             volume_estimate = volume.volume_reference(enriched_bundle)
+            capacity_estimate = capacity.ehz_capacity_reference(enriched_bundle)
         except NotImplementedError:
             break
-        records.append((enriched_bundle, metadata, volume_estimate))
+        records.append((enriched_bundle, metadata, volume_estimate, capacity_estimate))
 
 
 # ----------------------------------------------------------------------------
