@@ -12,6 +12,10 @@ from jaxtyping import Array, Float, Bool
 
 from viterbo.modern.types import Polytope
 from viterbo._wrapped import spatial as _spatial
+from viterbo.modern.numerics import (
+    INCIDENCE_ABS_TOLERANCE,
+    INCIDENCE_REL_TOLERANCE,
+)
 
 import jax.numpy as jnp
 
@@ -73,8 +77,8 @@ def incidence_matrix(
     normals: Float[Array, " num_facets dimension"],
     offsets: Float[Array, " num_facets"],
     vertices: Float[Array, " num_vertices dimension"],
-    rtol: float = 1e-12,
-    atol: float = 0.0,
+    rtol: float = INCIDENCE_REL_TOLERANCE,
+    atol: float = INCIDENCE_ABS_TOLERANCE,
 ) -> Bool[Array, " num_vertices num_facets"]:
     """Compute the incidence matrix for the given polytope data."""
     # idea: just check which vertices satisfy which halfspaces
@@ -86,5 +90,6 @@ def pad_polytope_bundle(
     target_facets: int,
     target_vertices: int,
 ) -> Polytope:
-    """Pad the bundle to fixed sizes for batching."""
-    raise NotImplementedError
+    """Placeholder for batching utilities (not part of modernization scope)."""
+
+    raise NotImplementedError("Padding is not implemented in the modern API.")

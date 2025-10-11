@@ -41,3 +41,5 @@ def test_incidence_matrix_for_axis_aligned_square() -> None:
     assert M.dtype == jnp.bool_
     # Each vertex incident to exactly two facets
     assert jnp.all(M.sum(axis=1) == 2)
+
+

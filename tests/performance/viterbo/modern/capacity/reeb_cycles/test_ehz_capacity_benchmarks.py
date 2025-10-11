@@ -7,10 +7,11 @@ from typing import cast
 import numpy as np
 import pytest
 import pytest_benchmark.plugin  # type: ignore[reportMissingTypeStubs]
+import jax.numpy as jnp
 from tests._utils.polytope_samples import load_polytope_instances
 
-from viterbo.symplectic.capacity.reeb_cycles.fast import compute_ehz_capacity_fast
-from viterbo.symplectic.capacity.reeb_cycles.reference import compute_ehz_capacity_reference
+from viterbo.modern.capacity import ehz_capacity_fast_reeb, ehz_capacity_reference_reeb
+from viterbo.modern.types import Polytope
 
 pytestmark = [pytest.mark.smoke, pytest.mark.deep]
 
@@ -29,12 +30,19 @@ def test_fast_matches_reference(
 ) -> None:
     """Benchmark the optimized solver against the reference implementation."""
 
+    bundle = Polytope(
+        normals=jnp.asarray(B, dtype=jnp.float64),
+        offsets=jnp.asarray(c, dtype=jnp.float64),
+        vertices=jnp.empty((0, B.shape[1]), dtype=jnp.float64),
+        incidence=jnp.empty((0, B.shape[0]), dtype=bool),
+    )
+
     try:
-        reference = compute_ehz_capacity_reference(B, c)
+        reference = ehz_capacity_reference_reeb(bundle)
     except ValueError as error:
         with pytest.raises(ValueError) as caught:
-            benchmark(lambda: compute_ehz_capacity_fast(B, c))
+            benchmark(lambda: ehz_capacity_fast_reeb(bundle))
         assert str(caught.value) == str(error)
     else:
-        optimized = cast(float, benchmark(lambda: compute_ehz_capacity_fast(B, c)))
+        optimized = cast(float, benchmark(lambda: ehz_capacity_fast_reeb(bundle)))
         assert np.isclose(optimized, reference, atol=1e-8)

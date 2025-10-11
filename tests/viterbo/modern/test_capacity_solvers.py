@@ -9,6 +9,10 @@ from viterbo.modern import capacity, polytopes
 from viterbo.modern.types import Polytope
 
 
+EXPECTED_SIMPLEX_CAPACITY = 1.0
+EXPECTED_MINKOWSKI_LENGTH = 8.0
+
+
 def _square_bundle(edge: float = 1.0) -> Polytope:
     vertices = jnp.asarray(
         [
@@ -62,6 +66,7 @@ def test_facet_normal_solvers_agree_on_simplex() -> None:
     reference = capacity.ehz_capacity_reference_facet_normals(bundle)
     fast = capacity.ehz_capacity_fast_facet_normals(bundle)
     assert fast == pytest.approx(reference, rel=1e-12, abs=0.0)
+    assert reference == pytest.approx(EXPECTED_SIMPLEX_CAPACITY, rel=1e-12, abs=0.0)
 
 
 @pytest.mark.goal_math
@@ -82,6 +87,7 @@ def test_reeb_cycle_fast_matches_reference() -> None:
     reference = capacity.ehz_capacity_reference_reeb(bundle)
     fast = capacity.ehz_capacity_fast_reeb(bundle)
     assert fast == pytest.approx(reference, rel=1e-12, abs=0.0)
+    assert reference == pytest.approx(EXPECTED_SIMPLEX_CAPACITY, rel=1e-12, abs=0.0)
 
 
 @pytest.mark.goal_math
@@ -132,8 +138,7 @@ def test_minkowski_billiard_lengths_match_reference() -> None:
     reference = capacity.minkowski_billiard_length_reference(table, geometry)
     fast = capacity.minkowski_billiard_length_fast(table, geometry)
     assert fast == pytest.approx(reference, rel=1e-12, abs=0.0)
-    expected = 4.0 * (1.0 + 1.0 / jnp.sqrt(2.0))
-    assert reference == pytest.approx(expected, rel=1e-9)
+    assert reference == pytest.approx(EXPECTED_MINKOWSKI_LENGTH, rel=1e-12, abs=0.0)
 
 
 @pytest.mark.goal_code

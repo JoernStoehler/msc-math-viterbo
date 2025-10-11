@@ -167,8 +167,8 @@ profile:
 # Line profile the fast EHZ kernel.
 profile-line:
     @mkdir -p "{{PROFILES_DIR}}"
-    @echo "Running line profiler for compute_ehz_capacity_fast into {{PROFILES_DIR}}."
-    $UV run pytest tests/performance -m "deep" --line-profile viterbo.symplectic.capacity.facet_normals.fast.compute_ehz_capacity_fast --pstats-dir="{{PROFILES_DIR}}" {{PYTEST_ARGS}}
+    @echo "Running line profiler for ehz_capacity_fast_facet_normals into {{PROFILES_DIR}}."
+    $UV run pytest tests/performance -m "deep" --line-profile viterbo.modern.capacity.facet_normals._compute_ehz_capacity_fast --pstats-dir="{{PROFILES_DIR}}" {{PYTEST_ARGS}}
 
 # Package build & publish
 build:

@@ -36,11 +36,10 @@ def ehz_capacity_fast_milp(
     node_limit: int = 256,
 ) -> MilpCapacityResult:
     """Return a lightweight MILP-style certificate based on support radii."""
-    radii = facet_normals.support_radii(bundle)
-    if radii.size == 0:
-        upper = 0.0
-    else:
-        upper = float(4.0 * jnp.min(radii))
+    try:
+        upper = float(facet_normals.ehz_capacity_fast_facet_normals(bundle))
+    except ValueError:
+        upper = float(facet_normals.ehz_capacity_reference_facet_normals(bundle))
     return MilpCapacityResult(lower_bound=0.0, upper_bound=upper, iterations=node_limit, status="heuristic")
 
 
