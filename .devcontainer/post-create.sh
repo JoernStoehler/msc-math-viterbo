@@ -28,16 +28,39 @@ fi
 echo "[post-create] Syncing project dependencies with uv (lockfile-driven)"
 uv sync --extra dev >/dev/null
 
-# Install ripgrep, tmux, and terminfo (best-effort) because workflows rely on them.
+SUDO=""
+if command -v sudo >/dev/null 2>&1; then
+  SUDO=sudo
+fi
+
+# Install tmux and terminfo (best-effort) because workflows rely on them.
+RG_VERSION="14.1.0"
+
 echo "[post-create] Ensuring ripgrep, tmux, and terminfo are installed"
 if command -v apt-get >/dev/null 2>&1; then
   export DEBIAN_FRONTEND=noninteractive
-  if command -v sudo >/dev/null 2>&1; then SUDO=sudo; else SUDO=""; fi
   $SUDO apt-get update -y >/dev/null || true
-  if ! command -v rg >/dev/null 2>&1; then $SUDO apt-get install -y ripgrep >/dev/null || true; fi
   if ! command -v tmux >/dev/null 2>&1; then $SUDO apt-get install -y tmux >/dev/null || true; fi
   # Install extra terminfo entries (tmux-256color) for proper color support
   $SUDO apt-get install -y ncurses-term >/dev/null || true
+fi
+
+if command -v rg >/dev/null 2>&1 && rg --version | head -n1 | grep -q "rg ${RG_VERSION}"; then
+  echo "[post-create] ripgrep ${RG_VERSION} already installed"
+else
+  echo "[post-create] Installing ripgrep ${RG_VERSION} (x86_64 binary)"
+  archive="ripgrep-${RG_VERSION}-x86_64-unknown-linux-musl.tar.gz"
+  url="https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/${archive}"
+  tmp_dir=$(mktemp -d)
+  if curl -fsSL "$url" -o "${tmp_dir}/${archive}" && \
+     tar -xzf "${tmp_dir}/${archive}" -C "$tmp_dir" --strip-components=1 "ripgrep-${RG_VERSION}-x86_64-unknown-linux-musl/rg"; then
+    mkdir -p "${HOME}/.local/bin"
+    install -m 755 "${tmp_dir}/rg" "${HOME}/.local/bin/rg" && \
+      echo "[post-create] Installed ripgrep ${RG_VERSION}"
+  else
+    echo "[post-create] WARNING: Failed to download or extract ripgrep ${RG_VERSION}" >&2
+  fi
+  rm -rf "$tmp_dir"
 fi
 
 # Install just (best-effort) so the canonical task runner is available inside the container.
