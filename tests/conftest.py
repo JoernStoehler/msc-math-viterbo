@@ -8,7 +8,7 @@ production runs fast while allowing strict checks locally.
 from __future__ import annotations
 
 import os
-from typing import Iterator
+from collections.abc import Iterator
 
 import jax
 import pytest
@@ -23,7 +23,7 @@ def _maybe_enable_jaxtyping_checks() -> None:
         return
 
     try:
-        import jaxtyping as jt  # type: ignore
+        import jaxtyping as jt  # type: ignore[reportMissingTypeStubs]
 
         # Prefer the simple toggle if available in the installed jaxtyping.
         if hasattr(jt, "enable"):

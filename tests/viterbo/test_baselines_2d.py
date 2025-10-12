@@ -8,7 +8,6 @@ from pathlib import Path
 import jax.numpy as jnp
 import pytest
 
-from viterbo.datasets import builders as polytopes
 from viterbo.math import volume
 
 
@@ -18,12 +17,11 @@ def test_modern_2d_baselines() -> None:
     """Compare area and capacity to curated 2D baselines."""
     # tests/_baselines/modern_2d.json relative to this file
     path = str(Path(__file__).resolve().parents[1] / "_baselines" / "modern_2d.json")
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         data = json.load(f)
     for name, entry in data.items():
         verts = jnp.asarray(entry["vertices"], dtype=jnp.float64)
-        P = polytopes.build_from_vertices(verts)
-        a = volume.volume_reference(P.vertices)
+        a = volume.volume_reference(verts)
         c = a
         assert jnp.isclose(
             c, jnp.asarray(entry["capacity_ehz"], dtype=jnp.float64), rtol=1e-12, atol=0.0

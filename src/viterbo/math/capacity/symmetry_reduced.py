@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
+from typing import NamedTuple
+
 import jax.numpy as jnp
 from jaxtyping import Array, Float
-from typing import NamedTuple
 
 from viterbo.math.capacity import facet_normals
 
 
 class FacetPairing(NamedTuple):
     """Pairing of opposite facets used to reduce symmetry."""
+
     pairs: tuple[tuple[int, int], ...]
     unpaired: tuple[int, ...]
 
@@ -101,11 +103,3 @@ def ehz_capacity_fast_symmetry_reduced(
 ) -> float:
     """Fast symmetry-reduced capacity identical to the reference variant."""
     return ehz_capacity_reference_symmetry_reduced(normals, offsets, pairing=pairing)
-
-
-__all__ = [
-    "detect_opposite_facet_pairs",
-    "ehz_capacity_reference_symmetry_reduced",
-    "ehz_capacity_fast_symmetry_reduced",
-    "FacetPairing",
-]

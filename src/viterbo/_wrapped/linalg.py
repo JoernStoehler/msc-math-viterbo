@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import Any, cast
 
 import numpy as _np
-import scipy.linalg as _la  # type: ignore[reportMissingTypeStubs]
 import numpy.typing as _npt
+import scipy.linalg as _la  # type: ignore[reportMissingTypeStubs]
 
 
 def expm(matrix: Any) -> _npt.NDArray[_np.float64]:

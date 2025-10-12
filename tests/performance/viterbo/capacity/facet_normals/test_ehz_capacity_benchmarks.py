@@ -15,15 +15,13 @@ import pytest_benchmark.plugin  # type: ignore[reportMissingTypeStubs]  # Third-
 
 pytestmark = [pytest.mark.smoke, pytest.mark.deep]
 
-from tests._utils.polytope_samples import load_polytope_instances
-
 import jax.numpy as jnp
+from tests._utils.polytope_samples import load_polytope_instances
 
 from viterbo.math.capacity.facet_normals import (
     ehz_capacity_fast_facet_normals,
     ehz_capacity_reference_facet_normals,
 )
-from viterbo.datasets.types import Polytope
 
 # Reuse the exact same catalog of polytopes as the regression tests so that any
 # deviation caught here points to a performance-only issue rather than a change
@@ -52,15 +50,8 @@ def test_fast_ehz_capacity_matches_reference_and_tracks_speed(
     of truth for both performance and accuracy checks.
     """
 
-    bundle = Polytope(
-        normals=jnp.asarray(B, dtype=jnp.float64),
-        offsets=jnp.asarray(c, dtype=jnp.float64),
-        vertices=jnp.empty((0, B.shape[1]), dtype=jnp.float64),
-        incidence=jnp.empty((0, B.shape[0]), dtype=bool),
-    )
-
-    B_matrix = bundle.normals
-    offsets = bundle.offsets
+    B_matrix = jnp.asarray(B, dtype=jnp.float64)
+    offsets = jnp.asarray(c, dtype=jnp.float64)
 
     try:
         reference = ehz_capacity_reference_facet_normals(B_matrix, offsets)

@@ -5,10 +5,12 @@ from __future__ import annotations
 import jax
 import jax.numpy as jnp
 import pytest
+from hypothesis import assume, given, settings
+from hypothesis import strategies as st
 
-from viterbo.datasets import builders as polytopes
-from viterbo.math.capacity.facet_normals import ehz_capacity_reference_facet_normals
+from viterbo._wrapped import spatial as _spatial
 from viterbo.math import symplectic
+from viterbo.math.capacity.facet_normals import ehz_capacity_reference_facet_normals
 
 
 @pytest.mark.goal_code
@@ -25,24 +27,31 @@ def test_random_symplectic_is_symplectic() -> None:
 
 @pytest.mark.goal_math
 @pytest.mark.smoke
-def test_capacity_invariance_under_random_symplectic_4d() -> None:
+@settings(max_examples=3, deadline=None)
+@given(st.integers(min_value=0, max_value=2**31 - 1))
+def test_capacity_invariance_under_random_symplectic_4d(seed: int) -> None:
     """c_EHZ invariant under linear symplectic transformations (4D)."""
-    key = jax.random.PRNGKey(123)
-    V = jnp.asarray(
-        [
-            [0.0, 0.0, 0.0, 0.0],
-            [2.0, 0.0, 0.0, 0.0],
-            [0.0, 1.5, 0.0, 0.0],
-            [0.0, 0.0, 1.2, 0.0],
-            [0.0, 0.0, 0.0, 0.8],
-        ],
-        dtype=jnp.float64,
-    )
-    P = polytopes.build_from_vertices(V)
-    c0 = ehz_capacity_reference_facet_normals(P.normals, P.offsets)
+    # Sample a small 4D vertex cloud and form its convex hull
+    key = jax.random.PRNGKey(seed)
+    V = jax.random.normal(key, (5, 4), dtype=jnp.float64)
+    try:
+        eq = _spatial.convex_hull_equations(V)
+    except _spatial.QhullError:
+        assume(False)
+        raise AssertionError
+    B = jnp.asarray(eq[:, :-1], dtype=jnp.float64)
+    c = jnp.asarray(-eq[:, -1], dtype=jnp.float64)
+    c0 = ehz_capacity_reference_facet_normals(B, c)
+    # Symplectic transform
     M = symplectic.random_symplectic_matrix(key, 4)
-    P2 = polytopes.build_from_vertices(V @ M.T)
-    c1 = ehz_capacity_reference_facet_normals(P2.normals, P2.offsets)
+    try:
+        eq2 = _spatial.convex_hull_equations(V @ M.T)
+    except _spatial.QhullError:
+        assume(False)
+        raise AssertionError
+    B2 = jnp.asarray(eq2[:, :-1], dtype=jnp.float64)
+    c2 = jnp.asarray(-eq2[:, -1], dtype=jnp.float64)
+    c1 = ehz_capacity_reference_facet_normals(B2, c2)
     assert jnp.isclose(c0, c1, rtol=1e-9, atol=1e-12)
 
 

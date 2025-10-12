@@ -253,8 +253,10 @@ Blocked?
   - `viterbo.datasets`: dataset representations and adapters.
     - Defines canonical column types (JAX/HF compatible), converters, and wrappers that
       compute columns from other columns using math functions. May include caching.
-    - HF integration lives here (Features, build/append/map/save/load), generators, and
-    polytope builders returning lightweight dataclasses.
+    - HF integration lives here (Features, build/append/map/save/load) and thin wrappers
+      around math-layer algorithms. Datasets do not implement new math algorithms.
+      Any sampling/generation logic (e.g., random polytopes, shape builders) lives in
+      `viterbo.math` and is merely adapted here.
   - `viterbo._wrapped`: interop with external libs (NumPy/SciPy/Qhull/HiGHS/CVX) to keep
     the math layer JAX‑first and SciPy‑free.
   - `viterbo.visualization`: empty placeholder for future stable helpers promoted from notebooks.
@@ -267,3 +269,47 @@ Blocked?
     convenience wrappers; callers choose methods at call sites.
   - During transition, thin re‑exports in legacy module paths are allowed to keep imports
     stable; prefer importing from `viterbo.math`/`viterbo.datasets` for new code.
+
+## 14) Policy Clarifications & Bans (imperative)
+
+- `__all__` is forbidden across the repository.
+  - Do not declare `__all__` lists in any module, including `__init__.py`.
+  - If a curated public surface is needed during transition, use explicit imports
+    in `__init__.py` (accepting `F401` per-file ignore) without `__all__`. Prefer
+    consumers import from concrete modules rather than re-exports.
+
+- No custom typedefs or aliases for jaxtyping arrays or dimensions.
+  - Do not declare `TypeAlias`-based aliases for tuples/records that could be
+    annotated directly at call sites.
+  - Do not introduce dimension-name constants for jaxtyping shape strings; use
+    string literals inline (AGENTS.md 3: Arrays & shapes).
+  - Do not alias `Any` (e.g., `Serializable = Any`) to bypass typing.
+
+- Strict layering between `math` and `datasets`.
+  - `viterbo.math` is self-contained: it must not import from `viterbo.datasets` or
+    `viterbo.datasets2`. It remains JAX-first and SciPy-free, using only
+    `viterbo._wrapped` for interop where required.
+  - `viterbo.datasets` adapts math functions to dataset forms (schemas, caching,
+    conversion) but does not implement math algorithms.
+
+- Algorithms live in `viterbo.math`.
+  - Random sampling, geometric generators/builders (e.g., hypercubes, cross polytopes,
+    half-space sampling), and incidence/geometry utilities belong to the math layer.
+  - Dataset code may wrap or compose these algorithms but should not duplicate or
+    introduce new math logic.
+
+- `viterbo.math` avoids dataclasses and container indirection.
+  - Math APIs return JAX arrays or tuples of arrays. No dataclasses, Protocols, or
+    container wrappers in the math layer.
+
+- `viterbo.datasets2` follows YAGNI and KISS.
+  - Use minimal, lightweight containers only where they clearly improve readability
+    for call sites (e.g., a single small frozen dataclass to group columns).
+  - Avoid Protocol/TypedDict hierarchies, dynamic module proxies, and re-export
+    indirection. Prefer explicit functions and direct imports.
+
+- Enforcement guidance
+  - Lint/typecheck should surface violations; if a ban requires new checks, note
+    the gap in a brief and add enforcement in a follow-up PR.
+  - Prefer small, focused cleanups to remove policy violations rather than adding
+    exceptions. Use `waivers.toml` only when strictly necessary and time-boxed.

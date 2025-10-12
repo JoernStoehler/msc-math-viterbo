@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import ast
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Iterator, Sequence
 
 GOAL_MARKERS = {"goal_math", "goal_code", "goal_performance"}
 SUITE_MARKERS = {"smoke", "deep", "longhaul"}

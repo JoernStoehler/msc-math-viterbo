@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 import jax.numpy as jnp
 from jaxtyping import Array, Float
-from typing import TypeAlias
 
 from viterbo.math.capacity import facet_normals
-
-SupportRelaxationSummary: TypeAlias = tuple[
-    float,
-    Float[Array, " num_samples dimension"],
-    Float[Array, " num_samples"],
-    int,
-]
 
 
 def _polygon_area(vertices: Float[Array, " num_vertices 2"]) -> float:
@@ -80,7 +72,12 @@ def support_relaxation_capacity_reference(
     tolerance_sequence: Sequence[float] = (1e-3,),
     solver: str | None = None,
     center_vertices: bool = True,
-) -> SupportRelaxationSummary:
+) -> tuple[
+    float,
+    Float[Array, " num_samples dimension"],
+    Float[Array, " num_samples"],
+    int,
+]:
     """Reference relaxation computed via dense angular sampling in 2D."""
     _ = (smoothing_parameters, tolerance_sequence, solver)
     normals = jnp.asarray(normals, dtype=jnp.float64)
@@ -110,7 +107,12 @@ def support_relaxation_capacity_fast(
     refinement_steps: int = 1,
     smoothing_parameters: Sequence[float] = (0.5, 0.25),
     jit_compile: bool = True,
-) -> SupportRelaxationSummary:
+) -> tuple[
+    float,
+    Float[Array, " num_samples dimension"],
+    Float[Array, " num_samples"],
+    int,
+]:
     """Fast relaxation based on sparse angular samples."""
     _ = (refinement_steps, smoothing_parameters, jit_compile)
     normals = jnp.asarray(normals, dtype=jnp.float64)
@@ -126,9 +128,3 @@ def support_relaxation_capacity_fast(
         radii = facet_normals.support_radii(normals, offsets)
         capacity = float(4.0 * jnp.min(radii)) if radii.size else 0.0
     return (capacity, directions, values, sample_count)
-
-
-__all__ = [
-    "support_relaxation_capacity_reference",
-    "support_relaxation_capacity_fast",
-]

@@ -5,10 +5,9 @@ from __future__ import annotations
 import jax.numpy as jnp
 import pytest
 
-from viterbo.datasets import builders as polytopes
+from viterbo._wrapped import spatial as _spatial
 from viterbo.math import spectrum
 from viterbo.math.capacity import reeb_cycles
-
 
 EXPECTED_SIMPLEX_EDGES = (
     (0, (0, 1, 2), 0, 1, 3, 4),
@@ -102,9 +101,11 @@ def test_ehz_spectrum_reference_requires_four_dimensional_bundle() -> None:
         ],
         dtype=jnp.float64,
     )
-    bundle = polytopes.build_from_vertices(vertices)
+    equations = _spatial.convex_hull_equations(vertices)
+    B = jnp.asarray(equations[:, :-1], dtype=jnp.float64)
+    c = jnp.asarray(-equations[:, -1], dtype=jnp.float64)
     with pytest.raises(ValueError, match="dimension four"):
-        spectrum.ehz_spectrum_reference(bundle.normals, bundle.offsets, head=3)
+        spectrum.ehz_spectrum_reference(B, c, head=3)
 
 
 @pytest.mark.goal_code
@@ -122,7 +123,9 @@ def test_ehz_spectrum_reference_manual_batching_pattern() -> None:
         ],
         dtype=jnp.float64,
     )
-    bundle4 = polytopes.build_from_vertices(vertices4)
+    eq4 = _spatial.convex_hull_equations(vertices4)
+    B4 = jnp.asarray(eq4[:, :-1], dtype=jnp.float64)
+    c4 = jnp.asarray(-eq4[:, -1], dtype=jnp.float64)
     vertices2 = jnp.asarray(
         [
             [1.0, 1.0],
@@ -132,14 +135,16 @@ def test_ehz_spectrum_reference_manual_batching_pattern() -> None:
         ],
         dtype=jnp.float64,
     )
-    bundle2 = polytopes.build_from_vertices(vertices2)
+    eq2 = _spatial.convex_hull_equations(vertices2)
+    B2 = jnp.asarray(eq2[:, :-1], dtype=jnp.float64)
+    c2 = jnp.asarray(-eq2[:, -1], dtype=jnp.float64)
     head = 5
 
     padded_rows: list[jnp.ndarray] = []
-    for bundle in (bundle4, bundle2):
+    for B, c in ((B4, c4), (B2, c2)):
         padded = jnp.full((head,), float("nan"), dtype=jnp.float64)
         try:
-            seq = spectrum.ehz_spectrum_reference(bundle.normals, bundle.offsets, head=head)
+            seq = spectrum.ehz_spectrum_reference(B, c, head=head)
         except ValueError:
             padded_rows.append(padded)
             continue
@@ -170,9 +175,11 @@ def test_oriented_edge_graph_matches_expected_metadata() -> None:
         ],
         dtype=jnp.float64,
     )
-    bundle = polytopes.build_from_vertices(vertices)
+    eq = _spatial.convex_hull_equations(vertices)
+    B = jnp.asarray(eq[:, :-1], dtype=jnp.float64)
+    c = jnp.asarray(-eq[:, -1], dtype=jnp.float64)
 
-    graph = reeb_cycles.build_oriented_edge_graph(bundle.normals, bundle.offsets)
+    graph = reeb_cycles.build_oriented_edge_graph(B, c)
 
     edges = tuple(
         (
@@ -208,6 +215,8 @@ def test_ehz_spectrum_reference_matches_expected_values() -> None:
         ],
         dtype=jnp.float64,
     )
-    bundle = polytopes.build_from_vertices(vertices)
-    spectrum_values = spectrum.ehz_spectrum_reference(bundle.normals, bundle.offsets, head=5)
+    eq = _spatial.convex_hull_equations(vertices)
+    B = jnp.asarray(eq[:, :-1], dtype=jnp.float64)
+    c = jnp.asarray(-eq[:, -1], dtype=jnp.float64)
+    spectrum_values = spectrum.ehz_spectrum_reference(B, c, head=5)
     assert spectrum_values == pytest.approx(EXPECTED_SIMPLEX_SPECTRUM, rel=1e-12, abs=0.0)

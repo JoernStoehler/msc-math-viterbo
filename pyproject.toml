@@ -78,6 +78,10 @@ select = [
     "E7", "E9",          # error-class pycodestyle (runtime/syntax)
     "F",                  # pyflakes (unused/undefined)
     "D",                  # pydocstyle (Google), with targeted ignores below
+    "I",                  # isort import ordering
+    "UP",                 # pyupgrade (modernize Python code)
+    "ANN401",             # flake8-annotations: disallow Any in annotations
+    "PGH003",             # pygrep-hooks: blanket noqa (policy)
     "TID252",             # ban relative imports (policy)
     "RUF100",             # prevent stale/noisy noqa
     "B006", "B008",      # bugbear: mutable defaults; function-call defaults
@@ -104,7 +108,9 @@ future-annotations = true
 "tests/**/*" = ["D"]
 # Re-export aggregators: avoid F401 noise for curated public API.
 "src/viterbo/__init__.py" = ["F401"]
-"src/viterbo/**/__init__.py" = ["F401"]
+"src/viterbo/**/__init__.py" = ["F401", "F841", "ANN401"]
+# Interop wrappers legitimately use Any and runtime imports.
+"src/viterbo/_wrapped/**/*" = ["ANN401", "PGH003"]
 # Private helper modules may omit docstrings; still lint formatting/content when present.
 "src/viterbo/**/_*.py" = ["D101", "D102", "D103"]
 # Experimental modules: relax docstring requirements during incubation.
@@ -113,15 +119,23 @@ future-annotations = true
 "src/viterbo/capacity/minkowski_billiards.py" = ["D"]
 "src/viterbo/capacity/reeb_cycles.py" = ["D"]
 "src/viterbo/capacity/__init__.py" = ["BLE001"]
-# Typing stubs package (`typings/`) may use relative imports internally.
-"typings/**/*" = ["TID252"]
-"notebooks/**" = ["T20", "I001", "D", "F401"]
+# Typing stubs package (`typings/`) may use relative imports internally and permissive types.
+"typings/**/*" = ["TID252", "ANN401", "UP035", "UP037", "UP047", "I001"]
+# Notebooks: keep modernisation nags low-friction.
+"notebooks/**" = ["T20", "I001", "D", "F401", "UP035"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = false
+mypy-init-return = true
+suppress-dummy-args = true
+ignore-fully-untyped = true
+
 
 # Coverage configuration for local coverage reports.
 [tool.coverage.run]

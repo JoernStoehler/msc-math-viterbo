@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import math
+
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
 from viterbo._wrapped import spatial as _spatial
 from viterbo.math.geometry import enumerate_vertices
-import math
 
 
 def volume_reference(vertices: Float[Array, " num_vertices dimension"]) -> float:
@@ -81,11 +82,3 @@ def polytope_volume_fast(
     except _spatial.QhullError:
         return float(_spatial.convex_hull_volume(vertices, qhull_options="QJ"))
     return _volume_of_simplices(vertices[simplices])
-
-
-__all__ = [
-    "volume_reference",
-    "volume_padded",
-    "polytope_volume_reference",
-    "polytope_volume_fast",
-]

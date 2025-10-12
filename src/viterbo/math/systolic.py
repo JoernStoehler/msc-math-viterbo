@@ -7,11 +7,11 @@ import math
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-from viterbo.math.volume import polytope_volume_fast
 from viterbo.math.capacity.facet_normals import (
     ehz_capacity_fast_facet_normals,
     ehz_capacity_reference_facet_normals,
 )
+from viterbo.math.volume import polytope_volume_fast
 
 
 def systolic_ratio(
@@ -53,6 +53,3 @@ def systolic_ratio(
         raise ValueError(msg)
 
     return float((capacity**n) / denominator)
-
-
-__all__ = ["systolic_ratio"]

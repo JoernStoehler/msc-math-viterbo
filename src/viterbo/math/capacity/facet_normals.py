@@ -9,28 +9,21 @@ programming shortcut used in the legacy implementation.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Iterator, Sequence
 from itertools import combinations, permutations
-from typing import Iterator, Sequence
 
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-from viterbo.math.symplectic import standard_symplectic_matrix
 from viterbo.math.numerics import FACET_SOLVER_TOLERANCE
+from viterbo.math.symplectic import standard_symplectic_matrix
 
 np = jnp
 
 _MAX_PERMUTATION_SIZE = 7
 
 
-@dataclass(frozen=True)
-class _FacetSubset:
-    """Data describing a facet subset and its Reeb measure."""
-
-    indices: tuple[int, ...]
-    beta: Float[Array, " m"]
-    symplectic_products: Float[Array, " m m"]
+# Internal facet-subset payload: (beta, symplectic_products)
 
 
 def support_radii(
@@ -63,7 +56,7 @@ def _prepare_subset(
     indices: Sequence[int],
     J: Float[Array, " dimension dimension"],
     tol: float,
-) -> _FacetSubset | None:
+) -> tuple[Float[Array, " m"], Float[Array, " m m"]] | None:
     selected = tuple(int(index) for index in indices)
     row_indices = jnp.asarray(selected, dtype=jnp.int64)
     B_subset = jnp.take(B_matrix, row_indices, axis=0)
@@ -95,7 +88,7 @@ def _prepare_subset(
         return None
 
     symplectic_products = (B_subset @ jnp.asarray(J)) @ B_subset.T
-    return _FacetSubset(indices=selected, beta=beta, symplectic_products=symplectic_products)
+    return (beta, symplectic_products)
 
 
 def _polygon_area_from_halfspaces(
@@ -179,9 +172,11 @@ def _maximum_antisymmetric_order_value(weights: Array) -> float:
     return best
 
 
-def _subset_capacity_candidate_dynamic(subset: _FacetSubset, *, tol: float) -> float | None:
-    beta = jnp.asarray(subset.beta, dtype=jnp.float64)
-    W = jnp.asarray(subset.symplectic_products, dtype=jnp.float64)
+def _subset_capacity_candidate_dynamic(
+    subset: tuple[Float[Array, " m"], Float[Array, " m m"]], *, tol: float
+) -> float | None:
+    beta = jnp.asarray(subset[0], dtype=jnp.float64)
+    W = jnp.asarray(subset[1], dtype=jnp.float64)
 
     positive = jnp.where(beta > float(tol))[0]
     if int(positive.size) < 2:
@@ -199,9 +194,11 @@ def _subset_capacity_candidate_dynamic(subset: _FacetSubset, *, tol: float) -> f
     return 0.5 / maximal_value
 
 
-def _subset_capacity_candidate(subset: _FacetSubset, *, tol: float) -> float | None:
-    beta = jnp.asarray(subset.beta, dtype=jnp.float64)
-    W = jnp.asarray(subset.symplectic_products, dtype=jnp.float64)
+def _subset_capacity_candidate(
+    subset: tuple[Float[Array, " m"], Float[Array, " m m"]], *, tol: float
+) -> float | None:
+    beta = jnp.asarray(subset[0], dtype=jnp.float64)
+    W = jnp.asarray(subset[1], dtype=jnp.float64)
     m = int(beta.shape[0])
     indices = range(m)
 
@@ -333,10 +330,3 @@ def ehz_capacity_fast_facet_normals(
     B_matrix = jnp.asarray(normals, dtype=jnp.float64)
     c = jnp.asarray(offsets, dtype=jnp.float64)
     return _compute_ehz_capacity_fast(B_matrix, c, tol=tol)
-
-
-__all__ = [
-    "support_radii",
-    "ehz_capacity_reference_facet_normals",
-    "ehz_capacity_fast_facet_normals",
-]

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import cvxpy
 from typing import Any
 
+import cvxpy
 import numpy as _np
 
 _OPTIMAL_STATUSES = frozenset({"optimal", "optimal_inaccurate"})
@@ -30,7 +30,8 @@ def solve_epigraph_minimum(
             options["abstol"] = tolerance
             options["reltol"] = tolerance
     # CVXPy lacks precise type hints; treat the solver call as dynamic.
-    from typing import cast as _cast, Any as _Any  # local to avoid polluting module namespace
+    from typing import Any as _Any
+    from typing import cast as _cast  # local to avoid polluting module namespace
 
     _cast(_Any, problem).solve(solver=solver, **options)
     status = problem.status.lower()

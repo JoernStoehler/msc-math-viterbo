@@ -6,18 +6,18 @@ import math
 
 import pytest
 import pytest_benchmark.plugin  # type: ignore[reportMissingTypeStubs]
-
 from viterbo.datasets.catalog import (
     cartesian_product,
     cross_polytope,
     hypercube,
     regular_polygon_product,
 )
+from viterbo.datasets.types import PolytopeRecord as Polytope
+
 from viterbo.math.capacity.minkowski_billiards import (
     minkowski_billiard_length_fast,
     minkowski_billiard_length_reference,
 )
-from viterbo.datasets.types import PolytopeRecord as Polytope
 
 pytestmark = [pytest.mark.smoke, pytest.mark.deep]
 

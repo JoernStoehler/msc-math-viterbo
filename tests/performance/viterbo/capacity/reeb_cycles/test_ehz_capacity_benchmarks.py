@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import cast
 
+import jax.numpy as jnp
 import numpy as np
 import pytest
 import pytest_benchmark.plugin  # type: ignore[reportMissingTypeStubs]
-import jax.numpy as jnp
 from tests._utils.polytope_samples import load_polytope_instances
 
 from viterbo.math.capacity.reeb_cycles import ehz_capacity_fast_reeb, ehz_capacity_reference_reeb

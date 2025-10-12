@@ -6,19 +6,20 @@ import argparse
 import cProfile
 import pstats
 import sys
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
-from typing import Callable, Iterable, Sequence
 
 import jax
 import jax.numpy as jnp
 import numpy as np
-
 from viterbo.datasets.catalog import catalog, random_transformations
+from viterbo.datasets.types import Polytope as ModernPolytope
+from viterbo.datasets.types import PolytopeRecord
+
 from viterbo.math.capacity.facet_normals import (
     ehz_capacity_fast_facet_normals,
     ehz_capacity_reference_facet_normals,
 )
-from viterbo.datasets.types import Polytope as ModernPolytope, PolytopeRecord
 
 Algorithm = Callable[[np.ndarray, np.ndarray], float]
 

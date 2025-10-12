@@ -1,8 +1,6 @@
-"""Basic generator semantics against the modern Polytope type.
+"""Basic generator semantics against the modern generators API (datasets2).
 
-Covers the intention that generators produce `Polytope` samples with expected
-dimensions and float64 data. These tests currently fail until the generator
-implementations are completed.
+Covers that generators produce samples with expected dimensions and float64 data.
 """
 
 from __future__ import annotations
@@ -11,24 +9,22 @@ import jax
 import jax.numpy as jnp
 import pytest
 
-from viterbo.datasets import generators as basic_generators
-from viterbo.datasets.types import Polytope
+from viterbo.datasets2 import generators as basic_generators
 
 
 @pytest.mark.goal_code
 @pytest.mark.smoke
 def test_sample_uniform_ball_produces_polytopes() -> None:
-    """Uniform-ball generator returns a list of `Polytope` with correct shapes."""
+    """Uniform-ball generator returns a list of samples with correct shapes."""
     key = jax.random.PRNGKey(0)
     dimension = 3
     num_samples = 2
     samples = basic_generators.sample_uniform_ball(key, dimension, num_samples=num_samples)
-    assert isinstance(samples, list)
+    assert isinstance(samples, (tuple, list))
     assert len(samples) == num_samples
-    for poly in samples:
-        assert isinstance(poly, Polytope)
-        assert poly.vertices.shape[1] == dimension
-        assert poly.vertices.dtype == jnp.float64
+    for sample in samples:
+        assert sample.vertices.shape[1] == dimension
+        assert sample.vertices.dtype == jnp.float64
 
 
 @pytest.mark.goal_code
@@ -39,8 +35,8 @@ def test_sample_uniform_sphere_vertices_on_unit_sphere() -> None:
     dimension = 3
     num_samples = 2
     samples = basic_generators.sample_uniform_sphere(key, dimension, num_samples=num_samples)
-    for poly in samples:
-        norms = jnp.linalg.norm(poly.vertices, axis=-1)
+    for sample in samples:
+        norms = jnp.linalg.norm(sample.vertices, axis=-1)
         assert jnp.allclose(norms, 1.0, rtol=1e-12, atol=1e-12)
 
 
@@ -55,6 +51,6 @@ def test_sample_halfspace_tangent_offsets_equal_one() -> None:
     samples = basic_generators.sample_halfspace_tangent(
         key, dimension, num_facets=num_facets, num_samples=num_samples
     )
-    for poly in samples:
-        assert poly.offsets.shape == (num_facets,)
-        assert jnp.allclose(poly.offsets, 1.0, rtol=0.0, atol=0.0)
+    for sample in samples:
+        assert sample.offsets.shape == (num_facets,)
+        assert jnp.allclose(sample.offsets, 1.0, rtol=0.0, atol=0.0)

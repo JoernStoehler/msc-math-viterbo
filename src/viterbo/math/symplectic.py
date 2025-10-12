@@ -107,14 +107,3 @@ def normalize_vector(vector: Float[Array, " dim"]) -> Float[Array, " dim"]:
     if norm <= ZERO_TOLERANCE:
         raise ValueError("Cannot normalize a vector with near-zero magnitude.")
     return vec / norm
-
-
-__all__ = [
-    "ZERO_TOLERANCE",
-    "standard_symplectic_matrix",
-    "random_symplectic_matrix",
-    "symplectic_product",
-    "support_function",
-    "minkowski_sum",
-    "normalize_vector",
-]

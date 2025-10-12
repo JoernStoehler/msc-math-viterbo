@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import argparse
 import sys
-from typing import Sequence
+from collections.abc import Sequence
 
 # Support execution both as a module (python -m scripts.check_test_metadata)
 # and as a script (python scripts/check_test_metadata.py).
 try:
     from scripts._test_metadata_helpers import (
         GOAL_MARKERS,
+        SUITE_MARKERS,
         collect_tests_in_file,
         iter_test_files,
     )
@@ -21,6 +22,7 @@ except ModuleNotFoundError:  # pragma: no cover - import fallback for direct exe
     _sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
     from scripts._test_metadata_helpers import (  # type: ignore[redefined-builtin]
         GOAL_MARKERS,
+        SUITE_MARKERS,
         collect_tests_in_file,
         iter_test_files,
     )
@@ -51,8 +53,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     issues: list[str] = []
     total_tests = 0
     files_scanned = 0
-
-    from scripts._test_metadata_helpers import SUITE_MARKERS  # type: ignore
 
     for path in iter_test_files(args.paths):
         files_scanned += 1

@@ -2,17 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Sequence
+from collections.abc import Sequence
 
 import jax.numpy as jnp
 import numpy as np
 from jaxtyping import Array
 
 
-Serializable = Any
-
-
-def array_to_python(value: Array | Sequence[float]) -> Serializable:
+def array_to_python(value: Array | Sequence[float] | float) -> object:
     """Return a Python-native representation for ``value``.
 
     HuggingFace datasets expect Python scalars, lists, or dictionaries. This helper
@@ -29,7 +26,7 @@ def array_to_python(value: Array | Sequence[float]) -> Serializable:
     return value
 
 
-def bool_array_to_python(value: Array | Sequence[bool]) -> Serializable:
+def bool_array_to_python(value: Array | Sequence[bool] | bool) -> object:
     """Convert a boolean JAX/NumPy array or sequence into nested Python lists."""
 
     if isinstance(value, jnp.ndarray):
@@ -41,22 +38,13 @@ def bool_array_to_python(value: Array | Sequence[bool]) -> Serializable:
     return bool(value)
 
 
-def python_to_array(value: Serializable, *, dtype=jnp.float64) -> Array:
+def python_to_array(value: object, *, dtype: object = jnp.float64) -> Array:
     """Convert a Python nested sequence back into a JAX array."""
 
     return jnp.asarray(value, dtype=dtype)
 
 
-def python_to_bool_array(value: Serializable) -> Array:
+def python_to_bool_array(value: object) -> Array:
     """Convert a Python nested sequence of booleans back into a JAX array."""
 
     return jnp.asarray(value, dtype=bool)
-
-
-__all__ = [
-    "Serializable",
-    "array_to_python",
-    "bool_array_to_python",
-    "python_to_array",
-    "python_to_bool_array",
-]

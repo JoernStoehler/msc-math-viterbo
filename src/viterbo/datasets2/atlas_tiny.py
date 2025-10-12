@@ -10,7 +10,6 @@ from datasets import Dataset, Features, Sequence, Value
 from viterbo._wrapped import spatial as _spatial
 from viterbo.datasets2 import converters, generators
 
-
 _DATASET_FEATURES = Features(
     {
         "polytope_id": Value("string"),
@@ -27,6 +26,8 @@ _DATASET_FEATURES = Features(
         "volume[fast]": Value("float64"),
     }
 )
+
+
 def _row_from_sample(
     identifier: str,
     generator_name: str,
@@ -170,5 +171,3 @@ def features() -> Features:
     """Return the dataset feature schema."""
 
     return _DATASET_FEATURES
-
-__all__ = ["build", "features", "rows"]

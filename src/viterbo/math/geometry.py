@@ -5,8 +5,9 @@ Functions operate on JAX arrays and return arrays or tuples of arrays.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from itertools import combinations
-from typing import Iterable, cast
+from typing import cast
 
 import jax
 import jax.numpy as jnp
@@ -147,11 +148,3 @@ def halfspaces_from_vertices(
     B_j = jnp.asarray(normals, dtype=jnp.float64)
     c_j = jnp.asarray(-offsets, dtype=jnp.float64)
     return remove_redundant_facets(B_j, c_j)
-
-
-__all__ = [
-    "enumerate_vertices",
-    "remove_redundant_facets",
-    "vertices_from_halfspaces",
-    "halfspaces_from_vertices",
-]

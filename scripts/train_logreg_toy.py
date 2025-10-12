@@ -7,7 +7,7 @@ import json
 import os
 import secrets
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import jax
@@ -53,12 +53,12 @@ def _load_dataset(
 
 
 def _make_run_name(dataset_version: str, variant: str) -> str:
-    date = datetime.now(timezone.utc).strftime("%Y%m%d")
+    date = datetime.now(UTC).strftime("%Y%m%d")
     return f"{date}_logreg_toy_{dataset_version}_{variant}"
 
 
 def _make_run_slug(dataset_version: str, variant: str) -> str:
-    date = datetime.now(timezone.utc).strftime("%Y%m%d")
+    date = datetime.now(UTC).strftime("%Y%m%d")
     token = secrets.token_hex(3)
     return f"{date}-logreg-toy-{dataset_version}-{variant}-{token}"
 
@@ -174,7 +174,7 @@ def run(args: argparse.Namespace) -> None:
     summary = {
         "run_name": run_name,
         "run_slug": run_slug,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "dataset_version": metadata["version"],
         "variant": args.variant,
         "hyperparameters": asdict(config),

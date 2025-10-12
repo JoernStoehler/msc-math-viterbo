@@ -5,10 +5,10 @@ from __future__ import annotations
 import jax.numpy as jnp
 import pytest
 
+from viterbo._wrapped import spatial as _spatial
 from viterbo.math.capacity.facet_normals import (
     ehz_capacity_reference_facet_normals,
 )
-from viterbo.datasets.builders import build_from_vertices
 
 pytestmark = [pytest.mark.smoke]
 
@@ -27,6 +27,8 @@ def test_modern_capacity_reference_benchmark_4d(benchmark) -> None:
         ],
         dtype=jnp.float64,
     )
-    P = build_from_vertices(verts)
-    result = benchmark(lambda: ehz_capacity_reference_facet_normals(P.normals, P.offsets))
+    eq = _spatial.convex_hull_equations(verts)
+    B = jnp.asarray(eq[:, :-1], dtype=jnp.float64)
+    c = jnp.asarray(-eq[:, -1], dtype=jnp.float64)
+    result = benchmark(lambda: ehz_capacity_reference_facet_normals(B, c))
     assert jnp.isfinite(result)

@@ -6,7 +6,7 @@ import argparse
 import hashlib
 import json
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import jax
@@ -111,7 +111,7 @@ def generate_dataset(output_dir: Path, seed: int, config: DatasetConfig) -> None
     metadata = {
         "dataset_name": "logreg-toy",
         "version": config.version,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "git_commit": _git_commit_hash(),
         "generator": "scripts/generate_logreg_toy_dataset.py",
         "jax_seed": seed,

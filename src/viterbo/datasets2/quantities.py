@@ -69,6 +69,3 @@ def volume_from_halfspaces(
     if method == "fast":
         return float(volume.polytope_volume_fast(normals64, offsets64, atol=atol))
     raise ValueError(f"Unknown volume method: {method}")
-
-
-__all__ = ["vertices", "halfspaces", "volume_from_vertices", "volume_from_halfspaces"]

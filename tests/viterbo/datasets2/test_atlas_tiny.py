@@ -4,11 +4,14 @@ import jax
 import jax.numpy as jnp
 import pytest
 
-from viterbo.datasets2 import atlas_tiny
-from viterbo.datasets2 import generators, quantities
+from viterbo.datasets2 import atlas_tiny, generators, quantities
 
 
+@pytest.mark.goal_code
+@pytest.mark.smoke
 def test_build_returns_expected_structure() -> None:
+    """Atlas tiny build returns 8 rows with expected columns and non-empty data."""
+
     dataset = atlas_tiny.build()
     assert dataset.num_rows == len(atlas_tiny.rows())
     assert dataset.num_rows == 8
@@ -35,7 +38,11 @@ def test_build_returns_expected_structure() -> None:
     assert first["incidence"], "incidence column should contain data"
 
 
+@pytest.mark.goal_code
+@pytest.mark.smoke
 def test_rows_roundtrip_to_jax() -> None:
+    """Rows convert to JAX arrays with expected ranks and dtypes."""
+
     row = atlas_tiny.rows()[0]
     vertices = jnp.asarray(row["vertices"], dtype=jnp.float64)
     normals = jnp.asarray(row["normals"], dtype=jnp.float64)
@@ -48,7 +55,11 @@ def test_rows_roundtrip_to_jax() -> None:
     assert incidence.ndim == 2
 
 
+@pytest.mark.goal_code
+@pytest.mark.smoke
 def test_generators_return_polytope_sample() -> None:
+    """Generator helpers return PolytopeSample with consistent shapes and volume parity."""
+
     sample = generators.hypercube(dimension=2, radius=1.0)
     vertices, normals, offsets, incidence = sample.as_tuple()
 
@@ -62,7 +73,11 @@ def test_generators_return_polytope_sample() -> None:
     assert vol_vertices == pytest.approx(vol_halfspaces)
 
 
+@pytest.mark.goal_code
+@pytest.mark.smoke
 def test_random_generators_cover_all_cases() -> None:
+    """Random/tangent/sphere/ball/product generators produce non-empty samples."""
+
     halfspace = generators.sample_halfspace(
         jax.random.PRNGKey(0), dimension=2, num_facets=6, num_samples=2
     )
@@ -75,15 +90,11 @@ def test_random_generators_cover_all_cases() -> None:
     assert len(tangent) == 1
     assert all(sample.vertices.size > 0 for sample in tangent)
 
-    sphere = generators.sample_uniform_sphere(
-        jax.random.PRNGKey(2), dimension=2, num_samples=1
-    )
+    sphere = generators.sample_uniform_sphere(jax.random.PRNGKey(2), dimension=2, num_samples=1)
     assert len(sphere) == 1
     assert all(sample.vertices.size > 0 for sample in sphere)
 
-    ball = generators.sample_uniform_ball(
-        jax.random.PRNGKey(3), dimension=2, num_samples=1
-    )
+    ball = generators.sample_uniform_ball(jax.random.PRNGKey(3), dimension=2, num_samples=1)
     assert len(ball) == 1
     assert all(sample.vertices.size > 0 for sample in ball)
 

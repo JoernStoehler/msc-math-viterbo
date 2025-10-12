@@ -7,7 +7,6 @@ import math
 import jax.numpy as jnp
 import pytest
 
-from viterbo.datasets import builders as polytopes
 from viterbo.math import spectrum
 
 
@@ -29,9 +28,8 @@ def test_ehz_spectrum_reference_returns_head_actions_4d() -> None:
         dtype=jnp.float64,
     )
     offsets = jnp.ones((8,), dtype=jnp.float64)
-    P = polytopes.build_from_halfspaces(normals, offsets)
     head = 4
-    seq = spectrum.ehz_spectrum_reference(P.normals, P.offsets, head=head)
+    seq = spectrum.ehz_spectrum_reference(normals, offsets, head=head)
     assert len(seq) <= head
     assert all(math.isfinite(x) and x >= 0.0 for x in seq)
     assert seq == sorted(seq)

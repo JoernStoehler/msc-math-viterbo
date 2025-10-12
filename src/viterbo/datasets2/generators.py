@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-import itertools
-import math
 from dataclasses import dataclass
 
-import jax
 import jax.numpy as jnp
 from jaxtyping import Array, Bool, Float, PRNGKeyArray
 
-from viterbo._wrapped import spatial as _spatial
+from viterbo.math import generators as _gen
 from viterbo.math.numerics import (
     GEOMETRY_ABS_TOLERANCE,
     INCIDENCE_ABS_TOLERANCE,
@@ -45,6 +42,8 @@ class PolytopeSample:
         """Return a tuple view of the sample for positional consumers."""
 
         return (self.vertices, self.normals, self.offsets, self.incidence)
+
+
 def _incidence(
     normals: Float[Array, " num_facets dimension"],
     offsets: Float[Array, " num_facets"],
@@ -59,40 +58,30 @@ def _incidence(
     return jnp.isclose(support, offsets[:, None], rtol=rtol, atol=atol)
 
 
-def _from_vertices(
+def _from_vertices(  # pyright: ignore[reportUnusedFunction]
     vertices: Float[Array, " num_vertices dimension"],
 ) -> PolytopeSample:
-    verts = jnp.asarray(vertices, dtype=jnp.float64)
-    equations = _spatial.convex_hull_equations(verts)
-    normals = jnp.asarray(equations[:, :-1], dtype=jnp.float64)
-    offsets = jnp.asarray(-equations[:, -1], dtype=jnp.float64)
-    hull_indices = jnp.asarray(_spatial.convex_hull_vertices(verts), dtype=jnp.int32)
-    hull_vertices = verts[hull_indices]
+    hull_vertices, normals, offsets = _gen.from_vertices(vertices)
     incidence = _incidence(normals, offsets, hull_vertices)
     return PolytopeSample(hull_vertices, normals, offsets, incidence)
 
 
-def _from_halfspaces(
+def _from_halfspaces(  # pyright: ignore[reportUnusedFunction]
     normals: Float[Array, " num_facets dimension"],
     offsets: Float[Array, " num_facets"],
     *,
     atol: float = GEOMETRY_ABS_TOLERANCE,
 ) -> PolytopeSample:
+    vertices = _gen.from_halfspaces(normals, offsets, atol=atol)
     normals64 = jnp.asarray(normals, dtype=jnp.float64)
     offsets64 = jnp.asarray(offsets, dtype=jnp.float64)
-    try:
-        vertices_np = _spatial.halfspace_intersection_vertices(normals64, offsets64)
-        vertices = jnp.asarray(vertices_np, dtype=jnp.float64)
-        if vertices.shape[0] == 0:
-            raise ValueError("no vertices")
-    except (ValueError, RuntimeError):
-        dimension = int(normals64.shape[1])
-        vertices = jnp.empty((0, dimension), dtype=jnp.float64)
     incidence = _incidence(normals64, offsets64, vertices)
     return PolytopeSample(vertices, normals64, offsets64, incidence)
 
 
-def _contains_origin(sample: PolytopeSample, *, atol: float = GEOMETRY_ABS_TOLERANCE) -> bool:
+def _contains_origin(  # pyright: ignore[reportUnusedFunction]
+    sample: PolytopeSample, *, atol: float = GEOMETRY_ABS_TOLERANCE
+) -> bool:
     offsets = sample.offsets
     if offsets.size == 0:
         return False
@@ -101,34 +90,23 @@ def _contains_origin(sample: PolytopeSample, *, atol: float = GEOMETRY_ABS_TOLER
 
 def hypercube(dimension: int, *, radius: float = 1.0) -> PolytopeSample:
     """Axis-aligned hypercube centred at the origin."""
-
-    if dimension <= 0:
-        raise ValueError("dimension must be positive")
-    corners = jnp.array(
-        list(itertools.product((-radius, radius), repeat=dimension)), dtype=jnp.float64
-    )
-    return _from_vertices(corners)
+    verts, normals, offsets = _gen.hypercube(dimension, radius=radius)
+    incidence = _incidence(normals, offsets, verts)
+    return PolytopeSample(verts, normals, offsets, incidence)
 
 
 def cross_polytope(dimension: int, *, radius: float = 1.0) -> PolytopeSample:
     """L1-ball (cross polytope) in ``dimension`` dimensions."""
-
-    if dimension <= 0:
-        raise ValueError("dimension must be positive")
-    basis = jnp.eye(dimension, dtype=jnp.float64)
-    vertices = jnp.concatenate([radius * basis, -radius * basis], axis=0)
-    return _from_vertices(vertices)
+    verts, normals, offsets = _gen.cross_polytope(dimension, radius=radius)
+    incidence = _incidence(normals, offsets, verts)
+    return PolytopeSample(verts, normals, offsets, incidence)
 
 
 def simplex(dimension: int) -> PolytopeSample:
     """Standard simplex in ``dimension`` dimensions."""
-
-    if dimension <= 0:
-        raise ValueError("dimension must be positive")
-    basis = jnp.eye(dimension, dtype=jnp.float64)
-    origin = jnp.zeros((1, dimension), dtype=jnp.float64)
-    vertices = jnp.concatenate([basis, origin], axis=0)
-    return _from_vertices(vertices)
+    verts, normals, offsets = _gen.simplex(dimension)
+    incidence = _incidence(normals, offsets, verts)
+    return PolytopeSample(verts, normals, offsets, incidence)
 
 
 def sample_halfspace(
@@ -142,30 +120,11 @@ def sample_halfspace(
     """Sample bounded polytopes from random half-space inequalities."""
 
     samples: list[PolytopeSample] = []
-    attempts = 0
-    rng = key
-    while len(samples) < num_samples and attempts < max_attempts:
-        attempts += 1
-        rng, normals_key = jax.random.split(rng)
-        normals_key, offsets_key = jax.random.split(normals_key)
-        normals = jax.random.normal(
-            normals_key, (num_facets, dimension), dtype=jnp.float64
-        )
-        norms = jnp.linalg.norm(normals, axis=1, keepdims=True)
-        normals = normals / jnp.where(norms == 0.0, 1.0, norms)
-        offsets = jax.random.uniform(
-            offsets_key,
-            (num_facets,),
-            minval=0.5,
-            maxval=2.0,
-            dtype=jnp.float64,
-        )
-        sample = _from_halfspaces(normals, offsets)
-        if sample.vertices.shape[0] == 0:
-            continue
-        samples.append(sample)
-    if len(samples) < num_samples:
-        raise RuntimeError("Failed to sample enough bounded polytopes from half-space data")
+    for vertices, normals, offsets in _gen.sample_halfspace(
+        key, dimension, num_facets=num_facets, num_samples=num_samples, max_attempts=max_attempts
+    ):
+        incidence = _incidence(normals, offsets, vertices)
+        samples.append(PolytopeSample(vertices, normals, offsets, incidence))
     return tuple(samples)
 
 
@@ -180,25 +139,11 @@ def sample_halfspace_tangent(
     """Sample polytopes from half-spaces tangent to the unit ball."""
 
     samples: list[PolytopeSample] = []
-    attempts = 0
-    rng = key
-    while len(samples) < num_samples and attempts < max_attempts:
-        attempts += 1
-        rng, normals_key = jax.random.split(rng)
-        normals = jax.random.normal(
-            normals_key, (num_facets, dimension), dtype=jnp.float64
-        )
-        norms = jnp.linalg.norm(normals, axis=1, keepdims=True)
-        normals = normals / jnp.where(norms == 0.0, 1.0, norms)
-        offsets = jnp.ones((num_facets,), dtype=jnp.float64)
-        sample = _from_halfspaces(normals, offsets)
-        if sample.vertices.shape[0] == 0:
-            continue
-        if not _contains_origin(sample):
-            continue
-        samples.append(sample)
-    if len(samples) < num_samples:
-        raise RuntimeError("Failed to sample enough tangent polytopes")
+    for vertices, normals, offsets in _gen.sample_halfspace_tangent(
+        key, dimension, num_facets=num_facets, num_samples=num_samples, max_attempts=max_attempts
+    ):
+        incidence = _incidence(normals, offsets, vertices)
+        samples.append(PolytopeSample(vertices, normals, offsets, incidence))
     return tuple(samples)
 
 
@@ -212,21 +157,11 @@ def sample_uniform_sphere(
     """Sample convex hulls of points drawn uniformly from the unit sphere."""
 
     samples: list[PolytopeSample] = []
-    attempts = 0
-    rng = key
-    num_vertices = dimension + 1
-    while len(samples) < num_samples and attempts < max_attempts:
-        attempts += 1
-        rng, draw_key = jax.random.split(rng)
-        points = jax.random.normal(draw_key, (num_vertices, dimension), dtype=jnp.float64)
-        norms = jnp.linalg.norm(points, axis=1, keepdims=True)
-        vertices = points / jnp.where(norms == 0.0, 1.0, norms)
-        sample = _from_vertices(vertices)
-        if not _contains_origin(sample):
-            continue
-        samples.append(sample)
-    if len(samples) < num_samples:
-        raise RuntimeError("Failed to sample enough sphere polytopes that contain the origin")
+    for vertices, normals, offsets in _gen.sample_uniform_sphere(
+        key, dimension, num_samples=num_samples, max_attempts=max_attempts
+    ):
+        incidence = _incidence(normals, offsets, vertices)
+        samples.append(PolytopeSample(vertices, normals, offsets, incidence))
     return tuple(samples)
 
 
@@ -240,26 +175,11 @@ def sample_uniform_ball(
     """Sample convex hulls of points drawn uniformly from the unit ball."""
 
     samples: list[PolytopeSample] = []
-    attempts = 0
-    rng = key
-    num_vertices = dimension + 1
-    while len(samples) < num_samples and attempts < max_attempts:
-        attempts += 1
-        rng, draw_key = jax.random.split(rng)
-        draw_key, radius_key = jax.random.split(draw_key)
-        directions = jax.random.normal(draw_key, (num_vertices, dimension), dtype=jnp.float64)
-        norms = jnp.linalg.norm(directions, axis=1, keepdims=True)
-        unit_dirs = directions / jnp.where(norms == 0.0, 1.0, norms)
-        radii = jax.random.uniform(
-            radius_key, (num_vertices, 1), dtype=jnp.float64
-        )
-        vertices = unit_dirs * jnp.power(radii, 1.0 / dimension)
-        sample = _from_vertices(vertices)
-        if not _contains_origin(sample):
-            continue
-        samples.append(sample)
-    if len(samples) < num_samples:
-        raise RuntimeError("Failed to sample enough ball polytopes that contain the origin")
+    for vertices, normals, offsets in _gen.sample_uniform_ball(
+        key, dimension, num_samples=num_samples, max_attempts=max_attempts
+    ):
+        incidence = _incidence(normals, offsets, vertices)
+        samples.append(PolytopeSample(vertices, normals, offsets, incidence))
     return tuple(samples)
 
 
@@ -271,91 +191,9 @@ def enumerate_product_ngons(
     """Enumerate Cartesian products of regular polygons with rotation grid."""
 
     samples: list[PolytopeSample] = []
-    for k_P in range(3, max_ngon_P + 1):
-        for k_Q in range(3, max_ngon_Q + 1):
-            for s in range(1, max_rotation_Q + 1):
-                for r in range(0, s):
-                    if r == 0 and s != 1:
-                        continue
-                    if r != 0 and math.gcd(r, s) != 1:
-                        continue
-                    if r / s >= 1.0 / k_Q:
-                        continue
-                    angle = 2.0 * math.pi * r / s
-                    vertices_P = jnp.array(
-                        [
-                            [math.cos(2.0 * math.pi * i / k_P), math.sin(2.0 * math.pi * i / k_P)]
-                            for i in range(k_P)
-                        ],
-                        dtype=jnp.float64,
-                    )
-                    vertices_Q = jnp.array(
-                        [
-                            [
-                                math.cos(2.0 * math.pi * i / k_Q + angle),
-                                math.sin(2.0 * math.pi * i / k_Q + angle),
-                            ]
-                            for i in range(k_Q)
-                        ],
-                        dtype=jnp.float64,
-                    )
-                    vertices = jnp.array(
-                        [
-                            jnp.concatenate([v_P, v_Q])
-                            for v_P in vertices_P
-                            for v_Q in vertices_Q
-                        ],
-                        dtype=jnp.float64,
-                    )
-                    normals_P = jnp.array(
-                        [
-                            [
-                                math.cos((2.0 * math.pi * i / k_P) + math.pi / k_P),
-                                math.sin((2.0 * math.pi * i / k_P) + math.pi / k_P),
-                            ]
-                            for i in range(k_P)
-                        ],
-                        dtype=jnp.float64,
-                    )
-                    normals_Q = jnp.array(
-                        [
-                            [
-                                math.cos((2.0 * math.pi * i / k_Q) + math.pi / k_Q + angle),
-                                math.sin((2.0 * math.pi * i / k_Q) + math.pi / k_Q + angle),
-                            ]
-                            for i in range(k_Q)
-                        ],
-                        dtype=jnp.float64,
-                    )
-                    offsets_P = jnp.full((k_P,), math.cos(math.pi / k_P), dtype=jnp.float64)
-                    offsets_Q = jnp.full((k_Q,), math.cos(math.pi / k_Q), dtype=jnp.float64)
-                    normals = jnp.concatenate(
-                        (
-                            jnp.concatenate(
-                                (normals_P, jnp.zeros((k_P, 2), dtype=jnp.float64)),
-                                axis=1,
-                            ),
-                            jnp.concatenate(
-                                (jnp.zeros((k_Q, 2), dtype=jnp.float64), normals_Q),
-                                axis=1,
-                            ),
-                        ),
-                        axis=0,
-                    )
-                    offsets = jnp.concatenate((offsets_P, offsets_Q), axis=0)
-                    incidence = _incidence(normals, offsets, vertices)
-                    samples.append(PolytopeSample(vertices, normals, offsets, incidence))
+    for vertices, normals, offsets in _gen.enumerate_product_ngons(
+        max_ngon_P, max_ngon_Q, max_rotation_Q
+    ):
+        incidence = _incidence(normals, offsets, vertices)
+        samples.append(PolytopeSample(vertices, normals, offsets, incidence))
     return tuple(samples)
-
-
-__all__ = [
-    "PolytopeSample",
-    "hypercube",
-    "cross_polytope",
-    "simplex",
-    "sample_halfspace",
-    "sample_halfspace_tangent",
-    "sample_uniform_sphere",
-    "sample_uniform_ball",
-    "enumerate_product_ngons",
-]

@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Any, Sequence, Tuple, cast
-import scipy.optimize as _sp_opt  # type: ignore
+from collections.abc import Sequence
+from typing import Any, cast
 
 import numpy as _np
+import scipy.optimize as _sp_opt  # type: ignore
 
-BoundTuple = Tuple[float | None, float | None]
+BoundTuple = tuple[float | None, float | None]
 
 
 class _OptimizeResultProtocol:

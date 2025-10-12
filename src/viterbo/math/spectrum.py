@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 import jax.numpy as jnp
 from jaxtyping import Array, Float
@@ -54,6 +54,3 @@ def _cycle_action(
         point_head = vertices[head]
         total += float(jnp.linalg.norm(point_head - point_tail))
     return total
-
-
-__all__ = ["ehz_spectrum_reference"]

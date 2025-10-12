@@ -2,47 +2,18 @@
 
 from __future__ import annotations
 
-from collections import deque
-from dataclasses import dataclass
-from itertools import combinations
 import math
-from typing import Iterable, Iterator, Sequence
+from collections import deque
+from collections.abc import Iterable, Iterator, Sequence
+from itertools import combinations
 
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-from viterbo.math.numerics import GEOMETRY_ABS_TOLERANCE
 from viterbo.math.geometry import enumerate_vertices
+from viterbo.math.numerics import GEOMETRY_ABS_TOLERANCE
 
-
-@dataclass(frozen=True)
-class NormalCone:
-    """Vertex together with the indices of its active facets."""
-
-    vertex: Float[Array, " dimension"]
-    active_facets: tuple[int, ...]
-
-
-@dataclass(frozen=True)
-class MinkowskiNormalFan:
-    """Normal fan representation of a polytope."""
-
-    normals: Float[Array, " num_facets dimension"]
-    vertices: Float[Array, " num_vertices dimension"]
-    cones: tuple[NormalCone, ...]
-    adjacency: Array
-    neighbors: tuple[tuple[int, ...], ...]
-    coordinate_blocks: tuple[tuple[int, ...], ...]
-
-    @property
-    def dimension(self) -> int:
-        """Ambient dimension of the normal fan vertices."""
-        return int(self.vertices.shape[1])
-
-    @property
-    def vertex_count(self) -> int:
-        """Number of vertices in the normal fan."""
-        return int(self.vertices.shape[0])
+# Internal representation avoids dataclasses; math layer returns arrays/tuples.
 
 
 def build_normal_fan(
@@ -50,45 +21,45 @@ def build_normal_fan(
     offsets: Float[Array, " num_facets"],
     *,
     atol: float = GEOMETRY_ABS_TOLERANCE,
-) -> MinkowskiNormalFan:
+) -> tuple[
+    Float[Array, " num_facets dimension"],
+    Float[Array, " num_vertices dimension"],
+    tuple[tuple[int, ...], ...],
+    tuple[tuple[int, ...], ...],
+]:
     """Construct the normal fan from a half-space description (B, c)."""
     normals = jnp.asarray(normals, dtype=jnp.float64)
     offsets = jnp.asarray(offsets, dtype=jnp.float64)
     vertices = enumerate_vertices(normals, offsets, atol=atol)
-    cones: list[NormalCone] = []
+    cone_vertices: list[jnp.ndarray] = []
+    cone_active: list[tuple[int, ...]] = []
     for k in range(int(vertices.shape[0])):
         v = vertices[k]
         residuals = normals @ v - offsets
         active = jnp.where(jnp.abs(residuals) <= float(atol))[0]
-        cones.append(
-            NormalCone(vertex=v, active_facets=tuple(int(i) for i in active.tolist()))
-        )
-    if not cones:
+        cone_vertices.append(v)
+        cone_active.append(tuple(int(i) for i in active.tolist()))
+    if not cone_vertices:
         raise ValueError("Polytope must have at least one vertex to build a normal fan.")
-    vertices = jnp.stack([cone.vertex for cone in cones], axis=0)
-    adjacency = _vertex_adjacency(cones, dimension=int(vertices.shape[1]))
+    vertices = jnp.stack(cone_vertices, axis=0)
+    adjacency = _vertex_adjacency_from_active(cone_active, dimension=int(vertices.shape[1]))
     neighbors = tuple(
         tuple(int(index) for index in jnp.where(row)[0].tolist()) for row in adjacency
     )
     coordinate_blocks = _coordinate_blocks(normals, tol=1e-12)
-    return MinkowskiNormalFan(
-        normals=normals,
-        vertices=vertices,
-        cones=tuple(cones),
-        adjacency=adjacency,
-        neighbors=neighbors,
-        coordinate_blocks=coordinate_blocks,
-    )
+    return normals, vertices, neighbors, coordinate_blocks
 
 
-def _vertex_adjacency(cones: Sequence[NormalCone], *, dimension: int) -> Array:
-    count = len(cones)
+def _vertex_adjacency_from_active(
+    cone_active: Sequence[tuple[int, ...]], *, dimension: int
+) -> Array:
+    count = len(cone_active)
     adjacency = jnp.zeros((count, count), dtype=bool)
-    for first_index, first_cone in enumerate(cones):
-        facets_first = set(first_cone.active_facets)
+    for first_index, active_first in enumerate(cone_active):
+        facets_first = set(active_first)
         for second_index in range(first_index + 1, count):
-            second_cone = cones[second_index]
-            facets_second = set(second_cone.active_facets)
+            active_second = cone_active[second_index]
+            facets_second = set(active_second)
             shared = len(facets_first.intersection(facets_second))
             threshold = max(0, dimension - 1)
             if shared >= threshold:
@@ -150,19 +121,19 @@ def minkowski_billiard_length_reference(
     atol: float = GEOMETRY_ABS_TOLERANCE,
 ) -> float:
     """Reference Minkowski billiard cycle length search by enumeration."""
-    fan = build_normal_fan(table_normals, table_offsets, atol=atol)
-    if fan.vertex_count == 0:
+    _, fan_vertices, neighbors, _ = build_normal_fan(table_normals, table_offsets, atol=atol)
+    if int(fan_vertices.shape[0]) == 0:
         raise ValueError("Normal fan construction yielded no vertices.")
     geometry_vertices = enumerate_vertices(geometry_normals, geometry_offsets, atol=atol)
 
-    dimension = fan.dimension
+    dimension = int(fan_vertices.shape[1])
     max_length = max_bounces if max_bounces is not None else (dimension + 2)
     if max_length < 3:
         raise ValueError("Closed billiard paths require at least three bounces.")
 
     best = jnp.inf
-    for cycle in _enumerate_cycles(fan, max_length=max_length):
-        length = _cycle_length(cycle, fan.vertices, geometry_vertices)
+    for cycle in _enumerate_cycles(neighbors, int(fan_vertices.shape[0]), max_length=max_length):
+        length = _cycle_length(cycle, fan_vertices, geometry_vertices)
         if length < best:
             best = length
 
@@ -182,21 +153,20 @@ def minkowski_billiard_length_fast(
     atol: float = GEOMETRY_ABS_TOLERANCE,
 ) -> float:
     """Fast Minkowski billiard cycle length via pruned DFS and heuristics."""
-    fan = build_normal_fan(table_normals, table_offsets, atol=atol)
-    if fan.vertex_count == 0:
+    _, fan_vertices, neighbors, _ = build_normal_fan(table_normals, table_offsets, atol=atol)
+    if int(fan_vertices.shape[0]) == 0:
         raise ValueError("Normal fan construction yielded no vertices.")
     geometry_vertices = enumerate_vertices(geometry_normals, geometry_offsets, atol=atol)
-    max_length = max_bounces if max_bounces is not None else (fan.dimension + 2)
+    max_length = max_bounces if max_bounces is not None else (int(fan_vertices.shape[1]) + 2)
     if max_length < 3:
         raise ValueError("Closed billiard paths require at least three bounces.")
 
-    length_matrix, min_edge_length = _pairwise_lengths(fan, geometry_vertices)
+    length_matrix, min_edge_length = _pairwise_lengths(fan_vertices, geometry_vertices)
     if not math.isfinite(min_edge_length):
         raise ValueError("No admissible edges available for Minkowski billiard paths.")
 
     best_overall = math.inf
-    num_vertices = fan.vertex_count
-    neighbors = fan.neighbors
+    num_vertices = int(fan_vertices.shape[0])
     prefix_best: dict[tuple[int, int, int, int], float] = {}
 
     for start in range(num_vertices):
@@ -232,12 +202,12 @@ def minkowski_billiard_length_fast(
 
 
 def _enumerate_cycles(
-    fan: MinkowskiNormalFan,
+    neighbors: tuple[tuple[int, ...], ...],
+    vertex_count: int,
     *,
     max_length: int,
 ) -> Iterable[tuple[int, ...]]:
-    neighbor_lists: list[list[int]] = [sorted(neighbors) for neighbors in fan.neighbors]
-    vertex_count = fan.vertex_count
+    neighbor_lists: list[list[int]] = [sorted(n) for n in neighbors]
     seen: set[tuple[int, ...]] = set()
 
     def unblock(vertex: int, blocked: list[bool], block_map: list[set[int]]) -> None:
@@ -306,8 +276,7 @@ def _enumerate_cycles(
             continue
         blocked = [False] * vertex_count
         block_map: list[set[int]] = [set() for _ in range(vertex_count)]
-        for cycle in circuit(start, start, component, blocked, block_map):
-            yield cycle
+        yield from circuit(start, start, component, blocked, block_map)
         for vertex in range(vertex_count):
             neighbor_lists[vertex] = [
                 neighbor for neighbor in neighbor_lists[vertex] if neighbor != start
@@ -398,10 +367,10 @@ def _cycle_length(
 
 
 def _pairwise_lengths(
-    fan: MinkowskiNormalFan,
+    fan_vertices: Float[Array, " num_vertices dimension"],
     geometry_vertices: Float[Array, " num_vertices dimension"],
 ) -> tuple[Array, float]:
-    V = jnp.asarray(fan.vertices, dtype=jnp.float64)
+    V = jnp.asarray(fan_vertices, dtype=jnp.float64)
     G = jnp.asarray(geometry_vertices, dtype=jnp.float64)
     n = V.shape[0]
     lengths = jnp.zeros((n, n), dtype=jnp.float64)

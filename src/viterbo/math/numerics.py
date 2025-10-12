@@ -13,10 +13,3 @@ INCIDENCE_REL_TOLERANCE: float = 1e-12
 
 INCIDENCE_ABS_TOLERANCE: float = 0.0
 """Default absolute tolerance when checking vertex-facet incidence."""
-
-__all__ = [
-    "GEOMETRY_ABS_TOLERANCE",
-    "FACET_SOLVER_TOLERANCE",
-    "INCIDENCE_REL_TOLERANCE",
-    "INCIDENCE_ABS_TOLERANCE",
-]

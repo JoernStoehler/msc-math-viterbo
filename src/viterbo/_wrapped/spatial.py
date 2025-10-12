@@ -11,10 +11,11 @@ from typing import Any
 
 import numpy as _np
 import scipy.spatial as _spatial  # type: ignore[reportMissingTypeStubs]
-from viterbo._wrapped.optimize import linprog as _linprog
 
 # Re-export the Qhull error type for callers that need to handle failures.
 from scipy.spatial import QhullError as QhullError  # type: ignore[reportMissingTypeStubs]
+
+from viterbo._wrapped.optimize import linprog as _linprog
 
 
 def convex_hull_volume(points: Any, *, qhull_options: str | None = "QJ") -> float:

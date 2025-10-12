@@ -1,8 +1,7 @@
 """Shared fixtures for generating representative polytope instances for tests.
 
-We centralize the catalog sampling logic so both correctness and performance
-suites iterate over the exact same data. This avoids accidental drift between
-benchmark inputs and the regression tests that guard correctness.
+Minimal replacement used by performance suites to avoid importing the
+deprecated viterbo.datasets. Provides a few small 4D instances.
 """
 
 from __future__ import annotations
@@ -10,67 +9,60 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Final
 
-import jax
 import jax.numpy as jnp
+import numpy as np
 
-from viterbo.datasets.catalog import catalog, random_transformations
-from viterbo.math.volume import polytope_volume_reference
+from viterbo.datasets2 import generators
+from viterbo.math import volume
+
+
+def _as_numpy_pair(sample: generators.PolytopeSample) -> tuple[np.ndarray, np.ndarray]:
+    return np.asarray(sample.normals), np.asarray(sample.offsets)
 
 
 def load_polytope_instances(
     *,
-    rng_seed: int = 2023,
-    variant_count: int = 3,
+    rng_seed: int = 0,
+    variant_count: int = 0,
     include_metadata: bool = False,
 ) -> (
-    tuple[
-        Sequence[tuple[jnp.ndarray, jnp.ndarray]],
-        Sequence[str],
-    ]
+    tuple[Sequence[tuple[np.ndarray, np.ndarray]], Sequence[str]]
     | tuple[
-        Sequence[tuple[jnp.ndarray, jnp.ndarray]],
-        Sequence[str],
-        Sequence[dict[str, float | None]],
+        Sequence[tuple[np.ndarray, np.ndarray]], Sequence[str], Sequence[dict[str, float | None]]
     ]
 ):
-    """Return a deterministic list of polytopes plus readable identifiers.
+    """Return a small deterministic list of 4D polytopes plus readable identifiers."""
 
-    The optimized and reference implementations are sensitive to both the
-    polytope geometry and the affine transformations we apply. Supplying a
-    fixed RNG seed keeps tests reproducible while allowing us to reuse the
-    sample set across correctness, benchmarking, and profiling runs.
-    """
-
-    key = jax.random.PRNGKey(rng_seed)
-    instances: list[tuple[jnp.ndarray, jnp.ndarray]] = []
+    instances: list[tuple[np.ndarray, np.ndarray]] = []
     identifiers: list[str] = []
     metadata: list[dict[str, float | None]] = []
 
-    for polytope in catalog():
-        geometry = polytope.geometry
-        B, c = geometry.halfspace_data()
-        instances.append((B, c))
-        identifiers.append(polytope.metadata.slug)
-        if include_metadata:
-            metadata.append(
-                {
-                    "reference_volume": polytope_volume_reference(B, c),
-                    "reference_capacity": polytope.metadata.reference_capacity,
-                }
-            )
+    # Right 4D simplex conv(0,2e_i)
+    simp = generators.simplex(4)
+    instances.append(_as_numpy_pair(simp))
+    identifiers.append("simplex_4d")
+    if include_metadata:
+        B, c = jnp.asarray(simp.normals), jnp.asarray(simp.offsets)
+        metadata.append(
+            {
+                "reference_volume": float(volume.polytope_volume_reference(B, c)),
+                "reference_capacity": None,
+            }
+        )
 
-        variants = random_transformations(polytope, key=key, count=variant_count)
-        for index, variant in enumerate(variants):
-            variant_B, variant_c = variant.geometry.halfspace_data()
-            instances.append((variant_B, variant_c))
-            identifiers.append(f"{polytope.metadata.slug}-variant-{index}")
-            if include_metadata:
-                metadata.append(
-                    {
-                        "reference_volume": polytope_volume_reference(variant_B, variant_c),
-                        "reference_capacity": polytope.metadata.reference_capacity,
-                    }
-                )
+    # Hypercube [-1,1]^4
+    cube = generators.hypercube(4, radius=1.0)
+    instances.append(_as_numpy_pair(cube))
+    identifiers.append("hypercube_4d")
+    if include_metadata:
+        B, c = jnp.asarray(cube.normals), jnp.asarray(cube.offsets)
+        metadata.append(
+            {
+                "reference_volume": float(volume.polytope_volume_reference(B, c)),
+                "reference_capacity": None,
+            }
+        )
+
     if include_metadata:
         return instances, identifiers, metadata
     return instances, identifiers
