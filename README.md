@@ -7,6 +7,24 @@ Numerical experiments around the Viterbo conjecture built on a JAX-first Python 
 operate on JAX arrays, with NumPy/SciPy interop isolated in thin adapters under
 `src/viterbo/_wrapped/`.
 
+## Modern namespace overview
+
+The production solvers, generators, and artefact helpers live under `viterbo.modern`. Capacity,
+cycle, and spectrum entry points consume the shared tolerance policy in
+[`src/viterbo/modern/numerics.py`](src/viterbo/modern/numerics.py) so downstream experiments observe
+consistent behaviour. The legacy `viterbo.symplectic` package has been removed; upgrade consumers to
+the modern modules via:
+
+- `viterbo.modern.capacity` for Haim–Kislev subset search, Chaidez–Hutchings graph wrappers, and
+  Minkowski billiard routines,
+- `viterbo.modern.volume` for deterministic volume estimators,
+- `viterbo.modern.atlas` for parquet schema helpers once the atlas pipeline is implemented.
+
+Higher-dimensional (≥6D) capacities, cycles, and spectra remain on the documented backlog while the
+team scopes combinatorial limits and CI/runtime budgets. See
+[`docs/briefs/2025-10-12-task-modernization-roadmap.md`](docs/briefs/2025-10-12-task-modernization-roadmap.md)
+for the release note and follow-up plan.
+
 ## Policy & Onboarding
 
 - `AGENTS.md` is the single source of truth for roles, conventions, and workflows. Treat this README

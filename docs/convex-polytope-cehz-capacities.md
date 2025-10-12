@@ -2,7 +2,24 @@
 
 We collect high-level procedures for evaluating the Ekeland–Hofer–Zehnder (EHZ) capacity of convex
 polytopes in $\\mathbb{R}^{2n}$ with $2n\\ge 4$. Each algorithm is described at the pseudo-code
-level with references for proofs, correctness, and complexity.
+level with references for proofs, correctness, and complexity. The production implementations live
+in :mod:`viterbo.modern.capacity`, with shared tolerance constants sourced from
+``src/viterbo/modern/numerics.py`` so the capacity, cycle, and spectrum stacks agree on numerical
+policy. The legacy :mod:`viterbo.symplectic` namespace has been retired; downstream consumers should
+import the modern modules directly.
+
+## Modern namespace summary
+
+- ``viterbo.modern.capacity.facet_normals`` implements the Haim–Kislev subset solver and exposes a
+  reference wrapper ``ehz_capacity_reference`` that matches the documented tolerances.
+- ``viterbo.modern.capacity.minkowski_billiards`` realises the billiard-based computation and
+  supplies structured diagnostics for degenerate trajectories.
+- ``viterbo.modern.capacity.reeb_cycles`` constructs Chaidez–Hutchings oriented-edge graphs that
+  feed both the capacity and spectrum APIs, with deterministic ordering encoded in the returned
+  metadata.
+- ``viterbo.modern.spectrum`` enumerates action spectra on top of the modern graph; higher
+  dimensions (≥6D) remain a documented backlog item until we finish the combinatorial and runtime
+  analysis required for practical support.
 
 ## 1. Facet-Normal Optimization Formula (General Dimension)
 

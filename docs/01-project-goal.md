@@ -31,6 +31,15 @@ isoperimetric-type inequalities.
 - Optional: small computational experiments exploring volume vs. capacity on parametric families of
   bodies.
 
+## Modernization milestone and legacy sunset
+
+- The production stack now lives entirely under :mod:`viterbo.modern`; the legacy
+  :mod:`viterbo.symplectic` modules have been removed as part of the modernization programme.
+- Release messaging highlights that higher-dimensional (≥6D) capacity, cycle, and spectrum support
+  remains on the backlog while we analyse combinatorial explosion and runtime budget implications.
+- Downstream consumers should import `viterbo.modern.capacity`, `viterbo.modern.volume`, and related
+  helpers directly; notebooks and scripts will be updated once the atlas pipeline lands.
+
 ## Roadmap (High-level)
 
 1. Foundations: review capacities and symplectic embeddings; compile precise statements of the
