@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any, Sequence, Tuple, cast
+import scipy.optimize as _sp_opt  # type: ignore
 
 import numpy as _np
 
@@ -28,11 +29,9 @@ def linprog(
     **options: Any,
 ) -> _OptimizeResultProtocol:
     """Call SciPy's linprog converting all arrays to NumPy internally."""
-    import scipy.optimize
-    func: Any = getattr(scipy.optimize, "linprog")
     return cast(
         _OptimizeResultProtocol,
-        func(
+        cast(Any, _sp_opt).linprog(
             c=_np.asarray(c, dtype=float),
             A_ub=None if A_ub is None else _np.asarray(A_ub, dtype=float),
             b_ub=None if b_ub is None else _np.asarray(b_ub, dtype=float),

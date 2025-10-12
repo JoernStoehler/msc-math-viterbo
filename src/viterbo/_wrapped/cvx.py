@@ -28,9 +28,12 @@ def solve_epigraph_minimum(
         elif solver_lower == "ecos":
             options["abstol"] = tolerance
             options["reltol"] = tolerance
-    problem.solve(solver=solver, **options)
+    # CVXPy lacks precise type hints; treat the solver call as dynamic.
+    from typing import cast as _cast, Any as _Any  # local to avoid polluting module namespace
+    _cast(_Any, problem).solve(solver=solver, **options)
     status = problem.status.lower()
     if status not in _OPTIMAL_STATUSES:
         msg = f"CVXPy solver failed with status {problem.status}."
         raise RuntimeError(msg)
+    assert variable.value is not None
     return float(variable.value)
