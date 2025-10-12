@@ -61,15 +61,15 @@ extra_javascript:
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 
 nav:
-  - Project Goal: 01-project-goal.md
-  - Collaboration: 05-working-with-codex.md
+  - Project Goal: briefs/2025-10-12-policy-project-goal.md
+  - Collaboration: briefs/2025-10-12-workflow-codex-collaboration.md
   - Reference:
-      - Reading List: 12-math-reading-list.md
-      - Symplectic Quantities: 13-symplectic-quantities.md
-      - Capacities: convex-polytope-cehz-capacities.md
-      - Volumes: convex-polytope-volumes.md
-      - Thesis Topic (Viterbo): 11-math-thesis-topics.md
-      - Papers Index: papers/README.md
+      - Thesis Topic (Viterbo): briefs/2025-10-12-workflow-thesis-topic-probing-viterbo.md
+      - Reading List: briefs/2025-10-12-workflow-reading-list.md
+      - Symplectic Quantities: briefs/2025-10-12-workflow-symplectic-quantities.md
+      - Capacities: briefs/2025-10-12-workflow-capacity-algorithms.md
+      - Volumes: briefs/2025-10-12-workflow-volume-algorithms.md
+      - Papers Index: briefs/2025-10-12-workflow-reading-archive.md
   - Briefs & Workflows:
       - Modernization Overview: briefs/2025-10-12-adr-modernization-source-of-truth.md
       - Data Spine ADR (HF Datasets): briefs/2025-10-12-adr-data-spine-hf-datasets.md
