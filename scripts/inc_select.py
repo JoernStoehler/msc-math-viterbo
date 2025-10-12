@@ -293,14 +293,25 @@ def main() -> int:
         if prev_nodes.get(p.as_posix(), {}).get("hash") not in {None, h}
     }
     changed = set(added | deleted | modified)
+    changed = changed - set([__file__])
 
     # Invalidation: plumbing
-    plumbing_patterns = ["pytest.ini", "pyproject.toml", "uv.lock", "scripts/inc_select.py"]
-    if any(Path(p).name == "conftest.py" for p in list(added | deleted | modified)) or any(
-        any(pp in p for pp in plumbing_patterns) for p in list(added | deleted | modified)
-    ):
-        # signal fallback by not writing selection and returning 0; caller will fallback to full
-        _stderr("[inc] plumbing changed; advise full run")
+    plumbing_patterns = ["conftest.py", "pytest.ini", "pyproject.toml", "uv.lock", "scripts/inc_select.py"]
+    # Robust plumbing detection against absolute paths
+    overlap = {p for p in changed for pat in plumbing_patterns if p.endswith(pat)}
+    if len(overlap) > 0:
+        _stderr("[inc] plumbing: " + ", ".join(sorted(overlap)))
+        # Persist the current graph as a new baseline before advising fallback
+        idx = build_module_index(files)
+        edges_cur = parse_imports(files, idx)
+        nodes_out: dict[str, dict] = {
+            p.as_posix(): {"hash": h, "is_test": is_test_file(p)} for p, h in current_hash.items()
+        }
+        edges_out: dict[str, list[str]] = {
+            k.as_posix(): [t.as_posix() for t in v] for k, v in edges_cur.items()
+        }
+        save_graph({"nodes": nodes_out, "edges": edges_out})
+        _stderr("[inc] plumbing changed; fall back to full run")
         return 0
 
     # Build import graph from current files
@@ -341,6 +352,14 @@ def main() -> int:
             txt = pp.read_text(encoding="utf-8")
             if "importlib." in txt or "__import__(" in txt:
                 _stderr(f"[inc] dynamic import detected in {pp.as_posix()}; advise full run")
+                # Persist baseline graph before advising fallback
+                nodes_out: dict[str, dict] = {
+                    p.as_posix(): {"hash": h, "is_test": is_test_file(p)} for p, h in current_hash.items()
+                }
+                edges_out: dict[str, list[str]] = {
+                    k.as_posix(): [t.as_posix() for t in v] for k, v in edges_cur.items()
+                }
+                save_graph({"nodes": nodes_out, "edges": edges_out})
                 return 0
     except OSError:
         pass
@@ -379,6 +398,14 @@ def main() -> int:
     # No changes fast-path
     if not dirty_tests and not prev_fail:
         _stderr("[inc] no Python changes and no prior failures; skipping test run")
+        # Persist baseline to ensure future diffs work even if none existed before
+        nodes_out: dict[str, dict] = {
+            p.as_posix(): {"hash": h, "is_test": is_test_file(p)} for p, h in current_hash.items()
+        }
+        edges_out: dict[str, list[str]] = {
+            k.as_posix(): [t.as_posix() for t in v] for k, v in edges_cur.items()
+        }
+        save_graph({"nodes": nodes_out, "edges": edges_out})
         return 2
 
     # Large-change fallback: if selection would be too large, advise full run
@@ -394,6 +421,14 @@ def main() -> int:
             f"[inc] large impact: selected_test_files={len(selected_test_files)}/"
             f"{total_tests} (p={fraction:.2f}) — advise full run"
         )
+        # Persist baseline graph before advising full run
+        nodes_out: dict[str, dict] = {
+            p.as_posix(): {"hash": h, "is_test": is_test_file(p)} for p, h in current_hash.items()
+        }
+        edges_out: dict[str, list[str]] = {
+            k.as_posix(): [t.as_posix() for t in v] for k, v in edges_cur.items()
+        }
+        save_graph({"nodes": nodes_out, "edges": edges_out})
         return 3
 
     # emit selection: order test files by relevance and add failing nodeids whose files aren't selected

@@ -44,21 +44,24 @@ scopes combinatorial limits and CI/runtime budgets. See the modernization overvi
 ## Command Reference
 
 ```
-just checks      # Fast loop: lint-fast → type → test-fast
-just test        # Smoke-tier tests (parallel unless testmon enabled)
-just test-fast   # FAST-mode tests (CPU/no-JIT; single-process with testmon)
-just type        # Pyright basic over src/ (fast loop)
-just type-strict # Pyright strict across the repository
-just lint        # Ruff lint + metadata check (CI parity)
-just format      # Ruff format
-just fix         # Ruff format + autofix
-just sync        # Install project and dev dependencies via uv
-just ci          # CI parity (sync → waivers → lint → type-strict → pytest)
-just build       # Build sdist/wheel into dist/
-just publish     # Publish dist/* to index (requires PYPI_TOKEN)
-just release L   # Bump semver (patch|minor|major), commit, tag
-just bench       # Benchmarks (smoke tier)
-just docs-build  # Build MkDocs site with strict checks
+just checks          # Fast loop: lint → type → test (incremental)
+just test            # Smoke-tier tests (incremental selection; serial)
+just test-full       # Smoke-tier tests (full serial)
+just test-xdist      # Smoke-tier tests (full parallel)
+just test-deep       # Smoke + deep tiers (serial)
+just test-longhaul   # Longhaul tier (serial)
+just test-metadata   # Summarise test markers/docstrings
+just coverage        # Smoke-tier coverage (HTML + XML)
+just type            # Pyright basic over src/ (fast loop)
+just type-strict     # Pyright strict across the repository
+just lint            # Ruff lint + metadata check (CI parity)
+just format          # Ruff format
+just fix             # Ruff format + autofix
+just sync            # Install project and dev dependencies via uv
+just ci              # CI parity (sync → waivers → lint → type-strict → pytest)
+just release L       # Bump semver (patch|minor|major), commit, tag
+just bench           # Benchmarks (smoke tier)
+just docs-build      # Build MkDocs site with strict checks
 ```
 
 Additional helpers include profiling targets (`just profile`, `just profile-line`) and the logistic
@@ -78,7 +81,7 @@ The training command expects `WANDB_API_KEY` in your environment (see the Justfi
 
 - Unit and integration tests reside in `tests/viterbo/`; performance benchmarks live in
   `tests/performance/viterbo/`.
-- Export `FAST=1` (or run `just quick`) to force CPU/no-JIT defaults and automatically skip tests
+- Export `FAST=1` to force CPU/no-JIT defaults and automatically skip tests
   marked `slow`, `gpu`, `jit`, or `integration`.
 - CI delegates to `just ci` (see `.github/workflows/ci.yml`) for parity with the local loop. A
   scheduled workflow runs weekly performance benchmarks and uploads `.benchmarks/` artefacts.
