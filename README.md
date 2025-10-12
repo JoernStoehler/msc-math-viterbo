@@ -12,27 +12,25 @@ operate on JAX arrays, with NumPy/SciPy interop isolated in thin adapters under
 The production solvers, generators, and artefact helpers live under `viterbo`. Capacity,
 cycle, and spectrum entry points consume the shared tolerance policy in
 [`src/viterbo/numerics.py`](src/viterbo/numerics.py) so downstream experiments observe
-consistent behaviour. The legacy `viterbo.symplectic` package has been removed; upgrade consumers to
-the flat modules via:
+consistent behaviour. Legacy package trees were removed; upgrade consumers to the flat modules via:
 
 - `viterbo.capacity` for Haim–Kislev subset search, Chaidez–Hutchings graph wrappers, and
   Minkowski billiard routines,
 - `viterbo.volume` for deterministic volume estimators,
 - `viterbo.atlas` for parquet schema helpers once the atlas pipeline is implemented.
 
-Higher-dimensional (≥6D) capacities, cycles, and spectra remain on the documented backlog while the
-team scopes combinatorial limits and CI/runtime budgets. See
-[`docs/briefs/2025-10-12-task-modernization-roadmap.md`](docs/briefs/2025-10-12-task-modernization-roadmap.md)
-for the release note and follow-up plan.
+Higher-dimensional (≥6D) capacities, cycles, and spectra remain on the backlog while the team
+scopes combinatorial limits and CI/runtime budgets. See the modernization overview ADR at
+`docs/briefs/2025-10-12-adr-modernization-source-of-truth.md` for scope and follow-ups.
 
 ## Policy & Onboarding
 
 - `AGENTS.md` is the single source of truth for roles, conventions, and workflows. Treat this README
   as a convenience overview and defer to `AGENTS.md` whenever guidance differs.
 - Task briefs and background notes live in `docs/`. Start with
-  `docs/briefs/2025-10-07-task-systolic-overview.md` for the current exploration programme and use
-  the neighbouring briefs for execution details. Draft new briefs using the conventions described in
-  `docs/briefs/2025-10-08-workflow-brief-authoring.md`.
+  `docs/briefs/2025-10-12-adr-modernization-source-of-truth.md` for the current scope and roadmap.
+  Draft new briefs using the conventions in
+  `docs/briefs/2025-10-12-workflow-brief-authoring.md`.
 - A MkDocs site is published from the `docs/` tree; the badge above links to the latest build.
 
 ## Environment

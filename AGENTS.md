@@ -39,7 +39,7 @@ documentation, so agents can start their work quickly. If another doc conflicts,
   naming pattern `YYYY-MM-DD-workflow-slug.md` and embed dependency call-outs inline. Place any
   situational guidance or long-form execution notes in additional briefs rather than resurrecting
   the old `docs/tasks/` hierarchy. Follow the layout conventions in
-  `docs/briefs/2025-10-08-workflow-brief-authoring.md` when drafting new briefs or workflow notes.
+  `docs/briefs/2025-10-12-workflow-brief-authoring.md` when drafting new briefs or workflow notes.
 - Source code: `src/viterbo/` (library), `tests/viterbo/` (unit/integration tests),
   `tests/performance/viterbo/` (benchmarks).
 - Thesis: `thesis/` (LaTeX source).
@@ -154,7 +154,7 @@ def ehz_capacity(
   cap, `--maxfail=1`, and a slow-test summary (`--durations=15`). `just test-deep` runs the deep
   tier; `just test-longhaul` is manual/scheduled. See
   `docs/briefs/2025-10-07-workflow-task-evaluation.md` for evaluation guidance and test/benchmark
-  cadence expectations.
+  cadence expectations. See `docs/briefs/2025-10-12-workflow-task-evaluation.md`.
 - Invariant baselines live under `tests/_baselines/` as JSON; update values only with
   maintainer sign-off and record the rationale in the PR/task brief.
 

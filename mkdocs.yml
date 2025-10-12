@@ -71,14 +71,14 @@ nav:
       - Thesis Topic (Viterbo): 11-math-thesis-topics.md
       - Papers Index: papers/README.md
   - Briefs & Workflows:
-      - Exploration Overview: briefs/2025-10-07-task-systolic-overview.md
-      - Baselines: briefs/2025-10-07-task-systolic-baselines.md
-      - Combinatorial Reeb Formalization: briefs/2025-10-07-task-combinatorial-reeb-formalization.md
-      - Systolic Pipeline: briefs/2025-10-07-task-systolic-pipeline.md
-      - Landscape Scans: briefs/2025-10-07-task-systolic-landscape-scans.md
-      - Certificates: briefs/2025-10-07-task-systolic-certificates.md
-      - ML Program: briefs/2025-10-07-task-systolic-ml-program.md
-      - Advanced Directions: briefs/2025-10-07-task-systolic-advanced-directions.md
-      - Impacted Coverage Selector ADR: briefs/2025-10-07-adr-impacted-coverage-selector.md
-      - Brief Authoring Guidelines: briefs/2025-10-08-workflow-brief-authoring.md
-      - Task Evaluation Methodology: briefs/2025-10-07-workflow-task-evaluation.md
+      - Modernization Overview: briefs/2025-10-12-adr-modernization-source-of-truth.md
+      - Data Spine ADR (HF Datasets): briefs/2025-10-12-adr-data-spine-hf-datasets.md
+      - No-Batching ADR: briefs/2025-10-12-adr-no-batching-in-library.md
+      - Spectrum 4D Task: briefs/2025-10-12-task-spectrum-4d-baseline.md
+      - Atlas Migration Task: briefs/2025-10-12-task-atlas-migrate-hf-datasets.md
+      - Brief Authoring Guidelines: briefs/2025-10-12-workflow-brief-authoring.md
+      - Task Evaluation Methodology: briefs/2025-10-12-workflow-task-evaluation.md
+      - Subtasks:
+          - Remove Polars → HF Datasets: briefs/subtasks/2025-10-12-subtask-remove-polars-migrate-hf-datasets.md
+          - Delete Batched Library APIs: briefs/subtasks/2025-10-12-subtask-delete-batched-library-apis.md
+          - Refactor Legacy Docs → Briefs: briefs/subtasks/2025-10-12-subtask-refactor-legacy-docs-into-briefs.md
