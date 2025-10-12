@@ -81,5 +81,5 @@ nav:
       - Task Evaluation Methodology: briefs/2025-10-12-workflow-task-evaluation.md
       - Subtasks:
           - Remove Polars → HF Datasets: briefs/subtasks/2025-10-12-subtask-remove-polars-migrate-hf-datasets.md
-          - Delete Batched Library APIs: briefs/subtasks/2025-10-12-subtask-delete-batched-library-apis.md
-          - Refactor Legacy Docs → Briefs: briefs/subtasks/2025-10-12-subtask-refactor-legacy-docs-into-briefs.md
+          - Delete Batched Library APIs: briefs/subtasks/archive/2025-10-12-subtask-delete-batched-library-apis.md
+          - Refactor Legacy Docs → Briefs: briefs/subtasks/archive/2025-10-12-subtask-refactor-legacy-docs-into-briefs.md

@@ -159,7 +159,7 @@ Kernel mean embeddings & MMD:
 
 Optimal transport:  
 - [Cuturi2013] M. Cuturi, *Sinkhorn Distances*, NeurIPS’13. <https://papers.neurips.cc/paper/4927-sinkhorn-distances-lightspeed-computation-of-optimal-transport.pdf>  
-- [PeyreCuturi2019] G. Peyré, M. Cuturi, *Computational Optimal Transport*, FnT ML 2019. <https://dl.acm.org/doi/10.1561/2200000073>  
+- [PeyreCuturi2019] G. Peyré, M. Cuturi, *Computational Optimal Transport*, FnT ML 2019. <https://arxiv.org/abs/1803.00567>
 - [Quellmalz2023] M. Quellmalz et al., *Sliced Optimal Transport on the Sphere*, 2023. <https://page.math.tu-berlin.de/~quellm/paper/QueBeiSte23.pdf>  
 - [Quellmalz2024] M. Quellmalz et al., *Parallelly Sliced OT on Spheres and on SO(3)*, 2024. <https://link.springer.com/article/10.1007/s10851-024-01206-w>
 
