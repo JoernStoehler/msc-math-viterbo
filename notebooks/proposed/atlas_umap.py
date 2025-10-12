@@ -6,7 +6,7 @@ We sketch two related visualisations: (i) an atlas subset embedding coloured by 
 similarity metrics, and (ii) an embedding highlighting clusters where systolic ratios or
 minimal action trajectories behave similarly. None of the helper functions exist yet; the
 purpose is to outline the expected data flow. Importantly, we avoid assuming that a full
-\(10^6 \times 10^6\) similarity matrix fits in memory; all computations below operate on
+$10^6 \times 10^6$ similarity matrix fits in memory; all computations below operate on
 stratified samples and streamed neighbour graphs.
 """
 

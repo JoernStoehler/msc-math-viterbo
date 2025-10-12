@@ -4,11 +4,11 @@
 
 We describe three related data tables for the meetup:
 
-1. Enumerated \(k_p \times k_q\) rotated \(n\)-gon pairs, highlighting the classical
+1. Enumerated $k_p \times k_q$ rotated $n$-gon pairs, highlighting the classical
    Viterbo counterexample.
-2. Expanded catalogue with random \(2d \times 2d\) polytopes, allowing filtering by
+2. Expanded catalogue with random $2d \times 2d$ polytopes, allowing filtering by
    systolic ratio.
-3. Mahler conjecture pairs where \(Q\) is the polar of \(P\).
+3. Mahler conjecture pairs where $Q$ is the polar of $P$.
 
 Each section contains placeholder code to show how we expect to interact with the data.
 """
@@ -28,7 +28,7 @@ from viterbo.visualization import highlight_counterexample_row  # placeholder
 
 # %% [markdown]
 """\
-## 1. Enumerated rotated \(n\)-gon pairs
+## 1. Enumerated rotated $n$-gon pairs
 
 We expect a tidy DataFrame with key parameters and derived invariants. The loader should
 support lazy pagination so that we can request only the slice needed for plotting.
@@ -65,9 +65,9 @@ rotated_pairs[scatter_columns].plot.scatter(
 
 # %% [markdown]
 """\
-## 2. Expanded random \(2d \times 2d\) polytope catalogue
+## 2. Expanded random $2d \times 2d$ polytope catalogue
 
-We want interactive filtering by systolic ratio \(> 1\) to surface other counterexamples.
+We want interactive filtering by systolic ratio $> 1$ to surface other counterexamples.
 The placeholders below assume a helper returning a manifest-style DataFrame with paths
 (or lightweight IDs) referencing persisted thumbnails so that notebooks do not load full
 images into memory at once.
@@ -128,7 +128,7 @@ mahler_pairs.assign(is_counterexample=lambda df: df["systolic_ratio"] > 1.0).plo
 ## 4. Follow-ups
 
 - [ ] Implement dataset loaders and ensure consistent schema across tables.
-- [ ] Decide how to persist and display 2D thumbnails for \(P\) and \(Q\) without inflating memory.
+- [ ] Decide how to persist and display 2D thumbnails for $P$ and $Q$ without inflating memory.
 - [ ] Add export helpers (CSV/Markdown/HTML) for sharing tables with collaborators.
 - [ ] Integrate filtering widgets if we keep using .py notebooks.
 - [ ] Confirm whether Mahler pairs should reuse IDs from the random catalogue for traceability.

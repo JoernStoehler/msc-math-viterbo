@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import importlib
 from typing import Any, Sequence, Tuple, cast
 
 import numpy as _np
@@ -29,8 +28,8 @@ def linprog(
     **options: Any,
 ) -> _OptimizeResultProtocol:
     """Call SciPy's linprog converting all arrays to NumPy internally."""
-    scipy_optimize = importlib.import_module("scipy.optimize")
-    func: Any = getattr(scipy_optimize, "linprog")
+    import scipy.optimize
+    func: Any = getattr(scipy.optimize, "linprog")
     return cast(
         _OptimizeResultProtocol,
         func(

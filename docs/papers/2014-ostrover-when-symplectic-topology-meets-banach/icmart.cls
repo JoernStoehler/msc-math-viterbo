@@ -43,7 +43,7 @@
 %%   Digits        \0\1\2\3\4\5\6\7\8\9
 %%   Exclamation   \!     Double quote  \"     Hash (number) \#
 %%   Dollar        \$     Percent       \%     Ampersand     \&
-%%   Acute accent  \'     Left paren    \(     Right paren   \)
+%%   Acute accent  \'     Left paren    $     Right paren   $
 %%   Asterisk      \*     Plus          \+     Comma         \,
 %%   Minus         \-     Point         \.     Solidus       \/
 %%   Colon         \:     Semicolon     \;     Less than     \<
@@ -154,7 +154,7 @@
 %%   Digits        \0\1\2\3\4\5\6\7\8\9
 %%   Exclamation   \!     Double quote  \"     Hash (number) \#
 %%   Dollar        \$     Percent       \%     Ampersand     \&
-%%   Acute accent  \'     Left paren    \(     Right paren   \)
+%%   Acute accent  \'     Left paren    $     Right paren   $
 %%   Asterisk      \*     Plus          \+     Comma         \,
 %%   Minus         \-     Point         \.     Solidus       \/
 %%   Colon         \:     Semicolon     \;     Less than     \<

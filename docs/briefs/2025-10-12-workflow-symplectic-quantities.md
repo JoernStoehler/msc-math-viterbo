@@ -30,7 +30,7 @@ summary: Reference symplectic invariants and computation notes for convex polyto
 
 ### 1. Gromov width $c_B$
 
-- Definition: \( c_B(P) = \sup \{ \pi r^2 : \exists S \in \mathrm{Sp}(2n),\ S(B^{2n}(r)) \subseteq P \} \).
+- Definition: $ c_B(P) = \sup \{ \pi r^2 : \exists S \in \mathrm{Sp}(2n),\ S(B^{2n}(r)) \subseteq P \} $.
 - Lower bounds from block-diagonal $S$ reduce to convex programmes over log-scalings. Exact formulas exist for orthotopes.
 - Optimise via Riemannian gradient ascent on $\mathrm{Sp}(2n)$ or by enumerating symmetry-reduced candidates.
 

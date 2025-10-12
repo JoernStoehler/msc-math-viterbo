@@ -25,7 +25,7 @@ from viterbo.datasets import load_counterexample_cycle  # placeholder
 """\
 ## 1. Load the counterexample trajectory
 
-We assume a helper that returns the discrete trajectory with both the \(p\) and \(q\)
+We assume a helper that returns the discrete trajectory with both the $p$ and $q$
 components, possibly as a structured array or a small dataclass.
 """
 
@@ -61,7 +61,7 @@ right_component = projection.right  # placeholder attribute
 """\
 ## 3. Plot the piecewise-linear trajectory with matching gradients
 
-Each segment should have a consistent gradient between the \(p\) and \(q\) components so
+Each segment should have a consistent gradient between the $p$ and $q$ components so
 that the viewer can track corresponding points. We will likely need a custom colormap to
 keep both plots synchronised.
 """
@@ -93,7 +93,7 @@ plt.show()
 ## 4. Checklist and follow-ups
 
 - [ ] Finalise the data loader for counterexample trajectories.
-- [ ] Define the projection helper that keeps the \(p\) and \(q\) components aligned.
+- [ ] Define the projection helper that keeps the $p$ and $q$ components aligned.
 - [ ] Implement consistent colour gradients shared across subplots.
 - [ ] Add annotations for action values at key points if useful.
 """
