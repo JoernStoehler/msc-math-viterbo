@@ -10,6 +10,7 @@ import jax.numpy as jnp
 from jaxtyping import Array, Bool, Float
 
 from viterbo.datasets.types import Polytope
+from viterbo.math.symplectic import standard_symplectic_matrix
 
 
 @dataclass(frozen=True)
@@ -74,7 +75,7 @@ def symplectic_spectrum_from_covariance(
 
     # Symmetrise to guard against numerical asymmetry.
     matrix = 0.5 * (matrix + matrix.T)
-    symplectic_matrix = _standard_symplectic_matrix(dimension)
+    symplectic_matrix = standard_symplectic_matrix(dimension)
     product = -matrix @ symplectic_matrix @ matrix @ symplectic_matrix
     eigenvalues = jnp.real(jnp.linalg.eigvals(product))
     eigenvalues = jnp.clip(eigenvalues, a_min=0.0)
@@ -332,19 +333,6 @@ def staged_symplectic_similarity(
     if scale <= 0.0:
         return combined
     return (combined - near_threshold) / scale
-
-
-def _standard_symplectic_matrix(dimension: int) -> Float[Array, " dimension dimension"]:
-    if dimension % 2 != 0:
-        raise ValueError("symplectic matrix requires even dimension")
-    half = dimension // 2
-    zero = jnp.zeros((half, half), dtype=jnp.float64)
-    identity = jnp.eye(half, dtype=jnp.float64)
-    top = jnp.concatenate([zero, identity], axis=1)
-    bottom = jnp.concatenate([-identity, zero], axis=1)
-    return jnp.concatenate([top, bottom], axis=0)
-
-
 def _centre_offsets(
     polytope: Polytope, translation: Float[Array, " dimension"]
 ) -> Float[Array, " num_facets"]:
@@ -422,7 +410,7 @@ def _symplectic_correlation_samples(
     weights_y = weights_y / jnp.sum(weights_y, axis=1, keepdims=True)
     samples_y = weights_y @ centred_vertices
 
-    symplectic_matrix = _standard_symplectic_matrix(dimension)
+    symplectic_matrix = standard_symplectic_matrix(dimension)
     products = jnp.einsum("bi,ij,bj->b", samples_x, symplectic_matrix, samples_y)
     return products
 

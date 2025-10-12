@@ -22,7 +22,7 @@ summary: Transcribe and contextualise the official MSc thesis topic on probing V
 
 ## Execution Outline
 
-1. Build or reuse tooling in `viterbo.capacity` and `viterbo.spectrum` to evaluate $A_{\min}(P)$ for convex polytopes.
+1. Build or reuse tooling in `viterbo.capacity` and `viterbo.math.spectrum` to evaluate $A_{\min}(P)$ for convex polytopes.
 2. Benchmark known counterexamples (e.g., the 2024 Haim-Kislev–Ostrover polytope) and equality cases to validate the implementation.
 3. Explore parametric families (Lagrangian products, centrally symmetric bodies) to map regions where $\operatorname{sys}(P)$ crosses 1.
 4. Train or calibrate ML surrogates that predict promising search directions; integrate with atlas datasets when available.

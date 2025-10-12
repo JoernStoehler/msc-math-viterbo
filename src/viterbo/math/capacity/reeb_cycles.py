@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from itertools import combinations
+from typing import Sequence
 
 import jax.numpy as jnp
 from jaxtyping import Array, Float
@@ -13,10 +14,7 @@ from viterbo.math.capacity.facet_normals import (
     ehz_capacity_fast_facet_normals,
     ehz_capacity_reference_facet_normals,
 )
-from viterbo.math.numerics import (
-    FACET_SOLVER_TOLERANCE,
-    GEOMETRY_ABS_TOLERANCE,
-)
+from viterbo.math.numerics import FACET_SOLVER_TOLERANCE, GEOMETRY_ABS_TOLERANCE
 @dataclass(frozen=True)
 class _Cone:
     vertex: Float[Array, " dimension"]
@@ -208,6 +206,78 @@ def _graph_diagnostics(graph: OrientedEdgeGraph) -> OrientedEdgeDiagnostics:
     )
 
 
+def minimum_cycle_reference(
+    normals: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
+    *,
+    atol: float = GEOMETRY_ABS_TOLERANCE,
+) -> Float[Array, " num_points dimension"]:
+    """Return a representative closed orbit on the oriented-edge graph."""
+
+    graph = build_oriented_edge_graph(normals, offsets, atol=atol)
+    cycles = enumerate_simple_cycles(graph, limit=1)
+    if not cycles:
+        dimension = int(normals.shape[1]) if normals.ndim == 2 else 0
+        return jnp.zeros((0, dimension), dtype=jnp.float64)
+
+    cycle = cycles[0]
+    vertices = enumerate_vertices(normals, offsets, atol=atol)
+    points = [vertices[graph.edges[index].tail_vertex] for index in cycle[:-1]]
+    return jnp.stack(points, axis=0)
+
+
+def enumerate_simple_cycles(
+    graph: OrientedEdgeGraph,
+    *,
+    limit: int,
+) -> list[tuple[int, ...]]:
+    """Enumerate simple cycles up to ``limit`` using DFS with canonicalisation."""
+
+    results: list[tuple[int, ...]] = []
+    seen: set[tuple[int, ...]] = set()
+
+    def canonicalize(sequence: Sequence[int]) -> tuple[int, ...]:
+        if not sequence:
+            return tuple()
+        base = list(sequence[:-1])
+        rotations = [tuple(base[i:] + base[:i]) for i in range(len(base))]
+        canonical = min(rotations)
+        return canonical + (canonical[0],)
+
+    visiting: set[int] = set()
+
+    def dfs(start: int, current: int, path: list[int]) -> None:
+        if len(path) > graph.edge_count:
+            return
+        if len(results) >= limit:
+            return
+        visiting.add(current)
+        for nxt in graph.successors(current):
+            if nxt == start and len(path) >= 2:
+                cycle = tuple(path + [start])
+                key = canonicalize(cycle)
+                if key not in seen:
+                    seen.add(key)
+                    results.append(cycle)
+                    if len(results) >= limit:
+                        visiting.discard(current)
+                        return
+                continue
+            if nxt in visiting:
+                continue
+            dfs(start, nxt, path + [nxt])
+        visiting.discard(current)
+
+    for edge_id in range(graph.edge_count):
+        if len(results) >= limit:
+            break
+        if not graph.successors(edge_id):
+            continue
+        dfs(edge_id, edge_id, [edge_id])
+
+    return results
+
+
 def ehz_capacity_reference_reeb(
     normals: Float[Array, " num_facets dimension"],
     offsets: Float[Array, " num_facets"],
@@ -256,6 +326,8 @@ __all__ = [
     "OrientedEdgeGraph",
     "OrientedEdgeDiagnostics",
     "build_oriented_edge_graph",
+    "enumerate_simple_cycles",
+    "minimum_cycle_reference",
     "ehz_capacity_reference_reeb",
     "ehz_capacity_fast_reeb",
 ]

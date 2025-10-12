@@ -6,7 +6,7 @@ import jax.numpy as jnp
 import pytest
 
 from viterbo.datasets import builders as polytopes
-from viterbo import spectrum
+from viterbo.math import spectrum
 from viterbo.math.capacity import reeb_cycles
 
 

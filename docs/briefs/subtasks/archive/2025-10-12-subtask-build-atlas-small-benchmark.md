@@ -10,7 +10,7 @@ summary: Sketch the atlas-small dataset build and benchmarking run across genera
 ## Context
 
 - `viterbo.atlas` already exposes HF Datasets helpers and schema definitions, but no concrete atlas snapshot is shipped.
-- Generator coverage currently spans random samplers in `viterbo.basic_generators` and structured enumerations; quantity algorithms live across `viterbo.capacity`, `viterbo.volume`, `viterbo.spectrum`, `viterbo.systolic`, and `viterbo.cycles`.
+- Generator coverage currently spans random samplers in `viterbo.basic_generators` and structured enumerations; quantity algorithms live across `viterbo.capacity`, `viterbo.volume`, `viterbo.math.spectrum`, `viterbo.math.systolic`, and `viterbo.datasets.cycles`.
 - The placeholder pipeline notebook (`notebooks/proposed/dataset_pipeline.py`) envisions chunked builders that log artefacts under `artefacts/`, but the updated scope treats the run as an in-memory pass with lightweight manifest-based resumability.
 
 ## Objectives

@@ -6,7 +6,7 @@ import jax.numpy as jnp
 import pytest
 
 from viterbo.datasets import atlas
-from viterbo import cycles
+import viterbo.datasets.cycles as cycles
 
 
 @pytest.mark.goal_code

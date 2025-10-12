@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 from hypothesis import assume, given, settings, strategies as st
 
-from viterbo.cycles import minimum_cycle_reference
+from viterbo.datasets.cycles import minimum_cycle_reference
 from viterbo.datasets import builders as polytopes
 from viterbo.datasets.catalog import hypercube
 from viterbo.math import symplectic, volume

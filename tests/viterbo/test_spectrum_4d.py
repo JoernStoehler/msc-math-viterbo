@@ -8,7 +8,7 @@ import jax.numpy as jnp
 import pytest
 
 from viterbo.datasets import builders as polytopes
-from viterbo import spectrum
+from viterbo.math import spectrum
 
 
 @pytest.mark.goal_math
