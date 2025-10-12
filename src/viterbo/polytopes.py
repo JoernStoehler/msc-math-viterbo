@@ -28,7 +28,7 @@ def build_from_halfspaces(
         inc = incidence_matrix(normals, offsets, verts)
         return Polytope(normals=normals, offsets=offsets, vertices=verts, incidence=inc)
     except (ValueError, RuntimeError):
-        num_facets, dimension = normals.shape
+        _, dimension = normals.shape
         vertices = jnp.empty((0, dimension), dtype=jnp.float64)
         inc = incidence_matrix(normals, offsets, vertices)
         return Polytope(normals=normals, offsets=offsets, vertices=vertices, incidence=inc)

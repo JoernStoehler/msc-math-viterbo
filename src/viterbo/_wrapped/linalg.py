@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as _np
 import scipy.linalg as _la  # type: ignore[reportMissingTypeStubs]
+import numpy.typing as _npt
 
 
-def expm(matrix: Any) -> _np.ndarray:
+def expm(matrix: Any) -> _npt.NDArray[_np.float64]:
     """Matrix exponential via SciPy, returning a NumPy array."""
     A = _np.asarray(matrix, dtype=float)
-    return _la.expm(A)
+    result = cast(
+        _npt.NDArray[_np.float64],
+        _la.expm(A),  # type: ignore[reportUnknownMemberType]
+    )
+    return _np.asarray(result, dtype=_np.float64)
 

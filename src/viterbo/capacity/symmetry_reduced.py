@@ -56,9 +56,9 @@ def _reduced_radii(bundle: Polytope, pairing: FacetPairingMetadata | None) -> jn
         return radii
     if pairing is None:
         return radii
-    paired_values = []
+    paired_values: list[float] = []
     for left, right in pairing.pairs:
-        paired_values.append(0.5 * (radii[left] + radii[right]))
+        paired_values.append(float(0.5 * (radii[left] + radii[right])))
     if pairing.unpaired:
         unpaired_values = radii[jnp.array(pairing.unpaired, dtype=jnp.int32)]
         all_values = jnp.concatenate((jnp.asarray(paired_values, dtype=jnp.float64), unpaired_values))
