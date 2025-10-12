@@ -6,14 +6,21 @@ from collections import deque
 from dataclasses import dataclass
 from itertools import combinations
 import math
-from typing import Any, Iterable, Iterator, Sequence
+from typing import Iterable, Iterator, Sequence
 
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
 from viterbo.math.numerics import GEOMETRY_ABS_TOLERANCE
 from viterbo.math.geometry import enumerate_vertices
-from viterbo.math.capacity.reeb_cycles import _Cone  # reuse simple cone structure
+
+
+@dataclass(frozen=True)
+class NormalCone:
+    """Vertex together with the indices of its active facets."""
+
+    vertex: Float[Array, " dimension"]
+    active_facets: tuple[int, ...]
 
 
 @dataclass(frozen=True)
@@ -22,7 +29,7 @@ class MinkowskiNormalFan:
 
     normals: Float[Array, " num_facets dimension"]
     vertices: Float[Array, " num_vertices dimension"]
-    cones: tuple[Any, ...]
+    cones: tuple[NormalCone, ...]
     adjacency: Array
     neighbors: tuple[tuple[int, ...], ...]
     coordinate_blocks: tuple[tuple[int, ...], ...]
@@ -48,12 +55,14 @@ def build_normal_fan(
     normals = jnp.asarray(normals, dtype=jnp.float64)
     offsets = jnp.asarray(offsets, dtype=jnp.float64)
     vertices = enumerate_vertices(normals, offsets, atol=atol)
-    cones: list[_Cone] = []
+    cones: list[NormalCone] = []
     for k in range(int(vertices.shape[0])):
         v = vertices[k]
         residuals = normals @ v - offsets
         active = jnp.where(jnp.abs(residuals) <= float(atol))[0]
-        cones.append(_Cone(vertex=v, active_facets=tuple(int(i) for i in active.tolist())))
+        cones.append(
+            NormalCone(vertex=v, active_facets=tuple(int(i) for i in active.tolist()))
+        )
     if not cones:
         raise ValueError("Polytope must have at least one vertex to build a normal fan.")
     vertices = jnp.stack([cone.vertex for cone in cones], axis=0)
@@ -72,7 +81,7 @@ def build_normal_fan(
     )
 
 
-def _vertex_adjacency(cones: Sequence[Any], *, dimension: int) -> Array:
+def _vertex_adjacency(cones: Sequence[NormalCone], *, dimension: int) -> Array:
     count = len(cones)
     adjacency = jnp.zeros((count, count), dtype=bool)
     for first_index, first_cone in enumerate(cones):
@@ -386,24 +395,6 @@ def _cycle_length(
         length_segment = _support_function(geometry_vertices, v)
         total += float(length_segment)
     return total
-
-
-def _try_product_decomposition(
-    table_normals: Float[Array, " num_facets dimension"],
-    geometry_normals: Float[Array, " num_facets dimension"],
-    *,
-    max_bounces: int | None,
-    atol: float,
-) -> float | None:
-    _ = (max_bounces, atol)
-    A = jnp.asarray(table_normals, dtype=jnp.float64)
-    B = jnp.asarray(geometry_normals, dtype=jnp.float64)
-    if A.shape[1] != B.shape[1]:
-        return None
-    dimension = int(A.shape[1])
-    if dimension % 2 != 0:
-        return None
-    return None
 
 
 def _pairwise_lengths(

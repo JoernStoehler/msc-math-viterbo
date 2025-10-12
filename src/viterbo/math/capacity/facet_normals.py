@@ -98,6 +98,48 @@ def _prepare_subset(
     return _FacetSubset(indices=selected, beta=beta, symplectic_products=symplectic_products)
 
 
+def _polygon_area_from_halfspaces(
+    B_matrix: Float[Array, " num_facets 2"], c: Float[Array, " num_facets"], *, tol: float
+) -> float:
+    B = jnp.asarray(B_matrix, dtype=jnp.float64)
+    rhs = jnp.asarray(c, dtype=jnp.float64)
+    num_facets = int(B.shape[0])
+    candidates: list[Array] = []
+    for first, second in combinations(range(num_facets), 2):
+        system = jnp.stack([B[first], B[second]], axis=0)
+        det = float(jnp.linalg.det(system))
+        if abs(det) <= float(tol):
+            continue
+        try:
+            vertex = jnp.linalg.solve(system, rhs[jnp.array([first, second])])
+        except (RuntimeError, ValueError):
+            continue
+        residuals = B @ vertex - rhs
+        if not bool(jnp.all(residuals <= float(tol))):
+            continue
+        duplicate = False
+        for existing in candidates:
+            if bool(jnp.linalg.norm(existing - vertex) <= float(tol)):
+                duplicate = True
+                break
+        if not duplicate:
+            candidates.append(vertex)
+    if len(candidates) < 3:
+        return 0.0
+    verts = jnp.stack(candidates, axis=0)
+    centroid = jnp.mean(verts, axis=0)
+    rel = verts - centroid
+    angles = jnp.arctan2(rel[:, 1], rel[:, 0])
+    order = jnp.argsort(angles)
+    ordered = verts[jnp.asarray(order, dtype=jnp.int32)]
+    x = ordered[:, 0]
+    y = ordered[:, 1]
+    x_next = jnp.roll(x, -1)
+    y_next = jnp.roll(y, -1)
+    area = 0.5 * jnp.abs(jnp.sum(x * y_next - y * x_next))
+    return float(area)
+
+
 def _maximum_antisymmetric_order_value(weights: Array) -> float:
     w = jnp.asarray(weights, dtype=jnp.float64)
     m = int(w.shape[0])
@@ -205,6 +247,8 @@ def _compute_ehz_capacity_reference(
         return 0.0
     if int(dimension) % 2 != 0 or int(dimension) < 2:
         raise ValueError("The ambient dimension must satisfy 2n with n >= 1.")
+    if int(dimension) == 2:
+        return _polygon_area_from_halfspaces(B_matrix, c, tol=tol)
 
     J = standard_symplectic_matrix(int(dimension))
     subset_size = int(dimension) + 1
@@ -221,6 +265,8 @@ def _compute_ehz_capacity_reference(
             best_capacity = candidate_value
 
     if not bool(jnp.isfinite(best_capacity)):
+        if int(dimension) == 2:
+            return _polygon_area_from_halfspaces(B_matrix, c, tol=tol)
         raise ValueError("No admissible facet subset satisfied the non-negativity constraints.")
 
     return float(best_capacity)
@@ -242,6 +288,8 @@ def _compute_ehz_capacity_fast(
         return 0.0
     if int(dimension) % 2 != 0 or int(dimension) < 2:
         raise ValueError("The ambient dimension must satisfy 2n with n >= 1.")
+    if int(dimension) == 2:
+        return _polygon_area_from_halfspaces(B_matrix, c, tol=tol)
 
     J = standard_symplectic_matrix(int(dimension))
     subset_size = int(dimension) + 1
