@@ -138,7 +138,7 @@ Convex geometry & support functions:
 - [SupportFnWiki] “Support function (convex geometry),” Wikipedia (accessed 2025-10-12), states \(d_H(K,L)=\|h_K-h_L\|_\infty\) for convex bodies. <https://en.wikipedia.org/wiki/Support_function>  
 - [Kousholt2015] A. Kousholt et al., *Reconstruction of convex bodies from surface tensors*, 2015 (notes), explicitly relating Hausdorff and support-function gaps. <https://pure.au.dk/ws/files/97725043/math_csgb_2015_10.pdf>  
 - [Gonzalez2009] Á. González, *Measurement of areas on a sphere using Fibonacci lattices*, 2009. <https://arxiv.org/pdf/0912.4540>  
-- [Gorski2005] K. M. Górski et al., *HEALPix*, *ApJ* 622, 2005. <https://ui.adsabs.harvard.edu/abs/2005ApJ...622..759G/abstract>  
+- [Gorski2005] K. M. Górski et al., *HEALPix*, *ApJ* 622, 2005. <https://arxiv.org/abs/astro-ph/0409513>
 - [SaffKuijlaars1997] E. B. Saff, A. B. J. Kuijlaars, *Distributing many points on a sphere*, 1997. <https://perswww.kuleuven.be/~u0017946/publications/Papers97/art97a-Saff-Kuijlaars-MI/Saff-Kuijlaars-MathIntel97.pdf>
 
 Spherical encoders & rotation invariants:  
@@ -175,5 +175,5 @@ Implicit representations & diff. optimization:
 - [Agrawal2019] A. Agrawal et al., *Differentiable Convex Optimization Layers*, NeurIPS’19. <https://arxiv.org/abs/1910.12430>
 
 Symplectic capacities (context):  
-- [HaimKislev2017] P. Haim‑Kislev, *On the symplectic size of convex polytopes*, 2017. <https://ui.adsabs.harvard.edu/abs/2017arXiv171203494H/abstract>  
+- [HaimKislev2017] P. Haim‑Kislev, *On the symplectic size of convex polytopes*, 2017. <https://arxiv.org/abs/1712.03494>
 - [LeipoldVallentin2024AMS] K. Leipold, F. Vallentin, *Computing the EHZ Capacity is NP-hard*, *Proc. Amer. Math. Soc. Series B*, 2024. <https://www.ams.org/journals/bproc/2024-11-52/S2330-1511-2024-00250-6/viewer>
