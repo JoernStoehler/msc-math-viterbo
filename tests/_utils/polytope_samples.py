@@ -46,27 +46,28 @@ def load_polytope_instances(
     metadata: list[dict[str, float | None]] = []
 
     for polytope in catalog():
-        B, c = polytope.halfspace_data()
+        geometry = polytope.geometry
+        B, c = geometry.halfspace_data()
         instances.append((B, c))
-        identifiers.append(polytope.name)
+        identifiers.append(polytope.metadata.slug)
         if include_metadata:
             metadata.append(
                 {
                     "reference_volume": polytope_volume_reference(B, c),
-                    "reference_capacity": polytope.reference_capacity,
+                    "reference_capacity": polytope.metadata.reference_capacity,
                 }
             )
 
         variants = random_transformations(polytope, key=key, count=variant_count)
         for index, variant in enumerate(variants):
-            variant_B, variant_c = variant.halfspace_data()
+            variant_B, variant_c = variant.geometry.halfspace_data()
             instances.append((variant_B, variant_c))
-            identifiers.append(f"{polytope.name}-variant-{index}")
+            identifiers.append(f"{polytope.metadata.slug}-variant-{index}")
             if include_metadata:
                 metadata.append(
                     {
                         "reference_volume": polytope_volume_reference(variant_B, variant_c),
-                        "reference_capacity": polytope.reference_capacity,
+                        "reference_capacity": polytope.metadata.reference_capacity,
                     }
                 )
     if include_metadata:

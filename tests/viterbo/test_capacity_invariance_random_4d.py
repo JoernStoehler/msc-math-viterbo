@@ -33,11 +33,11 @@ def test_capacity_symplectic_invariance_random_hull(seed: int) -> None:
     key = jax.random.PRNGKey(seed)
     V = _random_convex_hull_vertices_4d(key, n_vertices=7)
     P = polytopes.build_from_vertices(V)
-    c0 = capacity.ehz_capacity_reference(P)
+    c0 = capacity.ehz_capacity_reference(P.normals, P.offsets, P.vertices)
     M = symplectic.random_symplectic_matrix(key, 4)
     V2 = V @ M.T
     P2 = polytopes.build_from_vertices(V2)
-    c1 = capacity.ehz_capacity_reference(P2)
+    c1 = capacity.ehz_capacity_reference(P2.normals, P2.offsets, P2.vertices)
     assert jnp.isclose(c0, c1, rtol=1e-7, atol=1e-9)
 
 
@@ -49,7 +49,7 @@ def test_capacity_monotonicity_random_hull(seed: int) -> None:
     key = jax.random.PRNGKey(seed)
     V = _random_convex_hull_vertices_4d(key, n_vertices=6)
     P = polytopes.build_from_vertices(V)
-    c0 = capacity.ehz_capacity_reference(P)
+    c0 = capacity.ehz_capacity_reference(P.normals, P.offsets, P.vertices)
     P_big = polytopes.build_from_vertices(1.5 * V)
-    c1 = capacity.ehz_capacity_reference(P_big)
+    c1 = capacity.ehz_capacity_reference(P_big.normals, P_big.offsets, P_big.vertices)
     assert float(c1) >= float(c0)

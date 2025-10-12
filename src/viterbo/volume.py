@@ -5,18 +5,17 @@ from __future__ import annotations
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-from viterbo.types import Polytope
 from viterbo._wrapped import spatial as _spatial
 
 
-def volume_reference(bundle: Polytope) -> float:
-    """Return a reference volume estimate for ``bundle``.
+def volume_reference(vertices: Float[Array, " num_vertices dimension"]) -> float:
+    """Return a reference volume estimate for a vertex cloud.
 
     - In 2D, compute the exact polygon area via the shoelace formula on the
       convex hull of the provided vertices (ordered by angle around centroid).
     - In higher dimensions, fall back to Qhull volume.
     """
-    verts = jnp.asarray(bundle.vertices, dtype=jnp.float64)
+    verts = jnp.asarray(vertices, dtype=jnp.float64)
     d = int(verts.shape[1])
     if d == 2:
         # Use hull-ordered vertices and the shoelace formula for exactness on simple polytopes.

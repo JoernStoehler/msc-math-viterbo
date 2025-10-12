@@ -8,17 +8,17 @@ from itertools import combinations
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-from viterbo.geom import Polytope as _GeometryPolytope
 from viterbo.geom import polytope_combinatorics
 from viterbo.capacity.facet_normals import (
     ehz_capacity_fast_facet_normals,
     ehz_capacity_reference_facet_normals,
 )
-from viterbo.types import Polytope
 from viterbo.numerics import (
     FACET_SOLVER_TOLERANCE,
     GEOMETRY_ABS_TOLERANCE,
 )
+from viterbo.polytopes import build_from_halfspaces
+from viterbo.types import Polytope
 
 
 @dataclass(frozen=True)
@@ -62,20 +62,24 @@ class OrientedEdgeDiagnostics:
     edges_without_predecessors: tuple[int, ...]
 
 
-def _to_geometry_polytope(bundle: Polytope) -> _GeometryPolytope:
-    normals = jnp.asarray(bundle.normals, dtype=jnp.float64)
-    offsets = jnp.asarray(bundle.offsets, dtype=jnp.float64)
-    return _GeometryPolytope(name="modern-reeb", B=normals, c=offsets)
+def _to_geometry_polytope(
+    normals: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
+) -> Polytope:
+    normals = jnp.asarray(normals, dtype=jnp.float64)
+    offsets = jnp.asarray(offsets, dtype=jnp.float64)
+    return build_from_halfspaces(normals, offsets)
 
 
 def build_oriented_edge_graph(
-    bundle: Polytope,
+    normals: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
     *,
     atol: float = GEOMETRY_ABS_TOLERANCE,
 ) -> OrientedEdgeGraph:
     """Construct the oriented-edge graph for ``bundle`` using combinatorics."""
 
-    geometry_polytope = _to_geometry_polytope(bundle)
+    geometry_polytope = _to_geometry_polytope(normals, offsets)
     dimension = geometry_polytope.dimension
     if dimension != 4:
         msg = "Combinatorial Reeb cycles are only implemented for dimension four."
@@ -203,14 +207,15 @@ def _graph_diagnostics(graph: OrientedEdgeGraph) -> OrientedEdgeDiagnostics:
 
 
 def ehz_capacity_reference_reeb(
-    bundle: Polytope,
+    normals: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
     *,
     atol: float = GEOMETRY_ABS_TOLERANCE,
     tol: float = FACET_SOLVER_TOLERANCE,
 ) -> float:
     """Reference capacity after validating the oriented-edge graph."""
 
-    graph = build_oriented_edge_graph(bundle, atol=atol)
+    graph = build_oriented_edge_graph(normals, offsets, atol=atol)
     diagnostics = _graph_diagnostics(graph)
     if diagnostics.edge_count == 0:
         raise ValueError(
@@ -218,18 +223,19 @@ def ehz_capacity_reference_reeb(
             f"edges_without_successors={diagnostics.edges_without_successors}, "
             f"edges_without_predecessors={diagnostics.edges_without_predecessors}"
         )
-    return float(ehz_capacity_reference_facet_normals(bundle, tol=tol))
+    return float(ehz_capacity_reference_facet_normals(normals, offsets, tol=tol))
 
 
 def ehz_capacity_fast_reeb(
-    bundle: Polytope,
+    normals: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
     *,
     atol: float = GEOMETRY_ABS_TOLERANCE,
     tol: float = FACET_SOLVER_TOLERANCE,
 ) -> float:
     """Fast capacity via facet solver with oriented-edge validation."""
 
-    graph = build_oriented_edge_graph(bundle, atol=atol)
+    graph = build_oriented_edge_graph(normals, offsets, atol=atol)
     diagnostics = _graph_diagnostics(graph)
     if diagnostics.edge_count == 0:
         raise ValueError(
@@ -238,9 +244,9 @@ def ehz_capacity_fast_reeb(
             f"edges_without_predecessors={diagnostics.edges_without_predecessors}"
         )
     try:
-        return float(ehz_capacity_fast_facet_normals(bundle, tol=tol))
+        return float(ehz_capacity_fast_facet_normals(normals, offsets, tol=tol))
     except ValueError:
-        return float(ehz_capacity_reference_facet_normals(bundle, tol=tol))
+        return float(ehz_capacity_reference_facet_normals(normals, offsets, tol=tol))
 
 
 __all__ = [

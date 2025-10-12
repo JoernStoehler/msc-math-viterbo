@@ -17,7 +17,6 @@ import jax.numpy as jnp
 from jaxtyping import Array, Float
 
 from viterbo.symplectic import standard_symplectic_matrix
-from viterbo.types import Polytope
 from viterbo.numerics import FACET_SOLVER_TOLERANCE
 
 np = jnp
@@ -34,11 +33,14 @@ class _FacetSubset:
     symplectic_products: Float[Array, " m m"]
 
 
-def support_radii(bundle: Polytope) -> Float[Array, " num_facets"]:
+def support_radii(
+    normals: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
+) -> Float[Array, " num_facets"]:
     """Return the radial support values ``offset / ||normal||`` for each facet."""
 
-    normals = jnp.asarray(bundle.normals, dtype=jnp.float64)
-    offsets = jnp.asarray(bundle.offsets, dtype=jnp.float64)
+    normals = jnp.asarray(normals, dtype=jnp.float64)
+    offsets = jnp.asarray(offsets, dtype=jnp.float64)
     if normals.ndim != 2 or offsets.ndim != 1:
         return jnp.asarray([], dtype=jnp.float64)
     if normals.shape[0] == 0:
@@ -47,19 +49,6 @@ def support_radii(bundle: Polytope) -> Float[Array, " num_facets"]:
     safe_norms = jnp.where(norms == 0.0, 1.0, norms)
     radii = offsets / safe_norms
     return jnp.clip(radii, a_min=0.0)
-
-
-def _bundle_arrays(
-    bundle: Polytope | tuple[Float[Array, " num_facets dimension"], Float[Array, " num_facets"]]
-) -> tuple[Float[Array, " num_facets dimension"], Float[Array, " num_facets"]]:
-    if isinstance(bundle, Polytope):
-        normals = jnp.asarray(bundle.normals, dtype=jnp.float64)
-        offsets = jnp.asarray(bundle.offsets, dtype=jnp.float64)
-    else:
-        normals, offsets = bundle
-        normals = jnp.asarray(normals, dtype=jnp.float64)
-        offsets = jnp.asarray(offsets, dtype=jnp.float64)
-    return normals, offsets
 
 
 def _iter_index_combinations(count: int, size: int) -> Iterator[tuple[int, ...]]:
@@ -270,26 +259,30 @@ def _compute_ehz_capacity_fast(
 
 
 def ehz_capacity_reference_facet_normals(
-    bundle: Polytope | tuple[Float[Array, " num_facets dimension"], Float[Array, " num_facets"]],
+    normals: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
     *,
     tol: float = FACET_SOLVER_TOLERANCE,
 ) -> float:
     """Reference Haim–Kislev solver for the EHZ capacity."""
 
-    B_matrix, offsets = _bundle_arrays(bundle)
+    B_matrix = jnp.asarray(normals, dtype=jnp.float64)
+    offsets = jnp.asarray(offsets, dtype=jnp.float64)
     if B_matrix.size == 0 or offsets.size == 0:
         return 0.0
     return _compute_ehz_capacity_reference(B_matrix, offsets, tol=tol)
 
 
 def ehz_capacity_fast_facet_normals(
-    bundle: Polytope | tuple[Float[Array, " num_facets dimension"], Float[Array, " num_facets"]],
+    normals: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
     *,
     tol: float = FACET_SOLVER_TOLERANCE,
 ) -> float:
     """Dynamic-programming shortcut mirroring the legacy fast solver."""
 
-    B_matrix, offsets = _bundle_arrays(bundle)
+    B_matrix = jnp.asarray(normals, dtype=jnp.float64)
+    offsets = jnp.asarray(offsets, dtype=jnp.float64)
     if B_matrix.size == 0 or offsets.size == 0:
         return 0.0
     return _compute_ehz_capacity_fast(B_matrix, offsets, tol=tol)

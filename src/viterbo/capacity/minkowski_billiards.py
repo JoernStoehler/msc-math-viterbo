@@ -11,11 +11,9 @@ from typing import Any, Iterable, Iterator, Sequence
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-from viterbo.geom import (
-    Polytope as _GeometryPolytope,
-    polytope_combinatorics,
-)
+from viterbo.geom import polytope_combinatorics
 from viterbo.numerics import GEOMETRY_ABS_TOLERANCE
+from viterbo.polytopes import build_from_halfspaces
 from viterbo.types import Polytope
 
 
@@ -23,7 +21,7 @@ from viterbo.types import Polytope
 class MinkowskiNormalFan:
     """Normal fan representation of a polytope."""
 
-    polytope: _GeometryPolytope
+    polytope: Polytope
     vertices: Float[Array, " num_vertices dimension"]
     cones: tuple[Any, ...]
     adjacency: Array
@@ -39,10 +37,11 @@ class MinkowskiNormalFan:
         return int(self.vertices.shape[0])
 
 
-def _to_geometry_polytope(bundle: Polytope, *, name: str) -> _GeometryPolytope:
+def _to_geometry_polytope(bundle: Polytope, *, name: str) -> Polytope:
     normals = jnp.asarray(bundle.normals, dtype=jnp.float64)
     offsets = jnp.asarray(bundle.offsets, dtype=jnp.float64)
-    return _GeometryPolytope(name=name, B=normals, c=offsets)
+    _ = name  # legacy signature compatibility for logging contexts
+    return build_from_halfspaces(normals, offsets)
 
 
 def build_normal_fan(
@@ -60,7 +59,7 @@ def build_normal_fan(
     neighbors = tuple(
         tuple(int(index) for index in jnp.where(row)[0].tolist()) for row in adjacency
     )
-    coordinate_blocks = _coordinate_blocks(geometry_poly.B, tol=1e-12)
+    coordinate_blocks = _coordinate_blocks(geometry_poly.normals, tol=1e-12)
     return MinkowskiNormalFan(
         polytope=geometry_poly,
         vertices=vertices,
@@ -511,9 +510,9 @@ def _completion_bounds(
 
 
 def _pair_to_polytope(
-    polytope: _GeometryPolytope,
+    polytope: Polytope,
     blocks: tuple[tuple[int, ...], ...],
-) -> list[_GeometryPolytope] | None:
+) -> list[Polytope] | None:
     B, c = polytope.halfspace_data()
     assignments: list[list[int]] = [[] for _ in blocks]
     for row_index, row in enumerate(B):
@@ -527,7 +526,7 @@ def _pair_to_polytope(
                 break
         if not matched:
             return None
-    result: list[_GeometryPolytope] = []
+    result: list[Polytope] = []
     for block_index, (indices, block) in enumerate(zip(assignments, blocks)):
         if not indices:
             return None
@@ -536,26 +535,19 @@ def _pair_to_polytope(
         sub_B = jnp.take(B, row_indices, axis=0)
         sub_B = jnp.take(sub_B, column_indices, axis=1)
         sub_c = jnp.take(c, row_indices, axis=0)
-        result.append(
-            _GeometryPolytope(
-                name=f"{polytope.name}-block-{block_index}",
-                B=sub_B,
-                c=sub_c,
-                description=f"Coordinate block extracted from {polytope.name}.",
-            )
-        )
+        result.append(build_from_halfspaces(sub_B, sub_c))
     return result
 
 
 def _try_product_decomposition(
-    billiard_table: _GeometryPolytope,
-    geometry: _GeometryPolytope,
+    billiard_table: Polytope,
+    geometry: Polytope,
     *,
     max_bounces: int | None,
     atol: float,
 ) -> float | None:
-    blocks_table = _coordinate_blocks(billiard_table.B, tol=1e-12)
-    blocks_geometry = _coordinate_blocks(geometry.B, tol=1e-12)
+    blocks_table = _coordinate_blocks(billiard_table.normals, tol=1e-12)
+    blocks_geometry = _coordinate_blocks(geometry.normals, tol=1e-12)
     if len(blocks_table) <= 1 or len(blocks_geometry) <= 1:
         return None
     if any(len(block) < 2 for block in blocks_table):
@@ -579,18 +571,8 @@ def _try_product_decomposition(
         if max_bounces is not None:
             block_max = max(3, min(max_bounces, sub_table.dimension + 2))
         total += minkowski_billiard_length_fast(
-            Polytope(
-                normals=sub_table.B,
-                offsets=sub_table.c,
-                vertices=jnp.empty((0, sub_table.dimension), dtype=jnp.float64),
-                incidence=jnp.empty((0, sub_table.facets), dtype=bool),
-            ),
-            Polytope(
-                normals=sub_geom.B,
-                offsets=sub_geom.c,
-                vertices=jnp.empty((0, sub_geom.dimension), dtype=jnp.float64),
-                incidence=jnp.empty((0, sub_geom.facets), dtype=bool),
-            ),
+            sub_table,
+            sub_geom,
             max_bounces=block_max,
             atol=atol,
         )

@@ -2,47 +2,47 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import jax.numpy as jnp
+from jaxtyping import Array, Float
 
 from viterbo.capacity import facet_normals
-from viterbo.types import Polytope
+from viterbo.types import MilpCapacityBounds
+
+def _capacity_upper_bound(
+    normals: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
+) -> float:
+    normals = jnp.asarray(normals, dtype=jnp.float64)
+    offsets = jnp.asarray(offsets, dtype=jnp.float64)
+    return facet_normals.ehz_capacity_reference_facet_normals(normals, offsets)
 
 
-@dataclass(slots=True)
-class MilpCapacityResult:
-    """Summary of a capacity bounding run mimicking MILP certificates."""
-
-    lower_bound: float
-    upper_bound: float
-    iterations: int
-    status: str
-
-
-def _capacity_upper_bound(bundle: Polytope) -> float:
-    return facet_normals.ehz_capacity_reference_facet_normals(bundle)
-
-
-def ehz_capacity_reference_milp(bundle: Polytope, *, max_nodes: int = 1024) -> MilpCapacityResult:
+def ehz_capacity_reference_milp(
+    normals: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
+    *,
+    max_nodes: int = 1024,
+) -> MilpCapacityBounds:
     """Return a deterministic upper bound inspired by exhaustive MILP search."""
-    upper = _capacity_upper_bound(bundle)
-    return MilpCapacityResult(lower_bound=0.0, upper_bound=upper, iterations=max_nodes, status="exhaustive")
+    upper = _capacity_upper_bound(normals, offsets)
+    return (0.0, upper, max_nodes, "exhaustive")
 
 
 def ehz_capacity_fast_milp(
-    bundle: Polytope,
+    normals: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
     *,
     node_limit: int = 256,
-) -> MilpCapacityResult:
+) -> MilpCapacityBounds:
     """Return a lightweight MILP-style certificate based on support radii."""
     try:
-        upper = float(facet_normals.ehz_capacity_fast_facet_normals(bundle))
+        upper = float(facet_normals.ehz_capacity_fast_facet_normals(normals, offsets))
     except ValueError:
-        upper = float(facet_normals.ehz_capacity_reference_facet_normals(bundle))
-    return MilpCapacityResult(lower_bound=0.0, upper_bound=upper, iterations=node_limit, status="heuristic")
+        upper = float(facet_normals.ehz_capacity_reference_facet_normals(normals, offsets))
+    return (0.0, upper, node_limit, "heuristic")
 
 
 __all__ = [
-    "MilpCapacityResult",
     "ehz_capacity_reference_milp",
     "ehz_capacity_fast_milp",
 ]

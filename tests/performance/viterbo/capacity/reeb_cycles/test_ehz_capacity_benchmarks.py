@@ -31,19 +31,15 @@ def test_fast_matches_reference(
 ) -> None:
     """Benchmark the optimized solver against the reference implementation."""
 
-    bundle = Polytope(
-        normals=jnp.asarray(B, dtype=jnp.float64),
-        offsets=jnp.asarray(c, dtype=jnp.float64),
-        vertices=jnp.empty((0, B.shape[1]), dtype=jnp.float64),
-        incidence=jnp.empty((0, B.shape[0]), dtype=bool),
-    )
+    normals = jnp.asarray(B, dtype=jnp.float64)
+    offsets = jnp.asarray(c, dtype=jnp.float64)
 
     try:
-        reference = ehz_capacity_reference_reeb(bundle)
+        reference = ehz_capacity_reference_reeb(normals, offsets)
     except ValueError as error:
         with pytest.raises(ValueError) as caught:
-            benchmark(lambda: ehz_capacity_fast_reeb(bundle))
+            benchmark(lambda: ehz_capacity_fast_reeb(normals, offsets))
         assert str(caught.value) == str(error)
     else:
-        optimized = cast(float, benchmark(lambda: ehz_capacity_fast_reeb(bundle)))
+        optimized = cast(float, benchmark(lambda: ehz_capacity_fast_reeb(normals, offsets)))
         assert np.isclose(optimized, reference, atol=1e-8)

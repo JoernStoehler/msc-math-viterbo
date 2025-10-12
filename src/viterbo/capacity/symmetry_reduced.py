@@ -2,29 +2,20 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 import jax.numpy as jnp
+from jaxtyping import Array, Float
 
 from viterbo.capacity import facet_normals
-from viterbo.types import Polytope
-
-
-@dataclass(slots=True)
-class FacetPairingMetadata:
-    """Pairs of opposite facets detected from outward normals."""
-
-    pairs: tuple[tuple[int, int], ...]
-    unpaired: tuple[int, ...]
+from viterbo.types import FacetPairing
 
 
 def detect_opposite_facet_pairs(
-    bundle: Polytope,
+    normals: Float[Array, " num_facets dimension"],
     *,
     angle_tolerance: float = 1e-6,
-) -> FacetPairingMetadata:
+) -> FacetPairing:
     """Detect opposite facet pairs via cosine similarity."""
-    normals = jnp.asarray(bundle.normals, dtype=jnp.float64)
+    normals = jnp.asarray(normals, dtype=jnp.float64)
     norms = jnp.linalg.norm(normals, axis=1)
     safe = jnp.where(norms == 0.0, 1.0, norms)
     unit = normals / safe[:, None]
@@ -47,11 +38,15 @@ def detect_opposite_facet_pairs(
             used.add(best_index)
             pairs.append((i, best_index))
     unpaired = tuple(idx for idx in range(unit.shape[0]) if idx not in used)
-    return FacetPairingMetadata(pairs=tuple(pairs), unpaired=unpaired)
+    return FacetPairing(pairs=tuple(pairs), unpaired=unpaired)
 
 
-def _reduced_radii(bundle: Polytope, pairing: FacetPairingMetadata | None) -> jnp.ndarray:
-    radii = facet_normals.support_radii(bundle)
+def _reduced_radii(
+    normals: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
+    pairing: FacetPairing | None,
+) -> jnp.ndarray:
+    radii = facet_normals.support_radii(normals, offsets)
     if radii.size == 0:
         return radii
     if pairing is None:
@@ -70,32 +65,37 @@ def _reduced_radii(bundle: Polytope, pairing: FacetPairingMetadata | None) -> jn
 
 
 def ehz_capacity_reference_symmetry_reduced(
-    bundle: Polytope,
+    normals: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
     *,
-    pairing: FacetPairingMetadata | None = None,
+    pairing: FacetPairing | None = None,
 ) -> float:
     """Reference symmetry-reduced capacity delegating to the facet solver."""
 
     try:
-        return float(facet_normals.ehz_capacity_reference_facet_normals(bundle))
+        return float(facet_normals.ehz_capacity_reference_facet_normals(normals, offsets))
     except ValueError:
-        effective_radii = _reduced_radii(bundle, pairing or detect_opposite_facet_pairs(bundle))
+        effective_radii = _reduced_radii(
+            normals,
+            offsets,
+            pairing or detect_opposite_facet_pairs(normals),
+        )
         if effective_radii.size == 0:
             return 0.0
         return float(4.0 * jnp.min(effective_radii))
 
 
 def ehz_capacity_fast_symmetry_reduced(
-    bundle: Polytope,
+    normals: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
     *,
-    pairing: FacetPairingMetadata | None = None,
+    pairing: FacetPairing | None = None,
 ) -> float:
     """Fast symmetry-reduced capacity identical to the reference variant."""
-    return ehz_capacity_reference_symmetry_reduced(bundle, pairing=pairing)
+    return ehz_capacity_reference_symmetry_reduced(normals, offsets, pairing=pairing)
 
 
 __all__ = [
-    "FacetPairingMetadata",
     "detect_opposite_facet_pairs",
     "ehz_capacity_reference_symmetry_reduced",
     "ehz_capacity_fast_symmetry_reduced",
