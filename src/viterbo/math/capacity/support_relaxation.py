@@ -1,4 +1,4 @@
-"""Support-function relaxations implemented with JAX primitives."""
+"""Support-function relaxations implemented with JAX primitives (math layer)."""
 
 from __future__ import annotations
 
@@ -6,9 +6,16 @@ from typing import Sequence
 
 import jax.numpy as jnp
 from jaxtyping import Array, Float
+from typing import TypeAlias
 
-from viterbo.capacity import facet_normals
-from viterbo.types import SupportRelaxationSummary
+from viterbo.math.capacity import facet_normals
+
+SupportRelaxationSummary: TypeAlias = tuple[
+    float,
+    Float[Array, " num_samples dimension"],
+    Float[Array, " num_samples"],
+    int,
+]
 
 
 def _polygon_area(vertices: Float[Array, " num_vertices 2"]) -> float:

@@ -13,7 +13,8 @@ from typing import Final
 import jax
 import jax.numpy as jnp
 
-from viterbo.geom import catalog, random_transformations, polytope_volume_reference
+from viterbo.datasets.catalog import catalog, random_transformations
+from viterbo.math.volume import polytope_volume_reference
 
 
 def load_polytope_instances(

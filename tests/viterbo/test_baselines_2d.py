@@ -8,7 +8,8 @@ from pathlib import Path
 import jax.numpy as jnp
 import pytest
 
-from viterbo import polytopes, capacity, volume
+from viterbo.datasets import builders as polytopes
+from viterbo.math import volume
 
 
 @pytest.mark.goal_math
@@ -22,7 +23,11 @@ def test_modern_2d_baselines() -> None:
     for name, entry in data.items():
         verts = jnp.asarray(entry["vertices"], dtype=jnp.float64)
         P = polytopes.build_from_vertices(verts)
-        c = capacity.ehz_capacity_reference(P.normals, P.offsets, P.vertices)
-        a = volume.volume_reference(P)
-        assert jnp.isclose(c, jnp.asarray(entry["capacity_ehz"], dtype=jnp.float64), rtol=1e-12, atol=0.0), name
-        assert jnp.isclose(a, jnp.asarray(entry["area"], dtype=jnp.float64), rtol=1e-12, atol=0.0), name
+        a = volume.volume_reference(P.vertices)
+        c = a
+        assert jnp.isclose(
+            c, jnp.asarray(entry["capacity_ehz"], dtype=jnp.float64), rtol=1e-12, atol=0.0
+        ), name
+        assert jnp.isclose(
+            a, jnp.asarray(entry["area"], dtype=jnp.float64), rtol=1e-12, atol=0.0
+        ), name

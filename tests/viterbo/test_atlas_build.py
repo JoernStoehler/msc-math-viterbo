@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from viterbo import atlas
-from viterbo.atlas_build import QuantityConfig, build_atlas_dataset, default_plan
+from viterbo.datasets import atlas
+from viterbo.datasets.build import QuantityConfig, build_atlas_dataset, default_plan
 
 
 @pytest.mark.goal_code
@@ -59,12 +59,11 @@ def test_build_atlas_tiny_creates_manifest_and_logs(tmp_path: Path) -> None:
     ]
 
     outputs = build_atlas_dataset(
-        "tiny",
-        plan=plan,
-        output_dir=tmp_path / "datasets",
-        log_dir=tmp_path / "benchmarks",
+        plan,
+        preset="tiny",
+        dataset_dir=tmp_path / "datasets",
+        benchmark_dir=tmp_path / "benchmarks",
         sample_overrides=overrides,
-        resume=False,
     )
 
     dataset = atlas.load_dataset(str(outputs.dataset_path))
@@ -134,23 +133,20 @@ def test_resume_skips_completed_generators(tmp_path: Path) -> None:
     log_dir = tmp_path / "benchmarks"
 
     initial = build_atlas_dataset(
-        "tiny",
-        plan=plan,
-        output_dir=output_dir,
-        log_dir=log_dir,
+        plan,
+        preset="tiny",
+        dataset_dir=output_dir,
+        benchmark_dir=log_dir,
         sample_overrides=overrides,
-        resume=True,
     )
     assert initial.rows_written == len(plan.generators)
 
     rerun = build_atlas_dataset(
-        "tiny",
-        plan=plan,
-        output_dir=output_dir,
-        log_dir=log_dir,
+        plan,
+        preset="tiny",
+        dataset_dir=output_dir,
+        benchmark_dir=log_dir,
         sample_overrides=overrides,
-        resume=True,
-        limit_generators=[plan.generators[0].name],
     )
 
     assert rerun.rows_written == 0

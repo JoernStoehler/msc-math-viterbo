@@ -1,12 +1,15 @@
-"""MILP-inspired capacity envelopes built on modern primitives."""
+"""MILP-inspired capacity envelopes built on modern primitives (math layer)."""
 
 from __future__ import annotations
 
 import jax.numpy as jnp
 from jaxtyping import Array, Float
+from typing import TypeAlias
 
-from viterbo.capacity import facet_normals
-from viterbo.types import MilpCapacityBounds
+from viterbo.math.capacity import facet_normals
+
+MilpCapacityBounds: TypeAlias = tuple[float, float, int, str]
+
 
 def _capacity_upper_bound(
     normals: Float[Array, " num_facets dimension"],

@@ -6,7 +6,9 @@ import jax
 import jax.numpy as jnp
 import pytest
 
-from viterbo import polytopes, capacity, symplectic
+from viterbo.datasets import builders as polytopes
+from viterbo.math.capacity.facet_normals import ehz_capacity_reference_facet_normals
+from viterbo.math import symplectic
 
 
 @pytest.mark.goal_code
@@ -37,10 +39,10 @@ def test_capacity_invariance_under_random_symplectic_4d() -> None:
         dtype=jnp.float64,
     )
     P = polytopes.build_from_vertices(V)
-    c0 = capacity.ehz_capacity_reference(P.normals, P.offsets, P.vertices)
+    c0 = ehz_capacity_reference_facet_normals(P.normals, P.offsets)
     M = symplectic.random_symplectic_matrix(key, 4)
     P2 = polytopes.build_from_vertices(V @ M.T)
-    c1 = capacity.ehz_capacity_reference(P2.normals, P2.offsets, P2.vertices)
+    c1 = ehz_capacity_reference_facet_normals(P2.normals, P2.offsets)
     assert jnp.isclose(c0, c1, rtol=1e-9, atol=1e-12)
 
 

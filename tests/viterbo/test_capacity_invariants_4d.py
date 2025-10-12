@@ -13,7 +13,8 @@ import math
 import jax.numpy as jnp
 import pytest
 
-from viterbo import capacity, polytopes
+from viterbo.datasets import builders as polytopes
+from viterbo.math.capacity.facet_normals import ehz_capacity_reference_facet_normals
 
 
 def _simplex_4d(edge: float = 2.0) -> jnp.ndarray:
@@ -47,9 +48,9 @@ def test_capacity_scales_quadratically_in_4d_on_simplex() -> None:
     s = 1.5
     V = _simplex_4d(edge=2.0)
     P = polytopes.build_from_vertices(V)
-    c0 = capacity.ehz_capacity_reference(P.normals, P.offsets, P.vertices)
+    c0 = ehz_capacity_reference_facet_normals(P.normals, P.offsets)
     P_s = polytopes.build_from_vertices(V * s)
-    c1 = capacity.ehz_capacity_reference(P_s.normals, P_s.offsets, P_s.vertices)
+    c1 = ehz_capacity_reference_facet_normals(P_s.normals, P_s.offsets)
     assert jnp.isclose(c1, (s**2) * c0, rtol=1e-9, atol=1e-12)
 
 
@@ -60,8 +61,8 @@ def test_capacity_monotone_under_inclusion_4d_simplex() -> None:
     V = _simplex_4d(edge=2.0)
     P_small = polytopes.build_from_vertices(V)
     P_large = polytopes.build_from_vertices(2.0 * V)
-    c_small = capacity.ehz_capacity_reference(P_small.normals, P_small.offsets, P_small.vertices)
-    c_large = capacity.ehz_capacity_reference(P_large.normals, P_large.offsets, P_large.vertices)
+    c_small = ehz_capacity_reference_facet_normals(P_small.normals, P_small.offsets)
+    c_large = ehz_capacity_reference_facet_normals(P_large.normals, P_large.offsets)
     assert float(c_large) >= float(c_small)
 
 
@@ -71,9 +72,9 @@ def test_capacity_symplectic_invariance_block_rotation_4d() -> None:
     """Capacity invariant under diag(R_theta, R_theta) rotations in R^4."""
     V = _simplex_4d(edge=2.0)
     P = polytopes.build_from_vertices(V)
-    c0 = capacity.ehz_capacity_reference(P.normals, P.offsets, P.vertices)
+    c0 = ehz_capacity_reference_facet_normals(P.normals, P.offsets)
     M = _block_rot(theta=1.234)
     V_rot = V @ M.T
     P_rot = polytopes.build_from_vertices(V_rot)
-    c1 = capacity.ehz_capacity_reference(P_rot.normals, P_rot.offsets, P_rot.vertices)
+    c1 = ehz_capacity_reference_facet_normals(P_rot.normals, P_rot.offsets)
     assert jnp.isclose(c0, c1, rtol=1e-9, atol=1e-12)

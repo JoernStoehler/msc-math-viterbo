@@ -5,14 +5,20 @@ from __future__ import annotations
 import jax.numpy as jnp
 import pytest
 
-from viterbo import atlas, volume
+from viterbo.datasets import atlas
+from viterbo.math import volume
 
 
 @pytest.mark.goal_math
 @pytest.mark.smoke
 def test_volume_reference_matches_area_of_square() -> None:
     """Reference volume equals area 4.0 for square [-1,1]^2 (once implemented)."""
-    normals = [jnp.array([1.0, 0.0]), jnp.array([-1.0, 0.0]), jnp.array([0.0, 1.0]), jnp.array([0.0, -1.0])]
+    normals = [
+        jnp.array([1.0, 0.0]),
+        jnp.array([-1.0, 0.0]),
+        jnp.array([0.0, 1.0]),
+        jnp.array([0.0, -1.0]),
+    ]
     offsets = [1.0, 1.0, 1.0, 1.0]
     vertices = [
         jnp.array([1.0, 1.0]),
@@ -21,7 +27,7 @@ def test_volume_reference_matches_area_of_square() -> None:
         jnp.array([-1.0, -1.0]),
     ]
     bundle = atlas.as_polytope(2, 4, 4, normals, offsets, vertices)
-    vol = volume.volume_reference(bundle)
+    vol = volume.volume_reference(bundle.vertices)
     assert jnp.isclose(vol, 4.0, rtol=1e-12, atol=0.0)
 
 

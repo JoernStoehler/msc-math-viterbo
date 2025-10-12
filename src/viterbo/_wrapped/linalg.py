@@ -17,4 +17,3 @@ def expm(matrix: Any) -> _npt.NDArray[_np.float64]:
         _la.expm(A),  # type: ignore[reportUnknownMemberType]
     )
     return _np.asarray(result, dtype=_np.float64)
-

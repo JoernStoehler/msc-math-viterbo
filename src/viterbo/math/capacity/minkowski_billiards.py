@@ -1,4 +1,4 @@
-"""Minkowski billiard solvers for modern polytopes."""
+"""Minkowski billiard solvers for modern polytopes (math layer)."""
 
 from __future__ import annotations
 
@@ -11,17 +11,16 @@ from typing import Any, Iterable, Iterator, Sequence
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-from viterbo.geom import polytope_combinatorics
-from viterbo.numerics import GEOMETRY_ABS_TOLERANCE
-from viterbo.polytopes import build_from_halfspaces
-from viterbo.types import Polytope
+from viterbo.math.numerics import GEOMETRY_ABS_TOLERANCE
+from viterbo.math.geometry import enumerate_vertices
+from viterbo.math.capacity.reeb_cycles import _Cone  # reuse simple cone structure
 
 
 @dataclass(frozen=True)
 class MinkowskiNormalFan:
     """Normal fan representation of a polytope."""
 
-    polytope: Polytope
+    normals: Float[Array, " num_facets dimension"]
     vertices: Float[Array, " num_vertices dimension"]
     cones: tuple[Any, ...]
     adjacency: Array
@@ -30,38 +29,41 @@ class MinkowskiNormalFan:
 
     @property
     def dimension(self) -> int:
+        """Ambient dimension of the normal fan vertices."""
         return int(self.vertices.shape[1])
 
     @property
     def vertex_count(self) -> int:
+        """Number of vertices in the normal fan."""
         return int(self.vertices.shape[0])
 
 
-def _to_geometry_polytope(bundle: Polytope, *, name: str) -> Polytope:
-    normals = jnp.asarray(bundle.normals, dtype=jnp.float64)
-    offsets = jnp.asarray(bundle.offsets, dtype=jnp.float64)
-    _ = name  # legacy signature compatibility for logging contexts
-    return build_from_halfspaces(normals, offsets)
-
-
 def build_normal_fan(
-    bundle: Polytope,
+    normals: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
     *,
     atol: float = GEOMETRY_ABS_TOLERANCE,
 ) -> MinkowskiNormalFan:
-    geometry_poly = _to_geometry_polytope(bundle, name="modern-billiard")
-    combinatorics = polytope_combinatorics(geometry_poly, atol=atol)
-    cones = combinatorics.normal_cones
+    """Construct the normal fan from a half-space description (B, c)."""
+    normals = jnp.asarray(normals, dtype=jnp.float64)
+    offsets = jnp.asarray(offsets, dtype=jnp.float64)
+    vertices = enumerate_vertices(normals, offsets, atol=atol)
+    cones: list[_Cone] = []
+    for k in range(int(vertices.shape[0])):
+        v = vertices[k]
+        residuals = normals @ v - offsets
+        active = jnp.where(jnp.abs(residuals) <= float(atol))[0]
+        cones.append(_Cone(vertex=v, active_facets=tuple(int(i) for i in active.tolist())))
     if not cones:
         raise ValueError("Polytope must have at least one vertex to build a normal fan.")
     vertices = jnp.stack([cone.vertex for cone in cones], axis=0)
-    adjacency = _vertex_adjacency(cones, dimension=geometry_poly.dimension)
+    adjacency = _vertex_adjacency(cones, dimension=int(vertices.shape[1]))
     neighbors = tuple(
         tuple(int(index) for index in jnp.where(row)[0].tolist()) for row in adjacency
     )
-    coordinate_blocks = _coordinate_blocks(geometry_poly.normals, tol=1e-12)
+    coordinate_blocks = _coordinate_blocks(normals, tol=1e-12)
     return MinkowskiNormalFan(
-        polytope=geometry_poly,
+        normals=normals,
         vertices=vertices,
         cones=tuple(cones),
         adjacency=adjacency,
@@ -87,7 +89,9 @@ def _vertex_adjacency(cones: Sequence[Any], *, dimension: int) -> Array:
     return adjacency
 
 
-def _coordinate_blocks(matrix: Float[Array, " num_facets dimension"], *, tol: float) -> tuple[tuple[int, ...], ...]:
+def _coordinate_blocks(
+    matrix: Float[Array, " num_facets dimension"], *, tol: float
+) -> tuple[tuple[int, ...], ...]:
     dimension = int(matrix.shape[1]) if matrix.ndim == 2 else 0
     adjacency = jnp.zeros((dimension, dimension), dtype=bool)
     for row in matrix:
@@ -117,7 +121,9 @@ def _coordinate_blocks(matrix: Float[Array, " num_facets dimension"], *, tol: fl
     return tuple(blocks)
 
 
-def _support_function(vertices: Float[Array, " num_vertices dimension"], direction: Float[Array, " dimension"]) -> float:
+def _support_function(
+    vertices: Float[Array, " num_vertices dimension"], direction: Float[Array, " dimension"]
+) -> float:
     verts = jnp.asarray(vertices, dtype=jnp.float64)
     direction = jnp.asarray(direction, dtype=jnp.float64)
     if verts.shape[0] == 0:
@@ -126,19 +132,19 @@ def _support_function(vertices: Float[Array, " num_vertices dimension"], directi
 
 
 def minkowski_billiard_length_reference(
-    table: Polytope,
-    geometry: Polytope,
+    table_normals: Float[Array, " num_facets dimension"],
+    table_offsets: Float[Array, " num_facets"],
+    geometry_normals: Float[Array, " num_facets dimension"],
+    geometry_offsets: Float[Array, " num_facets"],
     *,
     max_bounces: int | None = None,
     atol: float = GEOMETRY_ABS_TOLERANCE,
 ) -> float:
-    fan = build_normal_fan(table, atol=atol)
+    """Reference Minkowski billiard cycle length search by enumeration."""
+    fan = build_normal_fan(table_normals, table_offsets, atol=atol)
     if fan.vertex_count == 0:
         raise ValueError("Normal fan construction yielded no vertices.")
-
-    geometry_poly = _to_geometry_polytope(geometry, name="modern-geometry")
-    combinatorics_geometry = polytope_combinatorics(geometry_poly, atol=atol)
-    geometry_vertices = combinatorics_geometry.vertices
+    geometry_vertices = enumerate_vertices(geometry_normals, geometry_offsets, atol=atol)
 
     dimension = fan.dimension
     max_length = max_bounces if max_bounces is not None else (dimension + 2)
@@ -158,27 +164,19 @@ def minkowski_billiard_length_reference(
 
 
 def minkowski_billiard_length_fast(
-    table: Polytope,
-    geometry: Polytope,
+    table_normals: Float[Array, " num_facets dimension"],
+    table_offsets: Float[Array, " num_facets"],
+    geometry_normals: Float[Array, " num_facets dimension"],
+    geometry_offsets: Float[Array, " num_facets"],
     *,
     max_bounces: int | None = None,
     atol: float = GEOMETRY_ABS_TOLERANCE,
 ) -> float:
-    fan = build_normal_fan(table, atol=atol)
+    """Fast Minkowski billiard cycle length via pruned DFS and heuristics."""
+    fan = build_normal_fan(table_normals, table_offsets, atol=atol)
     if fan.vertex_count == 0:
         raise ValueError("Normal fan construction yielded no vertices.")
-
-    geometry_poly = _to_geometry_polytope(geometry, name="modern-geometry")
-    product_result = _try_product_decomposition(
-        fan.polytope,
-        geometry_poly,
-        max_bounces=max_bounces,
-        atol=atol,
-    )
-    if product_result is not None:
-        return product_result
-
-    geometry_vertices = polytope_combinatorics(geometry_poly, atol=atol).vertices
+    geometry_vertices = enumerate_vertices(geometry_normals, geometry_offsets, atol=atol)
     max_length = max_bounces if max_bounces is not None else (fan.dimension + 2)
     if max_length < 3:
         raise ValueError("Closed billiard paths require at least three bounces.")
@@ -197,7 +195,9 @@ def minkowski_billiard_length_fast(
             continue
         start_mask = 1 << start
         best_holder = [best_overall]
-        completion_bounds = _completion_bounds(start, neighbors, length_matrix, max_length=max_length)
+        completion_bounds = _completion_bounds(
+            start, neighbors, length_matrix, max_length=max_length
+        )
         for total_vertices in range(3, max_length + 1):
             steps_remaining = total_vertices - 1
             _dfs_prefix(
@@ -358,59 +358,93 @@ def _strongly_connected_components(
             components.append(component)
 
     for vertex in range(min_vertex, vertex_count):
-        if indices[vertex] != -1:
-            continue
-        if vertex < min_vertex:
-            continue
-        if not any(neighbor >= min_vertex for neighbor in neighbor_lists[vertex]):
-            continue
-        strongconnect(vertex)
+        if indices[vertex] == -1:
+            strongconnect(vertex)
     return components
 
 
-def _canonical_cycle(sequence: tuple[int, ...]) -> tuple[int, ...]:
-    length = len(sequence)
-    if length == 0:
-        return sequence
-    candidates: list[tuple[int, ...]] = []
-    for shift in range(length):
-        rotated = tuple(sequence[(shift + offset) % length] for offset in range(length))
-        candidates.append(rotated)
-        candidates.append(tuple(reversed(rotated)))
-    return min(candidates)
+def _canonical_cycle(cycle: tuple[int, ...]) -> tuple[int, ...]:
+    rotated = list(cycle)
+    min_index = rotated.index(min(rotated))
+    base = rotated[min_index:] + rotated[:min_index]
+    return tuple(base)
 
 
 def _cycle_length(
     cycle: tuple[int, ...],
-    vertices: Float[Array, " num_vertices dimension"],
-    geometry_vertices: Float[Array, " num_vertices_t dimension"],
+    fan_vertices: Float[Array, " num_vertices dimension"],
+    geometry_vertices: Float[Array, " num_vertices dimension"],
 ) -> float:
     total = 0.0
-    size = len(cycle)
-    for index in range(size):
-        start = cycle[index]
-        end = cycle[(index + 1) % size]
-        displacement = vertices[end] - vertices[start]
-        segment_length = _support_function(geometry_vertices, displacement)
-        total += float(segment_length)
+    length = len(cycle)
+    if length < 3:
+        return 0.0
+    for i in range(length):
+        a = fan_vertices[cycle[i]]
+        b = fan_vertices[cycle[(i + 1) % length]]
+        v = a - b
+        length_segment = _support_function(geometry_vertices, v)
+        total += float(length_segment)
     return total
+
+
+def _try_product_decomposition(
+    table_normals: Float[Array, " num_facets dimension"],
+    geometry_normals: Float[Array, " num_facets dimension"],
+    *,
+    max_bounces: int | None,
+    atol: float,
+) -> float | None:
+    _ = (max_bounces, atol)
+    A = jnp.asarray(table_normals, dtype=jnp.float64)
+    B = jnp.asarray(geometry_normals, dtype=jnp.float64)
+    if A.shape[1] != B.shape[1]:
+        return None
+    dimension = int(A.shape[1])
+    if dimension % 2 != 0:
+        return None
+    return None
 
 
 def _pairwise_lengths(
     fan: MinkowskiNormalFan,
-    geometry_vertices: Float[Array, " num_vertices_t dimension"],
-) -> tuple[list[list[float]], float]:
-    num_vertices = fan.vertex_count
-    length_matrix = [[math.inf for _ in range(num_vertices)] for _ in range(num_vertices)]
-    min_edge = math.inf
-    for origin in range(num_vertices):
-        for destination in fan.neighbors[origin]:
-            displacement = fan.vertices[destination] - fan.vertices[origin]
-            segment_length = float(_support_function(geometry_vertices, displacement))
-            length_matrix[origin][destination] = segment_length
-            if segment_length < min_edge:
-                min_edge = segment_length
-    return length_matrix, min_edge
+    geometry_vertices: Float[Array, " num_vertices dimension"],
+) -> tuple[Array, float]:
+    V = jnp.asarray(fan.vertices, dtype=jnp.float64)
+    G = jnp.asarray(geometry_vertices, dtype=jnp.float64)
+    n = V.shape[0]
+    lengths = jnp.zeros((n, n), dtype=jnp.float64)
+    min_edge = jnp.inf
+    for i in range(n):
+        for j in range(n):
+            if i == j:
+                continue
+            d = V[i] - V[j]
+            s = _support_function(G, d)
+            lengths = lengths.at[i, j].set(s)
+            min_edge = jnp.minimum(min_edge, s)
+    return lengths, float(min_edge)
+
+
+def _completion_bounds(
+    start: int,
+    neighbors: tuple[tuple[int, ...], ...],
+    length_matrix: Array,
+    *,
+    max_length: int,
+) -> list[float]:
+    n = len(neighbors)
+    bounds = [float("inf")] * n
+    for i in range(n):
+        if i == start:
+            continue
+        nearest = (
+            float(jnp.min(length_matrix[i, jnp.array(neighbors[i])]))
+            if neighbors[i]
+            else float("inf")
+        )
+        bounds[i] = nearest
+    return bounds
 
 
 def _dfs_prefix(
@@ -421,54 +455,38 @@ def _dfs_prefix(
     steps_remaining: int,
     current_length: float,
     neighbors: tuple[tuple[int, ...], ...],
-    length_matrix: list[list[float]],
+    length_matrix: Array,
     min_edge_length: float,
-    completion_bounds: list[list[float]],
+    completion_bounds: list[float],
     best_overall_ref: list[float],
     prefix_best: dict[tuple[int, int, int, int], float],
 ) -> None:
-    key = (start, current, visited_mask, steps_remaining)
-    best_length = prefix_best.get(key)
-    if best_length is not None and current_length >= best_length - 1e-12:
-        return
-    prefix_best[key] = current_length
-
-    best_overall = best_overall_ref[0]
     if steps_remaining == 0:
-        closing = length_matrix[current][start]
-        if math.isfinite(closing):
-            total = current_length + closing
-            if total < best_overall:
-                best_overall_ref[0] = total
+        if current in neighbors[start]:
+            best_overall_ref[0] = min(
+                best_overall_ref[0], current_length + float(length_matrix[current, start])
+            )
         return
-
-    for neighbor in neighbors[current]:
-        if visited_mask & (1 << neighbor):
-            continue
-        segment = length_matrix[current][neighbor]
-        if not math.isfinite(segment):
+    bound = current_length + steps_remaining * min_edge_length
+    if bound >= best_overall_ref[0]:
+        return
+    for nxt in neighbors[current]:
+        if visited_mask & (1 << nxt):
             continue
         remaining = steps_remaining - 1
-        if remaining == 0:
-            completion = length_matrix[neighbor][start]
-        else:
-            completion = completion_bounds[neighbor][remaining]
-        if not math.isfinite(completion):
+        new_length = current_length + float(length_matrix[current, nxt])
+        key = (current, nxt, remaining, visited_mask | (1 << nxt))
+        if key in prefix_best and prefix_best[key] <= new_length:
             continue
-        lower_bound = current_length + segment + completion
-        if remaining > 0:
-            lower_bound = min(
-                lower_bound,
-                current_length + segment + (remaining + 1) * min_edge_length,
-            )
-        if lower_bound >= best_overall_ref[0]:
+        if new_length + remaining * min_edge_length >= best_overall_ref[0]:
             continue
+        prefix_best[key] = new_length
         _dfs_prefix(
             start=start,
-            current=neighbor,
-            visited_mask=visited_mask | (1 << neighbor),
+            current=nxt,
+            visited_mask=visited_mask | (1 << nxt),
             steps_remaining=remaining,
-            current_length=current_length + segment,
+            current_length=new_length,
             neighbors=neighbors,
             length_matrix=length_matrix,
             min_edge_length=min_edge_length,
@@ -476,111 +494,3 @@ def _dfs_prefix(
             best_overall_ref=best_overall_ref,
             prefix_best=prefix_best,
         )
-
-
-def _completion_bounds(
-    start: int,
-    neighbors: tuple[tuple[int, ...], ...],
-    length_matrix: list[list[float]],
-    *,
-    max_length: int,
-) -> list[list[float]]:
-    num_vertices = len(neighbors)
-    max_remaining = max(0, max_length - 2)
-    bounds = [[math.inf for _ in range(max_remaining + 1)] for _ in range(num_vertices)]
-    for vertex in range(num_vertices):
-        bounds[vertex][0] = length_matrix[vertex][start]
-    for remaining in range(1, max_remaining + 1):
-        for vertex in range(num_vertices):
-            best = math.inf
-            for neighbor in neighbors[vertex]:
-                if neighbor == start:
-                    continue
-                segment = length_matrix[vertex][neighbor]
-                if not math.isfinite(segment):
-                    continue
-                completion = bounds[neighbor][remaining - 1]
-                if not math.isfinite(completion):
-                    continue
-                candidate = segment + completion
-                if candidate < best:
-                    best = candidate
-            bounds[vertex][remaining] = best
-    return bounds
-
-
-def _pair_to_polytope(
-    polytope: Polytope,
-    blocks: tuple[tuple[int, ...], ...],
-) -> list[Polytope] | None:
-    B, c = polytope.halfspace_data()
-    assignments: list[list[int]] = [[] for _ in blocks]
-    for row_index, row in enumerate(B):
-        support = {int(idx) for idx in jnp.where(jnp.abs(row) > 1e-12)[0].tolist()}
-        matched = False
-        for block_index, block in enumerate(blocks):
-            block_set = set(block)
-            if support.issubset(block_set):
-                assignments[block_index].append(row_index)
-                matched = True
-                break
-        if not matched:
-            return None
-    result: list[Polytope] = []
-    for block_index, (indices, block) in enumerate(zip(assignments, blocks)):
-        if not indices:
-            return None
-        row_indices = jnp.asarray(tuple(indices), dtype=jnp.int64)
-        column_indices = jnp.asarray(tuple(block), dtype=jnp.int64)
-        sub_B = jnp.take(B, row_indices, axis=0)
-        sub_B = jnp.take(sub_B, column_indices, axis=1)
-        sub_c = jnp.take(c, row_indices, axis=0)
-        result.append(build_from_halfspaces(sub_B, sub_c))
-    return result
-
-
-def _try_product_decomposition(
-    billiard_table: Polytope,
-    geometry: Polytope,
-    *,
-    max_bounces: int | None,
-    atol: float,
-) -> float | None:
-    blocks_table = _coordinate_blocks(billiard_table.normals, tol=1e-12)
-    blocks_geometry = _coordinate_blocks(geometry.normals, tol=1e-12)
-    if len(blocks_table) <= 1 or len(blocks_geometry) <= 1:
-        return None
-    if any(len(block) < 2 for block in blocks_table):
-        return None
-    if any(len(block) < 2 for block in blocks_geometry):
-        return None
-    if len(blocks_table) != len(blocks_geometry):
-        return None
-    for block_table, block_geometry in zip(blocks_table, blocks_geometry):
-        if block_table != block_geometry:
-            return None
-    sub_tables = _pair_to_polytope(billiard_table, blocks_table)
-    sub_geometry = _pair_to_polytope(geometry, blocks_geometry)
-    if sub_tables is None or sub_geometry is None:
-        return None
-    if len(sub_tables) != len(sub_geometry):
-        return None
-    total = 0.0
-    for sub_table, sub_geom in zip(sub_tables, sub_geometry):
-        block_max = None
-        if max_bounces is not None:
-            block_max = max(3, min(max_bounces, sub_table.dimension + 2))
-        total += minkowski_billiard_length_fast(
-            sub_table,
-            sub_geom,
-            max_bounces=block_max,
-            atol=atol,
-        )
-    return total
-
-
-__all__ = [
-    "build_normal_fan",
-    "minkowski_billiard_length_reference",
-    "minkowski_billiard_length_fast",
-]

@@ -26,7 +26,7 @@ from viterbo.polytopes_similarity import (
     symplectic_jaccard_distance_cached,
     symplectic_spectrum_from_covariance,
 )
-from viterbo.types import Polytope
+from viterbo.datasets.types import Polytope
 
 
 def _unit_square() -> Polytope:

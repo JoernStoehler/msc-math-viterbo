@@ -1,4 +1,4 @@
-"""Dataset build harness for atlas snapshots and benchmarks."""
+"""Dataset build harness for atlas snapshots and benchmarks (datasets layer)."""
 
 from __future__ import annotations
 
@@ -14,8 +14,12 @@ import jax.random
 import jax.numpy as jnp
 from datasets import Dataset
 
-from viterbo import atlas, basic_generators, capacity, cycles, systolic, volume
-from viterbo.types import Polytope
+from viterbo.datasets import atlas
+from viterbo.datasets import generators as basic_generators
+from viterbo import cycles, systolic
+from viterbo.math import volume
+from viterbo.math.capacity.facet_normals import ehz_capacity_fast_facet_normals
+from viterbo.datasets.types import Polytope
 
 
 QuantValue = float | list[list[float]]
@@ -79,7 +83,6 @@ class GeneratorConfig:
             samples = list(generator(key=key, **params))
             return list(samples[completed:requested])
 
-        # Deterministic enumeration
         samples = list(generator(**params))
         return samples[completed:requested]
 
@@ -170,14 +173,14 @@ def default_plan() -> AtlasBuildPlan:
             name="volume",
             target_field="volume",
             implementation="viterbo.volume.volume_reference",
-            compute=lambda poly: float(volume.volume_reference(poly)),
+            compute=lambda poly: float(volume.volume_reference(poly.vertices)),
             failure_value=math.nan,
         ),
         QuantityConfig(
             name="ehz_capacity",
             target_field="ehz_capacity",
             implementation="viterbo.capacity.ehz_capacity_fast",
-            compute=lambda poly: float(capacity.ehz_capacity_fast(poly)),
+            compute=lambda poly: float(ehz_capacity_fast_facet_normals(poly.normals, poly.offsets)),
             failure_value=math.nan,
         ),
         QuantityConfig(
@@ -349,44 +352,35 @@ def _summarise_logs(log_path: Path, dataset_name: str) -> dict[str, Any]:
         }
         for (generator, quantity), record in sorted(summary.items())
     ]
-
-    return {"dataset": dataset_name, "entries": aggregated}
+    return {
+        "dataset": dataset_name,
+        "entries": aggregated,
+        "aggregated": aggregated,
+    }
 
 
 def build_atlas_dataset(
-    preset: str,
+    plan: AtlasBuildPlan,
     *,
-    plan: AtlasBuildPlan | None = None,
-    output_dir: Path | str,
-    log_dir: Path | str,
+    preset: str,
+    dataset_dir: Path,
+    benchmark_dir: Path,
     sample_overrides: Mapping[str, int] | None = None,
-    resume: bool = True,
-    limit_generators: Iterable[str] | None = None,
     seed_offset: int = 0,
 ) -> BuildOutputs:
-    """Materialise an atlas dataset preset and benchmark logs."""
+    """Build or extend an atlas dataset according to ``plan``.
 
-    plan = plan or default_plan()
+    Writes the dataset to ``dataset_dir`` and aggregates timing logs under
+    ``benchmark_dir``. Idempotent per generator entry.
+    """
+    manifest_path = dataset_dir / "manifest.json"
+    manifest = _load_manifest(manifest_path, plan, preset)
+    dataset = _load_existing_dataset(dataset_dir)
     dataset_name = plan.dataset_name(preset)
 
-    dataset_dir = Path(output_dir) / dataset_name
-    benchmark_dir = Path(log_dir)
-    benchmark_dir.mkdir(parents=True, exist_ok=True)
-    dataset_dir.mkdir(parents=True, exist_ok=True)
-
-    manifest_path = dataset_dir / "manifest.json"
-    manifest = (
-        _load_manifest(manifest_path, plan, preset) if resume else _initial_manifest(plan, preset)
-    )
-
-    dataset = _load_existing_dataset(dataset_dir) if resume else _empty_dataset()
-
-    available_generators = {cfg.name: cfg for cfg in plan.generators}
     selected_generators = plan.generators
-    if limit_generators:
-        selected_generators = [
-            available_generators[name] for name in limit_generators if name in available_generators
-        ]
+    if sample_overrides is None:
+        sample_overrides = {}
 
     raw_logs: list[dict[str, object]] = []
     rows_to_append: list[dict[str, object]] = []
@@ -487,6 +481,8 @@ def build_atlas_dataset(
     _write_json(manifest_path, manifest)
     _write_readme(dataset_dir, plan, preset)
 
+    # Ensure benchmark directory exists for logs and summaries
+    benchmark_dir.mkdir(parents=True, exist_ok=True)
     log_path = benchmark_dir / f"{dataset_name}_timings.jsonl"
     if raw_logs:
         with log_path.open("a", encoding="utf-8") as fp:

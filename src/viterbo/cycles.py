@@ -11,7 +11,7 @@ import itertools
 import jax.numpy as jnp
 from jaxtyping import Array, Bool, Float
 
-from viterbo.types import Polytope
+from viterbo.datasets.types import Polytope
 
 
 def minimum_cycle_reference(bundle: Polytope) -> Float[Array, " num_points dimension"]:
@@ -138,4 +138,3 @@ def minimum_cycle_reference(bundle: Polytope) -> Float[Array, " num_points dimen
     ids = cycle_ids[:-1]
     pts = [vertices[edges[eid].tail_vertex] for eid in ids]
     return jnp.stack(pts, axis=0)
-

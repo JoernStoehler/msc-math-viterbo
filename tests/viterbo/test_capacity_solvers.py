@@ -5,8 +5,33 @@ from __future__ import annotations
 import jax.numpy as jnp
 import pytest
 
-from viterbo import capacity, polytopes
-from viterbo.types import Polytope
+from viterbo.datasets import builders as polytopes
+from viterbo.datasets.types import Polytope
+from viterbo.math.capacity.facet_normals import (
+    ehz_capacity_reference_facet_normals,
+    ehz_capacity_fast_facet_normals,
+)
+from viterbo.math.capacity.milp import (
+    ehz_capacity_reference_milp,
+    ehz_capacity_fast_milp,
+)
+from viterbo.math.capacity.reeb_cycles import (
+    ehz_capacity_reference_reeb,
+    ehz_capacity_fast_reeb,
+)
+from viterbo.math.capacity.support_relaxation import (
+    support_relaxation_capacity_reference,
+    support_relaxation_capacity_fast,
+)
+from viterbo.math.capacity.symmetry_reduced import (
+    detect_opposite_facet_pairs,
+    ehz_capacity_reference_symmetry_reduced,
+    ehz_capacity_fast_symmetry_reduced,
+)
+from viterbo.math.capacity.minkowski_billiards import (
+    minkowski_billiard_length_reference,
+    minkowski_billiard_length_fast,
+)
 
 
 EXPECTED_SIMPLEX_CAPACITY = 1.0
@@ -65,8 +90,8 @@ def test_facet_normal_solvers_agree_on_simplex() -> None:
     bundle = _simplex_4d(edge=2.0)
     B_matrix = bundle.normals
     offsets = bundle.offsets
-    reference = capacity.ehz_capacity_reference_facet_normals(B_matrix, offsets)
-    fast = capacity.ehz_capacity_fast_facet_normals(B_matrix, offsets)
+    reference = ehz_capacity_reference_facet_normals(B_matrix, offsets)
+    fast = ehz_capacity_fast_facet_normals(B_matrix, offsets)
     assert fast == pytest.approx(reference, rel=1e-12, abs=0.0)
     assert reference == pytest.approx(EXPECTED_SIMPLEX_CAPACITY, rel=1e-12, abs=0.0)
 
@@ -78,8 +103,8 @@ def test_milp_fast_matches_reference_upper_bound() -> None:
     bundle = _simplex_4d(edge=2.0)
     B_matrix = bundle.normals
     offsets = bundle.offsets
-    reference = capacity.ehz_capacity_reference_milp(B_matrix, offsets)
-    fast = capacity.ehz_capacity_fast_milp(B_matrix, offsets, node_limit=128)
+    reference = ehz_capacity_reference_milp(B_matrix, offsets)
+    fast = ehz_capacity_fast_milp(B_matrix, offsets, node_limit=128)
     assert fast[1] == pytest.approx(reference[1], rel=1e-12, abs=0.0)
 
 
@@ -90,8 +115,8 @@ def test_reeb_cycle_fast_matches_reference() -> None:
     bundle = _simplex_4d(edge=2.0)
     B_matrix = bundle.normals
     offsets = bundle.offsets
-    reference = capacity.ehz_capacity_reference_reeb(B_matrix, offsets)
-    fast = capacity.ehz_capacity_fast_reeb(B_matrix, offsets)
+    reference = ehz_capacity_reference_reeb(B_matrix, offsets)
+    fast = ehz_capacity_fast_reeb(B_matrix, offsets)
     assert fast == pytest.approx(reference, rel=1e-12, abs=0.0)
     assert reference == pytest.approx(EXPECTED_SIMPLEX_CAPACITY, rel=1e-12, abs=0.0)
 
@@ -102,7 +127,7 @@ def test_support_relaxation_variants_nonnegative() -> None:
     """Support-relaxation solvers return non-negative upper bounds near π."""
     vertices = _unit_disk_vertices(samples=48)
     bundle = polytopes.build_from_vertices(vertices)
-    fast = capacity.support_relaxation_capacity_fast(
+    fast = support_relaxation_capacity_fast(
         bundle.normals,
         bundle.offsets,
         bundle.vertices,
@@ -111,7 +136,7 @@ def test_support_relaxation_variants_nonnegative() -> None:
         smoothing_parameters=(0.6, 0.3, 0.0),
         jit_compile=False,
     )
-    reference = capacity.support_relaxation_capacity_reference(
+    reference = support_relaxation_capacity_reference(
         bundle.normals,
         bundle.offsets,
         bundle.vertices,
@@ -133,10 +158,10 @@ def test_symmetry_reduced_matches_reference_on_square() -> None:
     bundle = _simplex_4d(edge=2.0)
     B_matrix = bundle.normals
     offsets = bundle.offsets
-    pairing = capacity.detect_opposite_facet_pairs(B_matrix)
-    reference = capacity.ehz_capacity_reference_symmetry_reduced(B_matrix, offsets, pairing=pairing)
-    fast = capacity.ehz_capacity_fast_symmetry_reduced(B_matrix, offsets, pairing=pairing)
-    baseline = capacity.ehz_capacity_reference_facet_normals(B_matrix, offsets)
+    pairing = detect_opposite_facet_pairs(B_matrix)
+    reference = ehz_capacity_reference_symmetry_reduced(B_matrix, offsets, pairing=pairing)
+    fast = ehz_capacity_fast_symmetry_reduced(B_matrix, offsets, pairing=pairing)
+    baseline = ehz_capacity_reference_facet_normals(B_matrix, offsets)
     assert reference == pytest.approx(baseline, rel=1e-12, abs=0.0)
     assert fast == pytest.approx(baseline, rel=1e-12, abs=0.0)
 
@@ -147,29 +172,13 @@ def test_minkowski_billiard_lengths_match_reference() -> None:
     """Minkowski billiard fast solver matches the reference on square/diamond."""
     table = _square_bundle(edge=1.0)
     geometry = _diamond_bundle(edge=1.0)
-    reference = capacity.minkowski_billiard_length_reference(table, geometry)
-    fast = capacity.minkowski_billiard_length_fast(table, geometry)
+    reference = minkowski_billiard_length_reference(
+        table.normals, table.offsets, geometry.normals, geometry.offsets
+    )
+    fast = minkowski_billiard_length_fast(
+        table.normals, table.offsets, geometry.normals, geometry.offsets
+    )
     assert fast == pytest.approx(reference, rel=1e-12, abs=0.0)
     assert reference == pytest.approx(EXPECTED_MINKOWSKI_LENGTH, rel=1e-12, abs=0.0)
 
-
-@pytest.mark.goal_code
-@pytest.mark.smoke
-def test_available_solvers_list_contains_all_expected_keys() -> None:
-    """available_solvers lists every solver identifier supported by adapters."""
-    keys = set(capacity.available_solvers())
-    expected = {
-        "facet-normal-reference",
-        "facet-normal-fast",
-        "milp-reference",
-        "milp-fast",
-        "reeb-reference",
-        "reeb-fast",
-        "support-reference",
-        "support-fast",
-        "symmetry-reference",
-        "symmetry-fast",
-        "minkowski-reference",
-        "minkowski-fast",
-    }
-    assert expected.issubset(keys)
+    # Adapter list is dropped in math-first layout; import explicit solvers instead.

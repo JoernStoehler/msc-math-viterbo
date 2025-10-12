@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 from datasets import Dataset, Features
 
-from viterbo import atlas
+from viterbo.datasets import atlas
 
 
 @pytest.mark.goal_code

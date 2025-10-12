@@ -16,8 +16,8 @@ from typing import Iterator, Sequence
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-from viterbo.symplectic import standard_symplectic_matrix
-from viterbo.numerics import FACET_SOLVER_TOLERANCE
+from viterbo.math.symplectic import standard_symplectic_matrix
+from viterbo.math.numerics import FACET_SOLVER_TOLERANCE
 
 np = jnp
 
@@ -86,7 +86,9 @@ def _prepare_subset(
     if bool(jnp.any(beta < -float(tol))):
         return None
 
-    if not bool(np.allclose(B_subset.T @ beta, jnp.zeros(B_subset.shape[1]), atol=float(tol), rtol=0.0)):
+    if not bool(
+        np.allclose(B_subset.T @ beta, jnp.zeros(B_subset.shape[1]), atol=float(tol), rtol=0.0)
+    ):
         return None
 
     if not bool(np.isclose(float(c_subset @ beta), 1.0, atol=float(tol), rtol=0.0)):
@@ -112,7 +114,9 @@ def _maximum_antisymmetric_order_value(weights: Array) -> float:
             lsb = mask & -mask
             bit_index = lsb.bit_length() - 1
             prev_mask = mask ^ lsb
-            prefix_sums = prefix_sums.at[idx, mask].set(prefix_sums[idx, prev_mask] + float(w[idx, bit_index]))
+            prefix_sums = prefix_sums.at[idx, mask].set(
+                prefix_sums[idx, prev_mask] + float(w[idx, bit_index])
+            )
 
     for mask in range(size):
         current = float(dp[mask])
@@ -129,7 +133,8 @@ def _maximum_antisymmetric_order_value(weights: Array) -> float:
                 dp = dp.at[new_mask].set(candidate)
             remaining ^= lsb
 
-    return float(dp[-1])
+    best = float(jnp.max(dp))
+    return best
 
 
 def _subset_capacity_candidate_dynamic(subset: _FacetSubset, *, tol: float) -> float | None:
@@ -264,13 +269,10 @@ def ehz_capacity_reference_facet_normals(
     *,
     tol: float = FACET_SOLVER_TOLERANCE,
 ) -> float:
-    """Reference Haim–Kislev solver for the EHZ capacity."""
-
+    """Reference EHZ capacity via exact subset enumeration over facet normals."""
     B_matrix = jnp.asarray(normals, dtype=jnp.float64)
-    offsets = jnp.asarray(offsets, dtype=jnp.float64)
-    if B_matrix.size == 0 or offsets.size == 0:
-        return 0.0
-    return _compute_ehz_capacity_reference(B_matrix, offsets, tol=tol)
+    c = jnp.asarray(offsets, dtype=jnp.float64)
+    return _compute_ehz_capacity_reference(B_matrix, c, tol=tol)
 
 
 def ehz_capacity_fast_facet_normals(
@@ -279,13 +281,10 @@ def ehz_capacity_fast_facet_normals(
     *,
     tol: float = FACET_SOLVER_TOLERANCE,
 ) -> float:
-    """Dynamic-programming shortcut mirroring the legacy fast solver."""
-
+    """Fast EHZ capacity via dynamic-programming shortcut (approximate)."""
     B_matrix = jnp.asarray(normals, dtype=jnp.float64)
-    offsets = jnp.asarray(offsets, dtype=jnp.float64)
-    if B_matrix.size == 0 or offsets.size == 0:
-        return 0.0
-    return _compute_ehz_capacity_fast(B_matrix, offsets, tol=tol)
+    c = jnp.asarray(offsets, dtype=jnp.float64)
+    return _compute_ehz_capacity_fast(B_matrix, c, tol=tol)
 
 
 __all__ = [

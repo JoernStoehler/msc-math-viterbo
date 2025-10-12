@@ -1,4 +1,4 @@
-"""The global atlas dataset, with conversion helpers."""
+"""The global atlas dataset, with conversion helpers (datasets layer)."""
 
 from __future__ import annotations
 
@@ -9,8 +9,8 @@ import jax.numpy as jnp
 from datasets import Dataset, Features, Sequence, Value, concatenate_datasets
 from jaxtyping import Array, Float
 
-from viterbo.types import Cycle, Polytope
-from viterbo.polytopes import incidence_matrix
+from viterbo.datasets.types import Cycle, Polytope
+from viterbo.datasets.builders import incidence_matrix
 
 
 ATLAS_FEATURES = Features(
@@ -86,8 +86,6 @@ def map_quantities(
     return dataset.map(_mapper, features=ATLAS_FEATURES)
 
 
-# we use different schemas for different dimensions
-# to allow fixed-size arrays, batching, etc.
 @dataclass(slots=True)
 class AtlasRow:
     """A single row of the atlas dataset, parsed into JAX types."""

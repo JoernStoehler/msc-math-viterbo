@@ -5,7 +5,10 @@ from __future__ import annotations
 import jax.numpy as jnp
 import pytest
 
-from viterbo import capacity, polytopes
+from viterbo.math.capacity.facet_normals import (
+    ehz_capacity_reference_facet_normals,
+)
+from viterbo.datasets.builders import build_from_vertices
 
 pytestmark = [pytest.mark.smoke]
 
@@ -24,6 +27,6 @@ def test_modern_capacity_reference_benchmark_4d(benchmark) -> None:
         ],
         dtype=jnp.float64,
     )
-    P = polytopes.build_from_vertices(verts)
-    result = benchmark(lambda: capacity.ehz_capacity_reference(P.normals, P.offsets, P.vertices))
+    P = build_from_vertices(verts)
+    result = benchmark(lambda: ehz_capacity_reference_facet_normals(P.normals, P.offsets))
     assert jnp.isfinite(result)

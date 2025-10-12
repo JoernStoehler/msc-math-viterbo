@@ -1,4 +1,4 @@
-"""Polytope construction helpers for the flat modern API."""
+"""Polytope construction helpers for dataset adapters."""
 
 from __future__ import annotations
 
@@ -6,11 +6,11 @@ import jax.numpy as jnp
 from jaxtyping import Array, Float, Bool
 
 from viterbo._wrapped import spatial as _spatial
-from viterbo.numerics import (
+from viterbo.math.numerics import (
     INCIDENCE_ABS_TOLERANCE,
     INCIDENCE_REL_TOLERANCE,
 )
-from viterbo.types import Polytope
+from viterbo.datasets.types import Polytope
 
 
 def build_from_halfspaces(
@@ -58,6 +58,7 @@ def incidence_matrix(
     rtol: float = INCIDENCE_REL_TOLERANCE,
     atol: float = INCIDENCE_ABS_TOLERANCE,
 ) -> Bool[Array, " num_vertices num_facets"]:
+    """Return vertex–facet incidence mask under ``rtol``/``atol`` tolerances."""
     return jnp.isclose((vertices @ normals.T) - offsets[None, :], 0.0, rtol=rtol, atol=atol)
 
 
@@ -67,6 +68,7 @@ def pad_polytope_bundle(
     target_facets: int,
     target_vertices: int,
 ) -> Polytope:
+    """Not implemented: reserved for future padding adapters used by datasets."""
     raise NotImplementedError("Padding is not implemented in the modern API.")
 
 
@@ -76,4 +78,3 @@ __all__ = [
     "incidence_matrix",
     "pad_polytope_bundle",
 ]
-

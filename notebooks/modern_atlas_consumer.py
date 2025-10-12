@@ -14,8 +14,8 @@ from typing import Iterable, Sequence
 from datasets import Dataset
 
 try:  # Imported for feature detection only; execution remains a stub.
-    from viterbo import atlas as modern_atlas
-    from viterbo import capacity as modern_capacity
+    from viterbo.datasets import atlas as modern_atlas
+    from viterbo.math.capacity import facet_normals as modern_capacity
 except ImportError:  # pragma: no cover - defensive guard for docs builds.
     modern_atlas = None  # type: ignore[assignment]
     modern_capacity = None  # type: ignore[assignment]

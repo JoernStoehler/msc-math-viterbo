@@ -9,7 +9,7 @@ import jax
 import jax.numpy as jnp
 from jaxtyping import Array, Bool, Float
 
-from viterbo.types import Polytope
+from viterbo.datasets.types import Polytope
 
 
 @dataclass(frozen=True)
@@ -270,21 +270,15 @@ def symplectic_jaccard_distance_cached(
         raise ValueError("polytopes must share the same ambient dimension")
 
     key = jax.random.PRNGKey(_combine_seeds(cache_a.seed, cache_b.seed))
-    base_samples = jax.random.uniform(
-        key, (cache_a.num_samples, dimension), dtype=jnp.float64
-    )
+    base_samples = jax.random.uniform(key, (cache_a.num_samples, dimension), dtype=jnp.float64)
 
     union_min = jnp.minimum(cache_a.bounding_min, cache_b.bounding_min)
     union_max = jnp.maximum(cache_a.bounding_max, cache_b.bounding_max)
     extent = jnp.maximum(union_max - union_min, 0.0)
     points = union_min + base_samples * extent
 
-    inside_a = _points_inside_polytope(
-        points, cache_a.centred_normals, cache_a.centred_offsets
-    )
-    inside_b = _points_inside_polytope(
-        points, cache_b.centred_normals, cache_b.centred_offsets
-    )
+    inside_a = _points_inside_polytope(points, cache_a.centred_normals, cache_a.centred_offsets)
+    inside_b = _points_inside_polytope(points, cache_b.centred_normals, cache_b.centred_offsets)
 
     intersection = jnp.sum(jnp.logical_and(inside_a, inside_b))
     union = jnp.sum(jnp.logical_or(inside_a, inside_b))
@@ -388,7 +382,9 @@ def _compute_log_radii(
         soft_min = min_val - softness * jnp.log(weights_sum)
         return jnp.log(soft_min)
 
-    vectorised: Callable[[Float[Array, " num_directions dimension"]], Float[Array, " num_directions"]] = jax.vmap(evaluate)
+    vectorised: Callable[
+        [Float[Array, " num_directions dimension"]], Float[Array, " num_directions"]
+    ] = jax.vmap(evaluate)
     return vectorised(directions)
 
 

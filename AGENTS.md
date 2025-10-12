@@ -241,3 +241,29 @@ Blocked?
 - This file applies to all tasks and agents. Maintain a single golden path.
 - There must be exactly one `AGENTS.md` at the repository root; do not add per‑folder variants.
 - If tools disagree or the golden path breaks, open `Needs-Unblock` instead of hand‑tuning.
+
+## 13) Module Layout & Conventions (facts)
+
+- Namespaces and responsibilities
+  - `viterbo.math`: pure mathematical definitions and algorithms.
+    - JAX‑first, float64; inputs/outputs are JAX arrays or tuples of arrays.
+    - No dataclasses, no I/O, no caching, no HF datasets. Deterministic/stateless.
+    - Examples: `geometry` (halfspace/vertex utilities, incidence), `combinatorics`,
+      `volume`, `symplectic`, `capacity/*`, `spectrum`, `similarity`, `systolic`.
+  - `viterbo.datasets`: dataset representations and adapters.
+    - Defines canonical column types (JAX/HF compatible), converters, and wrappers that
+      compute columns from other columns using math functions. May include caching.
+    - HF integration lives here (Features, build/append/map/save/load), generators, and
+    polytope builders returning lightweight dataclasses.
+  - `viterbo._wrapped`: interop with external libs (NumPy/SciPy/Qhull/HiGHS/CVX) to keep
+    the math layer JAX‑first and SciPy‑free.
+  - `viterbo.visualization`: empty placeholder for future stable helpers promoted from notebooks.
+  - `viterbo.models`: empty placeholder for future stable training utilities.
+
+- Conventions
+  - Use semantic names `normals`, `offsets` for Bx ≤ c. Public math APIs return JAX arrays.
+  - Datasets layer owns `Polytope`, `PolytopeRecord`, caching and HF `Features` schemas.
+  - No DSL for datasets: expose a simple registry of available methods per column and
+    convenience wrappers; callers choose methods at call sites.
+  - During transition, thin re‑exports in legacy module paths are allowed to keep imports
+    stable; prefer importing from `viterbo.math`/`viterbo.datasets` for new code.

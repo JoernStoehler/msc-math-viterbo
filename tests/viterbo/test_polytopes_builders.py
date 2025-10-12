@@ -5,7 +5,7 @@ from __future__ import annotations
 import jax.numpy as jnp
 import pytest
 
-from viterbo import polytopes
+from viterbo.datasets import builders as polytopes
 
 
 @pytest.mark.goal_code

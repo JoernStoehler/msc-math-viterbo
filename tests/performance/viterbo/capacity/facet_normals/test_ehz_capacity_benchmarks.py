@@ -19,11 +19,11 @@ from tests._utils.polytope_samples import load_polytope_instances
 
 import jax.numpy as jnp
 
-from viterbo.capacity import (
+from viterbo.math.capacity.facet_normals import (
     ehz_capacity_fast_facet_normals,
     ehz_capacity_reference_facet_normals,
 )
-from viterbo.types import Polytope
+from viterbo.datasets.types import Polytope
 
 # Reuse the exact same catalog of polytopes as the regression tests so that any
 # deviation caught here points to a performance-only issue rather than a change

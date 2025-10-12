@@ -5,7 +5,8 @@ from __future__ import annotations
 import jax.numpy as jnp
 import pytest
 
-from viterbo import atlas, cycles
+from viterbo.datasets import atlas
+from viterbo import cycles
 
 
 @pytest.mark.goal_code

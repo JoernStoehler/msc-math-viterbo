@@ -14,10 +14,10 @@ from pathlib import Path
 from typing import Iterable, Sequence
 
 try:  # Imported for feature detection only; calls remain stubbed.
-    from viterbo import atlas as modern_atlas
-    from viterbo import basic_generators as modern_generators
-    from viterbo import capacity as modern_capacity
-    from viterbo import volume as modern_volume
+    from viterbo.datasets import atlas as modern_atlas
+    from viterbo.datasets import generators as modern_generators
+    from viterbo.math.capacity import facet_normals as modern_capacity
+    from viterbo.math import volume as modern_volume
 except ImportError:  # pragma: no cover - defensive guard for docs builds.
     modern_atlas = None  # type: ignore[assignment]
     modern_generators = None  # type: ignore[assignment]
@@ -43,10 +43,10 @@ def _module_status() -> dict[str, bool]:
     """Record whether the modern modules expected by the atlas builder exist."""
 
     return {
-        "viterbo.atlas": modern_atlas is not None,
-        "viterbo.basic_generators": modern_generators is not None,
-        "viterbo.capacity": modern_capacity is not None,
-        "viterbo.volume": modern_volume is not None,
+        "viterbo.datasets.atlas": modern_atlas is not None,
+        "viterbo.datasets.generators": modern_generators is not None,
+        "viterbo.math.capacity.facet_normals": modern_capacity is not None,
+        "viterbo.math.volume": modern_volume is not None,
     }
 
 

@@ -6,17 +6,18 @@ import math
 
 import pytest
 import pytest_benchmark.plugin  # type: ignore[reportMissingTypeStubs]
-import jax.numpy as jnp
 
-from viterbo.geom import (
-    Polytope,
+from viterbo.datasets.catalog import (
     cartesian_product,
     cross_polytope,
     hypercube,
     regular_polygon_product,
 )
-from viterbo.capacity import minkowski_billiard_length_fast, minkowski_billiard_length_reference
-from viterbo.types import Polytope as ModernPolytope
+from viterbo.math.capacity.minkowski_billiards import (
+    minkowski_billiard_length_fast,
+    minkowski_billiard_length_reference,
+)
+from viterbo.datasets.types import PolytopeRecord as Polytope
 
 pytestmark = [pytest.mark.smoke, pytest.mark.deep]
 
@@ -54,21 +55,12 @@ def test_fast_solver_matches_reference_with_benchmark(
     """Benchmark the fast solver while validating against the reference enumeration."""
 
     assert isinstance(label, str)
-    bundle_table = _to_bundle(table)
-    bundle_geometry = _to_bundle(geometry)
-    reference = minkowski_billiard_length_reference(bundle_table, bundle_geometry)
-    fast_result = benchmark(lambda: minkowski_billiard_length_fast(bundle_table, bundle_geometry))
+    Bt, ct = table.geometry.halfspace_data()
+    Bg, cg = geometry.geometry.halfspace_data()
+    reference = minkowski_billiard_length_reference(Bt, ct, Bg, cg)
+    fast_result = benchmark(lambda: minkowski_billiard_length_fast(Bt, ct, Bg, cg))
     assert math.isclose(fast_result, reference, rel_tol=1e-9, abs_tol=1e-9)
 
 
-def _to_bundle(polytope: Polytope) -> ModernPolytope:
-    B, c = polytope.halfspace_data()
-    normals = jnp.asarray(B, dtype=jnp.float64)
-    offsets = jnp.asarray(c, dtype=jnp.float64)
-    dimension = normals.shape[1]
-    return ModernPolytope(
-        normals=normals,
-        offsets=offsets,
-        vertices=jnp.empty((0, dimension), dtype=jnp.float64),
-        incidence=jnp.empty((0, normals.shape[0]), dtype=bool),
-    )
+def _to_bundle(_: Polytope) -> None:
+    return None

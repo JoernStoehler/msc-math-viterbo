@@ -7,14 +7,12 @@ from typing import Iterable, Sequence
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-from viterbo.geom import polytope_combinatorics
-from viterbo.capacity.reeb_cycles import (
+from viterbo.math.capacity.reeb_cycles import (
     OrientedEdgeGraph,
     build_oriented_edge_graph,
 )
-from viterbo.numerics import GEOMETRY_ABS_TOLERANCE
-from viterbo.polytopes import build_from_halfspaces
-from viterbo.types import Polytope
+from viterbo.math.numerics import GEOMETRY_ABS_TOLERANCE
+from viterbo.math.geometry import enumerate_vertices
 
 
 def ehz_spectrum_reference(
@@ -26,24 +24,14 @@ def ehz_spectrum_reference(
 ) -> Sequence[float]:
     """Return the leading EHZ actions by enumerating cycles on the oriented-edge graph."""
 
-    geometry_polytope = _to_geometry_polytope(normals, offsets)
     graph = build_oriented_edge_graph(normals, offsets, atol=atol)
-    vertices = polytope_combinatorics(geometry_polytope, atol=atol, use_cache=False).vertices
+    vertices = enumerate_vertices(normals, offsets, atol=atol)
     cycles = _enumerate_simple_cycles(graph, limit=head)
     actions: list[float] = []
     for cycle in cycles:
         action = _cycle_action(cycle, graph, vertices)
         actions.append(action)
     return sorted(actions)[: int(head)]
-
-
-def _to_geometry_polytope(
-    normals: Float[Array, " num_facets dimension"],
-    offsets: Float[Array, " num_facets"],
-) -> Polytope:
-    normals = jnp.asarray(normals, dtype=jnp.float64)
-    offsets = jnp.asarray(offsets, dtype=jnp.float64)
-    return build_from_halfspaces(normals, offsets)
 
 
 def _enumerate_simple_cycles(graph: OrientedEdgeGraph, *, limit: int) -> Iterable[tuple[int, ...]]:

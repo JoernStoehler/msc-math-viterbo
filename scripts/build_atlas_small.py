@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from viterbo.atlas_build import build_atlas_dataset, default_plan
+from viterbo.datasets.build import build_atlas_dataset, default_plan
 
 
 def parse_args() -> argparse.Namespace:
@@ -54,12 +54,11 @@ def main() -> None:
     args = parse_args()
     plan = default_plan()
     build_atlas_dataset(
-        args.preset,
-        plan=plan,
-        output_dir=args.output_dir,
-        log_dir=args.log_dir,
-        resume=args.resume,
-        limit_generators=args.generators,
+        plan,
+        preset=args.preset,
+        dataset_dir=args.output_dir,
+        benchmark_dir=args.log_dir,
+        sample_overrides=None,
         seed_offset=args.seed_offset,
     )
 

@@ -11,8 +11,8 @@ import jax
 import jax.numpy as jnp
 import pytest
 
-from viterbo import basic_generators
-from viterbo.types import Polytope
+from viterbo.datasets import generators as basic_generators
+from viterbo.datasets.types import Polytope
 
 
 @pytest.mark.goal_code

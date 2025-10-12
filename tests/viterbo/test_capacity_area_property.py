@@ -15,7 +15,9 @@ import numpy as np
 import pytest
 from hypothesis import given, settings, strategies as st
 
-from viterbo import capacity, polytopes, volume
+from viterbo.datasets import builders as polytopes
+from viterbo.math.capacity.facet_normals import ehz_capacity_reference_facet_normals
+from viterbo.math import volume
 
 
 def _random_convex_polygon_vertices(rng: np.random.Generator, n: int) -> jnp.ndarray:
@@ -37,25 +39,31 @@ def test_capacity_equals_area_random_convex_polygons(n: int, seed: int) -> None:
     rng = np.random.default_rng(seed)
     verts = _random_convex_polygon_vertices(rng, n)
     P = polytopes.build_from_vertices(verts)
-    c = capacity.ehz_capacity_reference(P.normals, P.offsets, P.vertices)
-    a = volume.volume_reference(P)
+    c = ehz_capacity_reference_facet_normals(P.normals, P.offsets)
+    a = volume.volume_reference(P.vertices)
     assert jnp.isclose(c, a, rtol=1e-9, atol=1e-12)
 
 
 @pytest.mark.goal_math
 @pytest.mark.smoke
 @settings(max_examples=15, deadline=None)
-@given(st.integers(min_value=4, max_value=12), st.floats(min_value=-np.pi, max_value=np.pi), st.integers(min_value=0, max_value=2**31 - 1))
+@given(
+    st.integers(min_value=4, max_value=12),
+    st.floats(min_value=-np.pi, max_value=np.pi),
+    st.integers(min_value=0, max_value=2**31 - 1),
+)
 def test_capacity_rotation_invariance_2d(n: int, theta: float, seed: int) -> None:
     """In 2D, capacity is rotation invariant (equals area)."""
     rng = np.random.default_rng(seed)
     verts = _random_convex_polygon_vertices(rng, n)
     P = polytopes.build_from_vertices(verts)
-    c0 = capacity.ehz_capacity_reference(P.normals, P.offsets, P.vertices)
-    R = jnp.array([[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]], dtype=jnp.float64)
+    c0 = ehz_capacity_reference_facet_normals(P.normals, P.offsets)
+    R = jnp.array(
+        [[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]], dtype=jnp.float64
+    )
     verts_rot = verts @ R.T
     P_rot = polytopes.build_from_vertices(verts_rot)
-    c1 = capacity.ehz_capacity_reference(P_rot.normals, P_rot.offsets, P_rot.vertices)
+    c1 = ehz_capacity_reference_facet_normals(P_rot.normals, P_rot.offsets)
     assert jnp.isclose(c0, c1, rtol=1e-9, atol=1e-12)
 
 

@@ -1,4 +1,4 @@
-"""Shared dataclasses describing modern polytope artefacts (flat namespace)."""
+"""Shared dataclasses describing modern polytope artefacts (datasets layer)."""
 
 from __future__ import annotations
 
@@ -51,11 +51,13 @@ class Polytope:
     incidence: IncidenceMatrix
 
     @property
-    def dimension(self) -> int:  # noqa: D401 - short delegating helper
+    def dimension(self) -> int:
+        """Ambient dimension d for the polytope."""
         return int(self.normals.shape[1]) if self.normals.ndim == 2 else 0
 
     @property
-    def facets(self) -> int:  # noqa: D401 - short delegating helper
+    def facets(self) -> int:
+        """Number of facets m in the half-space description."""
         return int(self.normals.shape[0]) if self.normals.ndim == 2 else 0
 
     def halfspace_data(self) -> HalfspaceData:
@@ -137,4 +139,3 @@ __all__ = [
     "PolytopeCombinatorics",
     "Cycle",
 ]
-

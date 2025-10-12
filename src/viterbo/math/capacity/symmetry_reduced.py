@@ -1,12 +1,18 @@
-"""Symmetry-reduced capacity heuristics built from modern data structures."""
+"""Symmetry-reduced capacity heuristics built from modern data structures (math layer)."""
 
 from __future__ import annotations
 
 import jax.numpy as jnp
 from jaxtyping import Array, Float
+from typing import NamedTuple
 
-from viterbo.capacity import facet_normals
-from viterbo.types import FacetPairing
+from viterbo.math.capacity import facet_normals
+
+
+class FacetPairing(NamedTuple):
+    """Pairing of opposite facets used to reduce symmetry."""
+    pairs: tuple[tuple[int, int], ...]
+    unpaired: tuple[int, ...]
 
 
 def detect_opposite_facet_pairs(
@@ -56,7 +62,9 @@ def _reduced_radii(
         paired_values.append(float(0.5 * (radii[left] + radii[right])))
     if pairing.unpaired:
         unpaired_values = radii[jnp.array(pairing.unpaired, dtype=jnp.int32)]
-        all_values = jnp.concatenate((jnp.asarray(paired_values, dtype=jnp.float64), unpaired_values))
+        all_values = jnp.concatenate(
+            (jnp.asarray(paired_values, dtype=jnp.float64), unpaired_values)
+        )
     else:
         all_values = jnp.asarray(paired_values, dtype=jnp.float64)
     if all_values.size == 0:
@@ -99,4 +107,5 @@ __all__ = [
     "detect_opposite_facet_pairs",
     "ehz_capacity_reference_symmetry_reduced",
     "ehz_capacity_fast_symmetry_reduced",
+    "FacetPairing",
 ]

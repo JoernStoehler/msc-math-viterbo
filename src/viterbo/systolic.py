@@ -8,9 +8,12 @@ from typing import overload
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-from viterbo.geom import polytope_volume_fast
-from viterbo.capacity import ehz_capacity_fast, ehz_capacity_reference
-from viterbo.types import Polytope, PolytopeRecord
+from viterbo.math.volume import polytope_volume_fast
+from viterbo.math.capacity.facet_normals import (
+    ehz_capacity_fast_facet_normals,
+    ehz_capacity_reference_facet_normals,
+)
+from viterbo.datasets.types import Polytope, PolytopeRecord
 
 
 @overload
@@ -62,11 +65,10 @@ def systolic_ratio(
         raise ValueError(msg)
 
     n = dimension // 2
-    empty_vertices = jnp.empty((0, dimension), dtype=jnp.float64)
     try:
-        capacity = ehz_capacity_fast(B_matrix, offsets)
+        capacity = ehz_capacity_fast_facet_normals(B_matrix, offsets)
     except ValueError:
-        capacity = ehz_capacity_reference(B_matrix, offsets, empty_vertices)
+        capacity = ehz_capacity_reference_facet_normals(B_matrix, offsets)
 
     volume = polytope_volume_fast(B_matrix, offsets)
     denominator = math.factorial(n) * volume

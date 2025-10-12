@@ -10,8 +10,7 @@ import pytest_benchmark.plugin  # type: ignore[reportMissingTypeStubs]
 import jax.numpy as jnp
 from tests._utils.polytope_samples import load_polytope_instances
 
-from viterbo.capacity import ehz_capacity_fast_reeb, ehz_capacity_reference_reeb
-from viterbo.types import Polytope
+from viterbo.math.capacity.reeb_cycles import ehz_capacity_fast_reeb, ehz_capacity_reference_reeb
 
 pytestmark = [pytest.mark.smoke, pytest.mark.deep]
 

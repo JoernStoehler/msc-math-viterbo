@@ -5,8 +5,9 @@ from __future__ import annotations
 import jax.numpy as jnp
 import pytest
 
-from viterbo import polytopes, spectrum
-from viterbo.capacity import reeb_cycles
+from viterbo.datasets import builders as polytopes
+from viterbo import spectrum
+from viterbo.math.capacity import reeb_cycles
 
 
 EXPECTED_SIMPLEX_EDGES = (
@@ -103,7 +104,7 @@ def test_ehz_spectrum_reference_requires_four_dimensional_bundle() -> None:
     )
     bundle = polytopes.build_from_vertices(vertices)
     with pytest.raises(ValueError, match="dimension four"):
-        spectrum.ehz_spectrum_reference(bundle, head=3)
+        spectrum.ehz_spectrum_reference(bundle.normals, bundle.offsets, head=3)
 
 
 @pytest.mark.goal_code
@@ -138,7 +139,7 @@ def test_ehz_spectrum_reference_manual_batching_pattern() -> None:
     for bundle in (bundle4, bundle2):
         padded = jnp.full((head,), float("nan"), dtype=jnp.float64)
         try:
-            seq = spectrum.ehz_spectrum_reference(bundle, head=head)
+            seq = spectrum.ehz_spectrum_reference(bundle.normals, bundle.offsets, head=head)
         except ValueError:
             padded_rows.append(padded)
             continue
@@ -171,7 +172,7 @@ def test_oriented_edge_graph_matches_expected_metadata() -> None:
     )
     bundle = polytopes.build_from_vertices(vertices)
 
-    graph = reeb_cycles.build_oriented_edge_graph(bundle)
+    graph = reeb_cycles.build_oriented_edge_graph(bundle.normals, bundle.offsets)
 
     edges = tuple(
         (
@@ -208,5 +209,5 @@ def test_ehz_spectrum_reference_matches_expected_values() -> None:
         dtype=jnp.float64,
     )
     bundle = polytopes.build_from_vertices(vertices)
-    spectrum_values = spectrum.ehz_spectrum_reference(bundle, head=5)
+    spectrum_values = spectrum.ehz_spectrum_reference(bundle.normals, bundle.offsets, head=5)
     assert spectrum_values == pytest.approx(EXPECTED_SIMPLEX_SPECTRUM, rel=1e-12, abs=0.0)

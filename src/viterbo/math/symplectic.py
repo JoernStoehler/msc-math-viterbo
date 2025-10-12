@@ -118,4 +118,3 @@ __all__ = [
     "minkowski_sum",
     "normalize_vector",
 ]
-

@@ -1,4 +1,4 @@
-"""Reeb-cycle validation and oriented-edge graphs for modern polytopes."""
+"""Reeb-cycle validation and oriented-edge graphs for modern polytopes (math layer)."""
 
 from __future__ import annotations
 
@@ -8,17 +8,19 @@ from itertools import combinations
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-from viterbo.geom import polytope_combinatorics
-from viterbo.capacity.facet_normals import (
+from viterbo.math.geometry import enumerate_vertices
+from viterbo.math.capacity.facet_normals import (
     ehz_capacity_fast_facet_normals,
     ehz_capacity_reference_facet_normals,
 )
-from viterbo.numerics import (
+from viterbo.math.numerics import (
     FACET_SOLVER_TOLERANCE,
     GEOMETRY_ABS_TOLERANCE,
 )
-from viterbo.polytopes import build_from_halfspaces
-from viterbo.types import Polytope
+@dataclass(frozen=True)
+class _Cone:
+    vertex: Float[Array, " dimension"]
+    active_facets: tuple[int, ...]
 
 
 @dataclass(frozen=True)
@@ -43,13 +45,16 @@ class OrientedEdgeGraph:
     dimension: int
 
     def successors(self, edge_id: int) -> tuple[int, ...]:
+        """Return successor edge identifiers for ``edge_id``."""
         return self.outgoing[edge_id]
 
     def predecessors(self, edge_id: int) -> tuple[int, ...]:
+        """Return predecessor edge identifiers for ``edge_id``."""
         return self.incoming[edge_id]
 
     @property
     def edge_count(self) -> int:
+        """Return the number of edges in the graph."""
         return len(self.edges)
 
 
@@ -62,15 +67,6 @@ class OrientedEdgeDiagnostics:
     edges_without_predecessors: tuple[int, ...]
 
 
-def _to_geometry_polytope(
-    normals: Float[Array, " num_facets dimension"],
-    offsets: Float[Array, " num_facets"],
-) -> Polytope:
-    normals = jnp.asarray(normals, dtype=jnp.float64)
-    offsets = jnp.asarray(offsets, dtype=jnp.float64)
-    return build_from_halfspaces(normals, offsets)
-
-
 def build_oriented_edge_graph(
     normals: Float[Array, " num_facets dimension"],
     offsets: Float[Array, " num_facets"],
@@ -79,17 +75,22 @@ def build_oriented_edge_graph(
 ) -> OrientedEdgeGraph:
     """Construct the oriented-edge graph for ``bundle`` using combinatorics."""
 
-    geometry_polytope = _to_geometry_polytope(normals, offsets)
-    dimension = geometry_polytope.dimension
+    normals = jnp.asarray(normals, dtype=jnp.float64)
+    offsets = jnp.asarray(offsets, dtype=jnp.float64)
+    dimension = int(normals.shape[1]) if normals.ndim == 2 else 0
     if dimension != 4:
         msg = "Combinatorial Reeb cycles are only implemented for dimension four."
         raise ValueError(msg)
 
-    combinatorics = polytope_combinatorics(geometry_polytope, atol=atol, use_cache=False)
-    cones = combinatorics.normal_cones
-    vertex_lookup = {
-        _vertex_key(cone.vertex, atol=atol): index for index, cone in enumerate(cones)
-    }
+    vertices = enumerate_vertices(normals, offsets, atol=atol)
+    cones: list[_Cone] = []
+    for k in range(int(vertices.shape[0])):
+        v = vertices[k]
+        residuals = normals @ v - offsets
+        active = jnp.where(jnp.abs(residuals) <= float(atol))[0]
+        active_facets = tuple(int(i) for i in active.tolist())
+        cones.append(_Cone(vertex=v, active_facets=active_facets))
+    vertex_lookup = {_vertex_key(cone.vertex, atol=atol): index for index, cone in enumerate(cones)}
 
     incident_edges: dict[int, list[int]] = {}
     reverse_incident: dict[int, list[int]] = {}
@@ -160,7 +161,10 @@ def build_oriented_edge_graph(
                 edge_out = edges[target]
                 if source == target:
                     continue
-                if edge_in.tail_vertex == edge_out.head_vertex and edge_in.facets == edge_out.facets:
+                if (
+                    edge_in.tail_vertex == edge_out.head_vertex
+                    and edge_in.facets == edge_out.facets
+                ):
                     continue
                 shared_facets = set(edge_in.facets).intersection(edge_out.facets)
                 if len(shared_facets) != 2:
@@ -170,9 +174,7 @@ def build_oriented_edge_graph(
                 adjacency.setdefault(source, set()).add(target)
 
     edge_count = len(edges)
-    outgoing = tuple(
-        tuple(sorted(adjacency.get(index, set()))) for index in range(edge_count)
-    )
+    outgoing = tuple(tuple(sorted(adjacency.get(index, set()))) for index in range(edge_count))
     incoming_map: dict[int, list[int]] = {index: [] for index in range(edge_count)}
     for source, targets in adjacency.items():
         for target in targets:

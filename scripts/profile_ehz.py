@@ -13,9 +13,12 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from viterbo.geom import catalog, random_transformations
-from viterbo.capacity import ehz_capacity_fast, ehz_capacity_reference
-from viterbo.types import Polytope as ModernPolytope, PolytopeRecord
+from viterbo.datasets.catalog import catalog, random_transformations
+from viterbo.math.capacity.facet_normals import (
+    ehz_capacity_fast_facet_normals,
+    ehz_capacity_reference_facet_normals,
+)
+from viterbo.datasets.types import Polytope as ModernPolytope, PolytopeRecord
 
 Algorithm = Callable[[np.ndarray, np.ndarray], float]
 
@@ -39,8 +42,10 @@ def _bundle_from_halfspaces(B: np.ndarray, c: np.ndarray) -> ModernPolytope:
 
 
 ALGORITHMS: dict[str, Algorithm] = {
-    "reference": lambda B, c: float(ehz_capacity_reference(_bundle_from_halfspaces(B, c))),
-    "fast": lambda B, c: float(ehz_capacity_fast(_bundle_from_halfspaces(B, c))),
+    "reference": lambda B, c: float(
+        ehz_capacity_reference_facet_normals(jnp.asarray(B), jnp.asarray(c))
+    ),
+    "fast": lambda B, c: float(ehz_capacity_fast_facet_normals(jnp.asarray(B), jnp.asarray(c))),
 }
 
 

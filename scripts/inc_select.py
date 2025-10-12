@@ -296,7 +296,13 @@ def main() -> int:
     changed = changed - set([__file__])
 
     # Invalidation: plumbing
-    plumbing_patterns = ["conftest.py", "pytest.ini", "pyproject.toml", "uv.lock", "scripts/inc_select.py"]
+    plumbing_patterns = [
+        "conftest.py",
+        "pytest.ini",
+        "pyproject.toml",
+        "uv.lock",
+        "scripts/inc_select.py",
+    ]
     # Robust plumbing detection against absolute paths
     overlap = {p for p in changed for pat in plumbing_patterns if p.endswith(pat)}
     if len(overlap) > 0:
@@ -354,7 +360,8 @@ def main() -> int:
                 _stderr(f"[inc] dynamic import detected in {pp.as_posix()}; advise full run")
                 # Persist baseline graph before advising fallback
                 nodes_out: dict[str, dict] = {
-                    p.as_posix(): {"hash": h, "is_test": is_test_file(p)} for p, h in current_hash.items()
+                    p.as_posix(): {"hash": h, "is_test": is_test_file(p)}
+                    for p, h in current_hash.items()
                 }
                 edges_out: dict[str, list[str]] = {
                     k.as_posix(): [t.as_posix() for t in v] for k, v in edges_cur.items()
