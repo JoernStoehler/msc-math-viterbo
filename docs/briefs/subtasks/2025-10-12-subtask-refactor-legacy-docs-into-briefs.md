@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: adopted
 created: 2025-10-12
 workflow: task
 summary: Refactor legacy docs/* workflow/policy notes into modern briefs.
@@ -26,12 +26,14 @@ summary: Refactor legacy docs/* workflow/policy notes into modern briefs.
 4. Update `mkdocs.yml` to point to the new briefs; remove obsolete nav entries.
 5. Confirm no orphaned references remain and clean up any redirects or placeholders.
 
-## Status check (2025-02-14 audit)
+## Execution notes (2025-02-14 update)
 
-- `docs/01-project-goal.md`, `docs/05-working-with-codex.md`, `docs/11-math-thesis-topics.md`, `docs/12-math-reading-list.md`, `docs/13-symplectic-quantities.md`, `docs/convex-polytope-cehz-capacities.md`, and `docs/convex-polytope-volumes.md` still sit at the top level of `docs/` and retain the pre-brief format.
-- Topic folders such as `docs/papers/**` continue to host LaTeX/Markdown notes about individual references and have not been migrated into briefs.
-- MkDocs navigation still references the legacy paths above.
-- Conclusion: the migration remains outstanding; the acceptance criteria below are not yet met.
+- Migrated legacy workflow/policy/reference documents into briefs:
+  - Project goal and collaboration guidance now live in `docs/briefs/2025-10-12-policy-project-goal.md` and `docs/briefs/2025-10-12-workflow-codex-collaboration.md`.
+  - Thesis topic, reading list, symplectic quantity reference, and algorithm catalogues moved to dedicated briefs under `docs/briefs/`.
+  - The symplectic reading archive index now resides in `docs/briefs/2025-10-12-workflow-reading-archive.md`.
+- Removed the corresponding legacy files from `docs/` and `docs/papers/README.md`.
+- Updated `mkdocs.yml` navigation to point at the new briefs and verified no stale references remain.
 
 ## Acceptance
 
