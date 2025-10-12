@@ -61,6 +61,7 @@ extra_javascript:
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 
 nav:
+  - Project Guide: project-structure.md
   - Project Goal: briefs/2025-10-12-policy-project-goal.md
   - Collaboration: briefs/2025-10-12-workflow-codex-collaboration.md
   - Reference:
