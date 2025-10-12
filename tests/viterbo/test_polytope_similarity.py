@@ -8,7 +8,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from viterbo.polytopes_similarity import (
+from viterbo.datasets.similarity import (
     CorrelationSketch,
     JaccardMonteCarloCache,
     RadialProfileCache,

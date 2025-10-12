@@ -16,7 +16,8 @@ from datasets import Dataset
 
 from viterbo.datasets import atlas
 from viterbo.datasets import generators as basic_generators
-from viterbo import cycles, systolic
+import viterbo.datasets.cycles as cycles
+import viterbo.datasets.systolic as systolic
 from viterbo.math import volume
 from viterbo.math.capacity.facet_normals import ehz_capacity_fast_facet_normals
 from viterbo.datasets.types import Polytope
@@ -186,14 +187,14 @@ def default_plan() -> AtlasBuildPlan:
         QuantityConfig(
             name="systolic_ratio",
             target_field="systolic_ratio",
-            implementation="viterbo.systolic.systolic_ratio",
+            implementation="viterbo.datasets.systolic.systolic_ratio",
             compute=lambda poly: float(systolic.systolic_ratio(poly)),
             failure_value=math.nan,
         ),
         QuantityConfig(
             name="minimum_action_cycle",
             target_field="minimum_action_cycle",
-            implementation="viterbo.cycles.minimum_cycle_reference",
+            implementation="viterbo.datasets.cycles.minimum_cycle_reference",
             compute=_cycle,
             failure_value=[],
         ),

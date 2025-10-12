@@ -102,7 +102,7 @@ quoted directly from the implementation modules to establish a baseline before r
   - `incidence_matrix(normals: Float[Array, " num_facets dimension"], offsets: Float[Array, " num_facets"], vertices: Float[Array, " num_vertices dimension"], rtol: float = INCIDENCE_REL_TOLERANCE, atol: float = INCIDENCE_ABS_TOLERANCE) -> Bool[Array, " num_vertices num_facets"]`
   - `pad_polytope_bundle(bundle: Polytope, target_facets: int, target_vertices: int) -> Polytope`
 
-- `src/viterbo/polytopes_similarity.py`
+- `src/viterbo/datasets/similarity.py`
   - `RadialProfileCache`
   - `CorrelationSketch`
   - `JaccardMonteCarloCache`
@@ -119,7 +119,6 @@ quoted directly from the implementation modules to establish a baseline before r
   - `build_jaccard_cache(polytope: Polytope, num_samples: int, seed: int | None) -> JaccardMonteCarloCache`
   - `symplectic_jaccard_distance_cached(cache_a: JaccardMonteCarloCache, cache_b: JaccardMonteCarloCache, num_restarts: int, num_iterations: int, search_learning_rate: float) -> float`
   - `staged_symplectic_similarity(spectrum_a: SymplecticSpectrumCache, spectrum_b: SymplecticSpectrumCache, radial_a: RadialProfileCache, radial_b: RadialProfileCache, correlation_a: CorrelationSketch, correlation_b: CorrelationSketch, weights: Float[Array, " 3"], near_threshold: float, far_threshold: float) -> float`
-  - `_standard_symplectic_matrix(dimension: int) -> Float[Array, " dimension dimension"]`
   - `_centre_offsets(polytope: Polytope, translation: Float[Array, " dimension"]) -> Float[Array, " num_facets"]`
   - `_compute_log_radii(normals: Float[Array, " num_facets dimension"], offsets: Float[Array, " num_facets"], directions: Float[Array, " num_directions dimension"], softness: float, epsilon: float) -> Float[Array, " num_directions"]`
   - `_symplectic_correlation_samples(polytope: Polytope, num_pairs: int, seed: int | None) -> Float[Array, " num_pairs"]`
@@ -176,17 +175,18 @@ quoted directly from the implementation modules to establish a baseline before r
   - `_pair_to_polytope(polytope: _GeometryPolytope, blocks: tuple[tuple[int, ...], ...]) -> list[_GeometryPolytope] | None`
   - `_try_product_decomposition(billiard_table: _GeometryPolytope, geometry: _GeometryPolytope, max_bounces: int | None, atol: float) -> float | None`
 
-- `src/viterbo/capacity/reeb_cycles.py`
-  - `OrientedEdge`
-  - `OrientedEdgeGraph`
-    - `successors(self, edge_id: int) -> tuple[int, ...]`
-    - `predecessors(self, edge_id: int) -> tuple[int, ...]`
-    - `edge_count(self) -> int`
-  - `OrientedEdgeDiagnostics`
-  - `_to_geometry_polytope(bundle: Polytope) -> _GeometryPolytope`
-  - `build_oriented_edge_graph(bundle: Polytope, atol: float = GEOMETRY_ABS_TOLERANCE) -> OrientedEdgeGraph`
-  - `_vertex_key(vertex: Float[Array, " dimension"], atol: float) -> tuple[int, ...]`
-  - `_graph_diagnostics(graph: OrientedEdgeGraph) -> OrientedEdgeDiagnostics`
+  - `src/viterbo/capacity/reeb_cycles.py`
+    - `OrientedEdge`
+    - `OrientedEdgeGraph`
+      - `successors(self, edge_id: int) -> tuple[int, ...]`
+      - `predecessors(self, edge_id: int) -> tuple[int, ...]`
+      - `edge_count(self) -> int`
+    - `OrientedEdgeDiagnostics`
+    - `build_oriented_edge_graph(normals: Float[Array, " num_facets dimension"], offsets: Float[Array, " num_facets"], *, atol: float = GEOMETRY_ABS_TOLERANCE) -> OrientedEdgeGraph`
+    - `minimum_cycle_reference(normals: Float[Array, " num_facets dimension"], offsets: Float[Array, " num_facets"], *, atol: float = GEOMETRY_ABS_TOLERANCE) -> Float[Array, " num_points dimension"]`
+    - `enumerate_simple_cycles(graph: OrientedEdgeGraph, *, limit: int) -> list[tuple[int, ...]]`
+    - `ehz_capacity_reference_reeb(normals: Float[Array, " num_facets dimension"], offsets: Float[Array, " num_facets"], *, atol: float = GEOMETRY_ABS_TOLERANCE, tol: float = FACET_SOLVER_TOLERANCE) -> float`
+    - `ehz_capacity_fast_reeb(normals: Float[Array, " num_facets dimension"], offsets: Float[Array, " num_facets"], *, atol: float = GEOMETRY_ABS_TOLERANCE, tol: float = FACET_SOLVER_TOLERANCE) -> float`
   - `ehz_capacity_reference_reeb(bundle: Polytope, atol: float = GEOMETRY_ABS_TOLERANCE, tol: float = FACET_SOLVER_TOLERANCE) -> float`
   - `ehz_capacity_fast_reeb(bundle: Polytope, atol: float = GEOMETRY_ABS_TOLERANCE, tol: float = FACET_SOLVER_TOLERANCE) -> float`
 
@@ -206,7 +206,7 @@ quoted directly from the implementation modules to establish a baseline before r
   - `ehz_capacity_reference_symmetry_reduced(bundle: Polytope, pairing: FacetPairingMetadata | None = None) -> float`
   - `ehz_capacity_fast_symmetry_reduced(bundle: Polytope, pairing: FacetPairingMetadata | None = None) -> float`
 
-- `src/viterbo/cycles.py`
+- `src/viterbo/datasets/cycles.py`
   - `minimum_cycle_reference(bundle: Polytope) -> Float[Array, " num_points dimension"]`
 
 ### Symplectic and spectrum utilities
@@ -219,13 +219,11 @@ quoted directly from the implementation modules to establish a baseline before r
   - `minkowski_sum(first_vertices: Float[Array, " m dim"], second_vertices: Float[Array, " n dim"]) -> Float[Array, " k dim"]`
   - `normalize_vector(vector: Float[Array, " dim"]) -> Float[Array, " dim"]`
 
-- `src/viterbo/spectrum.py`
-  - `ehz_spectrum_reference(bundle: Polytope, head: int, atol: float = GEOMETRY_ABS_TOLERANCE) -> Sequence[float]`
-  - `_to_geometry_polytope(bundle: Polytope) -> _GeometryPolytope`
-  - `_enumerate_simple_cycles(graph: OrientedEdgeGraph, limit: int) -> Iterable[tuple[int, ...]]`
-  - `_cycle_action(cycle: tuple[int, ...], graph: OrientedEdgeGraph, vertices: Float[Array, " num_vertices dimension"]) -> float`
+  - `src/viterbo/math/spectrum.py`
+    - `ehz_spectrum_reference(normals: Float[Array, " num_facets dimension"], offsets: Float[Array, " num_facets"], *, head: int, atol: float = GEOMETRY_ABS_TOLERANCE) -> Iterable[float]`
+    - `_cycle_action(cycle: tuple[int, ...], graph: OrientedEdgeGraph, vertices: Float[Array, " num_vertices dimension"]) -> float`
 
-- `src/viterbo/systolic.py`
+- `src/viterbo/math/systolic.py`
   - `systolic_ratio(polytope: Polytope | GeometryPolytope, /) -> float`
   - `systolic_ratio(B_matrix: Float[Array, " num_facets dimension"], c: Float[Array, " num_facets"], /) -> float`
   - `systolic_ratio(arg: Polytope | GeometryPolytope | Float[Array, " num_facets dimension"], c: Float[Array, " num_facets"] | None = None) -> float`
