@@ -1,4 +1,5 @@
-status: complete
+---
+status: retired
 created: 2025-10-12
 workflow: task
 summary: Sketch the atlas-small dataset build and benchmarking run across generators and quantity algorithms.
