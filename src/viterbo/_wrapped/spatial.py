@@ -56,7 +56,7 @@ def halfspace_intersection_vertices(B: Any, c: Any, *, atol: float = 1e-12) -> _
     """
     Bm = _np.asarray(B, dtype=float)
     cv = _np.asarray(c, dtype=float)
-    m, d = Bm.shape
+    _, d = Bm.shape
     # Compute Chebyshev center (x, r) maximizing margin r >= 0 s.t.
     # a_i^T x + ||a_i|| r <= c_i for all i. Guarantees strict interior if r>0.
     norms = _np.linalg.norm(Bm, axis=1)

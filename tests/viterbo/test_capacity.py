@@ -5,7 +5,7 @@ from __future__ import annotations
 import jax.numpy as jnp
 import pytest
 
-from viterbo import atlas, capacity, polytopes
+from viterbo import atlas, capacity
 from viterbo.types import Polytope
 
 

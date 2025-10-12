@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import jax.numpy as jnp
-from jaxtyping import Array, Float
 
 from viterbo.capacity import facet_normals, milp, minkowski_billiards, reeb_cycles
 from viterbo.capacity import support_relaxation, symmetry_reduced
@@ -114,6 +113,7 @@ __all__ = [
     "minkowski_billiard_length_reference",
     "support_relaxation_capacity_fast",
     "support_relaxation_capacity_reference",
+    "support_radii",
     "facet_normals",
     "milp",
     "minkowski_billiards",

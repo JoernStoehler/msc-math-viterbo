@@ -6,7 +6,7 @@ from collections import deque
 from dataclasses import dataclass
 from itertools import combinations
 import math
-from typing import Iterable, Iterator, Sequence
+from typing import Any, Iterable, Iterator, Sequence
 
 import jax.numpy as jnp
 from jaxtyping import Array, Float
@@ -25,7 +25,7 @@ class MinkowskiNormalFan:
 
     polytope: _GeometryPolytope
     vertices: Float[Array, " num_vertices dimension"]
-    cones: tuple
+    cones: tuple[Any, ...]
     adjacency: Array
     neighbors: tuple[tuple[int, ...], ...]
     coordinate_blocks: tuple[tuple[int, ...], ...]
@@ -71,7 +71,7 @@ def build_normal_fan(
     )
 
 
-def _vertex_adjacency(cones: Sequence, *, dimension: int) -> Array:
+def _vertex_adjacency(cones: Sequence[Any], *, dimension: int) -> Array:
     count = len(cones)
     adjacency = jnp.zeros((count, count), dtype=bool)
     for first_index, first_cone in enumerate(cones):

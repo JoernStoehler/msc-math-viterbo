@@ -416,7 +416,7 @@ def _symplectic_correlation_samples(
 
     base_seed = 0 if seed is None else int(seed)
     key = jax.random.PRNGKey(base_seed)
-    key_x, key_y, key_weights = jax.random.split(key, 3)
+    key_y, key_weights = jax.random.split(key, 2)
 
     weights_x = jax.random.uniform(key_weights, (num_pairs, num_vertices), dtype=jnp.float64)
     weights_x = weights_x / jnp.sum(weights_x, axis=1, keepdims=True)

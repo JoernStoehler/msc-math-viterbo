@@ -96,7 +96,7 @@ def enumerate_product_ngons(
 
     We rotate the k_Q-gon by 2 * pi * r/s for coprime r,s <= max_rotation_Q and r/s < 1/k_Q.
     """
-    samples = []
+    samples: list[Polytope] = []
     for k_P in range(3, max_ngon_P + 1):
         for k_Q in range(3, max_ngon_Q + 1):
             for s in range(1, max_rotation_Q + 1):

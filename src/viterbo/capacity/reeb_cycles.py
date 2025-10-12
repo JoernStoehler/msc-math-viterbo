@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from itertools import combinations
-from typing import Sequence  # noqa: F401  # used for type hints during development
 
 import jax.numpy as jnp
 from jaxtyping import Array, Float
