@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from itertools import combinations
-from typing import Callable, Iterable, Sequence
+from typing import Callable, Sequence
 
 import jax
 import jax.numpy as jnp
