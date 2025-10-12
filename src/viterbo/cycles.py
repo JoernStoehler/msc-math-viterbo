@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import itertools
 import jax.numpy as jnp
-from jaxtyping import Array, Float, Bool
+from jaxtyping import Array, Bool, Float
 
 from viterbo.types import Polytope
 
@@ -139,19 +139,3 @@ def minimum_cycle_reference(bundle: Polytope) -> Float[Array, " num_points dimen
     pts = [vertices[edges[eid].tail_vertex] for eid in ids]
     return jnp.stack(pts, axis=0)
 
-
-def minimum_cycle_batched(
-    normals: Float[Array, " batch num_facets dimension"],
-    offsets: Float[Array, " batch num_facets"],
-    *,
-    padded_vertices: Float[Array, " batch num_vertices dimension"],
-) -> Float[Array, " batch num_points dimension"]:
-    """Return padded cycles for each polytope in the batch.
-
-    Padding semantics:
-    - Use in-band invalidation with ``NaN`` rows for unused slots; do not
-      return a separate mask. Callers should supply ``padded_vertices`` with
-      ``NaN`` rows indicating padding. This function returns it unchanged for
-      now; a true extractor will populate valid rows and leave padding as ``NaN``.
-    """
-    return jnp.asarray(padded_vertices, dtype=jnp.float64)

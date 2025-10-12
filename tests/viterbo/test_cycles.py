@@ -38,10 +38,7 @@ def test_minimum_cycle_reference_returns_closed_cycle_4d() -> None:
 
 @pytest.mark.goal_code
 @pytest.mark.smoke
-def test_minimum_cycle_batched_returns_padded_cycles() -> None:
-    """Batched cycle extraction returns padded cycles with batch dimension first."""
-    normals = jnp.zeros((2, 3, 4), dtype=jnp.float64)
-    offsets = jnp.zeros((2, 3), dtype=jnp.float64)
-    padded_vertices = jnp.zeros((2, 5, 4), dtype=jnp.float64)
-    cyc = cycles.minimum_cycle_batched(normals, offsets, padded_vertices=padded_vertices)
-    assert cyc.shape[0] == 2
+def test_cycles_module_exposes_per_instance_api_only() -> None:
+    """Cycles no longer exports a batched helper; callers keep manual padding."""
+
+    assert not hasattr(cycles, "minimum_cycle_batched")

@@ -1,4 +1,4 @@
-"""EHZ capacity semantics for reference and batched APIs."""
+"""EHZ capacity semantics for reference and per-instance APIs."""
 
 from __future__ import annotations
 
@@ -29,26 +29,30 @@ def test_ehz_capacity_reference_for_square_nonnegative_scalar() -> None:
 
 @pytest.mark.goal_code
 @pytest.mark.smoke
-def test_ehz_capacity_batched_signature_and_shapes() -> None:
-    """Batched capacity returns per-sample scalars with NaN padding."""
-    vertices = jnp.asarray(
-        [
-            [0.0, 0.0, 0.0, 0.0],
-            [2.0, 0.0, 0.0, 0.0],
-            [0.0, 2.0, 0.0, 0.0],
-            [0.0, 0.0, 2.0, 0.0],
-            [0.0, 0.0, 0.0, 2.0],
-        ],
-        dtype=jnp.float64,
-    )
-    valid = polytopes.build_from_vertices(vertices)
-    invalid = Polytope(
-        normals=jnp.zeros((0, 4), dtype=jnp.float64),
-        offsets=jnp.zeros((0,), dtype=jnp.float64),
-        vertices=jnp.zeros((0, 4), dtype=jnp.float64),
-        incidence=jnp.zeros((0, 0), dtype=bool),
-    )
-    caps = capacity.ehz_capacity_batched([valid, invalid], solver="facet-normal-reference")
-    assert caps.shape == (2,)
-    assert jnp.isfinite(caps[0])
-    assert jnp.isnan(caps[1])
+def test_ehz_capacity_reference_manual_batching_pattern() -> None:
+    """Manual loops over bundles reproduce batching behaviour without a helper."""
+
+    def _square_bundle(radius: float) -> Polytope:
+        normals = [
+            jnp.array([1.0, 0.0]),
+            jnp.array([-1.0, 0.0]),
+            jnp.array([0.0, 1.0]),
+            jnp.array([0.0, -1.0]),
+        ]
+        offsets = [radius] * 4
+        vertices = [
+            jnp.array([radius, radius]),
+            jnp.array([radius, -radius]),
+            jnp.array([-radius, radius]),
+            jnp.array([-radius, -radius]),
+        ]
+        return atlas.as_polytope(2, 4, 4, normals, offsets, vertices)
+
+    bundles = [_square_bundle(1.0), _square_bundle(2.0)]
+    capacities = []
+    for bundle in bundles:
+        capacities.append(capacity.ehz_capacity_reference(bundle))
+
+    assert capacities[0] == pytest.approx(4.0, rel=1e-12, abs=0.0)
+    assert capacities[1] == pytest.approx(16.0, rel=1e-12, abs=0.0)
+    assert not hasattr(capacity, "ehz_capacity_batched")
