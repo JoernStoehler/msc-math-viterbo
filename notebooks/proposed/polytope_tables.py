@@ -94,7 +94,7 @@ for _, row in counterexamples.head().iterrows():
 
 # %% [markdown]
 """\
-## 3. Mahler pairs (polars)
+## 3. Mahler pairs (HF datasets)
 
 Similar layout to the random catalogue, but restricted to polar pairs. We may reuse
 components once the dataset loader exposes a flag for polar pairs.
@@ -114,9 +114,7 @@ mahler_pairs = load_mahler_pairs(
 print(mahler_pairs.describe(include="all"))
 
 # Placeholder scatter coloured by whether the systolic ratio exceeds one.
-mahler_pairs.assign(
-    is_counterexample=lambda df: df["systolic_ratio"] > 1.0
-).plot.scatter(
+mahler_pairs.assign(is_counterexample=lambda df: df["systolic_ratio"] > 1.0).plot.scatter(
     x="k_p",
     y="k_q",
     c="is_counterexample",
