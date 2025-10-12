@@ -108,13 +108,50 @@ def test_ehz_spectrum_reference_requires_four_dimensional_bundle() -> None:
 
 @pytest.mark.goal_code
 @pytest.mark.smoke
-def test_ehz_spectrum_batched_returns_batch_by_head() -> None:
-    """Batched spectrum returns array with shape (batch, head)."""
-    normals = jnp.zeros((2, 3, 4), dtype=jnp.float64)
-    offsets = jnp.zeros((2, 3), dtype=jnp.float64)
+def test_ehz_spectrum_reference_manual_batching_pattern() -> None:
+    """Manual loops construct padded spectra; module exposes per-instance APIs only."""
+
+    vertices4 = jnp.asarray(
+        [
+            [0.0, 0.0, 0.0, 0.0],
+            [2.0, 0.0, 0.0, 0.0],
+            [0.0, 2.0, 0.0, 0.0],
+            [0.0, 0.0, 2.0, 0.0],
+            [0.0, 0.0, 0.0, 2.0],
+        ],
+        dtype=jnp.float64,
+    )
+    bundle4 = polytopes.build_from_vertices(vertices4)
+    vertices2 = jnp.asarray(
+        [
+            [1.0, 1.0],
+            [1.0, -1.0],
+            [-1.0, 1.0],
+            [-1.0, -1.0],
+        ],
+        dtype=jnp.float64,
+    )
+    bundle2 = polytopes.build_from_vertices(vertices2)
     head = 5
-    arr = spectrum.ehz_spectrum_batched(normals, offsets, head=head)
+
+    padded_rows: list[jnp.ndarray] = []
+    for bundle in (bundle4, bundle2):
+        padded = jnp.full((head,), float("nan"), dtype=jnp.float64)
+        try:
+            seq = spectrum.ehz_spectrum_reference(bundle, head=head)
+        except ValueError:
+            padded_rows.append(padded)
+            continue
+        if seq:
+            values = jnp.asarray(seq, dtype=jnp.float64)[:head]
+            padded = padded.at[: values.shape[0]].set(values)
+        padded_rows.append(padded)
+
+    arr = jnp.stack(padded_rows, axis=0)
     assert arr.shape == (2, head)
+    assert jnp.any(jnp.isfinite(arr[0]))
+    assert jnp.all(jnp.isnan(arr[1]))
+    assert not hasattr(spectrum, "ehz_spectrum_batched")
 
 
 @pytest.mark.goal_code

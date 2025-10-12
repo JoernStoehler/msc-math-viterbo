@@ -144,7 +144,7 @@ def test_minkowski_billiard_lengths_match_reference() -> None:
 @pytest.mark.goal_code
 @pytest.mark.smoke
 def test_available_solvers_list_contains_all_expected_keys() -> None:
-    """available_solvers exposes all dispatch keys required by batching."""
+    """available_solvers lists every solver identifier supported by adapters."""
     keys = set(capacity.available_solvers())
     expected = {
         "facet-normal-reference",

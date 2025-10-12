@@ -36,42 +36,6 @@ def ehz_spectrum_reference(
     return sorted(actions)[: int(head)]
 
 
-def ehz_spectrum_batched(
-    normals: Float[Array, " batch num_facets dimension"],
-    offsets: Float[Array, " batch num_facets"],
-    *,
-    head: int,
-    atol: float = GEOMETRY_ABS_TOLERANCE,
-) -> Float[Array, " batch head"]:
-    """Return NaN-padded spectra for each batch element."""
-
-    batch = int(normals.shape[0])
-    out = jnp.full((batch, head), float("nan"), dtype=jnp.float64)
-    for i in range(batch):
-        B = jnp.asarray(normals[i], dtype=jnp.float64)
-        c = jnp.asarray(offsets[i], dtype=jnp.float64)
-        if B.ndim != 2 or B.shape[1] != 4:
-            continue
-        try:
-            bundle = Polytope(
-                normals=B,
-                offsets=c,
-                vertices=jnp.empty((0, B.shape[1]), dtype=jnp.float64),
-                incidence=jnp.empty((0, B.shape[0]), dtype=bool),
-            )
-            seq = ehz_spectrum_reference(bundle, head=head, atol=atol)
-            if not seq:
-                continue
-            values = jnp.asarray(seq, dtype=jnp.float64)
-            if int(values.shape[0]) < head:
-                pad = jnp.full((head - int(values.shape[0]),), float("nan"), dtype=jnp.float64)
-                values = jnp.concatenate([values, pad], axis=0)
-            out = out.at[i].set(values[:head])
-        except ValueError:
-            continue
-    return out
-
-
 def _to_geometry_polytope(bundle: Polytope) -> _GeometryPolytope:
     normals = jnp.asarray(bundle.normals, dtype=jnp.float64)
     offsets = jnp.asarray(bundle.offsets, dtype=jnp.float64)
@@ -148,5 +112,4 @@ def _cycle_action(
 
 __all__ = [
     "ehz_spectrum_reference",
-    "ehz_spectrum_batched",
 ]
