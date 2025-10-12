@@ -1,82 +1,120 @@
-"""Demonstration notebook for building the modern atlas dataset.
+"""Placeholder workflow for building the modern atlas artefact.
 
-This script-style notebook outlines the intended workflow for generating or
-updating the polytope atlas without relying on legacy modules. Each step invokes
-stub functions from :mod:`viterbo.modern` and therefore raises
-:class:`NotImplementedError` today; the goal is to communicate the orchestration
-pattern we will support once real implementations land.
+This notebook intentionally documents the orchestration flow without executing
+heavy computations. The real implementation will live in
+:mod:`viterbo.modern` once the atlas pipeline lands; until then we keep this
+script runnable so it communicates expectations without triggering
+``NotImplementedError`` placeholders.
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Iterable, Sequence
 
-import polars as pl
+try:  # Imported for feature detection only; calls remain stubbed.
+    from viterbo.modern import atlas as modern_atlas
+    from viterbo.modern import basic_generators as modern_generators
+    from viterbo.modern import capacity as modern_capacity
+    from viterbo.modern import volume as modern_volume
+except ImportError:  # pragma: no cover - defensive guard for docs builds.
+    modern_atlas = None  # type: ignore[assignment]
+    modern_generators = None  # type: ignore[assignment]
+    modern_capacity = None  # type: ignore[assignment]
+    modern_volume = None  # type: ignore[assignment]
 
-from viterbo.modern import atlas, basic_generators, capacity, volume
 
-# ----------------------------------------------------------------------------
-# Configuration knobs a practitioner might toggle when (re)building the atlas.
-# ----------------------------------------------------------------------------
 ATLAS_PATH = Path("artefacts/modern_atlas.parquet")
 GENERATOR_DIMENSION = 4
 NUM_SAMPLES = 32
 
 
-# ----------------------------------------------------------------------------
-# Step 1: Produce candidate polytopes using modern generators.
-# ----------------------------------------------------------------------------
-try:
-    generator = basic_generators.sample_uniform_ball(
-        key=None,  # placeholder until PRNG handling is wired in
-        dimension=GENERATOR_DIMENSION,
-        num_samples=NUM_SAMPLES,
+@dataclass(frozen=True)
+class PlaceholderStep:
+    """Describe an orchestration step that will be implemented later."""
+
+    slug: str
+    summary: str
+    pending_apis: Sequence[str]
+
+
+def _module_status() -> dict[str, bool]:
+    """Record whether the modern modules expected by the atlas builder exist."""
+
+    return {
+        "viterbo.modern.atlas": modern_atlas is not None,
+        "viterbo.modern.basic_generators": modern_generators is not None,
+        "viterbo.modern.capacity": modern_capacity is not None,
+        "viterbo.modern.volume": modern_volume is not None,
+    }
+
+
+def _workflow() -> Iterable[PlaceholderStep]:
+    """Yield the planned atlas workflow steps in execution order."""
+
+    yield PlaceholderStep(
+        slug="generator",
+        summary=(
+            "Sample candidate polytopes via `basic_generators` using deterministic "
+            "PRNG wiring and atlas-specific configuration presets."
+        ),
+        pending_apis=("basic_generators.sample_uniform_ball",),
     )
-except NotImplementedError:
-    generator = None
+    yield PlaceholderStep(
+        slug="enrichment",
+        summary=(
+            "Compute reference volume and capacity estimates for each bundle, "
+            "tracking diagnostics emitted by the modern solvers."
+        ),
+        pending_apis=(
+            "volume.volume_reference",
+            "capacity.ehz_capacity_reference",
+        ),
+    )
+    yield PlaceholderStep(
+        slug="dataframe",
+        summary=(
+            "Materialise a Polars DataFrame that matches ``atlas.atlas_pl_schema`` "
+            "and append provenance metadata for downstream experiments."
+        ),
+        pending_apis=("atlas.atlas_pl_schema", "atlas.dataframe_from_records"),
+    )
+    yield PlaceholderStep(
+        slug="persist",
+        summary=(
+            "Merge the in-memory snapshot with ``artefacts/modern_atlas.parquet`` "
+            "and write atomically once schema checks pass."
+        ),
+        pending_apis=("atlas.merge_frames", "Path.write_bytes"),
+    )
 
 
-# ----------------------------------------------------------------------------
-# Step 2: Convert raw outputs into structured bundles and quantities.
-# ----------------------------------------------------------------------------
-records: list[tuple] = []
-if generator is not None:
-    for bundle, metadata in generator:
-        try:
-            # In the modern API, bundles are `Polytope` instances; incidence can
-            # be derived when needed via `polytopes.incidence_matrix`.
-            enriched_bundle = bundle
-            volume_estimate = volume.volume_reference(enriched_bundle)
-            capacity_estimate = capacity.ehz_capacity_reference(enriched_bundle)
-        except NotImplementedError:
-            break
-        records.append((enriched_bundle, metadata, volume_estimate, capacity_estimate))
+def describe_workflow() -> list[PlaceholderStep]:
+    """Return the placeholder steps for external documentation or tests."""
+
+    return list(_workflow())
 
 
-# ----------------------------------------------------------------------------
-# Step 3: Materialise a Polars dataframe matching the atlas schema.
-# ----------------------------------------------------------------------------
-try:
-    schema = atlas.atlas_pl_schema(GENERATOR_DIMENSION)
-    # TODO: Convert records into a dataframe via atlas helpers once added.
-    dataframe = None
-except NotImplementedError:
-    schema = None
-    dataframe = None
+def main() -> None:
+    """Emit a human-readable outline of the pending atlas builder."""
+
+    statuses = _module_status()
+    print("Modern atlas builder placeholder")
+    print(f"Target artefact: {ATLAS_PATH}")
+    print(f"Default generator dimension: {GENERATOR_DIMENSION}")
+    print(f"Default sample count: {NUM_SAMPLES}")
+    print("Module availability:")
+    for module_name, present in statuses.items():
+        flag = "available" if present else "missing"
+        print(f"  - {module_name}: {flag}")
+
+    print("\nPlanned workflow steps:")
+    for step in _workflow():
+        apis = ", ".join(step.pending_apis)
+        print(f"  · [{step.slug}] {step.summary}")
+        print(f"      pending APIs: {apis}")
 
 
-# ----------------------------------------------------------------------------
-# Step 4: Merge with any on-disk snapshot and persist the result.
-# ----------------------------------------------------------------------------
-if dataframe is not None and schema is not None:
-    try:
-        if ATLAS_PATH.exists():
-            existing = pl.read_parquet(ATLAS_PATH)
-            merged = existing
-        else:
-            merged = dataframe
-        merged.write_parquet(ATLAS_PATH)
-    except NotImplementedError:
-        pass
-
-print("Modern atlas builder executed placeholder workflow.")
+if __name__ == "__main__":
+    main()
