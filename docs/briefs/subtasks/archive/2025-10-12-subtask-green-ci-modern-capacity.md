@@ -1,5 +1,5 @@
 ---
-status: completed
+status: retired
 created: 2025-10-12
 workflow: task
 summary: Restore green CI by resolving lint and strict Pyright failures in the modern capacity stack.

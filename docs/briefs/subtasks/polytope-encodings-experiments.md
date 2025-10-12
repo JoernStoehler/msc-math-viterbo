@@ -1,6 +1,6 @@
 ---
 title: "Experiments: Symplectic-Invariant Encodings for Convex Polytopes"
-status: ready
+status: proposed
 version: 1.0
 last_updated: 2025-10-12
 owners: ["Assigned Developer"]

@@ -1,5 +1,5 @@
 ---
-status: adopted
+status: retired
 created: 2025-10-12
 workflow: task
 summary: Refactor legacy docs/* workflow/policy notes into modern briefs.

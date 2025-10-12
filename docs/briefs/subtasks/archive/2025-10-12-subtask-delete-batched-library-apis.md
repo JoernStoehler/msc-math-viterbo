@@ -1,5 +1,5 @@
 ---
-status: completed
+status: retired
 created: 2025-10-12
 workflow: task
 summary: Delete batched capacity/spectrum library APIs; keep per-instance calls only.
