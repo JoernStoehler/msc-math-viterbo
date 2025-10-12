@@ -1,0 +1,218 @@
+\chapter{Literature Overview}
+\label{chap:literature-overview}
+
+This chapter surveys prior work surrounding the Viterbo Volume--Capacity Conjecture\cite{Viterbo2000} and closely
+related directions. The intended reader knows standard material in symplectic/contact geometry;
+definitions are given as concise reminders, with emphasis on normalization and notation choices.
+
+\section*{Audience and Scope}
+
+- Audience: MSc-level mathematicians with background in differential/symplectic/contact geometry,
+  and experts seeking a quick map of results and techniques.
+- Goal: collect the main lines of work around the Viterbo conjecture, indicate known cases and
+  bounds, and flag adjacent topics (e.g., Mahler) that inform the landscape.
+
+\section*{Notation and Conventions (refresher)}
+
+- Ambient space: $(\mathbb{R}^{2n},\omega_0)$ with the standard symplectic form
+  $\omega_0 = \sum_{j=1}^n dx_j \wedge dy_j$.
+- Liouville one-form: $\lambda_0 = \tfrac{1}{2}\sum_{j=1}^n\bigl(x_j\,dy_j - y_j\,dx_j\bigr)$; some
+  authors use $\sum_j x_j\,dy_j$. The two choices differ by an exact form, hence yield the same
+  action on closed characteristics (standard), so capacity normalizations are unaffected\cite{CHLS2007}.
+- Convex bodies: $K \subset \mathbb{R}^{2n}$ compact, convex, with nonempty interior;\quad
+  volume $\mathrm{vol}(K)$ is $2n$-dimensional Lebesgue measure.
+- Ellipsoids and balls: $E(a_1,\dots,a_n)=\{\sum_j (\pi |z_j|^2/a_j)\le 1\}$;\quad
+  $B^{2n}(R)=E(\pi R^2,\dots,\pi R^2)$ so that $\mathrm{vol}\bigl(B^{2n}(R)\bigr)=\frac{(\pi R^2)^n}{n!}$.
+- Capacities: a symplectic capacity $c$ satisfies monotonicity, conformality ($c(\lambda X)=\lambda^2 c(X)$),
+  and normalization $c\bigl(B^{2n}(1)\bigr)=\pi$.
+
+\section{Symplectic Capacities (reminders)}
+
+- Gromov width $c_B$: supremal $\pi r^2$ of a symplectically embedded ball $B^{2n}(r)$.
+- Cylindrical capacity $c_Z$: infimal $\pi R^2$ such that $X$ embeds into $Z^{2n}(R)=B^2(R)\times\mathbb{R}^{2n-2}$.
+- Hofer--Zehnder capacity $c_{\mathrm{HZ}}$: variational supremum over admissible Hamiltonians.
+- Ekeland--Hofer--Zehnder $c_{\mathrm{EHZ}}$: first Ekeland--Hofer min--max value; equals $c_{\mathrm{HZ}}$ on convex bodies\cite{CHLS2007}.
+- Sequences: higher Ekeland--Hofer capacities $c_k^{\mathrm{EH}}$, Viterbo/symplectic-homology capacities
+  $c_k^{\mathrm{SH}}$ for star-shaped domains (with $c_1^{\mathrm{SH}}=c_{\mathrm{EHZ}}$ in convex settings; see e.g.\ \cite{Irie2022}).
+- In dimension $4$, embedded contact homology (ECH) capacities provide a sharp sequence of embedding
+  obstructions and satisfy volume asymptotics\cite{CristofaroGardiner2015,Hutchings2014}; they coincide with
+  other capacities on special classes (e.g., many toric/Reinhardt examples), but not in full generality.
+
+\section{The Viterbo Conjecture}
+
+Fix a normalized capacity $c$ (e.g., $c_{\mathrm{EHZ}}$, $c_B$, $c_Z$) on subsets of $\mathbb{R}^{2n}$.
+\emph{Viterbo's Volume--Capacity Conjecture} asserts the sharp inequality
+\begin{equation}\label{eq:viterbo}
+  \mathrm{vol}(K) \;\le\; \frac{c(K)^n}{n!}\quad\text{for all convex }K\subset\mathbb{R}^{2n},
+\end{equation}
+with equality for ellipsoids (hence for balls under our normalization). Equivalently, among convex
+bodies with fixed capacity, ellipsoids maximize volume; among convex bodies with fixed volume,
+ellipsoids minimize capacity. The conjecture is independent of the particular normalized capacity,
+as all such capacities are expected to be equivalent on convex bodies up to universal constants.
+
+\paragraph{Normalization sanity check.}
+For $K=B^{2n}(R)$ one has $c(K)=\pi R^2$ and $\mathrm{vol}(K)=(\pi R^2)^n/n!$, giving equality in
+\eqref{eq:viterbo}.
+
+\section{Post-2024 Update}
+
+Recent work of Haim-Kislev and Ostrover\cite{HaimKislevOstrover2024} exhibits a counterexample to the global form of the volume--capacity conjecture in dimension four: a Lagrangian product of planar convex polygons (notably, a product of congruent pentagons) violates the expected ball-extremality for the EHZ capacity. In their normalization one finds, with $A$ the area of each pentagon,
+\[ \frac{c_{\mathrm{EHZ}}(K\times T)^2}{2\,A^2} = \frac{\sqrt{5}+3}{5} > 1, \]
+contradicting the ball extremizer prediction. The construction leverages explicit formulas for polytopes and Minkowski billiards; see also\ \cite{HaimKislev2019}. Variants restricted to additional symmetry (e.g., centrally symmetric bodies) and near-ball regimes remain plausible; for the latter, see Abbondandolo--Benedetti--Edtmair\cite{AbbondandoloBenedettiEdtmair2023}.
+
+\section{Known Cases, Bounds, and Themes}
+
+This section summarizes what is known, grouping by the nature of the result. We intentionally state
+qualitative forms when exact constants vary by capacity/assumption across the literature.
+
+\subsection{Sharp and Model Cases}
+
+- \textbf{Ellipsoids and balls.} Equality holds in \eqref{eq:viterbo}. Capacities are easy to compute
+  and coincide with the principal axes data; this calibrates the conjecture.
+- \textbf{Products and polydisks.} For polydisks and certain product domains, explicit formulae for
+  several capacities are available and are consistent with the conjectured sharp constant.
+- \textbf{Toric/Reinhardt settings (4D).} In $\mathbb{R}^4$, convex toric/Reinhardt domains admit
+  combinatorial and holomorphic-curve tools for ECH/EH capacities\cite{Hutchings2014,Wormleighton2021};
+  volume asymptotics and embedding obstructions are sharp in many families, offering structured evidence.
+
+\subsection{Dimension-Dependent Inequalities}
+
+- \textbf{Exponential-/polynomial-type bounds.} For general convex bodies, there are dimension-dependent
+  upper bounds of the form $\mathrm{vol}(K)\le C(n)\,c(K)^n$ with $C(n)$ suboptimal relative to $1/n!$.
+  Successive works improved $C(n)$ across capacities and structural assumptions (e.g., central symmetry,
+  zonoids), but a sharp or dimension-free characterization remains open beyond model classes; see, e.g.,
+  dimension-independent comparisons via the M-ellipsoid/volume-radius framework\cite{ArtsteinAvidanMilmanOstrover2008}.
+- \textbf{Symmetric classes.} Stronger bounds are known for centrally symmetric bodies in some regimes.
+  Several techniques leverage polarity and dual norms (e.g., via Minkowski billiards) to tie
+  $c_{\mathrm{EHZ}}$ to combinatorial or metric data of $K$ and $K^{\circ}$.
+
+\subsection{Special Structures and Computability}
+
+- \textbf{Minkowski billiards characterization.} For smooth convex $K$, $c_{\mathrm{EHZ}}(K)$ equals the
+  minimal action of a closed characteristic, which corresponds to the length of the shortest periodic
+  billiard trajectory in the norm with unit ball $K^{\circ}$. For polytopes, this reduces to bounce
+  sequences on facets, enabling algorithmic approximations.
+- \textbf{Capacities from symplectic homology.} For star-shaped domains, Viterbo- and SH-based capacities
+  offer a filtration-driven perspective compatible with embeddings and ellipsoidal/toric examples\cite{Viterbo2000,Irie2022}.
+- \textbf{ECH capacities in 4D.} ECH provides a complete sequence of obstructions in dimension four with
+  precise volume asymptotics\cite{CristofaroGardiner2015}, reinforcing the volume--capacity linkage, though the first capacity alone
+  is generally not sufficient to settle \eqref{eq:viterbo}.
+
+\section{Techniques and Connections}
+
+- \textbf{Variational methods (Ekeland--Hofer, Hofer--Zehnder).} The action functional on the loop space of
+  $\partial K$ yields min--max invariants; for convex $K$, the first value coincides with
+  $c_{\mathrm{EHZ}}(K)$\cite{CHLS2007}.
+- \textbf{Spectral invariants and symplectic homology (Viterbo).} Positive $S^1$-equivariant symplectic homology
+  encodes sequences of capacities compatible with embeddings and product operations\cite{Viterbo2000,Irie2022}.
+- \textbf{Billiards and duality.} The Minkowski billiards viewpoint realizes closed characteristics as
+  periodic trajectories with respect to a dual norm, tying $c_{\mathrm{EHZ}}$ to support functions and
+  polarity; see e.g.\ \cite{HaimKislev2019}.
+- \textbf{Convex geometry bridges (Mahler).} Symplectic reduction and duality arguments connect volume--capacity
+  inequalities to the Mahler volume product problem in convex geometry\cite{ArtsteinAvidanKarasevOstrover2014}. While neither conjecture is known in
+  full generality, progress often flows both ways for symmetric classes and products.
+- \textbf{Embedding obstructions (ECH, EH hierarchies).} Capacity sequences constrain symplectic embeddings,
+  produce sharp obstructions in $4$D, and offer asymptotic volume control\cite{McDuffSchlenk2012}.
+
+\section{Historical Arc (high level)}
+
+- \textbf{Origins.} The capacity framework originates in Gromov's non-squeezing and subsequent axiomatizations
+  (Ekeland--Hofer; Hofer--Zehnder). Viterbo formulated the volume--capacity inequality in the 1990s/2000s as an
+  isoperimetric-type principle in symplectic geometry.
+- \textbf{Floer-theoretic capacities.} Viterbo's symplectic-homology capacities and later refinements connected
+  the inequality to spectral invariants and filtered chain complexes, with compatibility under embeddings and
+  product operations.
+- \textbf{Convex bridges.} Work at the interface with convex geometry (e.g., Artstein-Avidan--Karasev--Ostrover)
+  highlighted polarity/Mahler-type mechanisms and produced sharp comparisons in special classes.
+- \textbf{Dimension four.} ECH capacities provided a complete obstruction sequence with volume asymptotics,
+  offering a testing ground for refined statements and computations in low dimensions.
+
+\section{Capacity Comparisons on Convex Bodies}
+
+For convex bodies, several capacities are comparable up to absolute constants or with explicit
+dimension dependence. Typical comparisons (to be instantiated with precise constants in the
+references section of the thesis):
+
+- $c_B \le c_Z$ and $c_{\mathrm{EHZ}} \le c_Z$ generally (capacity axioms); for many convex classes,
+  $c_{\mathrm{EHZ}}$ and $c_B$ are equivalent up to universal constants.
+- On centrally symmetric bodies, duality yields two-sided estimates for $c_{\mathrm{EHZ}}$ in terms of
+  support functions of $K$ and its polar $K^{\circ}$ (via Minkowski billiards).
+- For toric/Reinhardt domains in $\mathbb{R}^4$, $c_1^{\mathrm{SH}}$ and first ECH capacity often agree and
+  track extremal projections, matching $c_Z$ in model examples.
+- Near the Euclidean ball, all normalized capacities coincide on smooth convex domains\cite{AbbondandoloBenedettiEdtmair2023}.
+- On convex bodies, several capacities are equivalent up to constants, with dimension-dependent and
+  in some regimes dimension-independent bounds\cite{ArtsteinAvidanMilmanOstrover2008}.
+
+\section{Relations to Mahler's Volume Product}
+
+Let $K \subset \mathbb{R}^{2n}$ be centrally symmetric with polar $K^{\circ}$. The Mahler product
+is $\mathcal{M}(K)=\mathrm{vol}(K)\,\mathrm{vol}(K^{\circ})$, conjecturally minimized by the cube (or
+Hanner polytopes) among symmetric bodies. Volume--capacity bounds interact with $\mathcal{M}(K)$ in
+several ways:
+
+- Lower bounds on $\mathcal{M}(K)$ translate to upper bounds on $c(K)$ for fixed $\mathrm{vol}(K)$ through
+  polarity and billiard characterizations of $c_{\mathrm{EHZ}}$.
+- Conversely, sharp capacity estimates for $K$ and $K^{\circ}$ constrain $\mathcal{M}(K)$.
+- In special families (e.g., cubes, cross-polytopes, zonoids), the conjectured sharp constant in
+  \eqref{eq:viterbo} aligns with extremal Mahler behavior.
+
+\section{Computational and Algorithmic Aspects}
+
+- \textbf{Polytopes via Minkowski billiards.} For a polytope $P=\{Ax\le b\}$ with facet normals in
+  the rows of $A$ and support numbers $b$, periodic billiards bounce among facets. The action of a
+  closed characteristic becomes a linear expression in $b$ constrained by word/combinatorial data.
+  This enables search over bounce words and convex subproblems for candidate actions.
+- \textbf{Toric combinatorics (4D).} For convex toric domains, lattice-path algorithms compute
+  ECH/EH capacities from the moment polytope, enabling bulk checks of volume asymptotics.
+- \textbf{Numerical SH proxies.} Discrete Reeb-graph approximations and persistence computations can
+  provide exploratory upper/lower bounds for $c_1^{\mathrm{SH}}$ on star-shaped domains, to be
+  cross-validated against billiard/ECH data.
+
+\section{Open Directions and Heuristics}
+
+- Tighten constants in capacity comparisons on symmetric bodies and zonoids.
+- Clarify equivalence (up to universal constants) among $c_B$, $c_Z$, $c_{\mathrm{EHZ}}$ on general convex
+  bodies; identify sharp families where gaps persist.
+- Extend Minkowski-billiard computational methods from polytopes to smooth convex bodies with
+  certified a posteriori bounds.
+- In $4$D, map when ECH, EH, and SH first capacities coincide and when they differ, relative to
+  projections controlling $c_Z$.
+
+\section{Surveys and Expository Guides}
+
+- Symplectic capacities and convex geometry surveys (overview of capacity axioms, examples, and convex links).
+- Expository notes on ECH capacities (dimension four) and their volume asymptotics.
+- Monographs and lecture notes on symplectic embedding problems that contextualize capacity methods.
+
+\section{Further Literature (not yet fully digested)}
+
+The following topics/papers are closely related by scope or technique. Items marked “from abstract”
+reflect sources we have not yet verified in detail; they motivate future passes through the chapter.
+
+- Improved constants in volume--capacity inequalities for symmetric bodies (from abstract).
+- Viterbo capacities via generating functions and comparisons with EH capacities (from abstract).
+- Toric domain capacities beyond Reinhardt convexity; lattice-path combinatorics (from abstract).
+- Mahler connections via symplectic reduction; stability under perturbations (from abstract).
+- Minkowski billiards for polytopes; combinatorial enumeration of bounce words (from abstract).
+
+\section{Selected Reading Guide (names without full citations yet)}
+
+The following sources offer broad coverage or keystone results; precise BibTeX will be added in a
+subsequent pass.
+
+- Viterbo: original statements of the volume--capacity inequality and symplectic-homology capacities.
+- Ostrover: surveys on symplectic capacities and convex geometry connections (volume/capacity/embedding).
+- Artstein-Avidan, Karasev, Ostrover: links to Mahler-type inequalities and sharp cases in convex classes.
+- Cieliebak, Frauenfelder, Paternain: identification of $c_1^{\mathrm{SH}}$ with $c_{\mathrm{EHZ}}$ in convex settings.
+- Hutchings: ECH capacities in dimension four and volume asymptotics; expository notes and algorithms.
+- McDuff, Schlenk: symplectic embedding problems in four dimensions (context and techniques informing capacities).
+- Akopyan, Karasev, and collaborators: Minkowski billiards interpretations of $c_{\mathrm{EHZ}}$ for convex bodies.
+
+\section{Positioning of This Thesis}
+
+- We focus on convex polytopes and star-shaped convex bodies, with an algorithmic lens on
+  $c_{\mathrm{EHZ}}$ and related capacities. Computational experiments and structural observations
+  in low dimensions (notably $4$D) are used to probe instances of \eqref{eq:viterbo} and to
+  benchmark bounds across families.
+- The chapter aims to orient the reader quickly, establish normalization choices, and supply
+  a map of techniques and references that subsequent chapters leverage.
