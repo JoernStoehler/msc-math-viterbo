@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
 
-import polars as pl
+from datasets import Dataset
 
 try:  # Imported for feature detection only; execution remains a stub.
     from viterbo import atlas as modern_atlas
@@ -21,7 +21,7 @@ except ImportError:  # pragma: no cover - defensive guard for docs builds.
     modern_capacity = None  # type: ignore[assignment]
 
 
-ATLAS_PATH = Path("artefacts/modern_atlas.parquet")
+ATLAS_PATH = Path("artefacts/datasets/modern_atlas")
 
 
 @dataclass(frozen=True)
@@ -33,12 +33,12 @@ class PlaceholderAction:
     pending_apis: Sequence[str]
 
 
-def _atlas_snapshot() -> pl.DataFrame | None:
+def _atlas_snapshot() -> Dataset | None:
     """Load the atlas snapshot if present; returns ``None`` when missing."""
 
     if not ATLAS_PATH.exists():
         return None
-    return pl.read_parquet(ATLAS_PATH)
+    return Dataset.load_from_disk(ATLAS_PATH.as_posix())
 
 
 def _actions() -> Iterable[PlaceholderAction]:
@@ -47,10 +47,10 @@ def _actions() -> Iterable[PlaceholderAction]:
     yield PlaceholderAction(
         slug="schema",
         summary=(
-            "Inspect ``atlas.atlas_pl_schema`` to confirm the builder emitted the "
+            "Inspect ``atlas.atlas_features`` to confirm the builder emitted the "
             "expected columns and dtypes."
         ),
-        pending_apis=("atlas.atlas_pl_schema",),
+        pending_apis=("atlas.atlas_features",),
     )
     yield PlaceholderAction(
         slug="polytope",
@@ -84,7 +84,10 @@ def main() -> None:
     if snapshot is None:
         print(f"No atlas snapshot found at {ATLAS_PATH}")
     else:
-        print(f"Loaded atlas snapshot with {snapshot.height} rows and {snapshot.width} columns")
+        print(
+            "Loaded atlas snapshot with "
+            f"{snapshot.num_rows} rows and {len(snapshot.column_names)} columns"
+        )
 
     module_status = {
         "viterbo.atlas": modern_atlas is not None,

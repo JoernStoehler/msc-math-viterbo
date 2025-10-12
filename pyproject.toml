@@ -29,7 +29,7 @@ dependencies = [
     # "diffrax>=0.6.0",  # enable only when ODE-based experiments are scheduled.
     # "equinox>=0.11.4",  # re-evaluate module system needs with maintainer buy-in.
     "equinox>=0.13.1",
-    "polars>=1.34.0",
+    "datasets>=4.2.0",
 ]
 
 [project.optional-dependencies]

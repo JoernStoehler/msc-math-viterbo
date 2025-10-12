@@ -1,48 +1,97 @@
 """The global atlas dataset, with conversion helpers."""
 
 from __future__ import annotations
+
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 
-import polars as pl
 import jax.numpy as jnp
+from datasets import Dataset, Features, Sequence, Value, concatenate_datasets
 from jaxtyping import Array, Float
 
-from viterbo.types import Polytope, Cycle
+from viterbo.types import Cycle, Polytope
 from viterbo.polytopes import incidence_matrix
+
+
+ATLAS_FEATURES = Features(
+    {
+        # basic metadata
+        "polytope_id": Value("string"),
+        "notes": Value("string"),
+        "distribution_name": Value("string"),
+        # polytope representation
+        "dimension": Value("int64"),
+        "num_facets": Value("int64"),
+        "num_vertices": Value("int64"),
+        "normals": Sequence(Sequence(Value("float64"))),
+        "offsets": Sequence(Value("float64")),
+        "vertices": Sequence(Sequence(Value("float64"))),
+        # quantities
+        "volume": Value("float64"),
+        "ehz_capacity": Value("float64"),
+        "systolic_ratio": Value("float64"),
+        "minimum_action_cycle": Sequence(Sequence(Value("float64"))),
+    }
+)
+
+
+def atlas_features() -> Features:
+    """Return the canonical Hugging Face dataset features for atlas rows."""
+
+    return ATLAS_FEATURES
+
+
+def build_dataset(rows_iterable: Iterable[Mapping[str, object]]) -> Dataset:
+    """Construct a :class:`datasets.Dataset` from an iterable of row mappings."""
+
+    rows = [dict(row) for row in rows_iterable]
+    if rows:
+        return Dataset.from_list(rows, features=ATLAS_FEATURES)
+    empty_payload: dict[str, list[object]] = {name: [] for name in ATLAS_FEATURES.keys()}
+    return Dataset.from_dict(empty_payload, features=ATLAS_FEATURES)
+
+
+def append_rows(dataset: Dataset, rows_iterable: Iterable[Mapping[str, object]]) -> Dataset:
+    """Append ``rows_iterable`` to ``dataset`` and return the combined dataset."""
+
+    new_rows = [dict(row) for row in rows_iterable]
+    if not new_rows:
+        return dataset
+    new_dataset = build_dataset(new_rows)
+    return concatenate_datasets([dataset, new_dataset])
+
+
+def save_dataset(dataset: Dataset, path: str) -> None:
+    """Persist ``dataset`` to ``path`` using Hugging Face Arrow format."""
+
+    dataset.save_to_disk(path)
+
+
+def load_dataset(path: str) -> Dataset:
+    """Load an atlas dataset that was previously saved via :func:`save_dataset`."""
+
+    return Dataset.load_from_disk(path)
+
+
+def map_quantities(
+    dataset: Dataset, fn: Callable[[Mapping[str, object]], Mapping[str, object]]
+) -> Dataset:
+    """Apply ``fn`` to each row to update derived atlas quantities."""
+
+    def _mapper(example: Mapping[str, object]) -> Mapping[str, object]:
+        merged = dict(example)
+        merged.update(fn(example))
+        return merged
+
+    return dataset.map(_mapper, features=ATLAS_FEATURES)
+
 
 # we use different schemas for different dimensions
 # to allow fixed-size arrays, batching, etc.
-def atlas_pl_schema(dimension: int) -> pl.Schema:
-    """Schema for atlas rows at a fixed `dimension`.
-
-    The schema encodes vector-valued columns as fixed-length Polars `Array`
-    types to enable predictable padding and batching downstream.
-    """
-    VecF64 = pl.Array(pl.Float64, dimension)
-    return pl.Schema(
-        {
-            # basic metadata
-            "polytope_id": pl.String(),
-            "notes": pl.String(),
-            "distribution_name": pl.String(),
-            # polytope representation
-            "dimension": pl.Int64(),
-            "num_facets": pl.Int64(),
-            "num_vertices": pl.Int64(),
-            "normals": pl.List(VecF64),
-            "offsets": pl.List(pl.Float64),
-            "vertices": pl.List(VecF64),
-            # quantities
-            "volume": pl.Float64(),
-            "ehz_capacity": pl.Float64(),
-            "systolic_ratio": pl.Float64(),
-            "minimum_action_cycle": pl.List(VecF64),
-        }
-    )
-
 @dataclass(slots=True)
 class AtlasRow:
     """A single row of the atlas dataset, parsed into JAX types."""
+
     # polytope metadata
     polytope_id: str
     dimension: int
@@ -55,6 +104,7 @@ class AtlasRow:
     ehz_capacity: Float[Array, ""]
     systolic_ratio: Float[Array, ""]
     minimum_action_cycle: Cycle
+
 
 def as_polytope(
     dimension: int,
@@ -82,6 +132,7 @@ def as_polytope(
         vertices=_vertices,
         incidence=_incidence,
     )
+
 
 def as_cycle(
     dimension: int,
