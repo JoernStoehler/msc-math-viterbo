@@ -1,24 +1,24 @@
 status: in-progress
 created: 2025-10-10
 workflow: task
-summary: Roadmap for implementing viterbo.modern fully and decommissioning legacy modules.
+summary: Roadmap for implementing flat viterbo namespace and decommissioning legacy modules.
 ---
 
-# Task Brief: Migrate to the viterbo.modern Architecture
+# Task Brief: Migrate to the flat `viterbo` Architecture
 
 ## 1. Objective
 
-Deliver a production-ready implementation of the `viterbo.modern` namespace, exercise it end to end, and retire the legacy code paths without breaking existing workflows.
+Deliver a production-ready implementation of the flat `viterbo` namespace, exercise it end to end, and retire the legacy code paths without breaking existing workflows.
 
 ## 2. Current Context
 
-- `viterbo.modern` exposes small JAX-first modules (`polytopes`, `atlas`, `basic_generators`, `volume`, `capacity`, `spectrum`, `cycles`).
+- `viterbo` exposes small JAX-first modules (`polytopes`, `atlas`, `basic_generators`, `volume`, `capacity`, `spectrum`, `cycles`).
 - The `atlas` module still targets Polars, but we intend to replace Polars with Hugging Face Datasets so that ~1 GB tables stay memory-resident while remaining easy to share and reuse via on-disk artefacts and integrated ML dataloaders.
 - `polytopes.incidence_matrix` provides the first reference primitive with strict float64 tolerances (rtol=1e-12, atol=0.0). Geometry builders:
   - `build_from_vertices` uses SciPy Qhull equations to robustly produce outward normals/offsets and deduplicated hull vertices.
   - `build_from_halfspaces` returns a Polytope with given halfspaces and an empty vertex set (vertex enumeration TBD).
 - Tests have been migrated to the modern surfaces and now assert intended behaviours instead of expecting `NotImplementedError`; unimplemented functions therefore cause failing tests by design.
-- Capacity, spectrum, and cycle modules still contain heuristic or placeholder implementations; the promised Haim–Kislev subset solver and related utilities never landed despite earlier status notes. There is no separate `Viterbo.modern` artefact to recover.
+- Capacity, spectrum, and cycle modules still contain heuristic or placeholder implementations; the promised Haim–Kislev subset solver and related utilities never landed despite earlier status notes. There is no separate `viterbo.modern` artefact to recover.
 - 2D Reeb cycles are trivial; the modern roadmap focuses on 4D first and ≥6D second. We no longer plan to implement 2D spectrum, capacity, or cycle machinery.
 - Batched helpers (e.g., `*_batched`) are not needed in the near term and should be removed until the batching roadmap restarts.
 - Legacy functionality still lives under `src/viterbo/` and its consumers/tests/notebooks.
@@ -46,12 +46,12 @@ Deliver a production-ready implementation of the `viterbo.modern` namespace, exe
    - Address feedback, update docstrings/tutorial notebooks, and confirm all automation stays green.
 6. **Migration and cleanup**
    - Remove deprecated legacy modules, tests, and notebooks once the modern replacements are verified.
-   - Update docs, briefs, and any orchestration scripts to point to `viterbo.modern` as the canonical entry point.
+- Update docs, briefs, and any orchestration scripts to point to the flat `viterbo` namespace as the canonical entry point.
    - Record migration notes or ADRs if major architectural decisions change.
 
 ## 4. Deliverables
 
-- Fully implemented `viterbo.modern` package with comprehensive tests and benchmarks.
+- Fully implemented flat `viterbo` package with comprehensive tests and benchmarks.
 - Updated notebooks illustrating atlas generation and consumption using the new APIs (`atlas` instead of `datasets`/`converters`).
 - CI evidence (lint, typecheck, pytest) demonstrating readiness.
 - Migration commits removing obsolete code and updating documentation/briefs.
@@ -87,7 +87,7 @@ Deliver a production-ready implementation of the `viterbo.modern` namespace, exe
 ## 8. Algorithm Notes (for follow-up tasks)
 
 - Capacity (required direction)
-  - Facet-normal (Haim–Kislev) reference: enumerate subsets of size 2n+1, solve Reeb measures, maximize quadratic form over permutations/dynamic programming, take min over subsets. Port the authoritative implementation from the legacy stack into `viterbo.modern.capacity`.
+- Facet-normal (Haim–Kislev) reference: enumerate subsets of size 2n+1, solve Reeb measures, maximize quadratic form over permutations/dynamic programming, take min over subsets. Port the authoritative implementation into `viterbo.capacity`.
   - 2D equivalence: c_EHZ equals area for planar domains, but the roadmap no longer prioritises specialised 2D capacity code.
   - Candidates for later: symmetry-reduced variants; MILP formulation; Reeb-cycle constrained variants; support-function relaxations.
 
@@ -113,7 +113,7 @@ Deliver a production-ready implementation of the `viterbo.modern` namespace, exe
 
 ## 9. Next Steps
 
-- Rebuild `viterbo.modern.capacity` around the Haim–Kislev facet-subset solver, including any combinatorial helpers it requires.
+- Rebuild `viterbo.capacity` around the Haim–Kislev facet-subset solver, including any combinatorial helpers it requires.
 - Port the robust 4D Reeb cycle extractor and align the 4D spectrum baseline with it; document ≥6D expectations as future work.
 - Remove batched helpers from the public API and tests until demand resurfaces; ensure padding policy notes remain for future reference.
 - Plan and execute the migration from Polars to Hugging Face Datasets in `atlas` once the modern algorithms are stable.
@@ -129,7 +129,7 @@ Deliver a production-ready implementation of the `viterbo.modern` namespace, exe
 
 ## 6. Success Criteria
 
-- All legacy consumers can switch to `viterbo.modern` without regressions in coverage, performance, or maintainability.
+- All legacy consumers can switch to `viterbo` without regressions in coverage, performance, or maintainability.
 - CI remains green post-migration, and notebooks execute without manual intervention.
 - Documentation reflects the new architecture, and no deprecated references remain in the repo.
 - Geometry predicates use float64 with strict tolerances; behaviour is documented where relevant.

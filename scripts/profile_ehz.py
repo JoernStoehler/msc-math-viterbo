@@ -13,9 +13,9 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from viterbo.geometry.polytopes import Polytope, catalog, random_transformations
-from viterbo.modern.capacity import ehz_capacity_fast, ehz_capacity_reference
-from viterbo.modern.types import Polytope as ModernPolytope
+from viterbo.geom import Polytope, catalog, random_transformations
+from viterbo.capacity import ehz_capacity_fast, ehz_capacity_reference
+from viterbo.types import Polytope as ModernPolytope
 
 Algorithm = Callable[[np.ndarray, np.ndarray], float]
 

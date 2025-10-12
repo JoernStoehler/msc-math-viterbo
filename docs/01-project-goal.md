@@ -33,11 +33,11 @@ isoperimetric-type inequalities.
 
 ## Modernization milestone and legacy sunset
 
-- The production stack now lives entirely under :mod:`viterbo.modern`; the legacy
+- The production stack now lives entirely under :mod:`viterbo`; the legacy
   :mod:`viterbo.symplectic` modules have been removed as part of the modernization programme.
 - Release messaging highlights that higher-dimensional (≥6D) capacity, cycle, and spectrum support
   remains on the backlog while we analyse combinatorial explosion and runtime budget implications.
-- Downstream consumers should import `viterbo.modern.capacity`, `viterbo.modern.volume`, and related
+- Downstream consumers should import `viterbo.capacity`, `viterbo.volume`, and related
   helpers directly; notebooks and scripts will be updated once the atlas pipeline lands.
 
 ## Roadmap (High-level)

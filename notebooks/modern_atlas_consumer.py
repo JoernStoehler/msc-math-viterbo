@@ -1,6 +1,6 @@
 """Placeholder workflow for inspecting the modern atlas artefact.
 
-The real consumer notebook will exercise :mod:`viterbo.modern.atlas` helpers
+The real consumer notebook will exercise :mod:`viterbo.atlas` helpers
 once the builder pipeline produces artefacts. Until then we surface the intended
 entry points and keep the script runnable for documentation and smoke checks.
 """
@@ -14,8 +14,8 @@ from typing import Iterable, Sequence
 import polars as pl
 
 try:  # Imported for feature detection only; execution remains a stub.
-    from viterbo.modern import atlas as modern_atlas
-    from viterbo.modern import capacity as modern_capacity
+    from viterbo import atlas as modern_atlas
+    from viterbo import capacity as modern_capacity
 except ImportError:  # pragma: no cover - defensive guard for docs builds.
     modern_atlas = None  # type: ignore[assignment]
     modern_capacity = None  # type: ignore[assignment]
@@ -87,8 +87,8 @@ def main() -> None:
         print(f"Loaded atlas snapshot with {snapshot.height} rows and {snapshot.width} columns")
 
     module_status = {
-        "viterbo.modern.atlas": modern_atlas is not None,
-        "viterbo.modern.capacity": modern_capacity is not None,
+        "viterbo.atlas": modern_atlas is not None,
+        "viterbo.capacity": modern_capacity is not None,
     }
     print("Module availability:")
     for module_name, present in module_status.items():

@@ -6,7 +6,7 @@ summary: Select and implement a modern EHZ spectrum algorithm (no legacy deps).
 
 # Task: Modern EHZ Spectrum Algorithm
 
-Goal: Implement `viterbo.modern.spectrum` without dependencies on legacy modules, define padding semantics, and add smoke/deep tests.
+Goal: Implement `viterbo.spectrum` without dependencies on legacy modules, define padding semantics, and add smoke/deep tests.
 
 Context
 - Modern capacity and 4D cycles are implemented and decoupled from `exp1`/`symplectic`.

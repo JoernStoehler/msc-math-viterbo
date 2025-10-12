@@ -9,6 +9,7 @@ from scripts import report_test_metadata
 
 
 @pytest.mark.goal_code
+@pytest.mark.smoke
 def test_report_test_metadata_outputs_deterministic_summary(tmp_path, capsys):
     """Reporter prints deterministic listing with goal marker and docstring summary."""
     test_file = tmp_path / "test_sample.py"
@@ -36,6 +37,7 @@ def test_report_test_metadata_outputs_deterministic_summary(tmp_path, capsys):
 
 
 @pytest.mark.goal_code
+@pytest.mark.smoke
 def test_report_test_metadata_filters_markers(tmp_path, capsys):
     """Reporter filters tests when marker selector is provided."""
     test_file = tmp_path / "test_sample.py"

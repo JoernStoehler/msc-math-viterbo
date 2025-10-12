@@ -1,20 +1,20 @@
 status: complete
 created: 2025-10-12
 workflow: task
-summary: End-to-end modernization roadmap aligning viterbo.modern with production readiness.
+summary: End-to-end modernization roadmap aligning viterbo with production readiness.
 ---
 
-# Task Brief: Modernization Roadmap for `viterbo.modern`
+# Task Brief: Modernization Roadmap for `viterbo`
 
 ## 1. Updated Context
 
-- The modern modules now host the production Haim–Kislev facet solver, Chaidez–Hutchings oriented-edge graph, Minkowski billiards, and associated wrappers without falling back to the legacy stack.【F:src/viterbo/modern/capacity/facet_normals.py†L1-L371】【F:src/viterbo/modern/capacity/reeb_cycles.py†L1-L209】【F:src/viterbo/modern/capacity/minkowski_billiards.py†L1-L603】【F:src/viterbo/modern/spectrum.py†L1-L118】
-- Regression tests anchor on explicit numeric baselines and deterministic adjacency metadata so they no longer depend on the deprecated ``viterbo.symplectic`` package.【F:tests/viterbo/modern/test_capacity_solvers.py†L1-L163】【F:tests/viterbo/modern/test_spectrum.py†L1-L114】
-- The legacy ``src/viterbo/symplectic`` and ``tests/viterbo/symplectic`` trees have been removed; all downstream scripts and performance harnesses import exclusively from ``viterbo.modern``.【F:scripts/profile_ehz.py†L1-L109】【F:tests/performance/viterbo/modern/capacity/facet_normals/test_ehz_capacity_benchmarks.py†L1-L71】【F:src/viterbo/__init__.py†L1-L63】
+- The modern modules now host the production Haim–Kislev facet solver, Chaidez–Hutchings oriented-edge graph, Minkowski billiards, and associated wrappers without falling back to the legacy stack (see `src/viterbo/capacity/facet_normals.py`, `src/viterbo/capacity/reeb_cycles.py`, `src/viterbo/capacity/minkowski_billiards.py`, `src/viterbo/spectrum.py`).
+- Regression tests anchor on explicit numeric baselines and deterministic adjacency metadata so they no longer depend on the deprecated ``viterbo.symplectic`` package (see `tests/viterbo/test_capacity_solvers.py` and `tests/viterbo/test_spectrum.py`).
+- The legacy ``src/viterbo/symplectic`` and ``tests/viterbo/symplectic`` trees have been removed; all downstream scripts and performance harnesses import exclusively from the flat ``viterbo`` namespace (see `scripts/profile_ehz.py`, `tests/performance/viterbo/capacity/facet_normals/test_ehz_capacity_benchmarks.py`, `src/viterbo/__init__.py`).
 
 ## 2. Modernization Goals
 
-1. Deliver production-ready capacity, cycle, and spectrum solvers within `viterbo.modern` that match or exceed the legacy reference accuracy envelope.
+1. Deliver production-ready capacity, cycle, and spectrum solvers within `viterbo` that match or exceed the legacy reference accuracy envelope.
 2. Align documentation, tolerances, and regression tests with the upgraded algorithms so downstream users can rely solely on the modern namespace.
 3. Retire or quarantine legacy symplectic modules after parity validation without blocking future feature work.
 
@@ -37,25 +37,25 @@ summary: End-to-end modernization roadmap aligning viterbo.modern with productio
 
 ### Phase B — Numeric alignment *(status: complete)*
 
-1. Adopt shared tolerance constants for modern geometry/capacity entrypoints that mirror the legacy defaults.【F:src/viterbo/modern/numerics.py†L5-L22】【F:src/viterbo/geometry/polytopes/reference.py†L70-L95】
-2. Update combinatorics helpers to consume the shared tolerances and disable caching while parity work is underway.【F:src/viterbo/modern/capacity/reeb_cycles.py†L72-L187】
+1. Adopt shared tolerance constants for modern geometry/capacity entrypoints that mirror the legacy defaults (see `src/viterbo/numerics.py` and `src/viterbo/geom.py`).
+2. Update combinatorics helpers to consume the shared tolerances and disable caching while parity work is underway (`src/viterbo/capacity/reeb_cycles.py`).
 3. Document the tolerance policy alongside modernization progress in this brief.
 
 ### Phase C — Capacity solver modernization *(status: complete)*
 
-1. Port the Haim–Kislev subset solver into `viterbo.modern.capacity`, preserving dynamic-programming fallback for large permutations and hooking into the modern `Polytope` dataclass.【F:src/viterbo/modern/capacity/facet_normals.py†L198-L295】
-2. Implement cycle-consistency validation analogous to `reeb_cycles.reference.compute_ehz_capacity_reference`, emitting actionable diagnostics when the oriented-edge graph is degenerate.【F:src/viterbo/modern/capacity/reeb_cycles.py†L206-L244】
+1. Port the Haim–Kislev subset solver into `viterbo.capacity`, preserving dynamic-programming fallback for large permutations and hooking into the modern `Polytope` dataclass.【F:src/viterbo/capacity/facet_normals.py†L1-L120】
+2. Implement cycle-consistency validation analogous to `reeb_cycles.reference.compute_ehz_capacity_reference`, emitting actionable diagnostics when the oriented-edge graph is degenerate (`src/viterbo/capacity/reeb_cycles.py`).
 3. Replace heuristic-based tests with fixtures comparing modern results to legacy reference outputs over curated polytopes.
 
 ### Phase D — Reeb cycle extraction *(status: complete)*
 
-1. Port the oriented-edge graph builder into the modern namespace without the NetworkX dependency while preserving Chaidez–Hutchings constraints and tolerance handling.【F:src/viterbo/modern/capacity/reeb_cycles.py†L72-L187】
-2. Extend `OrientedEdgeGraph` metadata so spectrum builders can remain deterministic across runs.【F:src/viterbo/modern/capacity/reeb_cycles.py†L1-L160】
+1. Port the oriented-edge graph builder into the modern namespace without the NetworkX dependency while preserving Chaidez–Hutchings constraints and tolerance handling (`src/viterbo/capacity/reeb_cycles.py`).
+2. Extend `OrientedEdgeGraph` metadata so spectrum builders can remain deterministic across runs (`src/viterbo/capacity/reeb_cycles.py`).
 3. Compare modern edge sets, adjacency, and degeneracy failures with the legacy graph on shared fixtures.
 
 ### Phase E — Spectrum rebuild *(status: complete)*
 
-1. Refactor spectrum routines to consume the shared oriented-edge graph with deterministic cycle enumeration.【F:src/viterbo/modern/spectrum.py†L1-L166】
+1. Refactor spectrum routines to consume the shared oriented-edge graph with deterministic cycle enumeration (`src/viterbo/spectrum.py`).
 2. Rewrite tests to compare action spectra between modern output and legacy cycle data; document that ≥6D support remains a future feature.
 
 ### Phase F — Documentation and legacy sunset *(status: complete)*
@@ -64,7 +64,7 @@ summary: End-to-end modernization roadmap aligning viterbo.modern with productio
    :mod:`viterbo.symplectic`.
 2. Notebooks remain placeholders but now describe the intended atlas workflow without shadowing the
    modern modules.
-3. Legacy symplectic modules removed; release notes highlight the migration to :mod:`viterbo.modern`.
+3. Legacy symplectic modules removed; release notes highlight the migration to the flat :mod:`viterbo` namespace.
 
 ## 5. Risks & Open Questions
 
@@ -93,13 +93,13 @@ summary: End-to-end modernization roadmap aligning viterbo.modern with productio
 
 ## 7. Execution Log (2025-10-12)
 
-- [x] C1 Ported Haim–Kislev facet solver (reference + dynamic-programming fast path) into `viterbo.modern.capacity` and rewired dispatchers.
+- [x] C1 Ported Haim–Kislev facet solver (reference + dynamic-programming fast path) into `viterbo.capacity` and rewired dispatchers.
 - [x] D1-D3 Implemented oriented-edge graph builder without NetworkX, validated through new Reeb-cycle wrappers, and exposed graph metadata for reuse.
 - [x] E1 Rebuilt the 4D spectrum enumeration on top of the modern oriented-edge graph with deterministic cycle ordering.
 - [x] B1-B3 Landed shared tolerance constants, updated helpers, and documented the policy.
 - [x] C3 Added parity assertions against legacy facet/reeb/minkowski solvers in the modern tests.
 - [x] C2 Integrated oriented-edge diagnostics and surfaced failure details in modern wrappers.
 - [x] E2 Locked spectrum fixtures against deterministic action sequences and recorded ≥6D as future work.
-- [x] Legacy symplectic modules and tests removed; profiling/benchmark harnesses now target `viterbo.modern`.
+- [x] Legacy symplectic modules and tests removed; profiling/benchmark harnesses now target `viterbo`.
 - [x] F1 Cleared remaining ``viterbo.symplectic`` references in docs and tooling; pointed profiling helpers at modern kernels.
 - [x] F-phase tasks: finalized docs, announced legacy removal, and captured higher-dimensional feature backlog.

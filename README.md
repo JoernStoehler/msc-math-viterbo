@@ -9,16 +9,16 @@ operate on JAX arrays, with NumPy/SciPy interop isolated in thin adapters under
 
 ## Modern namespace overview
 
-The production solvers, generators, and artefact helpers live under `viterbo.modern`. Capacity,
+The production solvers, generators, and artefact helpers live under `viterbo`. Capacity,
 cycle, and spectrum entry points consume the shared tolerance policy in
-[`src/viterbo/modern/numerics.py`](src/viterbo/modern/numerics.py) so downstream experiments observe
+[`src/viterbo/numerics.py`](src/viterbo/numerics.py) so downstream experiments observe
 consistent behaviour. The legacy `viterbo.symplectic` package has been removed; upgrade consumers to
-the modern modules via:
+the flat modules via:
 
-- `viterbo.modern.capacity` for Haim–Kislev subset search, Chaidez–Hutchings graph wrappers, and
+- `viterbo.capacity` for Haim–Kislev subset search, Chaidez–Hutchings graph wrappers, and
   Minkowski billiard routines,
-- `viterbo.modern.volume` for deterministic volume estimators,
-- `viterbo.modern.atlas` for parquet schema helpers once the atlas pipeline is implemented.
+- `viterbo.volume` for deterministic volume estimators,
+- `viterbo.atlas` for parquet schema helpers once the atlas pipeline is implemented.
 
 Higher-dimensional (≥6D) capacities, cycles, and spectra remain on the documented backlog while the
 team scopes combinatorial limits and CI/runtime budgets. See

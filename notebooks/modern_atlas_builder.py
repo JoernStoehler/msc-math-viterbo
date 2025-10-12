@@ -2,7 +2,7 @@
 
 This notebook intentionally documents the orchestration flow without executing
 heavy computations. The real implementation will live in
-:mod:`viterbo.modern` once the atlas pipeline lands; until then we keep this
+:mod:`viterbo` once the atlas pipeline lands; until then we keep this
 script runnable so it communicates expectations without triggering
 ``NotImplementedError`` placeholders.
 """
@@ -14,10 +14,10 @@ from pathlib import Path
 from typing import Iterable, Sequence
 
 try:  # Imported for feature detection only; calls remain stubbed.
-    from viterbo.modern import atlas as modern_atlas
-    from viterbo.modern import basic_generators as modern_generators
-    from viterbo.modern import capacity as modern_capacity
-    from viterbo.modern import volume as modern_volume
+    from viterbo import atlas as modern_atlas
+    from viterbo import basic_generators as modern_generators
+    from viterbo import capacity as modern_capacity
+    from viterbo import volume as modern_volume
 except ImportError:  # pragma: no cover - defensive guard for docs builds.
     modern_atlas = None  # type: ignore[assignment]
     modern_generators = None  # type: ignore[assignment]
@@ -43,10 +43,10 @@ def _module_status() -> dict[str, bool]:
     """Record whether the modern modules expected by the atlas builder exist."""
 
     return {
-        "viterbo.modern.atlas": modern_atlas is not None,
-        "viterbo.modern.basic_generators": modern_generators is not None,
-        "viterbo.modern.capacity": modern_capacity is not None,
-        "viterbo.modern.volume": modern_volume is not None,
+        "viterbo.atlas": modern_atlas is not None,
+        "viterbo.basic_generators": modern_generators is not None,
+        "viterbo.capacity": modern_capacity is not None,
+        "viterbo.volume": modern_volume is not None,
     }
 
 

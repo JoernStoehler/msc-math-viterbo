@@ -3,21 +3,21 @@
 We collect high-level procedures for evaluating the Ekeland–Hofer–Zehnder (EHZ) capacity of convex
 polytopes in $\\mathbb{R}^{2n}$ with $2n\\ge 4$. Each algorithm is described at the pseudo-code
 level with references for proofs, correctness, and complexity. The production implementations live
-in :mod:`viterbo.modern.capacity`, with shared tolerance constants sourced from
-``src/viterbo/modern/numerics.py`` so the capacity, cycle, and spectrum stacks agree on numerical
+in :mod:`viterbo.capacity`, with shared tolerance constants sourced from
+``src/viterbo/numerics.py`` so the capacity, cycle, and spectrum stacks agree on numerical
 policy. The legacy :mod:`viterbo.symplectic` namespace has been retired; downstream consumers should
 import the modern modules directly.
 
 ## Modern namespace summary
 
-- ``viterbo.modern.capacity.facet_normals`` implements the Haim–Kislev subset solver and exposes a
+- ``viterbo.capacity.facet_normals`` implements the Haim–Kislev subset solver and exposes a
   reference wrapper ``ehz_capacity_reference`` that matches the documented tolerances.
-- ``viterbo.modern.capacity.minkowski_billiards`` realises the billiard-based computation and
+- ``viterbo.capacity.minkowski_billiards`` realises the billiard-based computation and
   supplies structured diagnostics for degenerate trajectories.
-- ``viterbo.modern.capacity.reeb_cycles`` constructs Chaidez–Hutchings oriented-edge graphs that
+- ``viterbo.capacity.reeb_cycles`` constructs Chaidez–Hutchings oriented-edge graphs that
   feed both the capacity and spectrum APIs, with deterministic ordering encoded in the returned
   metadata.
-- ``viterbo.modern.spectrum`` enumerates action spectra on top of the modern graph; higher
+- ``viterbo.spectrum`` enumerates action spectra on top of the modern graph; higher
   dimensions (≥6D) remain a documented backlog item until we finish the combinatorial and runtime
   analysis required for practical support.
 
@@ -112,7 +112,8 @@ $\ell_T$-length $8$ that realises $c_{\mathrm{EHZ}}([-1,1]^2 \times B_1^2)$ and 
 Artstein-Avidan–Ostrover bounds.【F:docs/convex-polytope-cehz-capacities.md†L111-L121】We use this
 configuration as the canonical baseline when validating the reference and fast solvers and enforce a
 minimum of three distinct reflections in the enumeration to exclude degenerate two-bounce
-paths.【F:tests/viterbo/modern/test_capacity_solvers.py†L132-L141】【F:src/viterbo/modern/capacity/minkowski_billiards.py†L129-L220】
+paths. See tests under `tests/viterbo/test_capacity_solvers.py` and
+`src/viterbo/capacity/minkowski_billiards.py` for the concrete implementation hooks.
 
 ## 5. Convex Programming Relaxations via Support Functions (General Dimension)
 

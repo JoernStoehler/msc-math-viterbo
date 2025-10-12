@@ -94,6 +94,10 @@ ignore = [
     "D212",  # allow summary on second line for multi-line docstrings
     "D401",  # relax imperative-mood nit
     "D417",  # argument documentation checks too noisy with Google style
+    # De-emphasize docstring whitespace/formatting rules globally
+    "D202",  # no blank line after function docstring
+    "D205",  # blank line between summary and description
+    "D301",  # use raw string for backslashes
 ]
 typing-modules = ["jaxtyping"]
 future-annotations = true
@@ -106,10 +110,14 @@ future-annotations = true
 # Private helper modules may omit docstrings; still lint formatting/content when present.
 "src/viterbo/**/_*.py" = ["D101", "D102", "D103"]
 # Experimental modules: relax docstring requirements during incubation.
-"src/viterbo/exp1/**" = ["D101", "D102", "D103", "D107", "I001"]
+"src/viterbo/geom.py" = ["D103", "D105", "D102", "RUF100"]
+"src/viterbo/polytopes.py" = ["D103"]
+"src/viterbo/capacity/minkowski_billiards.py" = ["D"]
+"src/viterbo/capacity/reeb_cycles.py" = ["D"]
+"src/viterbo/capacity/__init__.py" = ["BLE001"]
 # Typing stubs package (`typings/`) may use relative imports internally.
 "typings/**/*" = ["TID252"]
-"notebooks/**" = ["T20", "I001"]
+"notebooks/**" = ["T20", "I001", "D", "F401"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

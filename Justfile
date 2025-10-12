@@ -64,8 +64,8 @@ lint:
     @echo "Running Ruff lint and metadata check (CI parity)."
     $UV run ruff check .
     $UV run python scripts/check_test_metadata.py
-    # TODO(expand): enforce suite markers repo-wide when suites are standardized beyond exp1
-    $UV run python scripts/check_test_metadata.py --require-suite tests/viterbo/modern
+    # Enforce suite markers on all tests
+    $UV run python scripts/check_test_metadata.py --require-suite tests
 
 # Summarise pytest test metadata (markers + docstrings).
 test-metadata:
@@ -168,7 +168,7 @@ profile:
 profile-line:
     @mkdir -p "{{PROFILES_DIR}}"
     @echo "Running line profiler for ehz_capacity_fast_facet_normals into {{PROFILES_DIR}}."
-    $UV run pytest tests/performance -m "deep" --line-profile viterbo.modern.capacity.facet_normals._compute_ehz_capacity_fast --pstats-dir="{{PROFILES_DIR}}" {{PYTEST_ARGS}}
+    $UV run pytest tests/performance -m "deep" --line-profile viterbo.capacity.facet_normals._compute_ehz_capacity_fast --pstats-dir="{{PROFILES_DIR}}" {{PYTEST_ARGS}}
 
 # Package build & publish
 build:
