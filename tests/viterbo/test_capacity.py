@@ -22,7 +22,7 @@ def test_ehz_capacity_reference_for_square_nonnegative_scalar() -> None:
         jnp.array([-1.0, -1.0]),
     ]
     bundle = atlas.as_polytope(2, 4, 4, normals, offsets, vertices)
-    c = capacity.ehz_capacity_reference(bundle)
+    c = capacity.ehz_capacity_reference(bundle.normals, bundle.offsets, bundle.vertices)
     assert jnp.isfinite(c)
     assert c == pytest.approx(4.0, rel=1e-12, abs=0.0)
 
@@ -51,7 +51,9 @@ def test_ehz_capacity_reference_manual_batching_pattern() -> None:
     bundles = [_square_bundle(1.0), _square_bundle(2.0)]
     capacities = []
     for bundle in bundles:
-        capacities.append(capacity.ehz_capacity_reference(bundle))
+        capacities.append(
+            capacity.ehz_capacity_reference(bundle.normals, bundle.offsets, bundle.vertices)
+        )
 
     assert capacities[0] == pytest.approx(4.0, rel=1e-12, abs=0.0)
     assert capacities[1] == pytest.approx(16.0, rel=1e-12, abs=0.0)

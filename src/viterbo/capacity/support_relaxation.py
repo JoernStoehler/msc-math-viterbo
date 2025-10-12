@@ -2,31 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Sequence
 
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
 from viterbo.capacity import facet_normals
-from viterbo.types import Polytope
-
-
-@dataclass(slots=True)
-class SupportRelaxationDiagnostics:
-    """Record of sampled directions and support values."""
-
-    directions: Float[Array, " num_samples dimension"]
-    support_values: Float[Array, " num_samples"]
-
-
-@dataclass(slots=True)
-class SupportRelaxationResult:
-    """Container storing the relaxed capacity estimate and diagnostics."""
-
-    capacity_upper_bound: float
-    diagnostics: SupportRelaxationDiagnostics
-    iterations: int
+from viterbo.types import SupportRelaxationSummary
 
 
 def _polygon_area(vertices: Float[Array, " num_vertices 2"]) -> float:
@@ -62,12 +44,19 @@ def _sample_directions(dimension: int, count: int) -> Float[Array, " count dimen
     return tiled[:count]
 
 
-def _support_values(bundle: Polytope, directions: Float[Array, " num_samples dimension"]) -> Float[Array, " num_samples"]:
+def _support_values(
+    vertices: Float[Array, " num_vertices dimension"],
+    normals: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
+    directions: Float[Array, " num_samples dimension"],
+) -> Float[Array, " num_samples"]:
     if directions.size == 0:
         return jnp.zeros((0,), dtype=jnp.float64)
-    vertices = jnp.asarray(bundle.vertices, dtype=jnp.float64)
+    vertices = jnp.asarray(vertices, dtype=jnp.float64)
+    normals = jnp.asarray(normals, dtype=jnp.float64)
+    offsets = jnp.asarray(offsets, dtype=jnp.float64)
     if vertices.size == 0:
-        radii = facet_normals.support_radii(bundle)
+        radii = facet_normals.support_radii(normals, offsets)
         value = jnp.min(radii) if radii.size else 0.0
         return jnp.full((directions.shape[0],), value, dtype=jnp.float64)
     products = vertices @ directions.T
@@ -75,65 +64,64 @@ def _support_values(bundle: Polytope, directions: Float[Array, " num_samples dim
 
 
 def support_relaxation_capacity_reference(
-    bundle: Polytope,
+    normals: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
+    vertices: Float[Array, " num_vertices dimension"],
     *,
     grid_density: int = 12,
     smoothing_parameters: Sequence[float] = (0.6, 0.3, 0.1),
     tolerance_sequence: Sequence[float] = (1e-3,),
     solver: str | None = None,
     center_vertices: bool = True,
-) -> SupportRelaxationResult:
+) -> SupportRelaxationSummary:
     """Reference relaxation computed via dense angular sampling in 2D."""
     _ = (smoothing_parameters, tolerance_sequence, solver)
-    dimension = int(bundle.vertices.shape[1]) if bundle.vertices.ndim else 0
-    vertices = bundle.vertices
+    normals = jnp.asarray(normals, dtype=jnp.float64)
+    offsets = jnp.asarray(offsets, dtype=jnp.float64)
+    vertices = jnp.asarray(vertices, dtype=jnp.float64)
+    dimension = int(vertices.shape[1]) if vertices.ndim == 2 else 0
     if center_vertices and vertices.size:
         centroid = jnp.mean(vertices, axis=0)
         vertices = vertices - centroid
-        bundle = Polytope(
-            normals=bundle.normals,
-            offsets=bundle.offsets,
-            vertices=vertices,
-            incidence=bundle.incidence,
-        )
     sample_count = max(grid_density * max(1, dimension), 4)
     directions = _sample_directions(dimension, sample_count)
-    values = _support_values(bundle, directions)
+    values = _support_values(vertices, normals, offsets, directions)
     if dimension == 2 and vertices.size:
         capacity = _polygon_area(vertices)
     else:
-        radii = facet_normals.support_radii(bundle)
+        radii = facet_normals.support_radii(normals, offsets)
         capacity = float(4.0 * jnp.min(radii)) if radii.size else 0.0
-    diagnostics = SupportRelaxationDiagnostics(directions=directions, support_values=values)
-    return SupportRelaxationResult(capacity_upper_bound=capacity, diagnostics=diagnostics, iterations=sample_count)
+    return (capacity, directions, values, sample_count)
 
 
 def support_relaxation_capacity_fast(
-    bundle: Polytope,
+    normals: Float[Array, " num_facets dimension"],
+    offsets: Float[Array, " num_facets"],
+    vertices: Float[Array, " num_vertices dimension"],
     *,
     initial_density: int = 6,
     refinement_steps: int = 1,
     smoothing_parameters: Sequence[float] = (0.5, 0.25),
     jit_compile: bool = True,
-) -> SupportRelaxationResult:
+) -> SupportRelaxationSummary:
     """Fast relaxation based on sparse angular samples."""
     _ = (refinement_steps, smoothing_parameters, jit_compile)
-    dimension = int(bundle.vertices.shape[1]) if bundle.vertices.ndim else 0
+    normals = jnp.asarray(normals, dtype=jnp.float64)
+    offsets = jnp.asarray(offsets, dtype=jnp.float64)
+    vertices = jnp.asarray(vertices, dtype=jnp.float64)
+    dimension = int(vertices.shape[1]) if vertices.ndim == 2 else 0
     sample_count = max(initial_density * max(1, dimension), 4)
     directions = _sample_directions(dimension, sample_count)
-    values = _support_values(bundle, directions)
-    if dimension == 2 and bundle.vertices.size:
-        capacity = _polygon_area(bundle.vertices)
+    values = _support_values(vertices, normals, offsets, directions)
+    if dimension == 2 and vertices.size:
+        capacity = _polygon_area(vertices)
     else:
-        radii = facet_normals.support_radii(bundle)
+        radii = facet_normals.support_radii(normals, offsets)
         capacity = float(4.0 * jnp.min(radii)) if radii.size else 0.0
-    diagnostics = SupportRelaxationDiagnostics(directions=directions, support_values=values)
-    return SupportRelaxationResult(capacity_upper_bound=capacity, diagnostics=diagnostics, iterations=sample_count)
+    return (capacity, directions, values, sample_count)
 
 
 __all__ = [
-    "SupportRelaxationDiagnostics",
-    "SupportRelaxationResult",
     "support_relaxation_capacity_reference",
     "support_relaxation_capacity_fast",
 ]

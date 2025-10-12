@@ -13,9 +13,9 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from viterbo.geom import Polytope, catalog, random_transformations
+from viterbo.geom import catalog, random_transformations
 from viterbo.capacity import ehz_capacity_fast, ehz_capacity_reference
-from viterbo.types import Polytope as ModernPolytope
+from viterbo.types import Polytope as ModernPolytope, PolytopeRecord
 
 Algorithm = Callable[[np.ndarray, np.ndarray], float]
 
@@ -44,8 +44,8 @@ ALGORITHMS: dict[str, Algorithm] = {
 }
 
 
-def _registry() -> dict[str, Polytope]:
-    return {poly.name: poly for poly in catalog()}
+def _registry() -> dict[str, PolytopeRecord]:
+    return {entry.metadata.slug: entry for entry in catalog()}
 
 
 def _parse_args() -> argparse.Namespace:
@@ -95,7 +95,7 @@ def _parse_args() -> argparse.Namespace:
 
 
 def _build_dataset(
-    polytopes: Iterable[Polytope],
+    polytopes: Iterable[PolytopeRecord],
     *,
     transforms: int,
     seed: int,
@@ -107,13 +107,14 @@ def _build_dataset(
     key = jax.random.PRNGKey(seed)
     dataset: list[tuple[str, np.ndarray, np.ndarray]] = []
     for poly in polytopes:
-        B, c = poly.halfspace_data()
-        dataset.append((poly.name, B, c))
+        geometry = poly.geometry
+        B, c = geometry.halfspace_data()
+        dataset.append((poly.metadata.slug, B, c))
         if transforms:
             variants = random_transformations(poly, key=key, count=transforms)
             for index, variant in enumerate(variants):
-                variant_B, variant_c = variant.halfspace_data()
-                label = f"{poly.name}-variant-{index}"
+                variant_B, variant_c = variant.geometry.halfspace_data()
+                label = f"{poly.metadata.slug}-variant-{index}"
                 dataset.append((label, variant_B, variant_c))
     return dataset
 

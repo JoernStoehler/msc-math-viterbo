@@ -59,19 +59,22 @@ def test_fast_ehz_capacity_matches_reference_and_tracks_speed(
         incidence=jnp.empty((0, B.shape[0]), dtype=bool),
     )
 
+    B_matrix = bundle.normals
+    offsets = bundle.offsets
+
     try:
-        reference = ehz_capacity_reference_facet_normals(bundle)
+        reference = ehz_capacity_reference_facet_normals(B_matrix, offsets)
     except ValueError as error:
         # When the reference rejects an instance (e.g. infeasible constraints)
         # we still run the optimized variant through the benchmark harness so
         # the failure is visible in timing reports. Pytest-benchmark re-raises
         # the underlying exception, letting us assert on parity of the message.
         with pytest.raises(ValueError) as caught:
-            benchmark(lambda: ehz_capacity_fast_facet_normals(bundle))  # type: ignore[reportArgumentType]
+            benchmark(lambda: ehz_capacity_fast_facet_normals(B_matrix, offsets))
         assert str(caught.value) == str(error)
     else:
         optimized = cast(
             float,
-            benchmark(lambda: ehz_capacity_fast_facet_normals(bundle)),  # type: ignore[reportArgumentType]
+            benchmark(lambda: ehz_capacity_fast_facet_normals(B_matrix, offsets)),
         )
         assert np.isclose(optimized, reference, atol=1e-8)

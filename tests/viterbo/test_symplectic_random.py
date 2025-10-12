@@ -37,10 +37,10 @@ def test_capacity_invariance_under_random_symplectic_4d() -> None:
         dtype=jnp.float64,
     )
     P = polytopes.build_from_vertices(V)
-    c0 = capacity.ehz_capacity_reference(P)
+    c0 = capacity.ehz_capacity_reference(P.normals, P.offsets, P.vertices)
     M = symplectic.random_symplectic_matrix(key, 4)
     P2 = polytopes.build_from_vertices(V @ M.T)
-    c1 = capacity.ehz_capacity_reference(P2)
+    c1 = capacity.ehz_capacity_reference(P2.normals, P2.offsets, P2.vertices)
     assert jnp.isclose(c0, c1, rtol=1e-9, atol=1e-12)
 
 

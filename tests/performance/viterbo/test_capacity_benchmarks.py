@@ -25,5 +25,5 @@ def test_modern_capacity_reference_benchmark_4d(benchmark) -> None:
         dtype=jnp.float64,
     )
     P = polytopes.build_from_vertices(verts)
-    result = benchmark(lambda: capacity.ehz_capacity_reference(P))
+    result = benchmark(lambda: capacity.ehz_capacity_reference(P.normals, P.offsets, P.vertices))
     assert jnp.isfinite(result)

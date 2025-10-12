@@ -26,7 +26,6 @@ import math
 import os
 import struct
 import threading
-from dataclasses import dataclass
 from itertools import combinations, product
 from typing import Final, Iterable, Sequence, cast
 
@@ -40,89 +39,41 @@ from viterbo._wrapped.spatial import (
     convex_hull_volume,
     delaunay_simplices,
 )
+from viterbo.polytopes import build_from_halfspaces
+from viterbo.types import (
+    Polytope,
+    PolytopeCombinatorics,
+    PolytopeMetadata,
+    PolytopeRecord,
+    NormalCone,
+)
 
 
 # -----------------------------------------------------------------------------
 # Dataclasses and combinatorics cache (ported from legacy geometry._shared)
 
 
-@dataclass(frozen=True)
-class NormalCone:
-    """Normal cone data attached to a polytope vertex."""
-
-    vertex: Float[Array, " dimension"]
-    active_facets: tuple[int, ...]
-    normals: Float[Array, " num_active dimension"]
-
-    def __post_init__(self) -> None:
-        vertex = jnp.asarray(self.vertex, dtype=jnp.float64)
-        normals = jnp.asarray(self.normals, dtype=jnp.float64)
-        object.__setattr__(self, "vertex", vertex)
-        object.__setattr__(self, "normals", normals)
-
-
-@dataclass(frozen=True)
-class PolytopeCombinatorics:
-    """Cached combinatorial structure derived from a ``Polytope``."""
-
-    vertices: Float[Array, " num_vertices dimension"]
-    facet_adjacency: Array
-    normal_cones: tuple[NormalCone, ...]
-
-    def __post_init__(self) -> None:
-        vertices = jnp.asarray(self.vertices, dtype=jnp.float64)
-        adjacency = jnp.asarray(self.facet_adjacency, dtype=bool)
-        object.__setattr__(self, "vertices", vertices)
-        object.__setattr__(self, "facet_adjacency", adjacency)
-
-
-@dataclass(frozen=True)
-class Polytope:
-    """Immutable container describing a convex polytope via half-space data."""
-
-    name: str
-    B: Float[Array, " num_facets dimension"]
-    c: Float[Array, " num_facets"]
-    description: str = ""
-    reference_capacity: float | None = None
-
-    def __post_init__(self) -> None:
-        matrix = jnp.asarray(self.B, dtype=jnp.float64)
-        offsets = jnp.asarray(self.c, dtype=jnp.float64)
-        if matrix.ndim != 2:
-            raise ValueError("Facet matrix B must be two-dimensional.")
-        if offsets.ndim != 1 or offsets.shape[0] != matrix.shape[0]:
-            raise ValueError("Offsets vector c must match the number of facets.")
-        object.__setattr__(self, "B", matrix)
-        object.__setattr__(self, "c", offsets)
-
-    @property
-    def dimension(self) -> int:  # noqa: D401 (concise)
-        return int(self.B.shape[1])
-
-    @property
-    def facets(self) -> int:  # noqa: D401 (concise)
-        return int(self.B.shape[0])
-
-    def halfspace_data(
-        self,
-    ) -> tuple[Float[Array, " num_facets dimension"], Float[Array, " num_facets"]]:
-        return jnp.array(self.B, copy=True), jnp.array(self.c, copy=True)
-
-    def with_metadata(self, *, name: str | None = None, description: str | None = None) -> "Polytope":
-        return Polytope(
-            name=name or self.name,
-            B=self.B,
-            c=self.c,
-            description=description or self.description,
-            reference_capacity=self.reference_capacity,
-        )
-
-
 _POLYTOPE_CACHE_MAX_SIZE: Final[int] = 128
 _POLYTOPE_CACHE: "dict[tuple[str, str], PolytopeCombinatorics]" = {}
 _POLYTOPE_CACHE_ORDER: "list[tuple[str, str]]" = []
 _POLYTOPE_CACHE_LOCK = threading.RLock()
+
+
+def annotate_polytope(
+    geometry: Polytope,
+    *,
+    slug: str,
+    description: str = "",
+    reference_capacity: float | None = None,
+) -> PolytopeRecord:
+    """Attach metadata to a geometry bundle without mutating it."""
+
+    metadata = PolytopeMetadata(
+        slug=slug,
+        description=description,
+        reference_capacity=reference_capacity,
+    )
+    return PolytopeRecord(geometry=geometry, metadata=metadata)
 
 
 def _halfspace_fingerprint(
@@ -137,7 +88,8 @@ def _halfspace_fingerprint(
 
 
 def polytope_fingerprint(polytope: Polytope, *, decimals: int = 12) -> str:
-    return _halfspace_fingerprint(polytope.B, polytope.c, decimals=decimals)
+    normals, offsets = polytope.halfspace_data()
+    return _halfspace_fingerprint(normals, offsets, decimals=decimals)
 
 
 def _tolerance_fingerprint(atol: float) -> str:
@@ -421,34 +373,40 @@ def polytope_volume_fast(
 
 
 def cartesian_product(
-    first: Polytope,
-    second: Polytope,
+    first: PolytopeRecord,
+    second: PolytopeRecord,
     *,
-    name: str | None = None,
+    slug: str | None = None,
     description: str | None = None,
-) -> Polytope:
-    B1, c1 = first.halfspace_data()
-    B2, c2 = second.halfspace_data()
+) -> PolytopeRecord:
+    geometry_first = first.geometry
+    geometry_second = second.geometry
+    B1, c1 = geometry_first.halfspace_data()
+    B2, c2 = geometry_second.halfspace_data()
     upper = jnp.hstack((B1, jnp.zeros((B1.shape[0], B2.shape[1]))))
     lower = jnp.hstack((jnp.zeros((B2.shape[0], B1.shape[1])), B2))
-    B = jnp.vstack((upper, lower))
-    c = jnp.concatenate((c1, c2))
-    product_name = name or f"{first.name}x{second.name}"
-    product_description = description or (
+    normals = jnp.vstack((upper, lower))
+    offsets = jnp.concatenate((c1, c2))
+    geometry = build_from_halfspaces(normals, offsets)
+    base_slug = slug or f"{first.metadata.slug}x{second.metadata.slug}"
+    base_description = description or (
         "Cartesian product constructed from "
-        f"{first.name} (dim {first.dimension}) and {second.name} (dim {second.dimension})."
+        f"{first.metadata.slug} (dim {geometry_first.dimension}) and {second.metadata.slug}"
+        f" (dim {geometry_second.dimension})."
     )
-    return Polytope(name=product_name, B=B, c=c, description=product_description)
+    metadata = PolytopeMetadata(slug=base_slug, description=base_description)
+    return PolytopeRecord(geometry=geometry, metadata=metadata)
 
 
 def affine_transform(
-    polytope: Polytope,
+    record: PolytopeRecord,
     matrix: Float[Array, " dimension dimension"],
     *,
     translation: Float[Array, " dimension"] | None = None,
-    name: str | None = None,
+    slug: str | None = None,
     description: str | None = None,
-) -> Polytope:
+) -> PolytopeRecord:
+    polytope = record.geometry
     matrix = jnp.asarray(matrix, dtype=jnp.float64)
     if matrix.shape != (polytope.dimension, polytope.dimension):
         raise ValueError("Linear transform must match the ambient dimension.")
@@ -463,66 +421,68 @@ def affine_transform(
     )
     if translation_vec.shape != (polytope.dimension,):
         raise ValueError("Translation vector must match the ambient dimension.")
-    B_transformed = polytope.B @ matrix_inv
-    c_transformed = polytope.c + B_transformed @ translation_vec
-    return Polytope(
-        name=name or f"{polytope.name}-affine",
-        B=B_transformed,
-        c=c_transformed,
-        description=description
-        or (
-            f"Affine image of {polytope.name} via matrix with det {float(det):.3f}."
-        ),
-        reference_capacity=polytope.reference_capacity,
+    normals, offsets = polytope.halfspace_data()
+    B_transformed = normals @ matrix_inv
+    c_transformed = offsets + B_transformed @ translation_vec
+    geometry = build_from_halfspaces(B_transformed, c_transformed)
+    result_slug = slug or f"{record.metadata.slug}-affine"
+    result_description = description or (
+        f"Affine image of {record.metadata.slug} via matrix with det {float(det):.3f}."
     )
+    metadata = PolytopeMetadata(
+        slug=result_slug,
+        description=result_description,
+        reference_capacity=record.metadata.reference_capacity,
+    )
+    return PolytopeRecord(geometry=geometry, metadata=metadata)
 
 
 def translate_polytope(
-    polytope: Polytope,
+    polytope: PolytopeRecord,
     translation: Float[Array, " dimension"],
     *,
-    name: str | None = None,
+    slug: str | None = None,
     description: str | None = None,
-) -> Polytope:
+) -> PolytopeRecord:
     return affine_transform(
         polytope,
-        jnp.eye(polytope.dimension),
+        jnp.eye(polytope.geometry.dimension),
         translation=translation,
-        name=name or f"{polytope.name}-translated",
-        description=description or f"Translation of {polytope.name}.",
+        slug=slug or f"{polytope.metadata.slug}-translated",
+        description=description or f"Translation of {polytope.metadata.slug}.",
     )
 
 
 def mirror_polytope(
-    polytope: Polytope,
+    polytope: PolytopeRecord,
     axes: Sequence[bool],
     *,
-    name: str | None = None,
+    slug: str | None = None,
     description: str | None = None,
-) -> Polytope:
-    if len(tuple(axes)) != polytope.dimension:
+) -> PolytopeRecord:
+    if len(tuple(axes)) != polytope.geometry.dimension:
         raise ValueError("Axis mask must match the polytope dimension.")
     signs = jnp.where(jnp.asarray(tuple(axes), dtype=bool), -1.0, 1.0)
     matrix = jnp.diag(signs)
     return affine_transform(
         polytope,
         matrix,
-        translation=jnp.zeros(polytope.dimension),
-        name=name or f"{polytope.name}-mirrored",
+        translation=jnp.zeros(polytope.geometry.dimension),
+        slug=slug or f"{polytope.metadata.slug}-mirrored",
         description=description or "Coordinate reflection of the base polytope.",
     )
 
 
 def rotate_polytope(
-    polytope: Polytope,
+    polytope: PolytopeRecord,
     *,
     plane: tuple[int, int],
     angle: float,
-    name: str | None = None,
+    slug: str | None = None,
     description: str | None = None,
-) -> Polytope:
+) -> PolytopeRecord:
     i, j = plane
-    dimension = polytope.dimension
+    dimension = polytope.geometry.dimension
     if not (0 <= i < dimension and 0 <= j < dimension) or i == j:
         raise ValueError("Rotation plane indices must be distinct and within range.")
     rotation = jnp.eye(dimension)
@@ -536,8 +496,8 @@ def rotate_polytope(
         polytope,
         rotation,
         translation=jnp.zeros(dimension),
-        name=name or f"{polytope.name}-rot",
-        description=description or f"Rotation of {polytope.name} in plane {(i, j)} by {angle} rad.",
+        slug=slug or f"{polytope.metadata.slug}-rot",
+        description=description or f"Rotation of {polytope.metadata.slug} in plane {(i, j)} by {angle} rad.",
     )
 
 
@@ -562,9 +522,9 @@ def regular_polygon_product(
     rotation: float = 0.0,
     radius_first: float = 1.0,
     radius_second: float | None = None,
-    name: str | None = None,
+    slug: str | None = None,
     description: str | None = None,
-) -> Polytope:
+) -> PolytopeRecord:
     normals_first = _regular_polygon_normals(sides_first)
     normals_second = _regular_polygon_normals(sides_second)
     if radius_second is None:
@@ -581,66 +541,60 @@ def regular_polygon_product(
             jnp.full(rotated_second.shape[0], float(radius_second)),
         )
     )
-    default_name = name or (
+    default_slug = slug or (
         f"{sides_first}gonx{sides_second}gon-rot{int(round(math.degrees(rotation)))}"
     )
     default_description = description or (
         "Product of two regular polygons, yielding a 4D polytope with"
         f" {normals_first.shape[0] + rotated_second.shape[0]} facets."
     )
-    return Polytope(
-        name=default_name,
-        B=jnp.asarray(B_np, dtype=jnp.float64),
-        c=jnp.asarray(c_np, dtype=jnp.float64),
-        description=default_description,
+    geometry = build_from_halfspaces(
+        jnp.asarray(B_np, dtype=jnp.float64),
+        jnp.asarray(c_np, dtype=jnp.float64),
     )
+    metadata = PolytopeMetadata(slug=default_slug, description=default_description)
+    return PolytopeRecord(geometry=geometry, metadata=metadata)
 
 
 def cross_polytope(
     dimension: int,
     *,
     radius: float = 1.0,
-    name: str | None = None,
-) -> Polytope:
+    slug: str | None = None,
+) -> PolytopeRecord:
     if dimension < 2:
         raise ValueError("Dimension must be at least two.")
     normals = jnp.asarray(list(product((-1.0, 1.0), repeat=dimension)), dtype=jnp.float64)
     c = jnp.full(normals.shape[0], float(radius))
     description = "Centrally symmetric cross-polytope with L1 ball geometry."
-    return Polytope(
-        name=name or f"cross-polytope-{dimension}d",
-        B=normals,
-        c=c,
-        description=description,
-    )
+    geometry = build_from_halfspaces(normals, c)
+    metadata = PolytopeMetadata(slug=slug or f"cross-polytope-{dimension}d", description=description)
+    return PolytopeRecord(geometry=geometry, metadata=metadata)
 
 
 def hypercube(
     dimension: int,
     *,
     radius: float = 1.0,
-    name: str | None = None,
-) -> Polytope:
+    slug: str | None = None,
+) -> PolytopeRecord:
     if dimension < 2:
         raise ValueError("Dimension must be at least two.")
     identity = jnp.eye(dimension)
     B_matrix = jnp.vstack((identity, -identity))
     c = jnp.full(2 * dimension, float(radius))
     description = "Hypercube aligned with the coordinate axes."
-    return Polytope(
-        name=name or f"hypercube-{dimension}d",
-        B=B_matrix,
-        c=c,
-        description=description,
-    )
+    geometry = build_from_halfspaces(B_matrix, c)
+    metadata = PolytopeMetadata(slug=slug or f"hypercube-{dimension}d", description=description)
+    return PolytopeRecord(geometry=geometry, metadata=metadata)
 
 
 def simplex_with_uniform_weights(
     dimension: int,
     *,
     last_offset: float | None = None,
-    name: str | None = None,
-) -> Polytope:
+    slug: str | None = None,
+) -> PolytopeRecord:
     if dimension < 2:
         raise ValueError("Dimension must be at least two.")
     B_matrix = jnp.eye(dimension)
@@ -650,7 +604,7 @@ def simplex_with_uniform_weights(
     if last_offset is None:
         last_offset = dimension / 2
     offsets = offsets.at[-1].set(float(last_offset))
-    polytope_name = name or f"uniform-simplex-{dimension}d"
+    polytope_slug = slug or f"uniform-simplex-{dimension}d"
     reference_capacity = None
     if dimension == 4 and math.isclose(last_offset, dimension / 2):
         reference_capacity = 9.0
@@ -659,16 +613,16 @@ def simplex_with_uniform_weights(
         if dimension == 4
         else "Simplex with uniform coordinate facets and a balancing facet."
     )
-    return Polytope(
-        name=polytope_name,
-        B=B_matrix,
-        c=offsets,
+    geometry = build_from_halfspaces(B_matrix, offsets)
+    metadata = PolytopeMetadata(
+        slug=polytope_slug,
         description=description,
         reference_capacity=reference_capacity,
     )
+    return PolytopeRecord(geometry=geometry, metadata=metadata)
 
 
-def truncated_simplex_four_dim() -> Polytope:
+def truncated_simplex_four_dim() -> PolytopeRecord:
     B_matrix = jnp.array(
         [
             [1.0, 0.0, 0.0, 0.0],
@@ -717,16 +671,16 @@ def truncated_simplex_four_dim() -> Polytope:
 
     reference_capacity = _haim_kislev_action(B_matrix, c)
     description = "Simplex-like model with an extra facet; preserves the optimal Reeb action"
-    return Polytope(
-        name="truncated-simplex-4d",
-        B=B_matrix,
-        c=c,
+    geometry = build_from_halfspaces(B_matrix, c)
+    metadata = PolytopeMetadata(
+        slug="truncated-simplex-4d",
         description=description,
         reference_capacity=reference_capacity,
     )
+    return PolytopeRecord(geometry=geometry, metadata=metadata)
 
 
-def viterbo_counterexample(radius: float = 1.0) -> Polytope:
+def viterbo_counterexample(radius: float = 1.0) -> PolytopeRecord:
     description = (
         "Product of a regular pentagon with its quarter-turned copy,"
         " the Chaidez–Hutchings counterexample to Viterbo's conjecture."
@@ -737,7 +691,7 @@ def viterbo_counterexample(radius: float = 1.0) -> Polytope:
         rotation=math.pi / 2,
         radius_first=radius,
         radius_second=radius,
-        name="viterbo-counterexample",
+        slug="viterbo-counterexample",
         description=description,
     )
 
@@ -782,10 +736,10 @@ def random_polytope(
     facets: int | None = None,
     offset_range: tuple[float, float] = (0.5, 1.5),
     translation_scale: float = 0.2,
-    name: str | None = None,
+    slug: str | None = None,
     description: str | None = None,
     max_attempts: int = 64,
-) -> Polytope:
+) -> PolytopeRecord:
     if dimension <= 0:
         raise ValueError("Dimension must be positive.")
     low, high = offset_range
@@ -815,34 +769,37 @@ def random_polytope(
             continue
         translation = jax.random.normal(k_trans, (dimension,), dtype=jnp.float64) * translation_scale
         translated_c = jnp.asarray(reduced_c) + jnp.asarray(reduced_B) @ translation
-        poly_name = name or f"random-{dimension}d-{attempt}"
-        poly_description = description or (
-            f"Random half-space polytope with {reduced_B.shape[0]} facets in dimension {dimension}."
+        geometry = build_from_halfspaces(
+            jnp.asarray(reduced_B, dtype=jnp.float64),
+            jnp.asarray(translated_c, dtype=jnp.float64),
         )
-        return Polytope(
-            name=poly_name,
-            B=jnp.asarray(reduced_B, dtype=jnp.float64),
-            c=jnp.asarray(translated_c, dtype=jnp.float64),
-            description=poly_description,
+        metadata = PolytopeMetadata(
+            slug=slug or f"random-{dimension}d-{attempt}",
+            description=description
+            or (
+                f"Random half-space polytope with {reduced_B.shape[0]} facets in dimension {dimension}."
+            ),
+            reference_capacity=None,
         )
+        return PolytopeRecord(geometry=geometry, metadata=metadata)
     raise RuntimeError("Failed to generate a bounded random polytope.")
 
 
 def random_transformations(
-    polytope: Polytope,
+    polytope: PolytopeRecord,
     *,
     key: Array,
     count: int,
     scale_range: tuple[float, float] = (0.6, 1.4),
     translation_scale: float = 0.3,
     shear_scale: float = 0.25,
-) -> list[Polytope]:
-    results: list[Polytope] = []
+) -> list[PolytopeRecord]:
+    results: list[PolytopeRecord] = []
     k = key
     for _ in range(count):
         subkey, k = jax.random.split(k)
         matrix, translation = random_affine_map(
-            polytope.dimension,
+            polytope.geometry.dimension,
             key=subkey,
             scale_range=scale_range,
             shear_scale=shear_scale,
@@ -852,24 +809,24 @@ def random_transformations(
             polytope,
             matrix,
             translation=translation,
-            name=f"{polytope.name}-random",
-            description=f"Random affine perturbation of {polytope.name}",
+            slug=f"{polytope.metadata.slug}-random",
+            description=f"Random affine perturbation of {polytope.metadata.slug}",
         )
         results.append(transformed)
     return results
 
 
-def catalog() -> tuple[Polytope, ...]:
-    simplex4 = simplex_with_uniform_weights(4, name="simplex-4d")
+def catalog() -> tuple[PolytopeRecord, ...]:
+    simplex4 = simplex_with_uniform_weights(4, slug="simplex-4d")
     truncated = truncated_simplex_four_dim()
-    simplex6 = simplex_with_uniform_weights(6, name="simplex-6d")
-    cube4 = hypercube(4, name="hypercube-4d")
-    cross4 = cross_polytope(4, name="cross-polytope-4d")
+    simplex6 = simplex_with_uniform_weights(6, slug="simplex-6d")
+    cube4 = hypercube(4, slug="hypercube-4d")
+    cross4 = cross_polytope(4, slug="cross-polytope-4d")
     hexagon_product = regular_polygon_product(
         6,
         6,
         rotation=math.pi / 6,
-        name="hexagon-product-rot30",
+        slug="hexagon-product-rot30",
         description="Product of two hexagons; features twelve facets in dimension four.",
     )
     simplex_product = cartesian_product(
@@ -889,11 +846,12 @@ def catalog() -> tuple[Polytope, ...]:
 
 
 __all__ = [
-    # Data structures
+    "annotate_polytope",
     "Polytope",
+    "PolytopeMetadata",
+    "PolytopeRecord",
     "NormalCone",
     "PolytopeCombinatorics",
-    # Half-space utilities
     "enumerate_vertices",
     "remove_redundant_facets",
     "vertices_from_halfspaces",

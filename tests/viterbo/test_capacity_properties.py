@@ -32,7 +32,7 @@ def test_capacity_equals_area_in_2d_for_rectangles() -> None:
         dtype=jnp.float64,
     )
     P = polytopes.build_from_vertices(vertices)
-    c = capacity.ehz_capacity_reference(P)
+    c = capacity.ehz_capacity_reference(P.normals, P.offsets, P.vertices)
     area = 4.0 * a * b  # side lengths are 2a and 2b → area = 4ab
     assert jnp.isclose(c, area, rtol=1e-12, atol=0.0)
 
@@ -52,9 +52,9 @@ def test_capacity_scales_quadratically_in_2d() -> None:
         dtype=jnp.float64,
     )
     P = polytopes.build_from_vertices(base)
-    c0 = capacity.ehz_capacity_reference(P)
+    c0 = capacity.ehz_capacity_reference(P.normals, P.offsets, P.vertices)
     P_scaled = polytopes.build_from_vertices(base * s)
-    c1 = capacity.ehz_capacity_reference(P_scaled)
+    c1 = capacity.ehz_capacity_reference(P_scaled.normals, P_scaled.offsets, P_scaled.vertices)
     assert jnp.isclose(c1, (s**2) * c0, rtol=1e-12, atol=0.0)
 
 
@@ -74,5 +74,5 @@ def test_capacity_nonnegative_on_4d_simplex() -> None:
         dtype=jnp.float64,
     )
     P = polytopes.build_from_vertices(verts)
-    c = capacity.ehz_capacity_reference(P)
+    c = capacity.ehz_capacity_reference(P.normals, P.offsets, P.vertices)
     assert math.isfinite(float(c)) and float(c) >= 0.0

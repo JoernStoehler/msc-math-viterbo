@@ -37,7 +37,7 @@ def test_capacity_equals_area_random_convex_polygons(n: int, seed: int) -> None:
     rng = np.random.default_rng(seed)
     verts = _random_convex_polygon_vertices(rng, n)
     P = polytopes.build_from_vertices(verts)
-    c = capacity.ehz_capacity_reference(P)
+    c = capacity.ehz_capacity_reference(P.normals, P.offsets, P.vertices)
     a = volume.volume_reference(P)
     assert jnp.isclose(c, a, rtol=1e-9, atol=1e-12)
 
@@ -51,11 +51,11 @@ def test_capacity_rotation_invariance_2d(n: int, theta: float, seed: int) -> Non
     rng = np.random.default_rng(seed)
     verts = _random_convex_polygon_vertices(rng, n)
     P = polytopes.build_from_vertices(verts)
-    c0 = capacity.ehz_capacity_reference(P)
+    c0 = capacity.ehz_capacity_reference(P.normals, P.offsets, P.vertices)
     R = jnp.array([[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]], dtype=jnp.float64)
     verts_rot = verts @ R.T
     P_rot = polytopes.build_from_vertices(verts_rot)
-    c1 = capacity.ehz_capacity_reference(P_rot)
+    c1 = capacity.ehz_capacity_reference(P_rot.normals, P_rot.offsets, P_rot.vertices)
     assert jnp.isclose(c0, c1, rtol=1e-9, atol=1e-12)
 
 
