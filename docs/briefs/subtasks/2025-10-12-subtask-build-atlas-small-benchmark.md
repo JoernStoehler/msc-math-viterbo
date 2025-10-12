@@ -1,4 +1,4 @@
-status: proposed
+status: complete
 created: 2025-10-12
 workflow: task
 summary: Sketch the atlas-small dataset build and benchmarking run across generators and quantity algorithms.
@@ -62,9 +62,21 @@ summary: Sketch the atlas-small dataset build and benchmarking run across genera
 - Persist raw timing/instrumentation outputs alongside the processed benchmark summary so deeper analyses do not require reruns.
 - Geometry artefacts can live in-repo (Git LFS is fine) without licensing concerns.
 
+## Outcome
+
+- Implemented `viterbo.atlas_build` with generator manifests, quantity instrumentation, and resumable execution for `atlas-tiny`
+  and `atlas-small` presets.
+- Added `scripts/build_atlas_small.py` to orchestrate dataset builds and benchmark logging into `artefacts/datasets/` and
+  `artefacts/benchmarks/`.
+- Created smoke tests that cover dataset generation, manifest integrity, timing logs, and resume semantics.
+- Default plan spans five generator families with ~10³ samples for `atlas-small`; overrides allow lighter developer runs while
+  retaining deterministic seeds.
+- Dataset artefacts now include `manifest.json`, timing summaries, and README guidance for consumption and resumption.
+
 ## Open Questions
 
-1. Select or design the timing harness: weigh integrating with existing benchmark tooling (e.g. `tests/performance`) versus a purpose-built notebook logger tailored for occasional atlas builds.
+1. (Resolved) Adopted a purpose-built harness (`viterbo.atlas_build`) with JSONL logging; integration with `tests/performance`
+   remains a potential follow-up if shared abstractions emerge.
 
 ## Notes
 
