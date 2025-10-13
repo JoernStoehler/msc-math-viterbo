@@ -128,3 +128,7 @@ PR message:
 - Ragged patterns: use lists of tensors or padded tensors + masks; provide collate functions (`collate_list`, `collate_pad`).
 - Devices: accept caller’s device; do not move implicitly. Dtypes are documented at each function.
 - C++ interop: CPU‑only baseline via `torch.utils.cpp_extension`; no CUDA unless required; keep fallbacks to Python/Torch.
+
+## 14) Current Focus
+
+- Primary research target: 4D polytopes in the symplectic standard setting.
