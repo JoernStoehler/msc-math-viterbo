@@ -1,315 +1,131 @@
 # AGENTS.md
 
-Single authoritative policy. This file distils the important takeaways from configs and reference 
-documentation, so agents can start their work quickly. If another doc conflicts, follow AGENTS.md.
+Single authoritative policy for this repo. If another doc conflicts, follow AGENTS.md.
 
 ## 0) Roles & Scope (facts)
 
 - Maintainer (PI)
-  - Approves task briefs (agents draft and iterate with the PI).
-  - Merges PRs; owns environment/DevOps and research/architecture decisions.
-  - Approves policy waivers and larger directional changes.
+  - Approves task briefs and larger directional changes.
+  - Owns DevOps/CI, merges PRs, and steers research/architecture.
 - Codex agents (ephemeral)
-  - Implement focused changes (feature/fix/refactor/docs/tests/benchmarks) on the golden path.
-  - Draft task briefs when useful and escalate uncertainties early.
-  - Open PRs and iterate until CI is green. The PI merges PRs.
-- Escalation triggers (choose one channel: PR description, `Needs-Unblock: <topic>`, or issue)
-  - Ambiguous acceptance criteria, unclear invariants, or competing interpretations.
-  - Environment/DevOps changes; policy conflicts; need for a waiver.
-  - Cross‑task research/architecture choices.
-  - Performance regressions beyond thresholds; inability to reproduce CI locally.
+  - Implement focused, incremental changes (feature/fix/refactor/docs/tests/benchmarks).
+  - Draft briefs when helpful; escalate uncertainties early.
+  - Open PRs and iterate until CI is green; PI merges.
+- Escalation triggers (PR description with `Needs-Unblock: <topic>` or issue)
+  - Ambiguous acceptance criteria; policy conflicts; larger env/CI changes.
+  - Cross‑task architecture choices; performance regressions beyond thresholds.
 
-## 1) Sources of Truth & Reference Materials (facts)
+## 1) Sources of Truth (facts)
 
-- AGENTS.md: rules, workflows, basic context.
-- Configuration files:
-  - Dependencies: `pyproject.toml`, `uv.lock` (pinned).
-  - Formatting, Linting: `pyproject.toml` (Ruff format + lint). Lint focuses on correctness and
-    policy, not cosmetic style. Auto‑fixable styling (e.g., import sorting) is allowed; non‑fixable
-    whitespace/empty‑line nags are disabled.
-  - Typing: `pyrightconfig.json` (strict; diagnostics are errors).
-  - Pytest defaults: `pytest.ini` (markers, session timeout, smoke filter).
-  - CI: `.github/workflows/ci.yml`.
-  - Environment: `.devcontainer/` (`devcontainer.json`, `post-create.sh`, `post-start.sh`).
-- Golden-path task runner: `Justfile` recipes.
-- Policy Waivers: `waivers.toml`.
-- Reference docs: `docs/` (math references, key context notes).
-- Briefs & workflow notes: `docs/briefs/` (date-prefixed Markdown with YAML front matter capturing
-  `status`, `workflow`, `summary`, and `created`). Keep briefs flat—no nested subfolders. Use the
-  naming pattern `YYYY-MM-DD-workflow-slug.md` and embed dependency call-outs inline. Place any
-  situational guidance or long-form execution notes in additional briefs rather than resurrecting
-  the old `docs/tasks/` hierarchy. Follow the layout conventions in
-  `docs/briefs/2025-10-12-workflow-brief-authoring.md` when drafting new briefs or workflow notes.
-- Source code: `src/viterbo/` (library), `tests/viterbo/` (unit/integration tests),
-  `tests/performance/viterbo/` (benchmarks).
-- Thesis: `thesis/` (LaTeX source).
-- Weekly progress reports: `mail/` (drafts, sent mails).
+- AGENTS.md (this file), MIGRATION.md (PyTorch+C++ migration log).
+- Config: `pyproject.toml` (deps, Ruff), `pyrightconfig.json` (basic), `pytest.ini` (smoke defaults), `.github/workflows/ci.yml` (CI), `.devcontainer/`.
+- Task runner: `Justfile`.
+- Waivers: `waivers.toml`.
+- Code: `src/viterbo/` (library), `tests/` (smoke + benchmarks).
+- Notes: `docs/` stubs and `notebooks/` examples during migration.
 
 ## 2) Environment & Tooling
 
-- Provisioned environment: Agents start in a ready‑to‑use devcontainer with deps installed and
-  x64 JAX enabled (`JAX_ENABLE_X64=1`). No manual setup required.
-- Dependency manager: uv. Use `uv run`, `uv sync`, and `uv add`. Commit `uv.lock`.
-- Verifying locally (only if replicating outside the provisioned env):
-  - One‑time: `bash .devcontainer/post-create.sh`
-  - Each boot: `bash .devcontainer/post-start.sh`
-  - Install: `just setup`
+- Stack: Python 3.12, PyTorch 2.x (CPU baseline; optional CUDA for models only).
+- Dependency manager: uv (`uv run`, `uv sync`, `uv add`). Commit `uv.lock`.
+- Editors: Pyright (basic) for fast feedback; Ruff for lint/format.
 
 ## 3) Coding Conventions (facts)
 
-- Docstrings: keep Google style, but focus on semantics over shapes.
-  - Public, stable APIs: include concise docstrings that explain semantics, invariants,
-    error behavior, units, and algorithmic intent. Do not restate shapes/dtypes already
-    covered by jaxtyping.
-  - Experimental code (e.g., `src/viterbo/exp1/**`): docstrings are optional during
-    incubation to keep iteration fast. Before promoting APIs to the main namespace,
-    add proper docstrings.
-  - Private helpers (`_*.py` or names starting with `_`): docstrings optional.
-- Half‑spaces naming: prefer semantic names `normals` and `offsets` for ``Bx ≤ c`` in public
-  APIs and docs; reserve short algebraic symbols for small local math blocks only.
-- JAX‑first: library code uses `jax.numpy`; return JAX arrays from public APIs.
-- Arrays & shapes: jaxtyping with explicit shapes/dtypes.
-  - Import: `from jaxtyping import Array, Float`; annotate as `Float[Array, " <shape>"]`.
-  - Use a leading space in the shape string to avoid erroneous Ruff F821 warnings/errors.
-  - Use shape literals, not constants. No custom typedefs (`Vector`, `FloatMatrix`, …).
-  - Examples of shape tokens: semantic `" num_facets dimension"`, algebraic `" B k n dimension"`.
-- Dtypes: default to float64; document and justify deviations; never downcast silently.
-- Purity: math code is pure (no I/O, no hidden state). Keep side‑effects in thin adapters.
-- Validation philosophy: prefer type/shape clarity and tests over redundant runtime assertions.
-  - Use `jaxtyping` + `beartype`/`jaxtyped` in tests for shape/name validation.
-  - Add explicit checks only for domain constraints that tests can’t reasonably cover.
-- Logging: use `logging` (module loggers). Logs may be elided under JIT; avoid logging patterns
-  that cause tracing errors; prefer logging in non‑jitted paths.
-- Imports & structure: absolute imports; no wildcard imports; no `__all__`. Keep modules modest;
-  split by cohesive concerns. Avoid re‑export indirection; prefer explicit import paths in code.
-- Security: credentials/config via env vars; never print or log secrets.
-- Branching & commits: `feat/<scope>`, `fix/<scope>`, `refactor/<scope>`; Conventional Commits.
-- API policy (v0.x): breaking changes allowed; update tests/docs in the same PR.
+- PyTorch‑first: library code uses `torch` tensors; return tensors from public APIs.
+- Precision: default to float32/float64 as context requires; avoid silent downcasts; document deviations.
+- Ragged data: allow Python lists of tensors or padded tensors with masks; expose `collate_fn`s in `datasets`.
+- Purity: `viterbo.math` is pure (no I/O, no hidden state). Keep side‑effects in adapters.
+- Docstrings: concise Google‑style focusing on semantics, invariants, and units. Avoid over‑specifying shapes; add shape/dtype notes when useful.
+- Imports & structure: absolute imports; no wildcard imports; avoid re‑export indirection; prefer explicit paths.
+- Security: never print/log secrets.
+- Branching: `feat/<scope>`, `fix/<scope>`, `refactor/<scope>`; Conventional Commits.
 
-## 4) JAX‑first specifics (facts)
+## 4) PyTorch + C++ specifics (facts)
 
-- Two variants when performance matters:
-  - Reference: readable, trusted, JAX‑first; Python control flow allowed; no JIT requirement.
-  - Fast: performance-optimized, jit‑able; prefer `jax.jit`, `vmap`, `lax` instead of Python loops on hot paths.
-- Precision: x64 is mandatory; do not downcast silently.
-- RNG: prefer JAX PRNG keys (`jax.random.PRNGKey`) or integer seeds; split keys locally; avoid
-  hidden global state.
-- Plotting/IO: convert to NumPy (`np.asarray`) at call sites (examples/tests), not within library
-  code.
-- Interop boundary: SciPy/NumPy calls live only under `viterbo/_wrapped/` (e.g., spatial Qhull,
-  scipy.optimize.linprog, byte hashing). Library code stays JAX‑first and should not import SciPy.
+- Device policy: math APIs accept tensors on caller’s device; no implicit device moves.
+- RNG: use `torch.Generator` or seed ints passed explicitly.
+- C++: use `torch.utils.cpp_extension` + pybind11; start CPU‑only. Add CUDA only when required.
+- Plotting/IO: push conversions to call sites (e.g., `tensor.detach().cpu().numpy()` when needed).
 
-## 5) Minimal example (Google docstring + jaxtyping)
+## 5) Minimal Example (PyTorch)
 
 ```python
-import jax.numpy as jnp
-from jaxtyping import Array, Float
+import torch
 
-def ehz_capacity(
-    facets: Float[Array, " num_facets dimension"],
-    normals: Float[Array, " num_facets dimension"],
-) -> float:
-    """Estimate EHZ capacity for a convex polytope.
+def support(points: torch.Tensor, direction: torch.Tensor) -> torch.Tensor:
+    """Support function of a finite point set.
 
     Args:
-      facets: Facet data, shape (num_facets, dimension). Units: coordinates.
-      normals: Outward facet normals, shape (num_facets, dimension). Must align with `facets`.
+      points: (N, D) float tensor.
+      direction: (D,) float tensor; not normalized.
 
     Returns:
-      Scalar capacity estimate.
+      Scalar tensor: max_i <points[i], direction>.
     """
-    facets = jnp.asarray(facets, dtype=jnp.float64)
-    normals = jnp.asarray(normals, dtype=jnp.float64)
-    capacity = jnp.maximum(0.0, jnp.mean(jnp.einsum("fd,fd->f", facets, normals)))
-    return float(capacity)
+    return (points @ direction).max()
 ```
 
 ## 6) Testing (facts)
 
-- Structure: organize by feature/module; explicit fixtures; no hidden I/O; clean up temp files.
-- Metadata: every `tests/**/test_*.py` function must declare exactly one goal marker
-  (`@pytest.mark.goal_math`, `@pytest.mark.goal_code`, or `@pytest.mark.goal_performance`) and
-  start with a concise docstring that states the invariant or behaviour under test. Docstrings in
-  `tests/` may use plain prose (no Google-style sections required) but must mention what the test
-  covers and, for math/code markers, which algorithmic surface or property is exercised.
-- Suite markers: every test must declare exactly one suite marker
-  (`@pytest.mark.smoke`, `@pytest.mark.deep`, or `@pytest.mark.longhaul`). The developer loop
-  (“just checks”) and default CI run select only `smoke` (positive whitelist). Deeper tiers are
-  opt‑in.
-- To inspect metadata quickly, run `just test-metadata ARGS="--marker goal_math"` (omit `ARGS` to
-  list everything). The script prints a deterministic summary (`LINES:<n>` + `path::test` rows).
-- Tolerances: choose context‑appropriate tolerances; document rationale. Typical float64 ranges are
-  `rtol` ~ 1e‑9–1e‑12 and `atol` near 0.0 for well‑conditioned problems, but adjust as needed.
-- Assertions: use clear options such as `pytest.approx`, `numpy.testing.assert_allclose`,
-  `numpy.isclose`, or `math.isclose` depending on the case.
-- Justfile toggles for pytest-driven targets:
-  - Testmon caching is enabled by default. Set `USE_TESTMON=0` to disable for a run.
-  - `PYTEST_ARGS="..."` forwards additional selectors/markers (e.g., `PYTEST_ARGS="-k smoke"`).
-- Property‑based tests: welcome when invariants are cleanly expressible (e.g., monotonicity,
-  symmetry). Prefer Hypothesis.
-- Shape/name validation in tests: enable `jaxtyping` + `beartype`/`jaxtyped` during tests when
-  valuable; avoid cluttering library code with repetitive checks.
-- Pytest tiering: layer `smoke`, `deep`, `longhaul` markers on top of `benchmark`,
-  `line_profile`, `slow`. `just test` runs smoke with a 10 s per-test timeout, a hard 60 s session
-  cap, `--maxfail=1`, and a slow-test summary (`--durations=15`). `just test-deep` runs the deep
-  tier; `just test-longhaul` is manual/scheduled. See
-  `docs/briefs/2025-10-07-workflow-task-evaluation.md` for evaluation guidance and test/benchmark
-  cadence expectations. See `docs/briefs/2025-10-12-workflow-task-evaluation.md`.
-- Invariant baselines live under `tests/_baselines/` as JSON; update values only with
-  maintainer sign-off and record the rationale in the PR/task brief.
+- Keep tests pragmatic and fast. Prefer smoke tests and representative benchmarks.
+- Structure: organize by module (`tests/test_*.py`, `tests/performance/test_*.py`).
+- Timeouts: keep smoke tests under a few seconds locally and in CI.
+- Benchmarks: use `pytest-benchmark` with fixed RNG seeds; save artefacts under `.benchmarks/`.
+- Assertions: use `pytest.approx`, `torch.testing.assert_close`, or `math.isclose` appropriately.
 
 ## 7) Performance (facts)
 
-- Benchmarks live in `tests/performance/` and reuse correctness fixtures. Keep RNG seeds fixed.
-- Run `just bench`; include a brief delta in PRs vs baseline/artifact.
-- Bench tiers: `just bench` (smoke/CI), `just bench-deep` (pre-merge),
-  `just bench-longhaul` (scheduled); archive longhaul runs in reports or
-  task briefs.
-- Scheduled CI runs `just test-longhaul` and `just bench-longhaul` weekly; longhaul failures block
-  merges until resolved or waived.
-- Profiling: `just profile` / `just profile-line` wrap `uv run` and write to
-  `.profiles/`; notebooks are out of scope.
-- If regression > 10% without justification, add a time‑boxed waiver to `waivers.toml` and open a
-  follow‑up issue.
+- Start with pure Python/Torch; introduce C++ for clear hotspots only.
+- Benchmarks live in `tests/performance/`; use `just bench` to run smoke benches.
+- Profile on demand with local tools; notebooks are fine for exploration.
 
 ## 8) Workflows (imperative)
 
-Daily development (in provisioned env)
+Daily development
 
-1. Read the task and scan relevant modules/tests.
-2. Plan the minimal change (one feature OR one fix OR one refactor). Write a short plan (≈4–7 steps).
-3. Implement pure functions in `src/viterbo/`; keep I/O at the edges. Add/adjust tests.
-4. Run: `just precommit-fast` during quick loops (wraps `lint-fast` + `test-incremental`); finish with
-   `just precommit` (alias for `just precommit-slow`) before handing off or requesting review. Use
-   `just help` for per-target tips, toggles, and related workflows (testmon caching is on by default;
-   set `USE_TESTMON=0` to disable, `PYTEST_ARGS="..."` forwards selectors/markers).
-   - Lint tiers: `just lint-fast` runs Ruff E/F/B essentials (ignores jaxtyping F722); `just lint`
-     mirrors CI (Ruff policy set).
-   - Typechecking tiers: `just typecheck-fast` targets `src/viterbo`; `just typecheck` covers the
-     entire repo.
-
-Short loops may use direct commands (`uv run pytest path/to/test.py`, custom markers, etc.). Close
-each handoff by re-running the golden-path targets above.
+1. Read task; scan relevant code/tests.
+2. Write a short plan (4–7 steps) and implement minimal, cohesive changes.
+3. Keep math pure; do I/O only in datasets/models/adapters.
+4. Run `just precommit` before handoff (format, lint, type, smoke tests).
 
 Pre‑PR checks
 
-- Keep diffs focused and coherent. Ensure types, tests, and docs are updated.
-- Ensure `just ci` is green locally (includes smoke tests with coverage). If the golden path breaks,
-  do not hand‑tune — escalate.
-- Run `just precommit` (slow tier) before requesting review; `just precommit-fast` is for local
-  iteration only.
-- Run `just coverage` when you need local HTML reports before requesting review.
-- Before landing performance-sensitive changes, run `just test-deep` and
-  `just bench-deep`; only run the longhaul tiers when maintainer asks.
+- Keep diffs focused; update tests/docs accordingly.
+- Ensure `just ci` is green locally.
 
 PR content
 
-- Scope, files touched, what you read, what you changed, how you tested (Ruff/Pyright/pytest
-  summaries), perf delta (if applicable), limitations, clarifications (with assumptions), follow‑ups
-  (H/M/L). Include file path references when helpful (e.g., `path/to/file.py:42`).
+- Scope, files touched, what changed, how tested (Ruff/Pyright/pytest summaries), perf delta if relevant, limitations and follow‑ups.
 
 Blocked?
 
-- After 60–90 minutes of focused effort, open a draft PR `Needs-Unblock: <topic>` with blockers and
-  a proposed fallback.
+- After ~60–90 minutes blocked, open a draft PR with `Needs-Unblock: <topic>`.
 
 ## 9) CI & Branch Protection (facts)
 
-- `just ci` mirrors GitHub Actions: dedicated jobs run format/lint, typecheck, and smoke+coverage
-  tests while the weekly schedule executes the longhaul tiers.
-- Branch protection: all checks must pass before merge; concurrency cancels in‑progress runs per ref.
-- Enforcement lives in repo configs; contributors need not re‑validate tool configuration.
+- `just ci` mirrors GitHub Actions: lint, type, and smoke tests; weekly jobs may run longer benches later.
 
 ## 10) Policy Waivers (facts)
 
-- Deviations live in `waivers.toml` with: `id`, `summary`, `owner`, `scope`, `created`, `expires`
-  (YYYY‑MM‑DD), `justification`, `removal_plan`. CI fails on expiry via `scripts/check_waivers.py`.
+- Deviations live in `waivers.toml` with `id`, `summary`, `owner`, `scope`, `created`, `expires`, `justification`, `removal_plan`.
 
-## 11) Process: Docs, Thesis, Weekly Mail (facts)
+## 11) Module Layout & Conventions (facts)
 
-- Docs authoring (`docs/`): concise Markdown documenting decisions, math references, and overviews;
-  include relative links to modules/tests; avoid committing rendered artefacts unless requested.
-- Thesis authoring (`thesis/`): single entry `thesis/main.tex`; include chapters via
-  `\include{chapters/<name>}`; figures under `thesis/figures/`; prefer vector formats; use
-  `thesis/macros.tex` for recurring notation; commit sources only (no build artefacts).
-- Weekly progress mail (`mail/`): use the scaffold in that folder; each week lives in
-  `mail/<YYYY-MM-DD>/` with `curated-takeaways.md`, `gathered-changes.md`, and `mail.md`;
-  British English; short, outcome-led paragraphs and bullets.
-
-## 12) Scope & Enforcement (facts)
-
-- This file applies to all tasks and agents. Maintain a single golden path.
-- There must be exactly one `AGENTS.md` at the repository root; do not add per‑folder variants.
-- If tools disagree or the golden path breaks, open `Needs-Unblock` instead of hand‑tuning.
-
-## 13) Module Layout & Conventions (facts)
-
-- Namespaces and responsibilities
-  - `viterbo.math`: pure mathematical definitions and algorithms.
-    - JAX‑first, float64; inputs/outputs are JAX arrays or tuples of arrays.
-    - No dataclasses, no I/O, no caching, no HF datasets. Deterministic/stateless.
-    - Examples: `geometry` (halfspace/vertex utilities, incidence), `combinatorics`,
-      `volume`, `symplectic`, `capacity/*`, `spectrum`, `similarity`, `systolic`.
-  - `viterbo.datasets`: dataset representations and adapters.
-    - Defines canonical column types (JAX/HF compatible), converters, and wrappers that
-      compute columns from other columns using math functions. May include caching.
-    - HF integration lives here (Features, build/append/map/save/load) and thin wrappers
-      around math-layer algorithms. Datasets do not implement new math algorithms.
-      Any sampling/generation logic (e.g., random polytopes, shape builders) lives in
-      `viterbo.math` and is merely adapted here.
-  - `viterbo._wrapped`: interop with external libs (NumPy/SciPy/Qhull/HiGHS/CVX) to keep
-    the math layer JAX‑first and SciPy‑free.
-  - `viterbo.visualization`: empty placeholder for future stable helpers promoted from notebooks.
-  - `viterbo.models`: empty placeholder for future stable training utilities.
+- Namespaces
+  - `viterbo.math`: pure geometry/math utilities (Torch tensors I/O).
+  - `viterbo.datasets`: adapters/datasets/collate functions for ragged data; thin wrappers around math.
+  - `viterbo.models`: experiments/training loops; may use GPU; no core math here.
+  - `viterbo._cpp`: C++/pybind11 extensions (CPU baseline).
 
 - Conventions
-  - Use semantic names `normals`, `offsets` for Bx ≤ c. Public math APIs return JAX arrays.
-  - Datasets layer owns `Polytope`, `PolytopeRecord`, caching and HF `Features` schemas.
-  - No DSL for datasets: expose a simple registry of available methods per column and
-    convenience wrappers; callers choose methods at call sites.
-  - During transition, thin re‑exports in legacy module paths are allowed to keep imports
-    stable; prefer importing from `viterbo.math`/`viterbo.datasets` for new code.
+  - Use semantic names like `normals`, `offsets` for halfspaces `Bx ≤ c` where applicable.
+  - Avoid dataclasses in `math`; return tensors/tuples of tensors.
+  - Keep `datasets` simple; no DSL; explicit functions and small classes.
 
-## 14) Policy Clarifications & Bans (imperative)
+## 12) Clarifications & Bans (imperative)
 
-- `__all__` is forbidden across the repository.
-  - Do not declare `__all__` lists in any module, including `__init__.py`.
-  - If a curated public surface is needed during transition, use explicit imports
-    in `__init__.py` (accepting `F401` per-file ignore) without `__all__`. Prefer
-    consumers import from concrete modules rather than re-exports.
-
-- No custom typedefs or aliases for jaxtyping arrays or dimensions.
-  - Do not declare `TypeAlias`-based aliases for tuples/records that could be
-    annotated directly at call sites.
-  - Do not introduce dimension-name constants for jaxtyping shape strings; use
-    string literals inline (AGENTS.md 3: Arrays & shapes).
-  - Do not alias `Any` (e.g., `Serializable = Any`) to bypass typing.
-
-- Strict layering between `math` and `datasets`.
-  - `viterbo.math` is self-contained: it must not import from `viterbo.datasets` or
-    `viterbo.datasets2`. It remains JAX-first and SciPy-free, using only
-    `viterbo._wrapped` for interop where required.
-  - `viterbo.datasets` adapts math functions to dataset forms (schemas, caching,
-    conversion) but does not implement math algorithms.
-
-- Algorithms live in `viterbo.math`.
-  - Random sampling, geometric generators/builders (e.g., hypercubes, cross polytopes,
-    half-space sampling), and incidence/geometry utilities belong to the math layer.
-  - Dataset code may wrap or compose these algorithms but should not duplicate or
-    introduce new math logic.
-
-- `viterbo.math` avoids dataclasses and container indirection.
-  - Math APIs return JAX arrays or tuples of arrays. No dataclasses, Protocols, or
-    container wrappers in the math layer.
-
-- `viterbo.datasets2` follows YAGNI and KISS.
-  - Use minimal, lightweight containers only where they clearly improve readability
-    for call sites (e.g., a single small frozen dataclass to group columns).
-  - Avoid Protocol/TypedDict hierarchies, dynamic module proxies, and re-export
-    indirection. Prefer explicit functions and direct imports.
-
-- Enforcement guidance
-  - Lint/typecheck should surface violations; if a ban requires new checks, note
-    the gap in a brief and add enforcement in a follow-up PR.
-  - Prefer small, focused cleanups to remove policy violations rather than adding
-    exceptions. Use `waivers.toml` only when strictly necessary and time-boxed.
+- No `__all__` across the repository.
+- Avoid custom typedefs for shapes/dimensions; annotate directly at call sites.
+- Maintain strict layering: `math` must not depend on `datasets`/`models`.
+- Prefer small, focused cleanups over exceptions. Use waivers only when necessary and time‑boxed.

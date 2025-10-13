@@ -15,8 +15,6 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    env:
-      JAX_ENABLE_X64: "1"
     steps:
       - uses: actions/checkout@v4
 
@@ -43,14 +41,18 @@ jobs:
           path: ~/.cache/uv
           key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
 
-      - name: Run CI
-        run: just ci
+      - name: Run CI (CPU torch)
+        run: just ci-cpu
+
+      - name: Run Deep Tests
+        run: just test-deep-sys
+
+      - name: Run Benchmarks (smoke)
+        run: just bench-sys
 
   longhaul-regression:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    env:
-      JAX_ENABLE_X64: "1"
     steps:
       - uses: actions/checkout@v4
 

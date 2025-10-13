@@ -1,6 +1,5 @@
-"""Model training utilities (placeholder).
+"""Models and experiment scaffolds (optionally GPU-enabled)."""
 
-This package will host stable training helpers promoted from notebooks.
-"""
+from viterbo.models.demo import run_probe
 
-from __future__ import annotations
+__all__ = ["run_probe"]
