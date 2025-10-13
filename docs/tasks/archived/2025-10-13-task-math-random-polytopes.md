@@ -1,7 +1,8 @@
 ---
 title: "Math/Random: polytope generators (H and V)"
 created: 2025-10-13
-status: ready
+completed: 2025-10-20
+status: done
 owner: TBD
 branch: task/math-random-polytopes
 priority: medium
@@ -15,6 +16,11 @@ deps:
 ## Summary
 
 Implement two random polytope generators: (1) via random halfspaces and (2) via random vertices. Focus on reproducibility (seedable), removal of redundancies, and returning both V and H reps.
+
+## Delivered
+
+- `random_polytope_algorithm1` and `random_polytope_algorithm2` now live in `src/viterbo/math/random_polytopes.py` with deterministic seeding.
+- `tests/test_math_random_polytopes.py` validates reproducibility and geometry invariants for 2D/3D fixtures.
 
 ## Deliverables
 

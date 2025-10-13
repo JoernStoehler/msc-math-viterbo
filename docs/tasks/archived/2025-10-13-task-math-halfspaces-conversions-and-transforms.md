@@ -1,7 +1,8 @@
 ---
 title: "Math/H-Rep: conversions and transforms"
 created: 2025-10-13
-status: ready
+completed: 2025-10-20
+status: done
 owner: TBD
 branch: task/math-halfspaces-conversions-transforms
 priority: high
@@ -14,6 +15,11 @@ deps:
 ## Summary
 
 Implement H↔V conversions and simple H-rep transforms (linear map and translation) for convex polytopes. Keep implementations pure Torch (CPU baseline), with clear dtype/device semantics and docstrings.
+
+## Delivered
+
+- Added `vertices_to_halfspaces`, `halfspaces_to_vertices`, and transform helpers in `src/viterbo/math/halfspaces.py` with determinism notes.
+- Coverage lives in `tests/test_math_halfspaces.py` exercising round-trips and transforms in 2D/3D.
 
 ## Deliverables
 
