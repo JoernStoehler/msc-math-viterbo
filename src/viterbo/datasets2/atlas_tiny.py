@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 
 import jax
 from datasets import Dataset, Features, Sequence, Value
@@ -64,100 +65,146 @@ def rows() -> tuple[dict[str, object], ...]:
 
     cases: list[tuple[str, str, dict[str, object], generators.PolytopeSample]] = []
 
-    cases.append(
-        (
-            "hypercube-2",
-            "hypercube",
-            {"dimension": 2, "radius": 1.0},
-            generators.hypercube(dimension=2, radius=1.0),
-        )
-    )
-    cases.append(
-        (
-            "cross-polytope-2",
-            "cross_polytope",
-            {"dimension": 2, "radius": 1.0},
-            generators.cross_polytope(dimension=2, radius=1.0),
-        )
-    )
-    cases.append(
-        (
-            "simplex-2",
-            "simplex",
-            {"dimension": 2},
-            generators.simplex(dimension=2),
-        )
-    )
+    dimension = 4
 
     halfspace_sample = generators.sample_halfspace(
         jax.random.PRNGKey(0),
-        dimension=2,
-        num_facets=6,
+        dimension=dimension,
+        num_facets=10,
         num_samples=1,
     )[0]
     cases.append(
         (
-            "random-halfspace-2",
+            "random-halfspace-4",
             "sample_halfspace",
-            {"dimension": 2, "num_facets": 6, "num_samples": 1, "seed": 0},
+            {
+                "dimension": dimension,
+                "num_facets": 10,
+                "num_samples": 1,
+                "seed": 0,
+            },
             halfspace_sample,
         )
     )
 
     tangent_sample = generators.sample_halfspace_tangent(
         jax.random.PRNGKey(1),
-        dimension=2,
-        num_facets=5,
+        dimension=dimension,
+        num_facets=8,
         num_samples=1,
     )[0]
     cases.append(
         (
-            "tangent-halfspace-2",
+            "tangent-halfspace-4",
             "sample_halfspace_tangent",
-            {"dimension": 2, "num_facets": 5, "num_samples": 1, "seed": 1},
+            {
+                "dimension": dimension,
+                "num_facets": 8,
+                "num_samples": 1,
+                "seed": 1,
+            },
             tangent_sample,
         )
     )
 
     sphere_sample = generators.sample_uniform_sphere(
         jax.random.PRNGKey(2),
-        dimension=2,
+        dimension=dimension,
         num_samples=1,
     )[0]
     cases.append(
         (
-            "sphere-hull-2",
+            "sphere-hull-4",
             "sample_uniform_sphere",
-            {"dimension": 2, "num_samples": 1, "seed": 2},
+            {"dimension": dimension, "num_samples": 1, "seed": 2},
             sphere_sample,
         )
     )
 
     ball_sample = generators.sample_uniform_ball(
         jax.random.PRNGKey(3),
-        dimension=2,
+        dimension=dimension,
         num_samples=1,
     )[0]
     cases.append(
         (
-            "ball-hull-2",
+            "ball-hull-4",
             "sample_uniform_ball",
-            {"dimension": 2, "num_samples": 1, "seed": 3},
+            {"dimension": dimension, "num_samples": 1, "seed": 3},
             ball_sample,
         )
     )
 
-    product_sample = generators.enumerate_product_ngons(
-        max_ngon_P=3,
-        max_ngon_Q=3,
-        max_rotation_Q=1,
-    )[0]
+    max_ngon_P = 5
+    max_ngon_Q = 5
+    max_rotation_Q = 6
+    product_samples = generators.enumerate_product_ngons(
+        max_ngon_P=max_ngon_P,
+        max_ngon_Q=max_ngon_Q,
+        max_rotation_Q=max_rotation_Q,
+    )
+    enumeration_metadata: list[dict[str, object]] = []
+    for k_P in range(3, max_ngon_P + 1):
+        for k_Q in range(3, max_ngon_Q + 1):
+            for s in range(1, max_rotation_Q + 1):
+                for r in range(0, s):
+                    if r == 0 and s != 1:
+                        continue
+                    if r != 0 and math.gcd(r, s) != 1:
+                        continue
+                    if r / s >= 1.0 / k_Q:
+                        continue
+                    angle = 2.0 * math.pi * r / s
+                    enumeration_metadata.append(
+                        {
+                            "max_ngon_P": max_ngon_P,
+                            "max_ngon_Q": max_ngon_Q,
+                            "max_rotation_Q": max_rotation_Q,
+                            "k_P": k_P,
+                            "k_Q": k_Q,
+                            "rotation": {
+                                "numerator": r,
+                                "denominator": s,
+                            },
+                            "rotation_radians": angle,
+                        }
+                    )
+
+    target_index = next(
+        (
+            index
+            for index, meta in enumerate(enumeration_metadata)
+            if meta["k_P"] == 5
+            and meta["k_Q"] == 5
+            and meta["rotation"]["numerator"] == 1
+            and meta["rotation"]["denominator"] == 6
+        ),
+        None,
+    )
+    if target_index is None:
+        raise RuntimeError("Failed to locate requested product-ngon configuration")
+    product_sample = product_samples[target_index]
+    product_config = enumeration_metadata[target_index]
     cases.append(
         (
-            "product-ngon-3x3",
+            "product-ngon-5x5-rot-1-6",
             "enumerate_product_ngons",
-            {"max_ngon_P": 3, "max_ngon_Q": 3, "max_rotation_Q": 1},
+            product_config,
             product_sample,
+        )
+    )
+
+    pentagon_sample = generators.pentagon_product_4d_sample(rotation=math.pi / 2.0)
+    cases.append(
+        (
+            "pentagon-product-counterexample",
+            "pentagon_product_4d",
+            {
+                "rotation_radians": math.pi / 2.0,
+                "rotation_degrees": 90.0,
+                "radius": 1.0,
+            },
+            pentagon_sample,
         )
     )
 
