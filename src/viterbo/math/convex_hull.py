@@ -7,4 +7,3 @@ Planned features:
 """
 
 # TODO: Implement convex_hull(points) -> dict(vertices=..., faces=..., incidence=...)
-

@@ -7,4 +7,3 @@ Planned features:
 """
 
 # TODO: Implement vertex_to_halfspaces(points) -> (normals, offsets)
-

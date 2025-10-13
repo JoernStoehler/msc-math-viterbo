@@ -2,7 +2,7 @@ import pytest
 import torch
 from torch.utils.data import DataLoader
 
-from viterbo.datasets import RaggedPointsDataset, collate_list, collate_pad
+from viterbo.datasets.core import RaggedPointsDataset, collate_list, collate_pad
 from viterbo.math.geometry import (
     bounding_box,
     halfspace_violations,
@@ -10,7 +10,7 @@ from viterbo.math.geometry import (
     support,
     support_argmax,
 )
-from viterbo.models import run_probe
+from viterbo.models.demo import run_probe
 
 pytestmark = pytest.mark.smoke
 

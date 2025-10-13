@@ -11,4 +11,3 @@ def test_cpp_add_one_smoke():
     x = torch.tensor([0.0, 1.0, 2.0])
     y = add_one(x)
     assert torch.allclose(y, x + 1)
-

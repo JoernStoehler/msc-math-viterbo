@@ -1,7 +1,7 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
 set export := true
 
-default: precommit
+default: checks
 
 UV := env_var_or_default("UV", "uv")
 
@@ -86,8 +86,16 @@ type-strict:
 # Smoke-tier pytest with enforced timeouts.
 # Default: impacted (serial). Falls back to full serial.
 test:
-    @echo "Running smoke-tier pytest."
-    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} {{PYTEST_ARGS}}
+    @mkdir -p .cache
+    @echo "Running incremental smoke-tier pytest."
+    @sel_status=0; $UV run --script scripts/inc_select.py > .cache/impacted_nodeids.txt || sel_status=$?; \
+    if [ -s .cache/impacted_nodeids.txt ] && [ "$sel_status" = "0" ]; then \
+        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --junitxml .cache/last-junit.xml @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
+    elif [ "$sel_status" = "2" ]; then \
+        echo "Selector: no changes and no prior failures — skipping pytest run."; \
+    else \
+        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}; \
+    fi
 
 # Full smoke-tier run (serial, no impacted selection).
 test-full:
@@ -209,23 +217,44 @@ precommit: precommit-slow
 # Run the CI command set locally.
 # Tip: Mirrors GitHub Actions; expect coverage artefacts and longer runtime.
 ci:
-    @echo "Running CI: sync deps, lint, type (basic), smoke-tier tests."
+    @echo "Running CI: sync deps, lint, type (basic), smoke-tier tests, docs build."
     $UV sync --extra dev
-    $UV run python scripts/check_waivers.py
     $UV run ruff check .
     $UV run pyright -p pyrightconfig.json
     $UV run pytest {{PYTEST_SMOKE_FLAGS}} -q -n auto {{PYTEST_ARGS}}
+    $UV run mkdocs build --strict
+
+# Fast local gate: lint → type → incremental smoke tests
+checks:
+    @echo "Running checks: format → lint → type → test (incremental)."
+    just format
+    just lint
+    just type
+    just test
+
+# Incremental smoke tests only (no lint/type)
+test-incremental:
+    @mkdir -p .cache
+    @echo "Running incremental smoke tests."
+    @sel_status=0; $UV run --script scripts/inc_select.py > .cache/impacted_nodeids.txt || sel_status=$?; \
+    if [ -s .cache/impacted_nodeids.txt ] && [ "$sel_status" = "0" ]; then \
+        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --junitxml .cache/last-junit.xml @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
+    elif [ "$sel_status" = "2" ]; then \
+        echo "Selector: no changes and no prior failures — skipping pytest run."; \
+    else \
+        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}; \
+    fi
 
 # CI flow with CPU-only torch wheel using uv pip (bypasses lock for torch).
 ci-cpu:
     @echo "Installing CPU-only torch (2.5.1) and project dev deps into system site-packages..."
     $UV pip install --system --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple "torch==2.5.1"
     $UV pip install --system -e ".[dev]"
-    @echo "Running lint/type/smoke tests using system Python."
-    python scripts/check_waivers.py || true
+    @echo "Running lint/type/smoke tests and docs build (system Python)."
     ruff check .
     pyright -p pyrightconfig.json
     python -m pytest {{PYTEST_SMOKE_FLAGS}} -q -n auto {{PYTEST_ARGS}}
+    mkdocs build --strict
 
 # System-Python variants for CI (avoid uv-run creating new envs)
 test-sys:
@@ -239,6 +268,7 @@ test-deep-sys:
 bench-sys:
     @echo "Running smoke-tier benchmarks (system Python)."
     python -m pytest tests/performance -m "smoke" {{BENCH_FLAGS}} {{PYTEST_ARGS}}
+
 
 # CI plus longhaul tiers and benchmarks.
 # Tip: Reserved for scheduled runs; coordinate with the maintainer before executing.

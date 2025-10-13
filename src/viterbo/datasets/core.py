@@ -60,9 +60,15 @@ class RaggedPointsDataset(Dataset[Sample]):
 
     def __getitem__(self, idx: int) -> Sample:
         """Generate a single sample with a random number of points."""
-        k = int(torch.randint(self.min_points, self.max_points + 1, (1,), generator=self._rng).item())
-        points = torch.randn((k, self.dim), generator=self._rng, device=self.device, dtype=self.dtype)
-        direction = torch.randn((self.dim,), generator=self._rng, device=self.device, dtype=self.dtype)
+        k = int(
+            torch.randint(self.min_points, self.max_points + 1, (1,), generator=self._rng).item()
+        )
+        points = torch.randn(
+            (k, self.dim), generator=self._rng, device=self.device, dtype=self.dtype
+        )
+        direction = torch.randn(
+            (self.dim,), generator=self._rng, device=self.device, dtype=self.dtype
+        )
         return Sample(points=points, direction=direction)
 
 

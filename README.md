@@ -58,7 +58,7 @@ just lint            # Ruff lint + metadata check (CI parity)
 just format          # Ruff format
 just fix             # Ruff format + autofix
 just sync            # Install project and dev dependencies via uv
-just ci              # CI parity (sync → waivers → lint → type-strict → pytest)
+just ci              # CI parity (sync → lint → type → pytest → docs)
 just release L       # Bump semver (patch|minor|major), commit, tag
 just bench           # Benchmarks (smoke tier)
 just docs-build      # Build MkDocs site with strict checks
@@ -103,8 +103,7 @@ The training command expects `WANDB_API_KEY` in your environment (see the Justfi
   capacity/volume surveys).
 - Planning, ADRs, and workflow notes live under `docs/briefs/` as dated Markdown files with YAML
   front matter (see `docs/briefs/2025-10-08-workflow-brief-authoring.md`).
-- `waivers.toml` tracks approved policy exceptions. CI runs `scripts/check_waivers.py` before other
-  checks.
+- Docs are built via MkDocs and validated in CI.
 
 ## Experiments & Tooling
 
