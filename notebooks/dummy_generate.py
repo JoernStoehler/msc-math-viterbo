@@ -11,7 +11,7 @@ from pathlib import Path
 import torch
 from torch.utils.data import DataLoader
 
-from viterbo.datasets import RaggedPointsDataset, collate_pad
+from viterbo.datasets.core import RaggedPointsDataset, collate_pad
 
 
 def main() -> None:
