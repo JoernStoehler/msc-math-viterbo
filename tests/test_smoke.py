@@ -3,7 +3,13 @@ import torch
 from torch.utils.data import DataLoader
 
 from viterbo.datasets import RaggedPointsDataset, collate_list, collate_pad
-from viterbo.math.geometry import pairwise_squared_distances, support
+from viterbo.math.geometry import (
+    bounding_box,
+    halfspace_violations,
+    pairwise_squared_distances,
+    support,
+    support_argmax,
+)
 from viterbo.models import run_probe
 
 pytestmark = pytest.mark.smoke
@@ -20,6 +26,19 @@ def test_imports_and_basic_geometry():
     d2 = pairwise_squared_distances(pts)
     assert d2.shape == (2, 2)
     assert pytest.approx(float(d2[0, 1])) == 2.0
+
+    val, idx = support_argmax(pts, d)
+    assert idx in (0, 1) and pytest.approx(float(val)) == 1.0
+
+    mins, maxs = bounding_box(pts)
+    assert mins.shape == maxs.shape == (2,)
+    assert float(mins.min()) <= float(maxs.max())
+
+    normals = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
+    offsets = torch.tensor([1.0, 1.0])
+    viol = halfspace_violations(pts, normals, offsets)
+    assert viol.shape == (2, 2)
+    assert torch.all(viol >= 0)
 
 
 def test_datasets_and_collate_and_models(tmp_path):
