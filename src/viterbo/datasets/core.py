@@ -72,14 +72,100 @@ class RaggedPointsDataset(Dataset[Sample]):
         return Sample(points=points, direction=direction)
 
 
+def _validate_ragged_batch(
+    batch: list[Sample], *, caller: str
+) -> tuple[int, torch.device, torch.dtype, list[int]]:
+    """Ensure a ragged batch is well-formed for downstream collators."""
+
+    if not batch:
+        raise ValueError(f"{caller} expected a non-empty batch of samples")
+
+    first = batch[0]
+    if not isinstance(first, Sample):
+        raise ValueError(f"{caller} expected Sample instances, but received {type(first).__name__}")
+
+    points = first.points
+    direction = first.direction
+
+    if points.ndim != 2:
+        raise ValueError(f"{caller} requires points tensors with shape (K, D); got {points.shape}")
+    if direction.ndim != 1:
+        raise ValueError(
+            f"{caller} requires direction tensors with shape (D,); got {direction.shape}"
+        )
+
+    dim = points.shape[1]
+    if direction.shape[0] != dim:
+        raise ValueError(
+            f"{caller} requires matching direction dimension {dim}; got {direction.shape[0]}"
+        )
+
+    device = points.device
+    dtype = points.dtype
+
+    if direction.device != device:
+        raise ValueError(
+            f"{caller} requires points and directions on the same device; got {device} and {direction.device}"
+        )
+    if direction.dtype != dtype:
+        raise ValueError(
+            f"{caller} requires points and directions with the same dtype; got {dtype} and {direction.dtype}"
+        )
+
+    lengths: list[int] = []
+    for i, sample in enumerate(batch):
+        if not isinstance(sample, Sample):
+            raise ValueError(
+                f"{caller} expected Sample instances, but received {type(sample).__name__} at index {i}"
+            )
+
+        pts = sample.points
+        drn = sample.direction
+
+        if pts.ndim != 2:
+            raise ValueError(
+                f"{caller} requires points tensors with shape (K, D); got {pts.shape} at index {i}"
+            )
+        if drn.ndim != 1:
+            raise ValueError(
+                f"{caller} requires direction tensors with shape (D,); got {drn.shape} at index {i}"
+            )
+
+        if pts.shape[1] != dim:
+            raise ValueError(
+                f"{caller} expected all points tensors to have D={dim}; got {pts.shape[1]} at index {i}"
+            )
+        if drn.shape[0] != dim:
+            raise ValueError(
+                f"{caller} expected all direction tensors to have length {dim}; got {drn.shape[0]} at index {i}"
+            )
+
+        if pts.device != device or drn.device != device:
+            raise ValueError(
+                f"{caller} requires a single device per batch; sample {i} uses {pts.device} / {drn.device} instead of {device}"
+            )
+        if pts.dtype != dtype or drn.dtype != dtype:
+            raise ValueError(
+                f"{caller} requires a single dtype per batch; sample {i} uses {pts.dtype} / {drn.dtype} instead of {dtype}"
+            )
+
+        lengths.append(int(pts.shape[0]))
+
+    return dim, device, dtype, lengths
+
+
 def collate_list(batch: list[Sample]) -> dict[str, list[torch.Tensor]]:
     """Collate into lists of variable-length tensors (no padding).
 
     Returns a dict with keys `points` (list[(K_i, D)]) and `direction` (list[(D,)]).
+
+    Raises:
+      ValueError: if the batch is empty, or tensors differ in shape, device, or dtype.
     """
 
-    points_list = [b.points for b in batch]
-    direction_list = [b.direction for b in batch]
+    _validate_ragged_batch(batch, caller="collate_list")
+    points_list = [sample.points for sample in batch]
+    direction_list = [sample.direction for sample in batch]
     return {"points": points_list, "direction": direction_list}
 
 
@@ -87,21 +173,27 @@ def collate_pad(batch: list[Sample]) -> dict[str, torch.Tensor]:
     """Collate with right-padding to the max K in batch and a boolean mask.
 
     Returns:
-      points: (B, K_max, D) padded with zeros.
-      mask: (B, K_max) True for valid entries.
+      points: (B, K_max, D) padded with zeros (float dtype of inputs).
+      mask: (B, K_max) boolean mask with True for valid entries.
       direction: (B, D)
+
+    Raises:
+      ValueError: if the batch is empty, or tensors differ in shape, device, or dtype.
     """
 
+    dim, device, dtype, lengths = _validate_ragged_batch(batch, caller="collate_pad")
+
     bsz = len(batch)
-    k_max = max(b.points.shape[0] for b in batch)
-    dim = batch[0].points.shape[1]
-    device = batch[0].points.device
-    dtype = batch[0].points.dtype
+    k_max = max(lengths)
     points = torch.zeros((bsz, k_max, dim), device=device, dtype=dtype)
     mask = torch.zeros((bsz, k_max), device=device, dtype=torch.bool)
-    direction = torch.stack([b.direction for b in batch], dim=0)
-    for i, b in enumerate(batch):
-        k = b.points.shape[0]
-        points[i, :k] = b.points
+    direction = torch.stack([sample.direction for sample in batch], dim=0)
+
+    for i, sample in enumerate(batch):
+        k = lengths[i]
+        if k == 0:
+            continue
+        points[i, :k] = sample.points
         mask[i, :k] = True
+
     return {"points": points, "mask": mask, "direction": direction}

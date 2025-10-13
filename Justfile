@@ -243,8 +243,20 @@ test-incremental:
 # CI flow with CPU-only torch wheel using uv pip (bypasses lock for torch).
 ci-cpu:
     @echo "Installing CPU-only torch (2.5.1) and project dev deps into system site-packages..."
-    $UV pip install --system --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple "torch==2.5.1"
-    $UV pip install --system -e ".[dev]"
+    PIP_INDEX_URL="${PIP_INDEX_URL:-https://download.pytorch.org/whl/cpu}" \
+    PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL:-https://pypi.org/simple}" \
+    UV_DEFAULT_INDEX="${UV_DEFAULT_INDEX:-https://download.pytorch.org/whl/cpu}" \
+    UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL:-https://pypi.org/simple}" \
+    UV_TORCH_BACKEND="${UV_TORCH_BACKEND:-cpu}" \
+        $UV pip install --system "torch==2.5.1"
+    PIP_INDEX_URL="${PIP_INDEX_URL:-https://download.pytorch.org/whl/cpu}" \
+    PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL:-https://pypi.org/simple}" \
+    UV_DEFAULT_INDEX="${UV_DEFAULT_INDEX:-https://download.pytorch.org/whl/cpu}" \
+    UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL:-https://pypi.org/simple}" \
+    UV_TORCH_BACKEND="${UV_TORCH_BACKEND:-cpu}" \
+        $UV pip install --system -e ".[dev]"
+    @echo "Validating torch build is CPU-only."
+    python scripts/verify_cpu_torch.py
     @echo "Running lint/type/smoke tests and docs build (system Python)."
     ruff check .
     pyright -p pyrightconfig.json

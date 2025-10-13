@@ -1,31 +1,28 @@
 ---
 title: "Define smoke tests for core algorithms"
 created: 2025-10-13
-status: in-progress
+status: completed
 owner: TBD
-branch: task/smoke-tests-definitions
+branch: main
 priority: high
 labels: [task]
 deps:
   - tests/test_smoke.py
+  - tests/math/test_polytope_smoke.py
+  - tests/math/test_volume_smoke.py
 ---
 
 ## Summary
 
-Design minimal smoke tests (function presence, basic invariants, shapes/dtypes) for the implemented math modules so future enhancements land with immediate validation.
+Design minimal smoke tests (function presence, basic invariants, shapes/dtypes) for the implemented math modules so future enhancements land with immediate validation. Added dedicated smoke suites for `viterbo.math.polytope` primitives and the general `volume` helper.
 
 ## Deliverables
 
-- Add/extend `tests/test_smoke.py` (or a dedicated `tests/test_smoke_algorithms.py`) to cover:
-  - presence of functions and import paths
-  - deterministic behaviour on small fixed inputs (where applicable)
-  - dtype expectations in docstrings
+- Add `tests/math/test_polytope_smoke.py` to cover support queries, pairwise distances, halfspace violations, and bounding boxes.
+- Add `tests/math/test_volume_smoke.py` to exercise 1D/2D/3D volumes and dtype preservation on simple shapes.
 
 ## Acceptance Criteria
 
 - CI green (lint/type/smoke).
 - Tests are light (<1s locally), readable, and stable across devices.
-
-## Progress Log
-
-- 2025-10-14: Extended `tests/test_smoke.py` to exercise 4D polytopes (support queries, halfspace feasibility, dataset/model probe). Remaining work: add import/shape checks for other math modules and document dtype guarantees.
+- New smoke modules pass standalone (`uv run pytest tests/math/test_polytope_smoke.py tests/math/test_volume_smoke.py`).

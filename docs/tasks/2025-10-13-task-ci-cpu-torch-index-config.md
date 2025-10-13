@@ -1,8 +1,8 @@
 ---
 title: "CI: enforce CPU-only Torch wheels via uv"
 created: 2025-10-13
-status: ready
-owner: TBD
+status: in-review
+owner: Codex agent
 branch: task/ci-cpu-torch-index
 priority: medium
 labels: [task]
@@ -26,3 +26,6 @@ Harden the CI installation so Torch CPU wheels are always used (no accidental CU
 - CI installation does not fetch CUDA meta-packages.
 - Local GPU installs remain unaffected.
 
+## Status Log
+
+- 2025-10-14 — Rebased CI on CPU-only Torch index via env overrides, added guard script, documented policy, and validated `just ci-cpu` under the constrained indexes.
