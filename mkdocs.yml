@@ -17,3 +17,4 @@ markdown_extensions:
 
 nav:
   - Home: README.md
+  - Architecture: architecture/overview.md

@@ -28,6 +28,7 @@ Single authoritative policy for this repo.
   - `_cpp/` — C++/pybind11 extensions (CPU baseline) with Python fallbacks.
 - Tests: `tests/` — smoke tests under `test_*.py`; benches under `tests/performance/`
 - Docs & Notes: `docs/` (site + task briefs), `notebooks/` (dummy examples), `artefacts/` (outputs, ignored)
+  - Tasks: `docs/tasks/` (open briefs) and `docs/tasks/archived/` (examples)
 
 ## 2) Environment & Tooling
 

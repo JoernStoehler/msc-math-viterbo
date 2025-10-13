@@ -1,118 +1,55 @@
-# Viterbo Conjecture — Python Project
+# Viterbo — PyTorch + C++ Skeleton
 
 [![Docs](https://github.com/JoernStoehler/msc-math-viterbo/actions/workflows/docs.yml/badge.svg)](https://github.com/JoernStoehler/msc-math-viterbo/actions/workflows/docs.yml)
 [![Pages](https://img.shields.io/badge/docs-GitHub%20Pages-blue?logo=github)](https://joernstoehler.github.io/msc-math-viterbo)
 
-Numerical experiments around the Viterbo conjecture built on a JAX-first Python stack. Public APIs
-operate on JAX arrays, with NumPy/SciPy interop isolated in thin adapters under
-`src/viterbo/_wrapped/`.
+Minimal, fast-to-iterate stack for numerical experiments around the Viterbo conjecture:
+- PyTorch-first math (ragged-friendly), CPU baseline; GPU optional in models
+- C++ extension scaffold for non-SIMD hotspots (CPU), with Python fallback
+- Lean tests (smoke + benchmarks), incremental by default
 
-## Modern namespace overview
+See AGENTS.md for the authoritative policy and workflows.
 
-The production solvers, generators, and artefact helpers live under `viterbo`. Capacity,
-cycle, and spectrum entry points consume the shared tolerance policy in
-[`src/viterbo/numerics.py`](src/viterbo/numerics.py) so downstream experiments observe
-consistent behaviour. Legacy package trees were removed; upgrade consumers to the flat modules via:
+## Quickstart
 
-- `viterbo.capacity` for Haim–Kislev subset search, Chaidez–Hutchings graph wrappers, and
-  Minkowski billiard routines,
-- `viterbo.volume` for deterministic volume estimators,
-- `viterbo.atlas` for parquet schema helpers once the atlas pipeline is implemented.
+1) Sync deps: `just sync`
+2) Fast loop: `just checks` (format → lint → type → test incremental)
+3) Full local CI: `just ci` (lint → type → smoke tests → docs build)
+4) Notebooks: `uv run python notebooks/dummy_generate.py`, then `uv run python notebooks/dummy_plot.py`
 
-Higher-dimensional (≥6D) capacities, cycles, and spectra remain on the backlog while the team
-scopes combinatorial limits and CI/runtime budgets. See the modernization overview ADR at
-`docs/briefs/2025-10-12-adr-modernization-source-of-truth.md` for scope and follow-ups.
-
-## Policy & Onboarding
-
-- `AGENTS.md` is the single source of truth for roles, conventions, and workflows. Treat this README
-  as a convenience overview and defer to `AGENTS.md` whenever guidance differs.
-- Task briefs and background notes live in `docs/`. Start with
-  `docs/briefs/2025-10-12-adr-modernization-source-of-truth.md` for the current scope and roadmap.
-  Draft new briefs using the conventions in
-  `docs/briefs/2025-10-12-workflow-brief-authoring.md`.
-- A MkDocs site is published from the `docs/` tree; the badge above links to the latest build.
-
-## Environment
-
-- The repository ships a devcontainer; agents start with dependencies pre-installed and
-  `JAX_ENABLE_X64=1` enabled (see `.devcontainer/post-start.sh`).
-- Dependency management uses `uv`. The `Justfile` wraps common workflows and keeps the golden path
-  in sync with CI.
-- To bootstrap locally, run `just setup` (idempotent) from the repo root.
-
-## Command Reference
+## Commands (common)
 
 ```
-just checks          # Fast loop: lint → type → test (incremental)
-just test            # Smoke-tier tests (incremental selection; serial)
-just test-full       # Smoke-tier tests (full serial)
-just test-xdist      # Smoke-tier tests (full parallel)
-just test-deep       # Smoke + deep tiers (serial)
-just test-longhaul   # Longhaul tier (serial)
-just test-metadata   # Summarise test markers/docstrings
-just coverage        # Smoke-tier coverage (HTML + XML)
-just type            # Pyright basic over src/ (fast loop)
-just type-strict     # Pyright strict across the repository
-just lint            # Ruff lint + metadata check (CI parity)
-just format          # Ruff format
-just fix             # Ruff format + autofix
-just sync            # Install project and dev dependencies via uv
-just ci              # CI parity (sync → lint → type → pytest → docs)
-just release L       # Bump semver (patch|minor|major), commit, tag
-just bench           # Benchmarks (smoke tier)
-just docs-build      # Build MkDocs site with strict checks
+just checks      # format → lint → type → test (incremental)
+just test        # smoke tests (incremental selection)
+just test-full   # smoke tests (full)
+just test-deep   # smoke + deep tiers
+just bench       # benchmarks (smoke)
+just ci          # CI parity: lint → type → tests → docs
+just docs-build  # Build MkDocs site (strict)
 ```
 
-Additional helpers include profiling targets (`just profile`, `just profile-line`) and the logistic
-regression experiment pipeline (`just train-logreg`, `just evaluate-logreg`, `just publish-logreg`).
-The training command expects `WANDB_API_KEY` in your environment (see the Justfile for details).
+## Layout
 
-## Typing & Linting
+- `src/viterbo/`
+  - `math/` — pure geometry/math utilities (Torch tensors I/O); no I/O, no state
+  - `datasets/` — datasets + collate functions for ragged data; thin wrappers around math
+  - `models/` — experiments; may use GPU; no core math here
+  - `_cpp/` — C++/pybind11 extensions (CPU baseline) with safe Python fallbacks
+- `tests/` — smoke tests under `test_*.py`; benchmarks under `tests/performance/`
+- `docs/` — site content (see Architecture below) + tasks
+- `notebooks/` — minimal examples for artefacts I/O
 
-- The default Pyright profile (`pyrightconfig.json`) uses basic mode for day-to-day loops; CI flips
-  to strict mode via `pyrightconfig.strict.json`. Repository-local stubs live under
-  `typings/jax/`—keep signatures accurate and prefer jaxtyping annotations with explicit shape
-  tokens.
-- Ruff enforces the Google docstring convention (with curated exceptions) and bans relative imports.
-- Optional runtime jaxtyping checks can be enabled during tests via `JAXTYPING_CHECKS=1 just test`.
+## Architecture (reference)
 
-## Tests & Benchmarks
+- Everyday overview lives in `AGENTS.md` (“Architecture Overview”).
+- Deeper rationale and decisions: `docs/architecture/overview.md`.
 
-- Unit and integration tests reside in `tests/viterbo/`; performance benchmarks live in
-  `tests/performance/viterbo/`.
-- Export `FAST=1` to force CPU/no-JIT defaults and automatically skip tests
-  marked `slow`, `gpu`, `jit`, or `integration`.
-- CI delegates to `just ci` (see `.github/workflows/ci.yml`) for parity with the local loop. A
-  scheduled workflow runs weekly performance benchmarks and uploads `.benchmarks/` artefacts.
-- Stick to deterministic seeds; tolerances default to `rtol=1e-9`, `atol=0.0` via the shared pytest
-  fixture (`tests/conftest.py`).
+## Tasks (parallel development)
 
-### Testing Policy
-
-- Every test declares exactly one goal marker: `@pytest.mark.goal_math`, `@pytest.mark.goal_code`,
-  or `@pytest.mark.goal_performance`.
-- Each test starts with a short docstring stating the invariant or behaviour under test.
-- Quick inspection commands:
-  - `just test-metadata` to list tests with goal markers and docstrings.
-  - `just lint` runs the same metadata check used in CI.
-
-## Docs & Knowledge Base
-
-- Core references live in `docs/` (project goal, reading list, symplectic quantity catalogues, and
-  capacity/volume surveys).
-- Planning, ADRs, and workflow notes live under `docs/briefs/` as dated Markdown files with YAML
-  front matter (see `docs/briefs/2025-10-08-workflow-brief-authoring.md`).
-- Docs are built via MkDocs and validated in CI.
-
-## Experiments & Tooling
-
-- Scripts under `scripts/` coordinate reproducible experiments (e.g., the logistic regression toy
-  pipeline). Prefer `uv run python scripts/<name>.py` when invoking them directly.
-- ML experiment tracking defaults to Weights & Biases; ensure secrets are sourced via `.env` or your
-  environment. Capture reproducibility details inside the relevant brief (e.g.,
-  `docs/briefs/2025-10-07-workflow-task-evaluation.md`).
+- Task briefs live under `docs/tasks/` (YAML front matter + clear scope + acceptance criteria).
+- Start with the open tasks in that folder; see archived examples under `docs/tasks/archived/`.
 
 ## License
 
-Distributed under the MIT License (`LICENSE`).
+MIT (`LICENSE`).
