@@ -102,11 +102,6 @@ test-full:
     @echo "Running full smoke-tier pytest (serial)."
     $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} {{PYTEST_ARGS}}
 
-# Full smoke-tier run with xdist (parallel).
-test-xdist:
-    @echo "Running full smoke-tier pytest (-n auto)."
-    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} -n auto {{PYTEST_ARGS}}
-
 # Smoke + deep tiers (full serial).
 # Tip: Ideal before review; combine with `just bench-deep` for performance-sensitive work.
 test-deep:
@@ -221,7 +216,7 @@ ci:
     $UV sync --extra dev
     $UV run ruff check .
     $UV run pyright -p pyrightconfig.json
-    $UV run pytest {{PYTEST_SMOKE_FLAGS}} -q -n auto {{PYTEST_ARGS}}
+    $UV run pytest {{PYTEST_SMOKE_FLAGS}} -q {{PYTEST_ARGS}}
     $UV run mkdocs build --strict
 
 # Fast local gate: lint → type → incremental smoke tests
@@ -253,7 +248,7 @@ ci-cpu:
     @echo "Running lint/type/smoke tests and docs build (system Python)."
     ruff check .
     pyright -p pyrightconfig.json
-    python -m pytest {{PYTEST_SMOKE_FLAGS}} -q -n auto {{PYTEST_ARGS}}
+    python -m pytest {{PYTEST_SMOKE_FLAGS}} -q {{PYTEST_ARGS}}
     mkdocs build --strict
 
 # System-Python variants for CI (avoid uv-run creating new envs)
@@ -324,18 +319,3 @@ publish-logreg:
     fi
     @mkdir -p artefacts/published/logreg-toy
     @tar czf artefacts/published/logreg-toy/$(basename "${RUN_DIR}").tar.gz -C "$(dirname "${RUN_DIR}")" "$(basename "${RUN_DIR}")"
-
-# Optional: incremental tests with xdist (may increase memory usage under JAX).
-test-xdist-incremental:
-    @mkdir -p .cache
-    @echo "Selecting incremental tests (xdist)."
-    @sel_status=0; $UV run --script scripts/inc_select.py > .cache/impacted_nodeids.txt || sel_status=$?; \
-    if [ -s .cache/impacted_nodeids.txt ] && [ "$sel_status" = "0" ]; then \
-        echo "Running incremental tests (-n auto)"; \
-        $UV run pytest -q -n auto --junitxml .cache/last-junit.xml @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
-    elif [ "$sel_status" = "2" ]; then \
-        echo "Selector: no changes and no prior failures — skipping pytest run."; \
-    else \
-        echo "Fallback: running full test suite (-n auto)"; \
-        $UV run pytest -q -n auto --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}; \
-    fi
