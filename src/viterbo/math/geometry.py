@@ -156,16 +156,47 @@ def translate_vertices(translation: torch.Tensor, vertices: torch.Tensor) -> tor
 
 
 def volume(vertices: torch.Tensor) -> torch.Tensor:
-    """Volume of a convex polytope given its vertices.
+    """Volume of a convex polytope specified by its vertices.
 
-    Intended as a reference implementation (e.g., via hull + simplices). Must be
-    deterministic for a fixed input without hidden RNG.
+    The function currently supports ``D ∈ {1, 2, 3}`` by decomposing the input
+    into intervals, polygons, or facet pyramids. To scale this routine beyond
+    three dimensions we intend to ship three deterministic back ends whose
+    docstrings spell out exact computational steps:
+
+    1. :func:`volume_via_triangulation` — build an oriented convex hull from the
+       vertices (Quickhull/Barber–Dobkin–Huhdanpaa 1996), extract a simplex
+       fan, and accumulate signed simplex volumes via ``torch.linalg.det``.
+    2. :func:`volume_via_lawrence` — operate directly on the H-representation
+       ``Ax <= b`` and evaluate the Lawrence (1991) sign decomposition by
+       iterating over facet bases and computing rational determinants.
+    3. :func:`volume_via_monte_carlo` — offer a fallback using deterministic
+       low-discrepancy sampling with stratified control variates when exact
+       combinatorics become prohibitive.
+
+    Keeping the current entry point small lets us dispatch to one of these
+    specialised kernels depending on the available representation. Each backend
+    will preserve torch dtype/device and provide hooks for gradient propagation
+    (e.g., propagate barycentric coordinates for autodiff). All routines will
+    reject unbounded polytopes by checking whether the hull or halfspaces span a
+    full-dimensional cone.
 
     Args:
-      vertices: (M, D) float tensor.
+      vertices: ``(M, D)`` float tensor listing the vertex cloud. The points are
+        assumed to span a full-dimensional convex body; duplicates are allowed
+        and will be deduplicated internally once higher-dimensional support is
+        added.
 
     Returns:
-      volume: scalar float tensor.
+      Scalar float tensor with the Lebesgue volume of the convex hull of
+      ``vertices``.
+
+    References:
+      Barber, Dobkin, Huhdanpaa (1996). ``The Quickhull algorithm for convex
+      hulls``. ACM TOMS 22(4).
+      Lawrence (1991). ``Polytope volume computation``. Mathematics of
+      Computation 57(195).
+      Büeler, Enge, Fukuda (2000). ``Exact volume computation for polytopes: A
+      practical study``. Polytopes—Combinatorics and Computation.
     """
     if vertices.ndim != 2:
         raise ValueError("vertices must be (M, D)")
@@ -196,6 +227,90 @@ def volume(vertices: torch.Tensor) -> torch.Tensor:
         height = offset - (centre @ normal)
         vol = vol + area * height / 3.0
     return torch.abs(vol)
+
+
+def volume_via_triangulation(vertices: torch.Tensor) -> torch.Tensor:
+    """Deterministic convex hull triangulation volume estimator.
+
+    The intended implementation constructs an oriented convex hull for the
+    vertex cloud using a Quickhull-style incremental build, extracts a set of
+    ``d``-simplices forming a fan around one interior point, and sums their
+    signed volumes ``|det([v_1 - p, …, v_d - p])| / d!`` with PyTorch linear
+    algebra. This backend is reliable up to ``d ≈ 7`` provided the hull is not
+    massively degenerate.
+
+    Args:
+      vertices: ``(M, D)`` float tensor. Must span a bounded polytope of
+        dimension ``D``.
+
+    Returns:
+      Scalar float tensor with the Lebesgue volume of the convex hull.
+
+    Raises:
+      NotImplementedError: pending triangulation kernel.
+    """
+    raise NotImplementedError
+
+
+def volume_via_lawrence(
+    normals: torch.Tensor, offsets: torch.Tensor, *, basis: torch.Tensor | None = None
+) -> torch.Tensor:
+    """Lawrence sign decomposition volume from supporting halfspaces.
+
+    The Lawrence algorithm enumerates sets of ``d`` active facets, solves
+    ``B x = c`` for each facet basis ``B`` (optionally preconditioned by
+    ``basis``), and accumulates the signed contributions ``sign(det B)
+    (⟨u, c⟩)^{d} / (d! det B)`` where ``u`` are the barycentric weights. We will
+    follow the exact arithmetic roadmap of Büeler–Enge–Fukuda (2000) by
+    rationalising the inputs and providing a fallback to 128-bit integers for
+    certification in low dimensions.
+
+    Args:
+      normals: ``(F, D)`` float tensor ``A`` of outward normals.
+      offsets: ``(F,)`` float tensor ``b`` with strictly positive entries.
+      basis: Optional ``(D, D)`` float tensor providing a numeric basis change
+        used to stabilise solves in near-degenerate configurations.
+
+    Returns:
+      Scalar float tensor with the polytope volume.
+
+    Raises:
+      NotImplementedError: pending Lawrence implementation.
+    """
+    raise NotImplementedError
+
+
+def volume_via_monte_carlo(
+    vertices: torch.Tensor,
+    normals: torch.Tensor,
+    offsets: torch.Tensor,
+    *,
+    samples: int,
+    generator: torch.Generator | int,
+) -> torch.Tensor:
+    """Low-discrepancy Monte Carlo volume estimator for high dimensions.
+
+    This stub will host a quasi-Monte Carlo estimator combining
+    Sobol/Halton-generated samples with rejection sampling against the
+    halfspaces ``Ax <= b``. We plan to add variance reduction by importance
+    rescaling with the bounding box of ``vertices`` and adapt the sample budget
+    based on concentration bounds (Dvoretzky–Kiefer–Wolfowitz inequality).
+
+    Args:
+      vertices: ``(M, D)`` float tensor used to build proposal distributions and
+        bounding boxes.
+      normals: ``(F, D)`` float tensor ``A`` of supporting normals.
+      offsets: ``(F,)`` float tensor ``b``.
+      samples: Number of quasi-random points to draw; must be ``>= D``.
+      generator: ``torch.Generator`` or seed controlling the Sobol sequence.
+
+    Returns:
+      Scalar float tensor approximating the polytope volume.
+
+    Raises:
+      NotImplementedError: pending estimator implementation.
+    """
+    raise NotImplementedError
 
 
 def rotated_regular_ngon2d(k: int, angle: float) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
