@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Callable, Dict
-
 import torch
 from torch.utils.data import DataLoader
 
@@ -12,7 +10,7 @@ def run_probe(
     loader: DataLoader,
     device: torch.device | None = None,
     max_batches: int | None = 2,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Run a tiny probe that computes a support statistic over a few batches.
 
     Args:
@@ -56,4 +54,3 @@ def run_probe(
                     count += 1
     avg = total / max(count, 1)
     return {"avg_support": avg}
-

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, Tuple
 
 import torch
 from torch.utils.data import Dataset
@@ -39,10 +38,11 @@ class RaggedPointsDataset(Dataset[Sample]):
         dim: int,
         min_points: int = 3,
         max_points: int = 12,
-        seed: Optional[int] = 0,
-        device: Optional[torch.device] = None,
+        seed: int | None = 0,
+        device: torch.device | None = None,
         dtype: torch.dtype = torch.float32,
     ) -> None:
+        """Initialize dataset parameters and RNG."""
         assert min_points >= 1 and max_points >= min_points
         self.num_samples = int(num_samples)
         self.dim = int(dim)
@@ -55,16 +55,18 @@ class RaggedPointsDataset(Dataset[Sample]):
             self._rng.manual_seed(int(seed))
 
     def __len__(self) -> int:
+        """Number of samples."""
         return self.num_samples
 
     def __getitem__(self, idx: int) -> Sample:
+        """Generate a single sample with a random number of points."""
         k = int(torch.randint(self.min_points, self.max_points + 1, (1,), generator=self._rng).item())
         points = torch.randn((k, self.dim), generator=self._rng, device=self.device, dtype=self.dtype)
         direction = torch.randn((self.dim,), generator=self._rng, device=self.device, dtype=self.dtype)
         return Sample(points=points, direction=direction)
 
 
-def collate_list(batch: List[Sample]) -> Dict[str, List[torch.Tensor]]:
+def collate_list(batch: list[Sample]) -> dict[str, list[torch.Tensor]]:
     """Collate into lists of variable-length tensors (no padding).
 
     Returns a dict with keys `points` (list[(K_i, D)]) and `direction` (list[(D,)]).
@@ -75,7 +77,7 @@ def collate_list(batch: List[Sample]) -> Dict[str, List[torch.Tensor]]:
     return {"points": points_list, "direction": direction_list}
 
 
-def collate_pad(batch: List[Sample]) -> Dict[str, torch.Tensor]:
+def collate_pad(batch: list[Sample]) -> dict[str, torch.Tensor]:
     """Collate with right-padding to the max K in batch and a boolean mask.
 
     Returns:
@@ -97,4 +99,3 @@ def collate_pad(batch: List[Sample]) -> Dict[str, torch.Tensor]:
         points[i, :k] = b.points
         mask[i, :k] = True
     return {"points": points, "mask": mask, "direction": direction}
-

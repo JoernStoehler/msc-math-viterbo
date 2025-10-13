@@ -45,10 +45,10 @@ jobs:
         run: just ci-cpu
 
       - name: Run Deep Tests
-        run: just test-deep
+        run: just test-deep-sys
 
       - name: Run Benchmarks (smoke)
-        run: just bench
+        run: just bench-sys
 
   longhaul-regression:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'

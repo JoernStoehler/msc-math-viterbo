@@ -19,7 +19,7 @@ def _try_load_add_one(name: str = "add_one_ext"):
     src = _this_dir / "add_one.cpp"
     try:
         return load(name=name, sources=[str(src)], verbose=False)
-    except Exception:
+    except (OSError, RuntimeError, ImportError):
         return None
 
 
@@ -37,4 +37,3 @@ def add_one(x: torch.Tensor) -> torch.Tensor:
 
 
 __all__ = ["add_one"]
-

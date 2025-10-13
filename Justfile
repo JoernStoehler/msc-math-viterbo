@@ -218,14 +218,27 @@ ci:
 
 # CI flow with CPU-only torch wheel using uv pip (bypasses lock for torch).
 ci-cpu:
-    @echo "Installing CPU-only torch (2.5.1) and project deps..."
+    @echo "Installing CPU-only torch (2.5.1) and project dev deps into system site-packages..."
     $UV pip install --system --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple "torch==2.5.1"
     $UV pip install --system -e ".[dev]"
-    @echo "Running lint/type/smoke tests."
-    $UV run python scripts/check_waivers.py || true
-    $UV run ruff check .
-    $UV run pyright -p pyrightconfig.json
-    $UV run pytest {{PYTEST_SMOKE_FLAGS}} -q -n auto {{PYTEST_ARGS}}
+    @echo "Running lint/type/smoke tests using system Python."
+    python scripts/check_waivers.py || true
+    ruff check .
+    pyright -p pyrightconfig.json
+    python -m pytest {{PYTEST_SMOKE_FLAGS}} -q -n auto {{PYTEST_ARGS}}
+
+# System-Python variants for CI (avoid uv-run creating new envs)
+test-sys:
+    @echo "Running smoke-tier pytest (system Python)."
+    python -m pytest -q {{PYTEST_SMOKE_FLAGS}} {{PYTEST_ARGS}}
+
+test-deep-sys:
+    @echo "Running smoke+deep pytest tiers (system Python)."
+    python -m pytest -q {{PYTEST_DEEP_FLAGS}} {{PYTEST_ARGS}}
+
+bench-sys:
+    @echo "Running smoke-tier benchmarks (system Python)."
+    python -m pytest tests/performance -m "smoke" {{BENCH_FLAGS}} {{PYTEST_ARGS}}
 
 # CI plus longhaul tiers and benchmarks.
 # Tip: Reserved for scheduled runs; coordinate with the maintainer before executing.

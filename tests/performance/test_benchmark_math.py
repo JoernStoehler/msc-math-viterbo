@@ -1,9 +1,9 @@
-import torch
 import pytest
+import torch
 
 try:
     import pytest_benchmark  # noqa: F401
-except Exception:  # pragma: no cover
+except ImportError:  # pragma: no cover
     pytestmark = pytest.mark.skip(reason="pytest-benchmark not installed")
 else:
     pytestmark = [pytest.mark.smoke, pytest.mark.benchmark]
