@@ -19,6 +19,7 @@ dependencies = [
     "jaxtyping>=0.3.3",
     "numpy>=2.3.3",
     "networkx>=3.2.1",
+    "matplotlib>=3.9.2",
     "orbax-checkpoint>=0.11.25",
     "pyarrow>=21.0.0",
     "scipy>=1.16.2",
