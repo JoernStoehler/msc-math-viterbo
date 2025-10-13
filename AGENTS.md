@@ -55,6 +55,7 @@ Single authoritative policy for this repo.
 - Imports & structure: absolute imports with explicit paths; no wildcard imports; No re‑export indirection; namespaced modules (no `__all__`).
 - Types: prefer built‑ins (`list[str]`, `dict[str, torch.Tensor]`, unions with `|`); avoid custom typedefs for shapes/dimensions.
 - Commit: Conventional Commits.
+- Placeholders: do **not** wrap `NotImplementedError` (or other TODO sentinels) in `try/except`; allow the error to surface so missing implementations remain obvious during TDD loops.
 
 ## 4) PyTorch + C++ specifics (facts)
 

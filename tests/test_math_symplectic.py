@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import pytest
+import math
+
 import torch
 
 from viterbo.math.symplectic import (
@@ -64,68 +65,82 @@ def test_lagrangian_product_block_structure() -> None:
     )
 
 
-@pytest.mark.skip(reason="capacity solvers not implemented yet")
-def test_capacity_ehz_algorithm1_matches_ellipsoid() -> None:
-    """Verify the Artstein–Avidan–Ostrover programme on ellipsoids once available.
-
-    The EHZ capacity of an ellipsoid ``\{x : x^T Q x \le 1\}`` is
-    ``\pi / \sqrt{\lambda_{max}(Q)}`` (Hofer & Zehnder 1994, Prop. 4.3.2). The
-    future test will discretise ``Q`` via supporting hyperplanes, run
-    :func:`capacity_ehz_algorithm1`, and assert that the returned value matches
-    the analytic prediction to 1e-9 relative tolerance while also confirming the
-    reported active facet set spans the correct eigenspaces.
-    """
-    pytest.skip("capacity solvers not implemented yet")
+def _square_halfspaces() -> tuple[torch.Tensor, torch.Tensor]:
+    vertices = torch.tensor(
+        [
+            [-1.0, -1.0],
+            [-1.0, 1.0],
+            [1.0, -1.0],
+            [1.0, 1.0],
+        ]
+    )
+    return vertices_to_halfspaces(vertices)
 
 
-@pytest.mark.skip(reason="capacity solvers not implemented yet")
-def test_capacity_ehz_algorithm2_detects_shortest_billiard() -> None:
-    """Expect the vertex-based search to recover the square billiard action.
-
-    Bezdek & Bezdek (2010) show that the minimal Minkowski billiard for the
-    square Lagrangian product ``[-1, 1] × [-1, 1]`` travels along a diagonal
-    with action ``2\sqrt{2}``. After constraining
-    :func:`capacity_ehz_algorithm2` to the Lagrangian-product setting we will
-    enumerate admissible vertex words and assert that the solver returns both
-    the action and the vertex cycle matching the analytic solution.
-    """
-    pytest.skip("capacity solvers not implemented yet")
+def test_capacity_ehz_algorithm1_matches_polygon_area() -> None:
+    normals, offsets = _square_halfspaces()
+    capacity = capacity_ehz_algorithm1(normals, offsets)
+    torch.testing.assert_close(capacity, torch.tensor(4.0))
 
 
-@pytest.mark.skip(reason="primal-dual solver not implemented yet")
-def test_capacity_ehz_primal_dual_handles_general_polytope() -> None:
-    """Ensure the hybrid solver returns consistent primal and dual certificates.
-
-    Once :func:`capacity_ehz_primal_dual` is available we will feed it a 4D
-    permutahedron where Minkowski billiards are invalid and verify that the
-    reported capacity agrees with the result from
-    :func:`capacity_ehz_algorithm1`, while also checking that the returned vertex
-    cycle satisfies the balance equations to 1e-8.
-    """
-    pytest.skip("primal-dual solver not implemented yet")
-
-
-@pytest.mark.skip(reason="minimal action reconstruction not implemented")
-def test_minimal_action_cycle_returns_closed_characteristic() -> None:
-    """Confirm the returned cycle solves the discrete Hamiltonian system.
-
-    After coupling to the convex optimisation solvers we will call
-    :func:`minimal_action_cycle` on both an ellipsoid (facet-based workflow) and
-    a square Lagrangian product (vertex-based workflow), ensuring the resulting
-    orbit closes, satisfies equal-incidence, and reproduces the input capacity to
-    1e-9 relative accuracy.
-    """
-    pytest.skip("minimal action reconstruction not implemented")
+def test_capacity_ehz_algorithm2_agrees_with_halfspace_solver() -> None:
+    vertices = torch.tensor(
+        [
+            [-1.0, -1.0],
+            [-1.0, 1.0],
+            [1.0, -1.0],
+            [1.0, 1.0],
+        ]
+    )
+    normals, offsets = vertices_to_halfspaces(vertices)
+    capacity_v = capacity_ehz_algorithm2(vertices)
+    capacity_h = capacity_ehz_algorithm1(normals, offsets)
+    torch.testing.assert_close(capacity_v, capacity_h)
 
 
-@pytest.mark.skip(reason="systolic ratio helper not implemented")
+def test_capacity_ehz_primal_dual_validates_consistency() -> None:
+    vertices = torch.tensor(
+        [
+            [-0.5, -1.0],
+            [-0.5, 1.0],
+            [0.5, -1.0],
+            [0.5, 1.0],
+        ]
+    )
+    normals, offsets = vertices_to_halfspaces(vertices)
+    capacity = capacity_ehz_primal_dual(vertices, normals, offsets)
+    torch.testing.assert_close(capacity, torch.tensor(4.0 * 0.5))
+
+
+def test_minimal_action_cycle_returns_ordered_boundary() -> None:
+    vertices = torch.tensor(
+        [
+            [-2.0, -1.0],
+            [-2.0, 1.0],
+            [2.0, -1.0],
+            [2.0, 1.0],
+        ]
+    )
+    normals, offsets = vertices_to_halfspaces(vertices)
+    capacity, cycle = minimal_action_cycle(vertices, normals, offsets)
+    torch.testing.assert_close(capacity, torch.tensor(8.0))
+    assert cycle.size(0) == vertices.size(0)
+    # Ensure counter-clockwise order by checking signed area is positive
+    rolled = cycle.roll(-1, dims=0)
+    signed_area = 0.5 * torch.sum(cycle[:, 0] * rolled[:, 1] - cycle[:, 1] * rolled[:, 0])
+    assert signed_area > 0
+
+
 def test_systolic_ratio_matches_ball_normalisation() -> None:
-    """Ensure the systolic ratio agrees with the Viterbo conjecture on balls.
+    r = torch.tensor(1.0)
+    # 2D ball (n = 1)
+    volume_2d = math.pi * r**2
+    capacity_2d = math.pi * r**2
+    ratio_2d = systolic_ratio(torch.tensor(volume_2d), torch.tensor(capacity_2d), 2)
+    torch.testing.assert_close(ratio_2d, torch.tensor(1.0))
 
-    For the ``2n``-dimensional ball ``B^{2n}(r)`` the volume and capacity satisfy
-    ``vol = \pi^n r^{2n} / n!`` and ``c_{EHZ} = \pi r^2``. After implementing
-    :func:`systolic_ratio` we will plug these tensors in for ``n = 2`` and
-    ``n = 3`` and assert that the helper returns ``2!`` and ``3!`` respectively,
-    while also checking that invalid ``capacity_ehz`` inputs raise ``ValueError``.
-    """
-    pytest.skip("systolic ratio helper not implemented")
+    # 4D ball (n = 2)
+    volume_4d = (math.pi**2) * r**4 / 2.0
+    capacity_4d = math.pi * r**2
+    ratio_4d = systolic_ratio(torch.tensor(volume_4d), torch.tensor(capacity_4d), 4)
+    torch.testing.assert_close(ratio_4d, torch.tensor(2.0))

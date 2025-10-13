@@ -8,7 +8,6 @@ it should avoid heavy dependencies at import time.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 import torch
 from torch.utils.data import Dataset
@@ -59,7 +58,7 @@ def atlas_tiny_complete_row(row: AtlasTinyRow) -> AtlasTinyRow:
         out.minimal_action_cycle = cycle
     if out.systolic_ratio is None:
         assert out.volume is not None and out.capacity_ehz is not None
-        out.systolic_ratio = systolic_ratio(out.volume, out.capacity_ehz)
+        out.systolic_ratio = systolic_ratio(out.volume, out.capacity_ehz, out.vertices.size(1))
     return out
 
 
