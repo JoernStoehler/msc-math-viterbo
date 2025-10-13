@@ -26,6 +26,10 @@ It is intended for maintainers or agents working on architecture/conventions.
   - Baseline is CPU-only C++ compiled via `torch.utils.cpp_extension.load` with pybind11 bindings.
   - Keep a safe Python fallback for each extension to preserve portability (CI, devcontainers).
   - Add CUDA only when a clear hotspot is demonstrated by profiling and justified by complexity.
+  - Example harness lives in `src/viterbo/_cpp/`: single-file (`add_one.cpp`) and multi-file (`affine_ops.{h,cpp}` + `affine_bindings.cpp`) builds are both wired through lazy loaders.
+  - Local build trigger (devcontainer validated): `uv run python -c "import torch; import viterbo._cpp as cpp; cpp.add_one(torch.ones(1)); cpp.affine_scale_shift(torch.ones(1), 1.5, 0.5)"`. This compiles the extensions once per Python process, caching objects under `.cache/torch_extensions/`.
+  - Default flags include `-O3`; pass more via `TORCH_CUDA_ARCH_LIST`, `CC`, `CXX`, or `CFLAGS` environment variables before import when platform tuning is required.
+  - Common failures: missing compilers (`c++: not found` → install `build-essential`), stale build artefacts (`rm -rf ~/.cache/torch_extensions/*`), or Ninja absence (`uv sync` pulls the bundled `ninja` dependency, otherwise `uv add ninja`); fallbacks keep runtime functional meanwhile.
 
 - Testing & CI philosophy
   - Smoke-first: quick validators and selective benchmarks in PRs; deeper tiers are opt-in.

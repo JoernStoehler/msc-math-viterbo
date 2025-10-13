@@ -5,8 +5,6 @@ import torch
 from viterbo.math.constructions import (
     matmul_halfspace,
     matmul_vertices,
-    translate_halfspace,
-    translate_vertices,
 )
 from viterbo.math.polytope import halfspaces_to_vertices, vertices_to_halfspaces
 
