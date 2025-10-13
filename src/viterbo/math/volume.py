@@ -5,10 +5,10 @@ from __future__ import annotations
 import math
 
 import jax.numpy as jnp
+import numpy as np
 from jaxtyping import Array, Float
 
 from viterbo._wrapped import spatial as _spatial
-from viterbo.math.geometry import enumerate_vertices
 
 
 def volume_reference(vertices: Float[Array, " num_vertices dimension"]) -> float:
@@ -32,20 +32,6 @@ def volume_reference(vertices: Float[Array, " num_vertices dimension"]) -> float
     return float(_spatial.convex_hull_volume(verts))
 
 
-def volume_padded(
-    normals: Float[Array, " batch num_facets dimension"],
-    offsets: Float[Array, " batch num_facets"],
-    *,
-    method: str,
-) -> Float[Array, " batch"]:
-    """Compute batched volumes using a padding-friendly method.
-
-    Placeholder for batching semantics; returns zeros of appropriate shape.
-    """
-    batch = normals.shape[0]
-    return jnp.zeros((batch,), dtype=jnp.float64)
-
-
 def _volume_of_simplices(
     simplex_vertices: Float[Array, " num_simplices vertices dimension"],
 ) -> float:
@@ -65,7 +51,15 @@ def polytope_volume_reference(
     atol: float = 1e-9,
 ) -> float:
     """Return reference convex volume using hull volume over enumerated vertices."""
-    vertices = enumerate_vertices(B, c, atol=atol)
+    normals = jnp.asarray(B, dtype=jnp.float64)
+    offsets = jnp.asarray(c, dtype=jnp.float64)
+    vertices = _spatial.halfspace_intersection_vertices(
+        np.asarray(normals, dtype=np.float64),
+        np.asarray(offsets, dtype=np.float64),
+        atol=atol,
+    )
+    if vertices.size == 0:
+        return 0.0
     return float(_spatial.convex_hull_volume(vertices, qhull_options="QJ"))
 
 
@@ -76,7 +70,13 @@ def polytope_volume_fast(
     atol: float = 1e-9,
 ) -> float:
     """Return fast convex volume via Delaunay simplices, fallback to hull volume."""
-    vertices = enumerate_vertices(B, c, atol=atol)
+    normals = jnp.asarray(B, dtype=jnp.float64)
+    offsets = jnp.asarray(c, dtype=jnp.float64)
+    vertices = _spatial.halfspace_intersection_vertices(
+        np.asarray(normals, dtype=np.float64),
+        np.asarray(offsets, dtype=np.float64),
+        atol=atol,
+    )
     try:
         simplices = _spatial.delaunay_simplices(vertices, qhull_options="QJ")
     except _spatial.QhullError:

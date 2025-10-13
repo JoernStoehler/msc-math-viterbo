@@ -26,16 +26,6 @@ def test_volume_reference_matches_area_of_square() -> None:
     assert jnp.isclose(vol, 4.0, rtol=1e-12, atol=0.0)
 
 
-@pytest.mark.goal_code
-@pytest.mark.smoke
-def test_volume_padded_accepts_batched_halfspaces_signature() -> None:
-    """Batched volume interface accepts (normals, offsets) and a method flag."""
-    normals = jnp.zeros((2, 3, 4), dtype=jnp.float64)
-    offsets = jnp.zeros((2, 3), dtype=jnp.float64)
-    vol = volume.volume_padded(normals, offsets, method="monte_carlo")
-    assert vol.shape == (2,)
-
-
 @pytest.mark.goal_math
 @pytest.mark.smoke
 def test_volume_hypercube_4d_closed_form() -> None:

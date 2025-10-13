@@ -27,7 +27,7 @@ summary: Frame a research sweep over neural encodings and architectures for poly
 
 ## Dependencies
 
-- Consumes atlas datasets (starting with `atlas-small`) to ground representations in realistic data.
+- Consumes atlas datasets (starting with the existing `atlas_tiny` snapshot); larger presets such as `atlas_small` depend on the builder expansion work.
 - Coordinates with the Monday notebooks for visual outputs and with dataset benchmarks for feature availability.
 - Requires access to baseline classical algorithms to establish comparative metrics.
 

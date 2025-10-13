@@ -13,8 +13,10 @@ from collections.abc import Iterator, Sequence
 from itertools import combinations, permutations
 
 import jax.numpy as jnp
+import numpy as _np
 from jaxtyping import Array, Float
 
+from viterbo._wrapped import spatial as _spatial
 from viterbo.math.numerics import FACET_SOLVER_TOLERANCE
 from viterbo.math.symplectic import standard_symplectic_matrix
 
@@ -94,43 +96,24 @@ def _prepare_subset(
 def _polygon_area_from_halfspaces(
     B_matrix: Float[Array, " num_facets 2"], c: Float[Array, " num_facets"], *, tol: float
 ) -> float:
-    B = jnp.asarray(B_matrix, dtype=jnp.float64)
-    rhs = jnp.asarray(c, dtype=jnp.float64)
-    num_facets = int(B.shape[0])
-    candidates: list[Array] = []
-    for first, second in combinations(range(num_facets), 2):
-        system = jnp.stack([B[first], B[second]], axis=0)
-        det = float(jnp.linalg.det(system))
-        if abs(det) <= float(tol):
-            continue
-        try:
-            vertex = jnp.linalg.solve(system, rhs[jnp.array([first, second])])
-        except (RuntimeError, ValueError):
-            continue
-        residuals = B @ vertex - rhs
-        if not bool(jnp.all(residuals <= float(tol))):
-            continue
-        duplicate = False
-        for existing in candidates:
-            if bool(jnp.linalg.norm(existing - vertex) <= float(tol)):
-                duplicate = True
-                break
-        if not duplicate:
-            candidates.append(vertex)
-    if len(candidates) < 3:
+    normals = _np.asarray(B_matrix, dtype=_np.float64)
+    offsets = _np.asarray(c, dtype=_np.float64)
+    try:
+        vertices = _spatial.halfspace_intersection_vertices(normals, offsets, atol=tol)
+    except ValueError:
         return 0.0
-    verts = jnp.stack(candidates, axis=0)
-    centroid = jnp.mean(verts, axis=0)
-    rel = verts - centroid
-    angles = jnp.arctan2(rel[:, 1], rel[:, 0])
-    order = jnp.argsort(angles)
-    ordered = verts[jnp.asarray(order, dtype=jnp.int32)]
+    if vertices.shape[0] < 3:
+        return 0.0
+    centroid = _np.mean(vertices, axis=0)
+    rel = vertices - centroid
+    angles = _np.arctan2(rel[:, 1], rel[:, 0])
+    order = _np.argsort(angles)
+    ordered = vertices[order]
     x = ordered[:, 0]
     y = ordered[:, 1]
-    x_next = jnp.roll(x, -1)
-    y_next = jnp.roll(y, -1)
-    area = 0.5 * jnp.abs(jnp.sum(x * y_next - y * x_next))
-    return float(area)
+    x_next = _np.roll(x, -1)
+    y_next = _np.roll(y, -1)
+    return float(0.5 * _np.abs(_np.sum(x * y_next - y * x_next)))
 
 
 def _maximum_antisymmetric_order_value(weights: Array) -> float:

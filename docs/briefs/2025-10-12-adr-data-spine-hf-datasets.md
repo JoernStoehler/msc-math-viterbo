@@ -28,24 +28,29 @@ Required keys (illustrative; evolve as needed):
 - `normals: list[list[float]]` (nullable)
 - `offsets: list[float]` (nullable)
 - `vertices: list[list[float]]` (nullable)
-- `capacity_ehz: float | None`
-- `spectrum_topk: list[float] | None`
-- `volume: float | None`
+- `volume: dict[str, dict[str, float]]` (e.g., `{"halfspaces": {"reference": 1.0, "fast": 1.0}, "vertices": {"reference": 1.0}}`)
+- `capacity_ehz: dict[str, dict[str, float | dict[str, float | int | str]]]` (facet-normal, Reeb, symmetry-reduced, support-relaxation, and MILP variants)
+- `spectrum_topk: dict[str, list[float]]`
+- `reeb_cycles: dict[str, object]` (simple-cycle representatives and oriented-edge diagnostics)
+- `systolic_ratio: dict[str, float]`
 - `tags: dict[str, object]` (e.g., `csym`, `family`, `scale`, `normalized`)
 - `provenance: dict[str, object]` (git SHA, seeds, tool versions)
 
 ## Interfaces (library side)
 
-Thin adapters under `viterbo.atlas`:
+Dataset builders in `src/viterbo/datasets2/` return HF `Dataset` instances directly. Callers use
+the standard HF Datasets API (`Dataset.from_list`, `.map`, `.save_to_disk`, `.load_from_disk`, …)
+without a project-specific adapter layer. Keep imports explicit and avoid helper singletons.
 
-- `build_dataset(rows_iterable) -> Dataset`
-- `append_rows(dataset, rows_iterable) -> Dataset`
-- `save_dataset(dataset, path) -> None`
-- `load_dataset(path) -> Dataset`
-- `map_quantities(dataset, fn) -> Dataset` (per-row compute; no library batching)
+## Current implementation snapshot (2025-10)
 
-Keep the interface explicit; no global singletons. Conversions to JAX arrays originate in
-consumers (ML pipelines or task scripts), not within library kernels.
+- Only the `atlas_tiny` builder is present today (`src/viterbo/datasets2/atlas_tiny.py`). It now
+  materialises every quantity family (volume, EHZ capacity, spectrum, Reeb cycles, systolic ratios)
+  across all implemented algorithms, returning `NaN` when a solver is not available for a
+  particular dimension.
+- There is no `viterbo.atlas` package. CLI entry points still import the legacy name and fail until
+  they call the live builders under `viterbo.datasets2`.
+- Polars wrappers referenced in older docs have already been removed.
 
 ## Storage Locations
 
@@ -54,8 +59,8 @@ consumers (ML pipelines or task scripts), not within library kernels.
 
 ## Migration Plan
 
-1. Implement HF adapters (`build/load/save/map`) and smoke tests.
-2. Provide a row builder that consumes `viterbo.types.Polytope` and current quantities.
-3. Update placeholder notebooks to exercise the HF-backed atlas.
-4. Mark Polars-specific helpers as deprecated in docs; remove once consumers switch.
+1. Update placeholder notebooks and CLI scripts to call the `viterbo.datasets2` builders directly
+   instead of the removed `viterbo.atlas` module.
+2. Expand coverage beyond `atlas_tiny` once additional presets (`atlas_small`, …) have an agreed
+   specification and implementation plan.
 
