@@ -12,6 +12,13 @@ on:
   schedule:
     - cron: "0 5 * * 1"
 
+env:
+  PIP_INDEX_URL: https://download.pytorch.org/whl/cpu
+  PIP_EXTRA_INDEX_URL: https://pypi.org/simple
+  UV_DEFAULT_INDEX: https://download.pytorch.org/whl/cpu
+  UV_EXTRA_INDEX_URL: https://pypi.org/simple
+  UV_TORCH_BACKEND: cpu
+
 jobs:
   ci:
     runs-on: ubuntu-latest

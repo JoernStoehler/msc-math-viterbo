@@ -29,6 +29,7 @@ Single authoritative policy for this repo.
 - Tests: `tests/` — smoke tests under `test_*.py`; benches under `tests/performance/`
 - Docs & Notes: `docs/` (site + task briefs), `notebooks/` (dummy examples), `artefacts/` (outputs, ignored)
   - Tasks: `docs/tasks/` (open briefs) and `docs/tasks/archived/` (examples)
+    * The Maintainer actively works through `docs/tasks/`; treat those briefs as the canonical backlog and update them whenever scope or status changes.
   - `notebooks/` stores Jupytext-managed `.py` notebooks; preserve the front-matter metadata when editing or adding entries.
 
 ## 2) Environment & Tooling

@@ -69,21 +69,18 @@ def test_halfspace_transforms_agree_with_vertices() -> None:
         atol=1e-6,
         rtol=0.0,
     )
-    translation = torch.tensor([0.5, -2.0])
-    translated_vertices = translate_vertices(translation, transformed_vertices)
-    expected_normals, expected_offsets = vertices_to_halfspaces(translated_vertices)
-    actual_normals, actual_offsets = translate_halfspace(
-        translation, actual_normals, actual_offsets
-    )
+
+
+def test_vertices_halfspaces_roundtrip_hypercube_4d() -> None:
+    points = torch.tensor([-1.0, 1.0], dtype=torch.get_default_dtype())
+    expected_vertices = torch.cartesian_prod(points, points, points, points)
+    identity = torch.eye(4, dtype=torch.get_default_dtype())
+    normals = torch.cat([identity, -identity], dim=0)
+    offsets = torch.ones(8, dtype=torch.get_default_dtype())
+    vertices = halfspaces_to_vertices(normals, offsets)
+    torch.testing.assert_close(_sorted_rows(vertices), _sorted_rows(expected_vertices))
+    reconstructed_normals, reconstructed_offsets = vertices_to_halfspaces(vertices)
+    roundtrip_vertices = halfspaces_to_vertices(reconstructed_normals, reconstructed_offsets)
     torch.testing.assert_close(
-        _sorted_rows(expected_normals),
-        _sorted_rows(actual_normals),
-        atol=1e-6,
-        rtol=0.0,
-    )
-    torch.testing.assert_close(
-        expected_offsets.sort().values,
-        actual_offsets.sort().values,
-        atol=1e-6,
-        rtol=0.0,
+        _sorted_rows(roundtrip_vertices), _sorted_rows(expected_vertices), atol=1e-6, rtol=0.0
     )

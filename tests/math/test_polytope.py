@@ -50,6 +50,14 @@ def test_volume_known_shapes() -> None:
         ]
     )
     assert math.isclose(volume(cube).item(), 1.0, rel_tol=1e-6, abs_tol=1e-6)
+    points = torch.tensor([-1.0, 1.0])
+    hypercube_vertices = torch.cartesian_prod(points, points, points, points)
+    torch.testing.assert_close(
+        volume(hypercube_vertices), torch.tensor(16.0, dtype=torch.get_default_dtype())
+    )
+    cross_poly_vertices = torch.cat([torch.eye(4), -torch.eye(4)], dim=0)
+    expected_cross_poly_volume = torch.tensor(2.0 / 3.0, dtype=torch.get_default_dtype())
+    torch.testing.assert_close(volume(cross_poly_vertices), expected_cross_poly_volume)
 
 
 def test_rotated_regular_ngon() -> None:

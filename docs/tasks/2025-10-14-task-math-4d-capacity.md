@@ -35,3 +35,7 @@ Restore 4D coverage for symplectic invariants so datasets and notebooks can oper
 - Capacity/minimal-action helpers accept tensors on arbitrary devices/dtypes (within float64 baseline).
 - Deterministic results for seeded generators and symmetric bodies (tests enforce specific values or tolerances).
 - Docs updated to point to algorithm references and usage constraints.
+
+## Progress Log
+
+- 2025-10-14: Added regression tests covering 4D volume computations, H/V round-trips, and generator outputs. Capacity/minimal-action solvers remain stubbed; follow-up work will enable the remaining acceptance criteria.

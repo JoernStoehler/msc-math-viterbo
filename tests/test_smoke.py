@@ -17,33 +17,41 @@ pytestmark = pytest.mark.smoke
 
 def test_imports_and_basic_geometry():
     """Ensure core modules import and basic geometry works (support, distances)."""
-    pts = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
-    d = torch.tensor([1.0, 1.0])
+    pts = torch.tensor(
+        [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+    )
+    d = torch.tensor([1.0, 1.0, 1.0, 1.0])
     s = support(pts, d)
     assert torch.is_tensor(s)
     assert pytest.approx(float(s)) == 1.0
 
     d2 = pairwise_squared_distances(pts)
-    assert d2.shape == (2, 2)
+    assert d2.shape == (4, 4)
     assert pytest.approx(float(d2[0, 1])) == 2.0
 
     val, idx = support_argmax(pts, d)
-    assert idx in (0, 1) and pytest.approx(float(val)) == 1.0
+    assert idx in (0, 1, 2, 3) and pytest.approx(float(val)) == 1.0
 
     mins, maxs = bounding_box(pts)
-    assert mins.shape == maxs.shape == (2,)
+    assert mins.shape == maxs.shape == (4,)
     assert float(mins.min()) <= float(maxs.max())
 
-    normals = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
-    offsets = torch.tensor([1.0, 1.0])
+    identity = torch.eye(4)
+    normals = torch.cat([identity, -identity], dim=0)
+    offsets = torch.ones(8)
     viol = halfspace_violations(pts, normals, offsets)
-    assert viol.shape == (2, 2)
+    assert viol.shape == (4, 8)
     assert torch.all(viol >= 0)
 
 
 def test_datasets_and_collate_and_models(tmp_path):
     """Ragged dataset + collate functions + demo probe produce a scalar metric."""
-    ds = RaggedPointsDataset(num_samples=8, dim=3, min_points=2, max_points=5, seed=123)
+    ds = RaggedPointsDataset(num_samples=8, dim=4, min_points=4, max_points=8, seed=123)
 
     # List collate
     loader_list = DataLoader(ds, batch_size=4, shuffle=False, collate_fn=collate_list)

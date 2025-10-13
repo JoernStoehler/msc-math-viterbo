@@ -7,6 +7,7 @@ from viterbo.math.constructions import (
     random_polytope_algorithm1,
     random_polytope_algorithm2,
 )
+from viterbo.math.volume import volume
 
 torch.set_default_dtype(torch.float64)
 
@@ -65,3 +66,35 @@ def test_random_polytope_algorithm2_returns_convex_hull() -> None:
     torch.testing.assert_close(vertices, v_again)
     torch.testing.assert_close(normals, n_again)
     torch.testing.assert_close(offsets, c_again)
+
+
+def test_random_polytope_algorithm2_dimension4_roundtrip() -> None:
+    seed = 1357
+    vertices, normals, offsets = random_polytope_algorithm2(seed, num_vertices=8, dimension=4)
+    assert vertices.ndim == 2 and vertices.size(1) == 4
+    assert normals.ndim == 2 and normals.size(1) == 4
+    assert offsets.ndim == 1
+    assert _feasible(normals, offsets, vertices)
+    recon_vertices, recon_normals, recon_offsets = random_polytope_algorithm2(
+        seed, num_vertices=8, dimension=4
+    )
+    torch.testing.assert_close(vertices, recon_vertices)
+    torch.testing.assert_close(normals, recon_normals)
+    torch.testing.assert_close(offsets, recon_offsets)
+
+
+def test_lagrangian_product_2d_blocks_form_4d_polytope() -> None:
+    square = torch.tensor(
+        [
+            [-1.0, -1.0],
+            [-1.0, 1.0],
+            [1.0, -1.0],
+            [1.0, 1.0],
+        ]
+    )
+    vertices, normals, offsets = lagrangian_product(square, square)
+    assert vertices.shape == (square.size(0) ** 2, 4)
+    assert normals.shape[1] == 4
+    assert offsets.shape[0] == normals.shape[0]
+    assert _feasible(normals, offsets, vertices)
+    assert volume(vertices).item() > 0
