@@ -70,6 +70,7 @@ This document tracks goals, decisions, scope, milestones, and progress for migra
 
 - 2025‑10‑13: Drafted migration plan and proposed decisions; awaiting confirmation on open questions.
 - 2025‑10‑13: Skeletonized repo to PyTorch: updated AGENTS.md, pyproject/pytest/Justfile; added minimal `math`/`datasets`/`models`; added C++ extension scaffold; smoke + benchmark tests; added dummy notebooks for artefacts I/O.
+- 2025‑10‑13: Opened PR #94 (pytorch → main); fixed lint issues, pruned legacy notebooks/scripts; simplified MkDocs config. CI (code + docs) green on PR.
 
 ## Open Questions (need PI confirmation)
 
