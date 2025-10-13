@@ -20,3 +20,26 @@ Author briefs manually. For style and scope, learn from examples under `docs/tas
 - 2025-10-13 Math/Symplectic: J, random symplectic matrices, Lagrangian product
 - 2025-10-13 Define smoke tests for core algorithms
 - 2025-10-13 Math/Symplectic: EHZ capacity (H/V) and minimal action cycle
+
+## 2025-10-14 Triage
+
+- Archived historical scaffolding briefs whose implementations now live in `src/viterbo/math/` (see `docs/tasks/archived/`).
+- Confirmed the active backlog focuses on completing symplectic capacity solvers, dataset tooling, CI hardening, and smoke coverage.
+- Relocated superseded workflow briefs under `docs/briefs/archive/` to avoid conflicting instructions.
+
+### Active Backlog Snapshot
+
+- `2025-10-13-task-math-ehz-capacity-and-min-action.md`
+- `2025-10-13-task-datasets-atlas-tiny.md`
+- `2025-10-13-task-datasets-collate-edge-cases.md`
+- `2025-10-13-task-cpp-harness-and-docs.md`
+- `2025-10-13-task-ci-cpu-torch-index-config.md`
+- `2025-10-13-task-smoke-tests-definitions.md`
+
+### Follow-ups
+
+- [ ] Land the EHZ capacity + minimal action algorithms and unskip the associated tests.
+- [ ] Finish the AtlasTiny dataset builder (generation + completion) and document the schema.
+- [ ] Harden collate helpers for edge cases and extend smoke coverage.
+- [ ] Enforce CPU-only Torch wheels in CI while preserving local GPU installs.
+- [ ] Expand smoke definitions so new math modules gain fast regression tests.

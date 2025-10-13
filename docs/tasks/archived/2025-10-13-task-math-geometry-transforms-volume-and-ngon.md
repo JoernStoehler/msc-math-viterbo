@@ -34,3 +34,7 @@ Add basic vertex-space transforms (linear map, translation), a reference `volume
 - `volume` consistent with known shapes (unit square/cube, regular polygons).
 - Docstrings include shapes/dtypes and units where relevant.
 
+## Status Log
+
+- 2025-10-14 — Archived after verifying geometry transforms, `volume` (≤3D), and `rotated_regular_ngon2d` ship with smoke coverage; future high-dimensional work will spin out into new briefs.
+

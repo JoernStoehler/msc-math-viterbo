@@ -33,3 +33,7 @@ Provide foundations for symplectic computations: standard symplectic form `J`, r
 - Numerical checks pass within reasonable tolerances.
 - Docstrings document shapes/dtypes and invariants.
 
+## Status Log
+
+- 2025-10-14 — Archived after verifying the symplectic form, random generator, and Lagrangian product helpers ship in `src/viterbo/math/symplectic.py` with dedicated smoke tests.
+

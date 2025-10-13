@@ -35,3 +35,7 @@ Implement two random polytope generators: (1) via random halfspaces and (2) via 
 - No implicit device moves; fixed seeds produce identical results.
 - Document limits and potential degeneracies.
 
+## Status Log
+
+- 2025-10-14 — Archived after confirming deterministic generators now live in `src/viterbo/math/random_polytopes.py` with smoke coverage documenting limitations.
+

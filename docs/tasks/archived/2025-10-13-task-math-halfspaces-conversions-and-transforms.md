@@ -35,3 +35,7 @@ Implement H↔V conversions and simple H-rep transforms (linear map and translat
 - Deterministic on fixed inputs; no implicit device moves.
 - Docstrings document shapes, dtype, and invariants.
 
+## Status Log
+
+- 2025-10-14 — Archived after verifying bidirectional conversions and transforms are implemented in `src/viterbo/math/halfspaces.py` with smoke coverage.
+
