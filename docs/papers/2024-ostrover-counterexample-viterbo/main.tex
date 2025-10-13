@@ -1,0 +1,338 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+
+\usepackage{amsthm}
+\usepackage{bbm}
+\usepackage{graphicx}
+\usepackage{float}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\theoremstyle{definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{claim}{Claim}
+
+\newcommand{\R}{{\mathbb{R}}}
+\newcommand{\C}{{\mathbb{C}}}
+\newcommand{\CP}{{\mathbb{CP}}}
+\newcommand{\ehzcap}{c_{_{\rm EHZ}}}
+\newcommand{\im}{$\implies$}
+
+\newcommand{\dg}{\dot{\gamma}}
+\newcommand{\dz}{\dot{z}}
+\newcommand{\deta}{\dot{\eta}}
+\newcommand{\dzeta}{\dot{\zeta}}
+
+\newcommand{\phis}[1]{{\varphi_{#1}}}
+\newcommand{\phism}[2]{{\varphi_{#1}^{#2}}}
+
+\def\phit{{\varphi_t}}
+\def\psit{{\psi_t}}
+\def\phiti{{\varphi^{-1}_t}}
+\def\gzi{{\gamma_z^i}}
+\def\dgzi{\dot{\gamma_z^i}}
+\def\Id{\mathbbm{1}}
+
+
+
+\begin{document}
+
+\title{A Counterexample to Viterbo's Conjecture}
+\author{Pazit Haim-Kislev, Yaron Ostrover}
+\maketitle
+
+\begin{abstract}
+We provide a counterexample to Viterbo's volume-capacity conjecture based on Minkowski billiard dynamics. This implies in particular that symplectic capacities differ on the class of convex domains in the classical phase space.    
+\end{abstract}
+
+
+\section{Introduction and Results}
+
+
+The renowned Gromov's non-squeezing theorem \cite{gromov}
+led to the development of global symplectic invariants, distinct from volume considerations, known today as {\it symplectic capacities}. These invariants play a central role in establishing rigidity results within symplectic geometry, and are particularly used to obtain obstructions to symplectic embeddings.  In this paper we address a longstanding conjecture regarding  symplectic capacities of convex domains in the classical phase space. More precisely, 
+consider $\R^{2n} \simeq \C^n$ equipped with the standard symplectic form $\omega = \sum dp_i \wedge dq_i$. A symplectic capacity is a map $c$ that assigns a number $c(U) \in [0,\infty]$ to each subset $U \subset \R^{2n}$, and satisfies the following:
+\begin{enumerate}
+\item (Monotonicity) $c(U) \leq c(V)$ if there is a symplectic embedding $U \hookrightarrow V$.
+\item (Conformality) $c( \alpha U) = \alpha^2 c(U)$, for $\alpha \in \R_{+}$.
+\item (Normalization) $c(B^{2n}(1)) = c(Z^{2n}(1)) = \pi$.
+\end{enumerate}
+Here $B^{2n}(r) \subset \C^n$ is the Euclidean ball of radius $r$, and $Z^{2n}(r)$ is the cylinder $B^2(r) \times \C^{n-1}$. 
+Two immediate examples of symplectic capacities which naturally arise from Gromov's non-squeezing theorem are the Gromov width 
+$$c_G(U) := \sup \{ \pi r^2 : \exists \,  B^{2n}(r) \overset{\mathrm s}{\hookrightarrow } U  \},$$
+where $\overset{\mathrm s}{\hookrightarrow }$ stands for a symplectic embedding, and the cylindrical capacity
+$$ c_Z(U) = \inf \{ \pi r^2 : \exists \, U  \overset{\mathrm s}{\hookrightarrow } Z^{2n}(r)  \}.$$
+Since~\cite{gromov}, numerous symplectic capacities have been constructed arising from various themes in symplectic geometry and Hamiltonian dynamics. Some examples include the Hofer--Zehnder capacity \cite{hofer-zehnder}, the Ekeland--Hofer capacities \cite{hofer-ekeland}, the symplectic homology capacity introduced by Viterbo in \cite{viterbo-sh}, the Gutt--Hutchings capacities \cite{Gu-Ha}, the embedded contact homology capacities \cite{ech} in dimension 4, and capacities defined using rational symplectic field theory \cite{siegel}.
+
+\medskip
+
+For the class of convex domains in $\R^{2n}$ it is known that the Hofer--Zehnder capacity, the first Ekeland--Hofer capacity, the symplectic homology capacity, and the first Gutt--Hutchings capacity coincide, and are equal to the minimal action among closed characteristic on the boundary (see \cite{hofer-zehnder, hofer-ekeland, viterbo_cap, irie, abbondandolo-kang, Gu-Ha, ginzburg-shon, gutt-hutchings-ramos}). We refer to this quantity as the Ekeland--Hofer--Zehnder capacity and denote it by $\ehzcap$. An influential conjecture that has initiated and contributed to several research efforts in the field is Viterbo's volume-capacity conjecture \cite{viterbo2000}, which states, roughly speaking, that among all convex bodies of the same volume in $\R^{2n}$ the Euclidean ball has the largest symplectic size.
+ \begin{conjecture}[Viterbo, 2000]
+\label{viterbo_conj}
+For any symplectic capacity $c$, and any convex domain $K \subset \R^{2n}$
+$$ c^n(K) \leq n! \text{Vol}(K).$$
+\end{conjecture}
+Note that the monotonicity property of symplectic capacities guarantees that 
+Conjecture \ref{viterbo_conj} holds for the Gromov width.
+A stronger version of this conjecture asserts that all symplectic capacities coincide on the class of convex domains.
+Since its introduction, Viterbo's conjecture inspired several related works. For example, in \cite{ArtsteinAvidanOstroverMilman} it is shown that the conjecture holds up to a universal constant. 
+In \cite{abhs} (cf.~\cite{abbondandoloBenedetti}) it was proven that the conjecture holds
+in a $C^3$-neighborhood of the 
+ball. Later, in \cite{edtmair} (cf.~\cite{abbondandolo-benedetti-edtmair}) 
+it was demonstrated that the aforementioned stronger version of the conjecture is valid within a 
+$C^2$-neighborhood of the ball.
+The papers \cite{balitsky, rudolf} prove Conjecture \ref{viterbo_conj} for certain Lagrangian products. %in $\R^4$.
+The conjecture has also been verified for  monotone toric domains in~\cite{gutt-hutchings-ramos}, and for specific domains associated with Hamiltonians of classical mechanical type in 
+\cite{karasev-sharipova}.
+In \cite{capacity_mahler} it is shown that the famous Mahler's conjecture on the volume product of centrally symmetric convex bodies, which had remained open for the past 80 years, and was recently proven in three dimensions \cite{mahler3dim}, is equivalent to the restriction of Conjecture \ref{viterbo_conj} to Lagrangian products of centrally symmetric convex bodies $K \subset \R^n_q$ and their dual bodies  $K^\circ \subset \R^n_p$.  
+Our main result is:
+
+\begin{theorem}
+\label{counterexample_thm}
+Viterbo's conjecture fails 
+%for $\R^{2n}$ 
+for every 
+%dimension 
+$n \geq 2$.
+\end{theorem}
+
+
+
+The proof of Theorem~\ref{counterexample_thm} is based on 
+the fact that the Ekeland--Hofer--Zehnder capacity of Lagrangian products of convex domains in the phase space is closely related with Minkowski billiard dynamics (see, e.g.,~\cite{singular_capacity}), and the following observation. Consider $\R^4 = \R^2_q \oplus \R^2_p$. Let $K \subset \R^2_q$ be the regular pentagon with vertices $\{(\cos(\frac{2\pi k}{5}), \sin(\frac{2\pi k}{5}))\}_{k=0}^4$,
+%(see Figure \ref{pentagonFig}).
+and let $T \subset \R^2_p$ be a rotation of $K$ by $90^o$, i.e. the vertices of $T$ are $\{(\cos(-\frac{\pi}{2} + \frac{2\pi k}{5}), \sin(-\frac{\pi}{2} + \frac{2\pi k}{5}))\}_{k=0}^4$ (see Figure \ref{pentagonFig}).
+
+\begin{proposition}
+\label{counterexample_prop}
+The Ekeland--Hofer--Zehnder capacity of the Lagrangian product $K \times T$ is the $T^{\circ}$-length of any one of the 2-bounce $T$-billiard trajectories along a diagonal of the pentagon $K$, i.e.,
+$$ \ehzcap(K \times T) = 2 \cos(\frac{\pi}{10}) (1 + \cos(\frac{\pi}{5})).$$
+\end{proposition}
+
+\begin{proof}[Proof of Theorem \ref{counterexample_thm}]
+Following Corollary 1.4 in \cite{p-prod}, it is enough to prove Theorem \ref{counterexample_thm} in $\R^4$.
+As the area of both $K$ and $T$ equals $A = \frac{5}{2} \sin(\frac{2\pi}{5})$, Proposition \ref{counterexample_prop} immediately yields
+ $$\frac{\ehzcap(K\times T)^2}{2 A^2} = \frac{\sqrt{5} + 3}{5} > 1.$$
+ This completes the proof of Theorem 
+ \ref{counterexample_thm}. 
+\end{proof}
+
+
+ \begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{pentagonTimesPentagon.pdf}
+\caption{The pentagon $K$ times the rotated pentagon $T$}
+\label{pentagonFig}
+\end{figure}
+
+
+\begin{remark}
+Using the formula given in Theorem 1.1 from \cite{pazit}, it is possible to calculate the capacity of $K \times T$ using a computer program. We refer to~\cite{pazit-website} for a suggested implementation. For completeness, we present  an independent proof of Proposition \ref{counterexample_prop} below.
+\end{remark}
+
+
+
+
+\noindent {\bf Discussion and Open Questions:} 
+
+
+\medskip
+
+(i) It follows from Theorem~\ref{counterexample_thm} that there are convex domains which achieve equality in Viterbo's volume-capacity inequality, and are not symplectomorphic to the Euclidean ball. Indeed, we owe the following argument to E. Kerman: From Theorem~\ref{counterexample_thm}  and a standard approximation argument it follows that there is a smooth convex body $C$ violating Viterbo's conjecture.
+Let $L$ be a convex domain  satisfying Viterbo's inequality, and consider $\lambda L + (1 - \lambda)C$. 
+From continuity one has that for some $\lambda'$ this domain will achieve equality in Viterbo's volume-capacity inequality. Moreover, one can choose this $\lambda'$
+such that even an arbitrarily small increase in its value will cause the domain to violate the conjecture.
+From~\cite[Corollary 2]{abbondandoloBenedetti} it follows that for any symplectic image of the Euclidean ball
+there exists a $C^3$-neighborhood in which any convex domain satisfies Viterbo’s conjecture. 
+Thus the above convex combination associated with $\lambda'$  can not be symplectomorphic to the Euclidean  ball. 
+
+
+\medskip 
+
+
+
+
+(ii) As mentioned above, substantial evidence suggests that there is a fundamental reason that Viterbo's conjecture is valid in many special cases. While Theorem \ref{counterexample_thm} demonstrates that Conjecture \ref{viterbo_conj} does not hold universally, it would be intriguing to identify, roughly speaking, the appropriate class of convex bodies for which Conjecture \ref{viterbo_conj} is applicable. Specifically, given the equivalence between the Mahler conjecture and Viterbo's conjecture for centrally symmetric convex bodies  \cite{capacity_mahler}, it would be valuable to determine whether Viterbo's conjecture holds true for this sub-class of convex domains. 
+
+
+\medskip
+
+(iii) Let $\mathcal K^{2n}$ denote the class of convex domains in $\R^{2n}$, and denote the 
+maximal symplectic systolic constant of this class by  $$ Sys(\mathcal K^{2n}) := \sup_{K \in \mathcal K^{2n}} \frac{\ehzcap(K)}{(n! \text{Vol}(K))^{1/n}}.$$ 
+In contrast with the larger class of star-shaped domains in which the capacity-volume ratio is unbounded~\cite{hermann}, for convex domains one has $Sys(\mathcal K^{2n}) \leq \alpha$, for some inexplicit universal constant $\alpha > 0$ (see \cite{ArtsteinAvidanOstroverMilman}). This improves a previous result of Viterbo~\cite{viterbo2000}, who used John ellipsoids to obtain a bound which is linear in the dimension. Moreover, it follows from~\cite{p-prod} that $Sys(\mathcal K^{2n}) \leq Sys(\mathcal K^{2m})$, whenever $n \leq m$.
+Theorem \ref{counterexample_thm} naturally raises the question of determining the value $Sys(\mathcal K^{2n})$. 
+This question is already interesting for the sub-class  of Lagrangian products of convex domains of the form $K\times T \subset \R_q^n \times \R^n_p$, and is open even when one of these bodies is the Euclidean  ball. 
+ Additionally, it would  be interesting to explore whether and how $Sys(\mathcal K^{2n})$ depends on the dimension. 
+
+
+\medskip
+
+(iv) Another notable class of domains in $\R^{2n}$, which includes convex domains, is the class $\mathcal {DC}^{2n}$ of dynamically convex domains (see~\cite{HWZ-3dconvex}).
+Contrary to previous assumptions, and in response to a longstanding open question, it has recently been demonstrated (first in $\R^4$~\cite{dynconvnotconvdim4}, and then in every dimension~\cite{dynconvnotconvdim2n}) that 
+there exist dynamically convex domains in $\R^{2n}$
+that are not
+symplectically convex.
+The maximal systolic constant for this class $Sys(\mathcal {DC}^{2n})$ can be defined in a similar manner  as above, where one replaces the Ekeland-Hofer-Zehnder capacity with the minimal action among closed characteritcs on the boundary. In~\cite{Systolicratio} it was shown that $Sys(\mathcal {DC}^{4}) \geq 2$. To the best of our knowledge, it is currently unknown if this quantity is bounded from above.  
+It is a natural question  to determine how different $Sys(\mathcal {DC}^{2n})$ and $Sys(\mathcal {K}^{2n})$.
+
+
+
+\medskip 
+
+(v) Finally, we note that
+by combining %recently it was proven~\cite{Hryniewicz-Hutchings-Ramos} 
+results from~\cite{edtmair} and \cite{Hryniewicz-Hutchings-Ramos}, one has that in $\R^4$ the first ECH capacity and the cylindrical capacity coincide for dynamically convex domains.
+Thus, as of today, there are a-priori 3 different capacities for convex domains: the Gromov width, the Ekeland-Hofer-Zehnder capacity and the cylindrical capacity. 
+While Theorem~\ref{counterexample_thm} demonstrates that the Gromov width differs from the EHZ capacity, it remains an  open question whether the EHZ capacity coincides with the cylindrical capacity for convex domains (note that in the case of the products of pentagons $K \times T$ mentioned above, a simple computation shows that these two capacities indeed coincide). 
+
+\medskip 
+
+
+\noindent{\bf Acknowledgement:} We are grateful to Leonid Polterovich and Shira Tanny for several useful comments. Both authors were partially supported by the ISF grant No. 938/22.
+
+
+\section{Proof of the Main Result}
+
+As mentioned before, the proof of Theorem~\ref{counterexample_thm} is based on the fact that the Ekeland-Hofer-Zehnder capacity of a Lagrangian product configuration $K \times T$ of two convex domains  equals the $T^{\circ}$-length of the minimal periodic $T$-Minkowski billiard trajectory in $K$.
+Hence, before we turn to prove Proposition~\ref{counterexample_prop}, we first recall the notion of Minkowski billiards. 
+
+
+\medskip 
+
+Minkowski billiards were introduced by Gutkin and Tabachnikov in~\cite{GutTab}, as a natural generalization of classical billiards to the Finsler setting, where the Euclidean structure is replaced by a Minkowski metric. 
+In this setting, there are two convex bodies $K, T \subset \R^n$, where one of them, say $K$, plays the role of the billiard table, and the other body $T$ determines a possibly not symmetric norm, given by the support function $h_T$, which controls the billiard dynamics in $K$. In particular, the reflection law for the associated Minkowski billiard follows from a variational principle of the length functional, where the Euclidean length is replaced by $h_T$. In what follows we refer to such billiard trajectories as $T$-billiard trajectories in $K$, and to the corresponding distance associated with the support function $h_T$ as $T^{\circ}$-length. For more information on Minkowski billiard dynamics see, e.g., Section 2.4 in~\cite{singular_capacity},
+and Section 1.2 in~\cite{Mink-Bill-Rudolf} where no smoothness assumptions are assumed on $K$ and $T$. 
+
+
+\medskip 
+
+A useful characterisation of minimal billiard trajectories was introduced by Bezdek-Bezdek in \cite{bezdek-bezdek}. More precisely, in \cite{bezdek-bezdek} (see the Proof of Theorem 1.1, and in particular Lemma 2.4), and its extension to Minkowski billiards (see e.g.,~\cite[Theorem 2.1]{non_symmetric_mahler}, and~\cite[Threorem 1]{Mink-Bill-Rudolf}), it is proven that the $T^{\circ}$-minimal closed billiard trajectories are precisely the closed polygonal curves with minimal $T^\circ$-length %of closed trajectories 
+%which satisfy that there is no translation which moves the entire curve to the interior of $K$. 
+which can not be translated into the interior of $K$.
+Moreover,  using the classical Helly's theorem, it was proven in~\cite{bezdek-bezdek} (cf.~\cite{non_symmetric_mahler, Mink-Bill-Rudolf}) that given such a curve which satisfies the above conditions, one may omit vertices keeping 
+both conditions satisfied, until the curve has at most $n+1$ vertices.
+
+\begin{proof}[{\bf Proof of Proposition~\ref{counterexample_prop}}]
+  
+Denote the vertices of the pentagon $K \subset \R^2_q$ by $v_k := (\cos(\frac{2\pi k}{5}), \sin(\frac{2\pi k}{5}))$, and the vertices of the pentagon $T \subset \R^2_p$ by  $w_k:= (\cos(-\frac{\pi}{2} + \frac{2\pi k}{5}), \sin(-\frac{\pi}{2} + \frac{2\pi k}{5}))$, where $0 \leq k \leq 4$. Following Theorem 2.13 in \cite{singular_capacity} (cf. Theorem 1 in~\cite{Mink-Bill-Rudolf}), the Ekeland-Hofer-Zehnder capacity $\ehzcap(K \times T)$ is the minimal $T^\circ$-length among the periodic $T$-billiard trajectories in $K$. Recall that these billiard trajectories are the projections to $\R^2_q$ of (generalized) closed characteristics on the boundary $\partial (K \times T)$. 
+%We refer the reader to the aforementioned references for precise definitions and formulations of Minkowski billiard dynamics.  
+Given that $K$ and $T$ are not smooth, it is possible for some vertices of a $T$-billiard trajectory to lie within the interior of $K$. We note that in fact there always exists at least one $T^\circ$-minimal $T$-billiard trajectory in $K$ that has all its vertices on the boundary $\partial K$. Despite this, our subsequent analysis will also  consider $T$-billiard trajectories that include vertices within the interior of $K$.
+
+\medskip 
+
+
+In light of the above discussion on the Bezdek-Bezdek result, to find the minimal $T^{\circ}$-length  among periodic $T$-billiard trajectories in $K$, it suffices to consider trajectories with only $2$ or $3$ bounce points. Recall that by definition, the $T^\circ$-length of a vector $v \in \R^2_q$ is 
+\begin{equation} \label{eqn-T-dual-length} \|v\|_{T^\circ} = \max_{0\leq k \leq 4} \langle v, w_k \rangle. \end{equation}
+A direct computation shows that the $T^{\circ}$-length of any  of the $2$-bounce billiard trajectories along the diagonals of the pentagon $K$ is
+$ 2 \cos(\frac{\pi}{10}) (1 + \cos(\frac{\pi}{5}))$. 
+Any other $2$-bounce which cannot be translated into the interior is a trajectory connecting one of the vertices $v_k$ with a point 
+$\widetilde q$ on the opposite edge, i.e., the edge connecting the vertices $v_{k+2}$ and $v_{k+3}$ counting indices modulo 5.
+We claim that the $T^\circ$-length of such a $2$-bounce equals to the $T^\circ$-length of the diagonal.
+Indeed, the $T^\circ$-length of such a 2-bounce trajectory is  $$\langle v_k - \widetilde q, w_{k+1} \rangle + \langle \widetilde q - v_k, w_{k-1} \rangle,$$
+where again we count indices modulo 5. 
+As this length is linear in the variation of $\widetilde q$ along the edge between $v_{k+2}$ and $v_{k+3}$,
+it is enough to check  that the values at the endpoints coincide. This follows from the fact that 
+both endpoints are diagonals.
+We conclude that the minimal $T^\circ$-length of any 2-bounce $T$-billiard trajectory in $K$ has $T^\circ$-length equal to
+$ 2 \cos(\frac{\pi}{10}) (1 + \cos(\frac{\pi}{5}))$. 
+
+\medskip 
+
+We turn to consider $T^{\circ}$-length minimizing $3$-bounce trajectories.
+Since such a curve cannot be translated into the interior of $K$, if one vertex of the trajectory lies in the interior of $K$ (see the remark at the beginning of the proof), the other two vertices are a vertex of $K$, and a point on the opposite edge. From the triangle inequality, this case can be reduced to the $2$-bounce case.
+Hence, we may assume  in what follows that all three vertices of a $T^{\circ}$-length minimize $3$-bounce trajectory are on the boundary of $K$.
+
+
+
+\medskip
+
+According to Theorem 1.5 in~\cite{pazit}, there exists a $T^\circ$-length minimizing closed billiard trajectory whose velocities are in the set of outer normals to $T$, i.e., the set $V = \{(-w_k)\}_{k=0}^4$,
+%Moreover, one can assume that 
+and each such velocity is being utilized at most once. Note that  the latter polygonal trajectory might have a vertex in the interior of $K$.
+The above considerations give a closed $T^\circ$-length minimizing billiard trajectory with at most 5 vertices, which can not be translated into the interior of $K$. 
+Moreover, as demonstrated in \cite[Lemma 2.1]{bezdek-bezdek}, by applying the classical Helly's theorem, it is possible to omit vertices from this polygonal trajectory while maintaining the condition that the curve cannot be translated into the interior of $K$, 
+until it has  3 vertices. 
+Note that after such a procedure,  at least one of the curve's velocities is a genuine normal from the set $V$, while two others might be positive linear combinations of pairs of vectors from $V$. We denote this billiard trajectory by $\gamma$.
+%Note that 
+Since $K$ and $T$ exhibit symmetry with respect to rotations with angle $\frac{2\pi}{5}$, one might assume without loss of generality that one of the velocities of the billiard trajectory  $\gamma$ is the vector $(0,1)$. 
+
+
+
+
+\medskip 
+
+
+To summarize, it follows from the above that % there exists 
+it is enough to consider 
+a $T^\circ$-length minimizing $T$-billiard trajectory $\gamma$ in $ K$ which satisfies: (i) 
+$\gamma$ has 3 vertices on  $\partial K$. (ii) 
+$\gamma$ cannot be translated into the interior of $K$, and (iii) One of $\gamma$'s velocities is in the direction $(0,1)$.
+We separate the proof into two cases. 
+\begin{center} \begin{it} The line in $\gamma$ in the direction $(0,1)$ is to the left of the line from $v_4$ to $v_1$.\end{it} \end{center} 
+Note that one point in $\gamma$ is to the right of the line from $v_4$ to $v_1$. Otherwise one can translate $\gamma$ into the interior. Denote $x_1, x_2, x_3$ to be the vertices of $\gamma$ (see Figure \ref{gamma1Fig}).
+We have that $x_1$ is on the line between $v_1$ and $v_2$, $x_3$ is on the line between $v_3$ and $v_4$, and $x_2$ is to the right of the line from $v_1$ to $v_4$. Let us assume that $x_2$ is on the line from $v_4$ to $v_0$. The case where $x_2$ is on the line from $v_0$ to $v_1$ is similar.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{gamma1.pdf}
+	 	\caption{The billiard trajectory $\gamma$ in the first case}
+	 	\label{gamma1Fig}
+\end{figure}
+Let us fix $x_1$ and $x_3$ and %consider what happens 
+explore the variation 
+to the $T^\circ$-length of $\gamma$ when one varies $x_2$ on the line between $v_4$ to $v_0$.
+%Note that by definition, the $T^\circ$-length of a vector $v$ is 
+%$$ \|v\|_{T^\circ} = \max_{0\leq k \leq 4} \langle v, w_k \rangle. $$
+A direct computation shows that the $T^\circ$-length of the line from $x_3$ to $x_1$ equals $\|x_1-x_3\|_{T^\circ} = \langle x_1 - x_3, w_2 \rangle = \langle x_1 - x_3, w_3 \rangle$ (the vector $(0,1)$ is the normal vector to the line between $w_2$ and $w_3$). 
+For the line from $x_2$ to $x_3$ (for all possible choices of $x_2$), the length is $\|x_3 - x_2\|_{T^\circ} = \langle x_3 - x_2, w_4 \rangle$. Similarly, for the line from $x_1$ to $x_2$,  $\|x_2 - x_1\|_{T^\circ}$ is either $\langle x_2 - x_1, w_1 \rangle$ or $\langle x_2 - x_1, w_0 \rangle$ depending on how $x_2$ is chosen. 
+From linearity with respect to varying $x_2$, we get that the minimal $T^\circ$-length is attained at either $x_2=v_0$, or $x_2=v_4$, or when $x_2$ is chosen such that the line from $x_1$ to $x_2$ is perpendicular to the line from $w_0$ to $w_1$. Assume first that the maximum is attained at $w_0$. The $T^\circ$-length of $\gamma$ can be written as
+$$ \langle x_2 - x_1, w_0\rangle + \langle x_3 - x_2, w_4 \rangle + \langle x_1 - x_3, w_2 \rangle. $$
+Collecting the terms dependent on $x_2$ we obtain $ \langle x_2, w_0 - w_4 \rangle$. Since $w_0 - w_4$ is perpendicular to the line between $v_4$ and $v_0$ we get that this value is independent on the choice for $x_2$. 
+Similarly, when the maximum is attained at $w_1$ the change in the $T^\circ$-length as $x_2$ moves from $v_4$ to $v_0$ is $\langle v_0 - v_4, w_1 - w_4 \rangle > 0$, which implies that the $T^\circ$-length increases.
+Overall we get that the minimum is attained at $x_2 = v_4$.
+Assume $x_2=v_4$. One has from the triangle inequality that the $T^\circ$-length of $\gamma$ is smaller or equal than the $T^\circ$-length of the 2-bounce between $x_1$ and $v_4$ (in fact, it is equal). 
+We remark that this 2-bounce trajectory cannot be translated into the interior of $K$, and we have already addressed this case above. 
+ 
+
+
+\begin{center} \begin{it} The line in $\gamma$ in the direction $(0,1)$ is to the right of the line from $v_4$ to $v_1$.\end{it} \end{center}
+Assume that $\gamma$ is the curve with vertices $x_1, x_2, x_3$ such that $x_1$ is on the line from $v_0$ to $v_1$, $x_3$ is on the line from $v_4$ to $v_0$ and the direction from $x_3$ to $x_1$ is the vector $(0,1)$. Note that $x_2$ must be on the line from $v_2$ to $v_3$. Otherwise there is a translation of $\gamma$ into the interior of $K$ (see Figure \ref{gamma2Fig}).
+The $T^\circ$-length of $\gamma$ in this case is
+$$ \langle x_2 - x_1, w_4 \rangle + \langle x_3 - x_2, w_1 \rangle + \langle x_1 - x_3, w_2 \rangle .$$
+Like before, the line $w_4 - w_1$ is perpendicular to the line from $v_2$ to $v_3$, and hence the choice of $x_2$ does not change the $T^\circ$-length. Hence we may choose $x_2 = v_2$. Again using the triangle inequality, we get that the $T^\circ$-length of $\gamma$ is smaller or equal than the $T^\circ$-length of a 2-bounce between $x_3$ and $v_2$ (this time it is strictly smaller). This 2-bounce again cannot be translated into the interior and its $T^{\circ}$-length is equal to the $T^\circ$-length of a diagonal. This completes the proof of the proposition. 
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{gamma2.pdf}
+	 	\caption{The billiard trajectory $\gamma$ in the second case}
+	 	\label{gamma2Fig}
+\end{figure}
+
+
+\end{proof}
+
+\bibliography{references}
+\bibliographystyle{siam}
+
+
+\vskip10pt
+
+\noindent Pazit Haim-Kislev \\
+\noindent School of Mathematical Sciences, Tel Aviv University, Israel \\
+\noindent e-mail: pazithaim@mail.tau.ac.il
+\vskip 10pt
+
+
+\noindent Yaron Ostrover \\
+\noindent School of Mathematical Sciences, Tel Aviv University, Israel \\
+\noindent e-mail: ostrover@tauex.tau.ac.il
+
+
+\end{document}

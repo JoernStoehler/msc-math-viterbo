@@ -1,7 +1,7 @@
 ---
 title: "Math/H-Rep: conversions and transforms"
 created: 2025-10-13
-status: ready
+status: archived
 owner: TBD
 branch: task/math-halfspaces-conversions-transforms
 priority: high
@@ -28,4 +28,8 @@ Implement H↔V conversions and simple H-rep transforms (linear map and translat
 - CI green (lint/type/smoke).
 - Deterministic on fixed inputs; no implicit device moves.
 - Docstrings document shapes, dtype, and invariants.
+
+## Status Log
+
+- 2025-10-14 — Archived after verifying bidirectional conversions and transforms are implemented in `src/viterbo/math/halfspaces.py` with smoke coverage.
 

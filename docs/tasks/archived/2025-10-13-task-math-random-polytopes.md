@@ -1,7 +1,7 @@
 ---
 title: "Math/Random: polytope generators (H and V)"
 created: 2025-10-13
-status: ready
+status: archived
 owner: TBD
 branch: task/math-random-polytopes
 priority: medium
@@ -28,4 +28,8 @@ Implement two random polytope generators: (1) via random halfspaces and (2) via 
 - CI green (lint/type/smoke).
 - No implicit device moves; fixed seeds produce identical results.
 - Document limits and potential degeneracies.
+
+## Status Log
+
+- 2025-10-14 — Archived after confirming deterministic generators now live in `src/viterbo/math/random_polytopes.py` with smoke coverage documenting limitations.
 

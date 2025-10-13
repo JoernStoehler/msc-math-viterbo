@@ -1,0 +1,213 @@
+
+
+\section{Rotation numbers}
+\label{app:rotation_numbers} 
+
+Let $\Sgt$ denote the universal cover of the group $\Sg$ of $2\times 2$ real symplectic matrices. Let $\op{Diff}(S^1)$ denote the group of orientation-preserving $C^1$ diffeomorphisms\footnote{For the most part we could work more generally with orientation-preserving homeomorphisms.} of $S^1=\R/\Z$, and let $\widetilde{\op{Diff}}(S^1)$ denote its universal cover. In this appendix, we review two invariants of elements of $\Sgt$, and more generally $\widetilde{\op{Diff}}(S^1)$: the rotation number $\rho$ and the ``minimum rotation number'' $r$. The former is a standard notion in dynamics and is a key ingredient in Theorem~\ref{thm:smoothtocomb}; and we use the latter to bound the former.  We also explain how to use rotation numbers to efficiently compute certain products in $\Sgt$, which is needed for our algorithms.
+
+\subsection{Rotation numbers of circle diffeomorphisms} \label{subsubsec:the_dynamical_rotation_number_of_circle_diffeomorphisms}
+
+We can identify the universal cover $\Dft$ with the group of $C^1$ diffeomorphisms $\Phi:\R\to\R$ which are $\Z$-equivariant in the sense that $\Phi(t+1)=\Phi(t)+1$ for all $t\in\R$. Such a diffeomorphism of $\R$ descends to an orientation-preserving diffeomorphism of $S^1$, and this defines the covering map $\Dft\to\Df$.
+
+\begin{definition}
+\label{def:dynamical_rotation_number_for_S1}
+Given $\sigma\in S^1$, we define the {\bf rotation number with respect to $\sigma$\/}, denoted by
+\[
+r_\sigma:\Dft \longrightarrow \R,
+\]
+as follows. Let $\Phi$ be a $\Z$-equivariant diffeomorphism of $\R$ as above. Let $t\in\R$ be a lift of $\sigma\in\R/\Z$. We then define
+\begin{equation}
+\label{eqn:def_of_dynamical_rotation_wrts}
+r_\sigma(\Phi) = \Phi(t) - t.
+\end{equation}
+\end{definition}
+
+\begin{definition}
+Given $\Phi\in\Dft$, we define the {\bf rotation number\/}
+\begin{equation}
+\label{eqn:defrhophi}
+\rho(\Phi) = \lim_{n\to\infty}\frac{r_\sigma(\Phi^n)}{n} \in \R
+\end{equation}
+where $\sigma\in S^1$. This limit does not depend on the choice of $\sigma$. Equivalently,
+\begin{equation}
+\label{eqn:defrhophi2}
+\rho(\Phi) = \lim_{n\to\infty}\frac{\Phi^n(t)-t}{n}
+\end{equation}
+where $t\in\R$.
+\end{definition}
+
+Note that we have the $\Z$-equivariance property
+\begin{equation}
+\label{eqn:rhoequivariant}
+\rho(\Phi+1)=\rho(\Phi)+1.
+\end{equation}
+
+We can bound the rotation number as follows.
+
+\begin{definition}
+We define the {\bf minimum rotation number\/} $r:\Dft\to\R$ by
+\begin{equation}
+\label{eqn:def_of_dynamical_rotation}
+r\left(\Phi\right) = \min_{\sigma\in S^1} r_\sigma\left(\Phi\right).
+\end{equation}
+\end{definition}
+
+Alternatively, if $\Phi\in\widetilde{\op{Diff}}(S^1)$ is presented as a piecewise smooth path $\{\phi_t\}_{t\in[0,1]}$ in $\op{Diff}(S^1)$ with $\phi_0=\op{id}_{S^1}$, then
+\[
+r(\Phi) = \min_{\sigma\in S^1}\int_0^1\frac{d}{ds}\phi_s(\sigma)ds.
+\]
+In particular, it follows that
+\begin{equation}
+\label{eqn:rminbound}
+r(\Phi) \ge \int_0^1\min_{\sigma\in S^1}\left(\frac{d}{ds}\phi_s(\sigma)\right)\,ds.
+\end{equation}
+
+It follows from the definitions that
+\begin{equation}
+\label{eqn:rhor}
+\rho(\Phi) \ge r(\Phi).
+\end{equation}
+
+\subsection{A partial order}
+
+\begin{definition}
+\label{def:order_on_DiffS1}
+We define a partial order $\ge$ on $\Dft$ as follows:
+\begin{equation}
+\Phi \ge \Psi \text{ if and only if } r_s(\Phi) \ge r_s(\Psi) \text{ for all }s \in S^1.
+\end{equation}
+Equivalently, $\Phi(t)\ge \Psi(t)$ for all $t\in\R$.
+\end{definition}
+
+\begin{lemma}
+\label{lem:order_on_DiffS1_invariance}
+The partial order $\ge$ on $\Dft$ is left and right invariant.
+\end{lemma}
+
+\begin{proof}
+Let $\Phi,\Psi,\Theta \in \Dft$, and suppose that $\Phi\ge\Psi$, i.e.
+\begin{equation}
+\label{eqn:phigreaterthanpsi}
+\Phi(t) \ge \Psi(t)
+\end{equation}
+for every $t\in\R$. We need to show that $\Phi\Theta\ge \Psi\Theta$ and $\Theta\Phi\ge\Theta\Psi$.
+
+Since $\Theta:\R\to\R$ is an orientation preserving diffeomorphism, it preserves the order on $\R$, so it follows from \eqref{eqn:phigreaterthanpsi} that
+\[
+\Theta(\Phi(t)) \ge \Theta(\Psi(t))
+\]
+for every $t\in\R$, so $\Theta\Phi\ge\Theta\Psi$.
+
+On the other hand, replacing $t$ by $\Theta(t)$ in the inequality \eqref{eqn:phigreaterthanpsi}, we deduce that
+\[
+\Phi(\Theta(t)) \ge \Psi(\Theta(t))
+\]
+for every $t\in\R$, so $\Phi\Theta\ge\Psi\Theta$.
+\end{proof}
+
+\begin{lemma}
+\label{lem:rhoorder}
+If $\Phi,\Psi\in\Dft$ and $\Phi\ge\Psi$, then $\rho(\Phi)\ge \rho(\Psi)$.
+\end{lemma}
+
+\begin{proof}
+By \eqref{eqn:defrhophi2}, it is enough to show that given $t\in\R$, we have $\Phi^n(t)\ge \Psi^n(t)$ for each positive integer $n$. This follows by induction on $n$, using the fact that $\Phi$ preserves the order on $\R$.
+\end{proof}
+
+\subsection{Rotation numbers of symplectic matrices}
+\label{subsubsec:the_symplectic_rotation_number}
+
+There is a natural homomorphism $\Sg\to\Df$, sending a symplectic linear map $A:\R^2\to\R^2$ to its action on the set of positive rays (identified with $\R/\Z$ by the map sending $t\in\R/\Z$ to the ray through $e^{2\pi i t}$). This lifts to a canonical homomorphism $\Sgt\to\Dft$. Under this homomorphism, the invariants $r_s$, $r$, and $\rho$ defined above pull back to functions $\Sgt\to\R$, which by abuse of notation we denote using the same symbols.
+
+We can describe the rotation number $\rho:\Sgt\to\R$ more explicitly in terms of the following classification of elements of the symplectic group $\Sg$.
+
+\begin{definition}
+\label{def:classifySp2}
+Let $A \in \Sg$. We say that $A$ is
+\begin{itemize}
+	\item {\bf positive hyperbolic} if $\Tr(A) > 2$ and {\bf negative hyperbolic} if $\Tr(A) < -2$.
+	\item a {\bf positive shear} if $\Tr(A) = 2$ and a {\bf negative shear} if $\Tr(A) = -2$.
+	\item {\bf positive elliptic} if $-2 < \Tr(A) < 2$ and $\det([v,Av]) > 0$ for all $v \in \R^2\setminus\{0\}$.
+	\item {\bf negative elliptic} if $-2 < \Tr(A) < 2$ and $\det([v,Av]) < 0$ for all $v \in \R^2\setminus\{0\}$.
+\end{itemize}
+\end{definition}
+
+By the equivariance property \eqref{eqn:rhoequivariant}, the rotation number $\rho:\Sgt\to\R$ descends to a ``mod $\Z$ rotation number'' $\bar{\rho}:\Sg\to\R/\Z$.
+
+\begin{lemma}
+\label{lem:compute_rho_bar}
+The mod $\mathbb{Z}$ rotation number $\bar{\rho}:\Sg \to \R/\Z$ can be computed as follows:
+\[
+\bar{\rho}(A) = \left\{
+\begin{array}{ccc}
+0 & \text{ if } & A \text{ is positive hyperbolic or a positive shear,}\\
+\frac{1}{2} & \text{ if } & A \text{ is negative hyperbolic or a negative shear,}\\
+\theta & \text{ if } & A \text{ is positive elliptic with eigenvalues }e^{\pm 2 \pi i \theta} \text{ for } \theta \in (0,\frac{1}{2}),\\
+-\theta & \text{ if } & A \text{ is negative elliptic with eigenvalues }e^{\pm 2 \pi i \theta} \text{ for } \theta \in (0,\frac{1}{2}).\\
+\end{array}
+\right.
+\]
+\end{lemma}
+
+\begin{proof}
+In the first two cases, $A$ has $1$ or $-1$ as an eigenvalue. This means that there exists $s\in S^1$ which is fixed or sent to its antipode, and one can use this $s$ in the definition \eqref{eqn:defrhophi}.
+
+In the third case, $A$ is conjugate to rotation by $2\pi\theta$. One can then lift $A$ to an element of $\Sgt$ whose image in $\Dft$ is a $\Z$-equivariant diffeomorphism $\Phi:\R\to\R$ such that $|\Phi^n(t)-t-n\theta|<1$ for each $t\in\R$. It then follows from \eqref{eqn:defrhophi2} that $\rho(\Phi)=\theta$. The last case is analogous.
+\end{proof}
+
+\subsection{Computing products in $\Sgt$}
+\label{subsec:computing_with_Sp2}
+
+Observe that $\Sgt$ can be identified with the set of pairs $(A,r)$, where $A\in\Sg$ and $r\in\R$ is a lift of $\overline{\rho}(A)\in\R/\Z$. The identification sends a lift $\widetilde{A}$ to the pair $(A,\rho(\widetilde{A}))$.
+
+For computational purposes, we can keep track of the lifts of $A$ using less information, which is useful when for example we do not want to compute $\overline{\rho}(A)$ exactly. Namely, we can identify a lift $\widetilde{A}$ with a pair $(A,r)$, where $r$ is either an integer (when $A$ has positive eigenvalues), an open interval $(n,n+1/2)$ for some integer $n$ (when $A$ is positive elliptic), a half-integer (when $A$ has negative eigenvalues), or an open interval $(n-1/2,n)$ (when $A$ is negative elliptic).
+
+The following proposition allows us to compute products in the group $\Sgt$ in terms of the above data, in the cases that we need (see Remark~\ref{rem:ucmult}).
+
+\begin{proposition}
+\label{prop:ucmult}
+Let $\widetilde{A},\widetilde{B} \in \Sgt$. Suppose that $\rho(\widetilde{A})\in(0,1/2)$. Then
+\[
+\rho(\widetilde{B}) \le \rho(\widetilde{A}\widetilde{B}) \le \rho(\widetilde{B}) + \frac{1}{2}.
+\]
+\end{proposition}
+
+To apply this proposition, if for example $\widetilde{B}$ is described by the pair $(B,(m,m+1/2))$, then it follows that $\widetilde{A}\widetilde{B}$ is described by either $(AB,(m,m+1/2))$, $(AB,m+1/2)$, or $(AB,(m+1/2,m+1))$. To decide which of these three possibilities holds, by Lemma~\ref{lem:compute_rho_bar} it is enough to check whether $AB$ is positive elliptic, has negative eigenvalues, or is negative elliptic.
+
+\begin{proof}[Proof of Proposition~\ref{prop:ucmult}.]
+Let $\Phi$ and $\Psi$ denote the elements of $\Dft$ determined by $\widetilde{A}$ and $\widetilde{B}$ respectively.
+Let $\Theta:\R\to \R$ denote translation by $1/2$. By Lemma~\ref{lem:compute_rho_bar}, $\widetilde{A}$ projects to a positive elliptic element of $\Sg$. It follows that with respect to the partial order on $\Dft$, we have
+\[
+\op{id}_\R \le \Phi \le \Theta.
+\]
+By Lemma~\ref{lem:order_on_DiffS1_invariance}, we can multiply on the right by $\Psi$ to obtain
+\[
+\Psi \le \Phi\Psi \le \Theta\Psi.
+\]
+Using Lemma~\ref{lem:rhoorder}, we deduce that
+\[
+\rho(\Psi) \le \rho(\Phi\Psi) \le \rho(\Theta\Psi).
+\]
+Since $\Psi$ comes from a linear map, it commutes with $\Theta$, so we have
+\[
+\rho(\Theta\Psi) = \rho(\Psi) + \frac{1}{2}.
+\]
+Combining the above two lines completes the proof.
+\end{proof}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

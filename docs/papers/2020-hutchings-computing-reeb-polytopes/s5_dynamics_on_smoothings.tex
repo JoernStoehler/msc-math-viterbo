@@ -1,0 +1,445 @@
+
+\section{Reeb dynamics on smoothings of polytopes}
+\label{sec:smoothingdynamics}
+
+In \S\ref{sec:smoothings} and \S\ref{sec:Rfssp} we study the Reeb flow on the boundary of a smoothing of a symplectic polytope in $\R^4$. In \S\ref{sec:nss} and \S\ref{sec:srn} we explain some more technical issues arising from the fact that the smoothing is only $C^1$, and in particular how to make sense of the ``rotation number'' of Reeb trajectories. In \S\ref{sec:rnlb} we derive important lower bounds on this rotation number. 
+
+\subsection{Smoothings of polytopes}
+\label{sec:smoothings}
+
+If $X\subset\R^m$ is a compact convex set and $\epsilon>0$, define the $\epsilon$-smoothing $X_\epsilon$ of $X$ by equation \eqref{eqn:deltasmoothing}.
+Observe that $X_\epsilon$ is convex. Denote its boundary by $Y_\epsilon = \partial X_\epsilon$. We now describe $Y_\epsilon$ more explicitly, in a way which mostly does not depend on $\epsilon$. We first have:
+
+\begin{lemma}
+\label{lem:Yepsilon}
+If $X$ is a compact convex set then
+\[
+Y_\epsilon = \{y \in \R^m\mid \op{dist}(y,X) = \epsilon\}.
+\]
+\end{lemma}
+
+\begin{proof}
+The left hand side is contained in the right hand side because distance to $X$ is a continuous function on $\R^m$. The reverse inclusion holds because given $y\in \R^m$ with $\op{dist}(y,X)=\epsilon$, since $X$ is compact and convex, there is a unique point $x\in X$ which is closest to $y$. By convexity again, $X$ is contained in the closed half-space $\{z\in \R^m\mid \langle z, y-x\rangle \le 0\}$. It follows that $\op{dist}(t(y-x),X)=\epsilon t$ for $t>0$, so that $y\in\partial X_\epsilon$.
+\end{proof}
+
+\begin{definition}
+If $X\subset\R^m$ is a compact convex set, define the ``blown-up boundary''
+\[
+Y_0 = \left\{(y,v) \;\big|\; y\in \partial X,\; v\in N_y^+X,\; |v|=1\right\}\subset\partial X \times S^{m-1}.
+\]
+\end{definition}
+
+We then have the following lemma, which is proved by similar arguments to Lemma~\ref{lem:Yepsilon}:
+
+\begin{lemma}
+\label{lem:bub}
+Let $X\subset\R^m$ be a compact convex set and let $\epsilon>0$. Then:
+\begin{itemize}
+\item[\emph{(a)}]
+There is a homeomorphism
+\[
+Y_0\stackrel{\simeq}{\longrightarrow} Y_\epsilon
+\]
+sending $(y,v)\mapsto y+\epsilon v$.
+\item[\emph{(b)}]
+The inverse homeomorphism sends $y\mapsto (x,\epsilon^{-1}(y-x))$ where $x$ is the unique closest point in $X$ to $y$.
+\item[\emph{(c)}]
+For $y\in Y_\epsilon$, if $x$ is the closest point in $X$ to $y$, then the positive normal cone $N_y^+X_\epsilon$ is the ray consisting of nonnegative multiples of $y-x$.
+\end{itemize}\end{lemma}
+
+Suppose now that $X\subset\R^m$ is a convex polytope and $\epsilon>0$.
+
+\begin{definition}
+If $F$ is a face of $X$, define the {\bf $\epsilon$-smoothed face\/}
+\[
+F_\epsilon = \{x \in Y_\epsilon \mid \op{dist}(x,F)=\epsilon\}.
+\]
+\end{definition}
+
+By Lemma~\ref{lem:bub}, we have
+\[
+Y_\epsilon = \bigsqcup_F F_\epsilon
+\]
+and
+\[
+F_\epsilon = F + \{v\in N_F^+X\mid |v|=\epsilon\}.
+\]
+Note that each $F_\epsilon$ is a $C^\infty$ smooth hypersurface, and where the closure of one $F_\epsilon$ meets another, the outward unit normal vectors agree. It follows that $Y_\epsilon$ is a $C^1$ smooth hypersurface, and it is $C^\infty$ except along strata\footnote{We do not also need to mention strata of the form $F+\partial \{v\in N_F^+X\mid |v|=\epsilon\}$, because any point in $\partial N_F^+X$ is contained in $N_E^+X$ where $E$ is a face with $F\subset \partial E$.} of the form $\partial F + \{v\in N_F^+X\mid |v|=\epsilon\}$.
+
+\subsection{The Reeb flow on a smoothed symplectic polytope}
+\label{sec:Rfssp}
+
+Suppose now that $X$ is a symplectic polytope in $\R^4$ and $\epsilon>0$. As noted above, $Y_\epsilon = \partial X_\epsilon$ is a $C^1$ convex hypersurface, and as such it has a well-defined $C^0$ Reeb vector field, which is smooth except along the strata of $Y_\epsilon$ arising from the boundaries of the faces of $X$. We now investigate the Reeb flow on $Y_\epsilon$ in more detail, as well as the lifted linearized Reeb flow $\widetilde{\phi}$ from Definition~\ref{def:linearized}.
+
+\subsection*{General remarks.}
+
+By Lemma~\ref{lem:bub}, a point in $Y_\epsilon$ lives in an $\epsilon$-smoothed face $F_\epsilon$ for a unique face $F$ of $X$, and thus has the form $y+\epsilon v$ where $y\in F$ and $v\in N_F^+X$ is a unit vector. By equation \eqref{eqn:Reebinu} and Lemma~\ref{lem:bub}(c), the Reeb vector field at $y+\epsilon v$ is given by
+\begin{equation}
+\label{eqn:Reebsmoothed}
+R_{y+\epsilon v} = \frac{2{\mathbf i}v}{\langle v,y\rangle + \epsilon}.
+\end{equation}
+
+\begin{lemma}
+\label{lem:transinv}
+The Reeb vector field \eqref{eqn:Reebsmoothed} on the $\epsilon$-smoothed face $F_\epsilon$, regarded as a map $F_\epsilon\to \R^4$, depends only $v\in N_F^+X$ and not on the choice of $y\in F$.
+\end{lemma}
+
+\begin{proof}
+This follows from equation \eqref{eqn:Reebsmoothed}, because for fixed $v\in N_F^+X$ and for two points $y,y'\in F$, by the definition of positive normal cone we have $\langle v,y-y'\rangle = 0$.
+\end{proof}
+
+\subsection*{Smoothed 3-faces.} The Reeb flow on a smoothed $3$-face is very simple.
+
+\begin{lemma}
+\label{lem:smoothed3face}
+Let $X\subset\R^4$ be a symplectic polytope, let $\epsilon>0$, and let $E$ be a $3$-face of $X$ with outward unit normal vector $\nu$.
+\begin{itemize}
+\item[\emph{(a)}]
+The Reeb vector field on $E_\epsilon$, regarded as a map $E_\epsilon\to\R^4$, agrees with the Reeb vector field on $E$, up to rescaling by a positive constant which limits to $1$ as $\epsilon\to0$.
+\item[\emph{(b)}]
+If $\gamma:[0,t]\to E_\epsilon$ is a Reeb trajectory, then $\widetilde{\phi}(\gamma(0),t)=1\in\widetilde{\op{Sp}}(2)$.
+\item[\emph{(c)}]
+If $y\in\partial E$, then at the point $y+\epsilon\nu\in Y_\epsilon$, the Reeb vector field on $Y_\epsilon$ is not tangent to $\partial E_\epsilon$.
+\end{itemize}
+\end{lemma}
+
+\begin{proof}
+(a)
+This follows from equation \eqref{eqn:Reebsmoothed}.
+
+(b) For $s\in[0,t]$, the Reeb flow $\Phi_s:Y_\epsilon\to Y_\epsilon$ is a translation on a neighborhood of $\gamma(0)$. Consequently the linearized Reeb flow $d\Phi_s:\xi_{\gamma(0)}\to \xi_{\gamma(s)}$ is the identity, if we regard $\xi_{\gamma(0)}$ and $\xi_{\gamma(s)}$ as (identical) two-dimensional subspaces of $\R^4$. The quaternionic trivialization $\tau:\R^2\to \xi_{\gamma(s)}$ likewise does not depend on $s\in[0,t]$. Consequently $\phi(y,s)=1$ for all $s\in[0,t]$. Thus $\widetilde{\phi}(y,t)$ is the constant path at the identity in $\op{Sp}(2)$.
+
+(c)
+It is equivalent to show that the Reeb vector field on $E$ at $y$ is not tangent to $\partial E$. If the Reeb vector field on $E$ at $y$ is tangent to $\partial E$, then it is tangent to some $2$-face $F\subset \partial E$. By Lemma~\ref{lem:la}, the face $2$-face $F$ is Lagrangian, contradicting our hypothesis that the polytope $X$ is symplectic.
+\end{proof}
+
+\subsection*{Smoothed 2-faces.}
+Let $F$ be a $2$-face. Let $E_1$ and $E_2$ be the $3$-faces adjacent to $F$. By Lemma~\ref{lem:Reebcone}, we can choose these so that $R_{E_2}$ points out of $F$; and a similar argument shows that then $R_{E_1}$ points into $F$. Let $\nu_1$ and $\nu_2$ denote the outward unit normal vectors to $E_1$ and $E_2$ respectively. By Lemma~\ref{lem:ncn}, the normal cone $N_F^+$ consists of nonnegative linear combinations of $\nu_1$ and $\nu_2$. Let $\{v,w\}$ be an orthonormal basis for $F^\perp$, such that the orientation given by $(v,w)$ agrees with the orientation given by $(\nu_1,\nu_2)$. For $i=1,2$ we can write $\nu_i=(\cos\theta_i) v + (\sin\theta_i) w$ where $0<\theta_2-\theta_1 < \pi$. We then have a homeomorphism
+\begin{equation}
+\label{eqn:smoothed2face}
+\begin{split}
+F \times [\theta_1,\theta_2] &\stackrel{\simeq}{\longrightarrow} F_\epsilon,\\
+(y,\theta) &\longmapsto 
+y+\epsilon((\cos\theta) v + (\sin\theta) w).
+\end{split}
+\end{equation}
+
+In the coordinates $(y,\theta)$, the Reeb vector field $R$ on $F_\epsilon$ depends only on $\theta$ by Lemma~\ref{lem:transinv}, and has positive $\partial_\theta$ coordinate for both $\theta=\theta_1$ and $\theta=\theta_2$ by our choice of labeling of $E_1$ and $E_2$. By equation \eqref{eqn:Reebsmoothed}, Lemma~\ref{lem:la}, and our hypothesis that the polytope $X$ is symplectic, the $\partial_\theta$ component of the Reeb vector field is positive on all of $F_\epsilon$.
+
+Let $U_{F,\epsilon}\subset F$ denote the set of $y\in F$ such that the Reeb flow on $Y_\epsilon$ starting at $(y,\theta_1)\in F_\epsilon$ stays in $F_\epsilon$ until reaching a point in $F\times\{\theta_2\}$, which we denote by $(\phi_{F,\epsilon}(y),\theta_2)$. Thus we have a well-defined ``flow map'' $\phi_{F,\epsilon}: U_{F,\epsilon}\to F$.
+
+\begin{lemma}
+\label{lem:stf}
+Let $F$ be a two-face of a symplectic polytope $X\subset \R^4$. Then:
+\begin{itemize}
+\item[\emph{(a)}] The flow map $\phi_{F,\epsilon}:U_{F,\epsilon}\to F$ above is translation by a vector $V_{F,\epsilon}\in TF$.
+\item[\emph{(b)}]
+$|V_{F,\epsilon}|=O(\epsilon)$ and $\lim_{\epsilon\to 0}U_{F,\epsilon}=F$.
+\item[\emph{(c)}]
+Let $y\in U_{F,\epsilon}$ and let $t$ be the Reeb flow time on $F_\epsilon$ from $y+\epsilon\nu_1$ to $\phi_{F,\epsilon}(y)+\epsilon\nu_2$. Then $\phi(y,t)\in\op{Sp}(2)$ agrees with the transition matrix $\psi_F$ in Definition~\ref{def:transitionmatrix}, and $\widetilde{\phi}(y,t)\in\widetilde{\op{Sp}}(2)$ is the unique lift of $\psi_F$ with rotation number in the interval $(0,1/2)$.
+\end{itemize}
+\end{lemma}
+
+\begin{proof}
+(a) If $y,y'\in U_{F,\epsilon}$, then it follows from the translation invariance in Lemma~\ref{lem:transinv} that $\phi_{F,\epsilon}(y)-y=\phi_{F,\epsilon}(y')-y'$, so $\phi_{F,\epsilon}$ is a translation.
+
+(b) It follows from equation \eqref{eqn:Reebsmoothed} that for each $v$, the Reeb vector field $R_{y+\epsilon v}$, regarded as a vector in $\R^4$, has a well-defined limit as $\epsilon\to 0$, which by Lemma~\ref{lem:la} is not tangent to $F$. Since $\partial_\theta$, regarded as a vector in $\R^4$, has length $\epsilon$, it follows that the flow time of the Reeb vector field on $F_\epsilon$ from $F\times\{\theta_1\}$ to $F\times\{\theta_2\}$ is $O(\epsilon)$. Consequently the translation vector $V_{F,\epsilon}$ has length $O(\epsilon)$, and the complement $F\setminus U_{F,\epsilon}$ of the domain of the flow map is contained within distance $O(\epsilon)$ of $\partial F$.
+
+(c) Write $y_1=y+\epsilon\nu_1$ and $y_2=\phi_{F,\epsilon}(y)+\epsilon\nu_2$. By part (a) and the translation invariance in Lemma~\ref{lem:transinv}, the time $t$ Reeb flow $\Phi_t$ on $Y_\epsilon$ restricted to $U_{F,\epsilon} + \epsilon \nu_1$ is a translation in $\R^4$.
+%by $V_{F,\epsilon} + \epsilon(\nu_2-\nu_1)$ to its image in $F+\epsilon\nu_2$. 
+Hence the derivative of $\Phi_t$ on the full tangent space of $Y_\epsilon$, namely
+\[
+d\Phi_t: T_{y_1}Y_\epsilon \longrightarrow T_{y_2}Y_\epsilon,
+\]
+restricts to the identity on $TF$. We now have a commutative diagram
+\[
+\begin{CD}
+\xi_{y_1} @>>> TF @>{\tau_F'}>> \R^2 \\
+@V{d\Phi_t}VV @V{1}VV @VV{\psi_F}V \\
+\xi_{y_2} @>>> TF @>{\tau_F}>> \R^2.
+\end{CD}
+\]
+Here the upper left horizontal arrow is projection along the Reeb vector field in $T_{y_1}Y_\epsilon$, and the lower left horizontal arrow is projection along the Reeb vector field in $T_{y_2}Y_\epsilon$. The right horizontal arrows were defined in Definition~\ref{def:qtfg} and Remark~\ref{rem:altcon}. The left square commutes because $d\Phi_t$ preserves the Reeb vector field. The right square commutes by Definition~\ref{def:transitionmatrix}. The composition of the arrows in the top row is the quaternionic trivialization $\tau$ on $\xi_{y_1}$, and the composition of the arrows in the bottom row is the quaternionic trivialization $\tau$ on $\xi_{y_2}$. Going around the outside of the diagram then shows that $\phi(y,t)=\psi_F$.
+
+To determine the lift $\widetilde{\phi}(y,t)$, note that this is actually defined for, and depends continuously on, any $\epsilon>0$ and any pair of hyperplanes $E_1$ and $E_2$ that do not contain the origin and that intersect in a non-Lagrangian $2$-plane $F$. Thus we can denote this lift by $\widetilde{\phi}(E_1,E_2,\epsilon)\in\widetilde{\op{Sp}}(2)$.
+Now fixing $E_1$, $F$, and $\epsilon$, we can interpolate from $E_1$ and $E_2$ via a $1$-parameter family of hyperplanes $\{E_s\}_{s\in[1,2]}$ such that $0\notin E_s$ and $E_1\cap E_s=F$ for $1<s\le 2$. The rotation number $\rho:\widetilde{\op{Sp}}(2)\to\R$ then gives us a continuous map
+\[
+\begin{split}
+f: (1,2] &\longrightarrow \R,\\
+s &\longmapsto \rho\left(\widetilde{\phi}(E_1,E_s,\epsilon)\right)
+\end{split}
+\]
+We have $\lim_{\tau\searrow 1}\widetilde{\phi}(E_1,E_s,\epsilon)=1$, so $\lim_{s\searrow 1}f(s) = 0$. On the other hand, for each $s\in(1,2]$, the fractional part of $f(s)$ is in the interval $(0,1/2)$ by Lemma~\ref{lem:transitionmatrix}. It follows by continuity that $f(s)\in(0,1/2)$ for all $s\in(1,2]$. Thus $f(2)\in(0,1/2)$, which is what we wanted to prove.
+\end{proof}
+
+\subsection*{Smoothed 1-faces.} The Reeb flow on a smoothed $1$-face is more complicated, but we will not need to analyze this in detail. We just remark that one can see the difference between good and bad $1$-faces in the Reeb dynamics on their smoothings. Namely:
+
+\begin{remark}
+\label{rem:spiral}
+If $L$ is a bad $1$-face, then by definition, there is a unique unit vector $v\in N_L^+X$ such that ${\mathbf i}v$ is tangent to $L$. The line segment $L+\epsilon v\subset L_\epsilon$ is then a Reeb trajectory. On the complement of this line in $L_\epsilon$, the Reeb vector field spirals around the line, with the number of times that it spirals around going to infinity as $\epsilon\to 0$. This gives some intuition why Type 3 combinatorial Reeb orbits do not correspond to limits of sequences of Reeb orbits on smoothings with bounded rotation number.
+\end{remark}
+
+By contrast, if $L$ is a good $1$-face, then the Reeb vector field on $L_\epsilon$ always has a nonzero component in the $N_L^+X$ direction.
+
+\subsection*{Smoothed 0-faces.} If $P$ is a $0$-face, then by Lemma~\ref{lem:bub}, $P_\epsilon$ is identified with a domain in $S^3$. By equation \eqref{eqn:Reebsmoothed}, the Reeb vector field on this domain agrees, up to reparametrization, with the standard Reeb vector field on the unit sphere in $\R^4$.
+
+\subsection{Non-smooth strata}
+\label{sec:nss}
+
+We now investigate in more detail how Reeb trajectories on $Y_\epsilon$ intersect the strata where $Y_\epsilon$ is not $C^\infty$.
+
+Let $\Sigma$ denote the subset of $Y_\epsilon$ where $Y_\epsilon$ is not locally $C^\infty$. By the discussion at the end of \S\ref{sec:smoothings}, we can write
+\[
+\Sigma = \Sigma_1 \sqcup \Sigma_2 \sqcup \Sigma_3
+\]
+where:
+
+\begin{itemize}
+\item
+$\Sigma_1$ is the disjoint union of sets
+\begin{equation}
+\label{eqn:Sigma1}
+P+\{v\in N_L^+X\mid |v|=\epsilon\}
+\end{equation}
+where $P$ is a vertex of $X$, and $L$ is a $1$-face adjacent to $P$.
+\item
+$\Sigma_2$ is the disjoint union of sets
+\begin{equation}
+\label{eqn:Sigma2}
+L+\{v\in N_F^+X\mid |v|=\epsilon\}
+\end{equation}
+where $L$ is a $1$-face, and $F$ is a $2$-face adjacent to $L$.
+\item
+$\Sigma_3$ is the disjoint union of sets
+\[
+F+\epsilon\nu
+\]
+where $F$ is a $2$-face, and $\nu$ is the outward unit normal vector to one of the two $3$-faces $E$ adjacent to $F$.
+\end{itemize}
+
+\begin{lemma}
+\label{lem:nsrt}
+Let $X\subset\R^4$ be a symplectic polytope, let $\epsilon>0$, and let $\gamma:[a,b]\to Y_\epsilon$ be a Reeb trajectory. Then there exist a nonnegative integer $k$ and real numbers $a\le t_1 < t_2 < \cdots < t_k \le b$ with the following properties:
+\begin{itemize}
+\item[\emph{(a)}]
+$\gamma(t_i)\in\Sigma$ for each $i$.
+\item[\emph{(b)}]
+For each $i=0,\ldots,k$, one of the following possibilities holds:
+\begin{itemize}
+\item[\emph{(i)}] $\gamma$ maps $(t_i,t_{i+1})$ to $Y_\epsilon\setminus\Sigma$. (Here we interpret $t_0=a$ and $t_{k+1}=b$.)
+\item[\emph{(ii)}] $\gamma$ maps $(t_i,t_{i+1})$ to a Reeb trajectory in a component of $\Sigma_1$. (Each component of $\Sigma_1$ contains at most one Reeb trajectory of positive length.)
+\item[\emph{(iii)}] $\gamma$ maps $(t_i,t_{i+1})$ to a Reeb trajectory in a component of $\Sigma_2$. (This can only happen when the corresponding $2$-face $F$ is complex linear, and in this case the component of $\Sigma_2$ is foliated by Reeb trajectories.)
+\end{itemize}
+\end{itemize}
+\end{lemma}
+
+\begin{proof}
+We need to show that a Reeb trajectory intersects $\Sigma$ in isolated points, or in Reeb trajectories of the types described in (ii) and (iii).
+
+We have seen in \S\ref{sec:Rfssp} that the Reeb vector field is transverse to all of $\Sigma_3$. Thus the Reeb trajectory $\gamma$ intersects $\Sigma_3$ only in isolated points.
+
+Next let us consider the Reeb vector field on a component of $\Sigma_2$ of the form \eqref{eqn:Sigma2}. As in \S\ref{sec:Rfssp}, let $E_1$ and $E_2$ denote the $3$-faces adjacent to $F$, with outward unit normal vectors $\nu_1$ and $\nu_2$ respectively. The smoothing $F_\epsilon$ is parametrized by \eqref{eqn:smoothed2face}. This parametrization extends by the same formula to a parametrization of $\overline{F_\epsilon}$ by $\overline{F}\times [\theta_1,\theta_2]$. The latter parametrization includes the component \eqref{eqn:Sigma2} of $\Sigma_2$ as the restriction to $L\times [\theta_1,\theta_2]$. By equation \eqref{eqn:Reebsmoothed}, at the point corresponding to $(y,\theta)$ in \eqref{eqn:smoothed2face}, the Reeb vector is given by
+\begin{equation}
+\label{eqn:RSigma2}
+R = \frac{2}{\langle (\cos\theta)v+(\sin\theta)w,y\rangle + \epsilon}{\mathbf i}((\cos\theta) v + (\sin\theta) w).
+\end{equation}
+This vector is tangent to the component \eqref{eqn:Sigma2} if and only if the orthogonal projection of ${\mathbf i}((\cos\theta)v + (\sin\theta)w)$ to $F$ is parallel to $L$.
+
+If the projections of ${\mathbf i}v$ and ${\mathbf i}w$ to $F$ are not parallel, then this tangency will only happen for isolated values of $\theta$, and since the Reeb vector field on $\overline{F_\epsilon}$ always has a positive $\partial_\theta$ component, a Reeb trajectory will only intersect the component \eqref{eqn:Sigma2} in isolated points.
+
+If on the other hand the projections of ${\mathbf i}v$ and ${\mathbf i}w$ to $F$ are parallel, then there is a nontrivial linear combination of ${\mathbf i}v$ and ${\mathbf i}w$ whose projection to $F$ is zero. This means that there is a nonzero vector $\nu$ perpendicular to $F$ such that ${\mathbf i}\nu$ is also perpendicular to $F$. This means that $F^\perp$ is complex linear, and thus $F$ is also complex linear. Then ${\mathbf i}v$ and ${\mathbf i}w$ are both perpendicular to $F$, so in the parametrization \eqref{eqn:smoothed2face}, the Reeb vector field vector field \eqref{eqn:RSigma2} is a just a positive multiple of $\partial_\theta$.
+
+The conclusion is that a Reeb trajectory will intersect each component \eqref{eqn:Sigma2} of $\Sigma_2$ either in isolated points, or (when $F$ is complex linear) in Reeb trajectories which, in the parametrization \eqref{eqn:smoothed2face}, start on $L\times \{\theta_1\}$ and end on $L\times\{\theta_2\}$, keeping the $L$ component constant.
+
+Finally we consider the Reeb vector field on a component \eqref{eqn:Sigma1} of $\Sigma_1$. The set of vectors $v$ that arise in \eqref{eqn:Sigma1} is a domain $D$ in the intersection of the sphere $|v|=\epsilon$ with the hyperplane $L^\perp$. As we have seen at the end of \S\ref{sec:Rfssp}, the Reeb vector field on $Y_\epsilon$ at a point in \eqref{eqn:Sigma1} agrees, up to scaling, with the standard Reeb vector field on the sphere $|v|=\epsilon$, whose Reeb orbits are Hopf circles. There is a unique Hopf circle $C$ contained entirely in $L^\perp$. All other Hopf circles intersect $L^\perp$ transversely. Thus any Reeb trajectory in $Y_\epsilon$ intersects the component \eqref{eqn:Sigma1} in isolated points and/or the arc corresponding to $C\cap D$, if the latter intersection is nonempty.
+\end{proof}
+
+\subsection{Rotation number of Reeb trajectories}
+\label{sec:srn}
+
+Suppose $\gamma:[a,b]\to Y_\epsilon$ is a Reeb trajectory. Let $D\subset Y_\epsilon$ be a disk through $\gamma(a)$ tranverse to $\gamma$, and let $D'\subset Y_\epsilon$ be a disk through $\gamma(b)$ transverse to $\gamma$. We can identify $D$ with a neighborhood of $0$ in $\xi_{\gamma(a)}$, and $D'$ with a neighborhood of $0$ in $\xi_{\gamma(b)}$, via orthogonal projection in $\R^4$. If $D$ is small enough, then there is a well-defined map continuous map $\phi:D\to D'$ with $\phi(\gamma(a))=\gamma(b)$, such that for each $x\in D$, there is a unique Reeb trajectory near $\gamma$ starting at $x$ and ending at $\phi(x)$.
+
+\begin{lemma}
+\label{lem:plrm}
+Let $X$ be a symplectic polytope in $\R^4$, let $\epsilon>0$, and let $\gamma:[a,b]\to Y_\epsilon$ be a Reeb trajectory. Then there is a unique (independent of the choice of $D$ and $D'$) homeomorphism
+\[
+P_\gamma:\xi_{\gamma(a)} \longrightarrow \xi_{\gamma(b)}
+\]
+such that:
+\begin{itemize}
+\item[\emph{(a)}]
+\begin{equation}
+\label{eqn:uniqueP}
+\lim_{x\to 0}\frac{\phi(x)-P_\gamma(x)}{\|x\|}=0.
+\end{equation}
+\item[\emph{(b)}] $P_\gamma$ is linear along rays, i.e. if $x\in \xi_{\gamma(a)}$ and $c>0$ then $P_\gamma(cx) = cP_\gamma(x)$.
+\end{itemize}
+This map $P_\gamma$ has the following additional properties:
+\begin{itemize}
+\item[\emph{(c)}]
+If $\gamma$ does not include any arcs as in Lemma~\ref{lem:nsrt}(ii)-(iii), and in particular if $\gamma$ does not intersect any smoothed $0$-face or smoothed $1$-face, then $P_\gamma$ is linear.
+\item[\emph{(d)}]
+For $t\in(a,b)$ we have the composition property
+\[
+P_\gamma = P_{\gamma|_{[t,b]}} \circ P_{\gamma|_{[a,t]}}.
+\]
+\item[\emph{(e)}]
+For $t\in [a,b]$, the homeomorphism $\R^2\to\R^2$ given by the composition
+\[
+\R^2 \stackrel{\tau^{-1}}{\longrightarrow} \xi_{\gamma(a)} \stackrel{P_{\gamma|_{[a,b]}}}{\longrightarrow} \xi_{\gamma(t)} \stackrel{\tau}{\longrightarrow} \R^2
+\]
+is a continuous, piecewise smooth function of $t$.
+\end{itemize}
+\end{lemma}
+
+\begin{proof}
+Uniqueness of the homeomorphism $P_\gamma$ follows from properties (a) and (b). Independence of the choice of $D$ and $D'$ follows from properties (a) and (b) together with continuity of the Reeb vector field. Assuming existence of the homeomorphism $P_\gamma$, the composition property (d) follows from uniqueness.
+
+We now need to prove existence of the homeomorphism satisfying properties (a), (b), (c), and (e). Let $a\le t_1<t_2<\cdots <t_k\le b$ be the subdivision of the inteveral $[a,b]$ given by Lemma~\ref{lem:nsrt}. For $i=0,\ldots,k$, let $\gamma_i$ denote the restriction of $\gamma$ to $[t_i,t_{i+1}]$, where we interpret $t_0=a$ and $t_k=b$. It is enough to prove existence of a homeomorphism
+\[
+P_{\gamma_i}: \xi_{\gamma(t_i)} \longrightarrow \xi_{\gamma(t_{i+1})}
+\]
+with the required properties for each $i$. The desired homeomorphism $P_\gamma$ is then given by the composition $P_k\cdots P_0$.
+
+For case (i) in Lemma~\ref{lem:nsrt}, a homeomorphism $P_{\gamma_i}$ with properties (a), (b), and (e) is given by the usual linearized return map on the smooth hypersurface $Y_\epsilon\setminus\Sigma$ from $t_i+\delta$ to $t_{i+1}-\delta$, in the limit as $\delta\to 0$. Since $P_{\gamma_i}$ is linear, we also obtain property (c).
+
+For case (ii) or (iii) in Lemma~\ref{lem:nsrt}, the existence of $P_{\gamma_i}$ with the desired properties follows from the fact that $\gamma_i$ is on a smooth hypersurface separating two regions of $Y_\epsilon$, on each of which the Reeb vector field is $C^\infty$.
+\end{proof}
+
+\begin{remark}
+\label{rem:avf}
+In case (ii) or (iii) above, the description of the Reeb flow in \S\ref{sec:Rfssp} allows us to write down the map $P_{\gamma_i}$ quite explicitly. Namely, for a suitable trivialization, $P_{\gamma_i}$ is given by the flow for some positive time of a continuous, piecewise smooth vector field $V$ on $\R^2$, which is the derivative of a shear on one half of $\R^2$, and which is the derivative of a rotation or the identity on the other half of $\R^2$. For case (ii), the vector field has the form
+\begin{equation}
+\label{eqn:avf2}
+V(x,y) = \left\{\begin{array}{cl} -y\partial_x, & x\ge 0,\\ x\partial_y - y\partial_x, & x\le 0. \end{array}
+\right.
+\end{equation}
+For case (iii), the vector field has the form
+\begin{equation}
+\label{eqn:avf3}
+V(x,y) = \left\{\begin{array}{cl} x\partial_y, & x\ge 0,\\ 0, & x\le 0. \end{array}\right.
+\end{equation}
+\end{remark}
+
+Since the map $P_\gamma:\xi_{\gamma(a)}\to\xi_{\gamma(b)}$ sends rays to rays, it induces a well-defined map ${\mathbb P}\xi_{\gamma(a)}\to{\mathbb P}\xi_{\gamma(b)}$. It follows from Lemma~\ref{lem:plrm}(c),(d) and equations \eqref{eqn:avf2} and \eqref{eqn:avf3} that the latter map is $C^1$. Similarly to \eqref{eqn:lrf}, we obtain a $C^1$ diffeomorphism of $S^1$ given by the composition
+\[
+S^1\stackrel{\tau^{-1}}{\longrightarrow} {\mathbb P}\xi_{\gamma(a)} \stackrel{P_\gamma}{\longrightarrow} {\mathbb P}\xi_{\gamma(b)} \stackrel{\tau}{\longrightarrow} S^1. 
+\]
+Stealing the notation from Definition~\ref{def:linearized}, let us denote this map by $\phi(y,t)$ where $y=\gamma(a)$ and $t=b-a$. By analogy with \eqref{eqn:llrf}, we define
+\[
+\widetilde{\phi}(y,t) = \{\phi(y,s)\}_{s\in[0,t]}\in\widetilde{\op{Diff}}(S^1).
+\]
+This then has a well-defined rotation number, see Appendix A, which we denote by
+\[
+\rho(\gamma) = \rho(\widetilde{\phi}(y,t))\in\R.
+\]
+
+\subsection{Lower bounds on the rotation number}
+\label{sec:rnlb}
+
+We now prove the following lower bound on the rotation number.
+
+\begin{lemma}
+\label{lem:rnlb1}
+Let $X$ be a symplectic polytope in $\R^4$. Then there exists a constant $C>0$, depending only on $X$, such that if $\epsilon>0$ is small, then the following holds. Let $\gamma:[a,b]\to Y_\epsilon$ be a Reeb trajectory, and assume that if $t\in(a,b)$ and $E$ is a $3$-face then $\gamma(t)\notin E_\epsilon$. Then
+\[
+\rho(\gamma)\ge C\epsilon^{-1}(b-a).
+\]
+\end{lemma}
+
+\begin{proof}
+Define a function
+\[
+r^{\min}_\epsilon:Y_\epsilon\longrightarrow\R
+\]
+as follows. A point $Y_\epsilon$ can by uniquely written as $y+\epsilon v$ where $y\in Y$ and $v$ is a unit vector in $N_y^+X$. Then define
+\begin{equation}
+\label{eqn:remin}
+r^{\min}_\epsilon(y+\epsilon v) = \min_{\theta\in\R/2\pi\Z}\frac{1}{\pi(\langle v,y\rangle + \epsilon)}(S({\mathbf i}v) + S(\cos(\theta){\mathbf j}v + \sin(\theta){\mathbf k}v)).
+\end{equation}
+Here $S:TY_\epsilon\to\R$ is the single-argument version of the second fundamental form, which is well-defined, even though along the non-smooth strata of $Y_\epsilon$ there is no corresponding bilinear form.
+
+More explicitly, $T_{y+\epsilon v}Y_\epsilon$, regarded as a subspace of $\R^4$, does not depend on $\epsilon$. A tangent vector $V\in T_{y+\epsilon v}Y_\epsilon$ can be uniquely decomposed as
+\begin{equation}
+\label{eqn:vtn}
+V = V_T + V_N
+\end{equation}
+where $V_T\in T_y\partial X$ is tangent to a face $F$ such that $y\in\overline{F}$ and $v\in N_F^+X$, and $V_N\in T_vN_y^+X$ is perpendicular to $v$. We then have
+\begin{equation}
+\label{eqn:svepsilon}
+S(V) = \epsilon^{-1}|V_N|^2.
+\end{equation}
+
+Lemma~\ref{lem:minrot} and Proposition~\ref{prop:uj} carry over to the present situation to show that
+\begin{equation}
+\label{eqn:cops}
+\rho(\gamma) \ge \int_a^b r_\epsilon^{\min}(\gamma(s))ds.
+\end{equation}
+In \eqref{eqn:remin}, by compactness, there is a uniform upper bound on $\langle v,y\rangle$ for $y\in\partial X$ and $v\in N_y^+X$ a unit vector. Thus by \eqref{eqn:svepsilon} and \eqref{eqn:cops}, to complete the proof of the lemma, it is enough to show that there is a constant $C>0$ such that
+\begin{equation}
+\label{eqn:annest}
+\left|({\mathbf i}v)_N\right|^2 + \left|(\cos(\theta){\mathbf j}v + \sin(\theta){\mathbf k}v)_N\right|^2 \ge C
+\end{equation}
+whenever $y\in\partial X$, $v\in N_y^+X$ is a unit vector, $\theta\in\R/2\pi\Z$, and $y+\epsilon v$ is not in the closure of $E_\epsilon$ where $E$ is a $3$-face. To prove this, it is enough to show that for each $k$-face $F$ with $k<3$, there is a uniform positive lower bound on the left hand side of \eqref{eqn:annest} for all $y\in F$, all unit vectors $v$ in $N_F^+X$ that are not normal to a $3$-face adjacent to $F$, and all $\theta$.
+
+If $k=2$, then we have a positive lower bound on $|({\mathbf i}v)_N|^2$ by the discussion of smoothed $2$-faces in \S\ref{sec:Rfssp}.
+
+If $k=1$, denote the $1$-face $F$ by $L$. If $v$ is on the boundary of $N_L^+X$, then we have a positive lower bound on $|({\mathbf i}v)_N|^2$ as in the case $k=2$ above. Suppose now that $v$ is in the interior of $N_L^+X$. We have a positive lower bound on $|({\mathbf i}v)_N|^2$ when ${\mathbf i}v_N$ is away from the Reeb cone of $L$. This is sufficient when $L$ is a good $1$-face. If $L$ is a bad $1$-face, then we have to consider the case where ${\mathbf i}v$ is on or near the Reeb cone $R_L^+X$. If ${\mathbf i}v$ is in the Reeb cone, then all vectors in $V\in T_{y+\epsilon v}Y_\epsilon$ that are not in the real span of the Reeb cone $R_L^+X$ have $V_N\neq 0$. Since the vectors $\cos(\theta){\mathbf j}v + \sin(\theta){\mathbf k}v$ are all unit length and orthogonal to ${\mathbf i}v$, we get a positive lower bound on $\left|(\cos(\theta){\mathbf j}v + \sin(\theta){\mathbf k}v)_N\right|^2$ for all $\theta$ when ${\mathbf i}v$ is on or near the Reeb cone.
+
+Suppose now that $k=0$. If $v$ is on the boundary of $N_L^+X$, then the desired lower bound follows as in the cases $k=1$ and $k=2$ above. If $v$ is in the interior of $N_F^+X$, then we have $|({\mathbf i}v)_N|^2=1$.
+\end{proof}
+
+We now deduce a related rotation number bound. Let $\gamma:[a,b]\to Y_\epsilon$ be a Reeb trajectory. By Lemma~\ref{lem:bub}, we can write
+\[
+\gamma(t) = y(t) + \epsilon v(t)
+\]
+where $y(t)\in \partial X$ and $v(t)$ is a unit vector in $N_{y(t)}^+X$ for each $t$. 
+
+\begin{lemma}
+\label{lem:rnlb2}
+Let $X$ be a symplectic polytope in $\R^4$. Then there exists a constant $C>0$, depending only on $X$, such that if $\epsilon>0$ is small and $\gamma:[a,b]\to Y_\epsilon$ is a Reeb trajectory as above, then
+\[
+\rho(\gamma) \ge C \int_a^b|v'(s)|ds.
+\]
+\end{lemma}
+
+\begin{proof}
+By Lemma~\ref{lem:rnlb1}, it is enough to show that there is a constant $C$ such that
+\[
+|v'(s)|\le C\epsilon^{-1}.
+\]
+To prove this last statement, observe that by equation \eqref{eqn:Reebsmoothed}, in the notation \eqref{eqn:vtn} we have
+\[
+v'(s) = \frac{2\epsilon^{-1}}{\langle v(s),y(s)\rangle + \epsilon}({\mathbf i}v(s))_N.
+\]
+Thus
+\[
+|v'(s)|
+\le \frac{2\epsilon^{-1}}{\langle v(s),y(s)\rangle + \epsilon}.
+\]
+If $y\in\partial X$ and $v\in N_y^+X$ is a unit vector, then $\langle v,y\rangle >0$ because $X$ is convex and $0\in\op{int}(X)$. By compactness, there is then a uniform lower bound on $\langle v,y\rangle$ for all such pairs $(y,v)$.
+\end{proof}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
