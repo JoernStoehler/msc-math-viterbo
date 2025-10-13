@@ -1,85 +1,19 @@
-site_name: Viterbo MSc Project
-site_description: Numerical experiments and docs for the Viterbo conjecture project
-site_url: https://joernstoehler.github.io/msc-math-viterbo
+site_name: Viterbo MSc Project (PyTorch Migration)
 repo_url: https://github.com/JoernStoehler/msc-math-viterbo
 theme:
   name: material
-  features:
-    - navigation.instant
-    - navigation.tracking
-    - content.code.copy
-    - content.tabs.link
   language: en
 
 strict: true
 
 plugins:
   - search
-  - htmlproofer:
-      raise_error: true
-      validate_external_urls: true
-      ignore_urls:
-        - "mailto:*"
-        - "tel:*"
-        - "http://localhost*"
-        - "https://localhost*"
-        - "https://arxiv.org/*"
-        - "https://www.arxiv.org/*"
-        - "https://doi.org/*"
-        - "https://scholar.google.com/*"
-        - "https://www.scholar.google.com/*"
-        - "https://researchgate.net/*"
-        - "https://www.researchgate.net/*"
-        - "https://springer.com/*"
-        - "https://www.springer.com/*"
-        - "https://elsevier.com/*"
-        - "https://www.elsevier.com/*"
-        - "https://jstor.org/*"
-        - "https://www.jstor.org/*"
-        - "*.pdf"
 
 markdown_extensions:
   - admonition
-  - def_list
-  - footnotes
   - tables
   - toc:
       permalink: true
-  - attr_list
-  - pymdownx.details
-  - pymdownx.superfences
-  - pymdownx.inlinehilite
-  - pymdownx.highlight
-  - pymdownx.critic
-  - pymdownx.snippets
-  - pymdownx.arithmatex:
-      generic: true
-
-extra_javascript:
-  - javascripts/mathjax.js
-  - https://polyfill.io/v3/polyfill.min.js?features=es6
-  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 
 nav:
-  - Project Guide: project-structure.md
-  - Project Goal: briefs/2025-10-12-policy-project-goal.md
-  - Collaboration: briefs/2025-10-12-workflow-codex-collaboration.md
-  - Reference:
-      - Thesis Topic (Viterbo): briefs/2025-10-12-workflow-thesis-topic-probing-viterbo.md
-      - Reading List: briefs/2025-10-12-workflow-reading-list.md
-      - Symplectic Quantities: briefs/2025-10-12-workflow-symplectic-quantities.md
-      - Capacities: briefs/2025-10-12-workflow-capacity-algorithms.md
-      - Volumes: briefs/2025-10-12-workflow-volume-algorithms.md
-      - Papers Index: briefs/2025-10-12-workflow-reading-archive.md
-  - Briefs & Workflows:
-      - Modernization Overview: briefs/2025-10-12-adr-modernization-source-of-truth.md
-      - Data Spine ADR (HF Datasets): briefs/2025-10-12-adr-data-spine-hf-datasets.md
-      - No-Batching ADR: briefs/2025-10-12-adr-no-batching-in-library.md
-      - Spectrum 4D Task: briefs/2025-10-12-task-spectrum-4d-baseline.md
-      - Atlas Migration Task: briefs/2025-10-12-task-atlas-migrate-hf-datasets.md
-      - Brief Authoring Guidelines: briefs/2025-10-12-workflow-brief-authoring.md
-      - Task Evaluation Methodology: briefs/2025-10-12-workflow-task-evaluation.md
-      - Subtasks:
-          - Remove Polars → HF Datasets: briefs/subtasks/2025-10-12-subtask-remove-polars-migrate-hf-datasets.md
-          - Delete Batched Library APIs: briefs/subtasks/archive/2025-10-12-subtask-delete-batched-library-apis.md
-          - Refactor Legacy Docs → Briefs: briefs/subtasks/archive/2025-10-12-subtask-refactor-legacy-docs-into-briefs.md
+  - Home: README.md
