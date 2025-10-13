@@ -42,7 +42,7 @@ import pstats
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_PATH = PROJECT_ROOT / "src"
@@ -142,26 +142,42 @@ def print_profile_overview(profile: cProfile.Profile, *, limit: int = 30) -> Non
     print(stream.getvalue())
 
 
+class FuncStatSummary(NamedTuple):
+    label: str
+    primitive_calls: int
+    total_calls: int
+    self_seconds: float
+    cumulative_seconds: float
+
+
 def collect_math_hotspots(
     profile: cProfile.Profile,
     *,
     root: Path = Path("viterbo/math"),
     limit: int = 20,
-) -> list[tuple[str, pstats.func_stats]]:
+) -> list[FuncStatSummary]:
     """Return the hottest frames originating from ``viterbo/math``."""
 
     stats = pstats.Stats(profile).sort_stats("cumulative")
-    rows: list[tuple[str, pstats.func_stats]] = []
+    rows: list[FuncStatSummary] = []
+    root_fragment = root.as_posix()
     for (filename, line, func_name), func_stat in stats.stats.items():
-        if root.as_posix() in Path(filename).as_posix():
-            rows.append((f"{Path(filename).name}:{line}::{func_name}", func_stat))
-    rows.sort(key=lambda item: item[1][3], reverse=True)  # sort by cumulative time
+        path = Path(filename)
+        if root_fragment not in path.as_posix():
+            continue
+        cc, nc, tt, ct, _ = func_stat
+        label = f"{path.name}:{line}::{func_name}"
+        rows.append(
+            FuncStatSummary(
+                label=label,
+                primitive_calls=cc,
+                total_calls=nc,
+                self_seconds=tt,
+                cumulative_seconds=ct,
+            )
+        )
+    rows.sort(key=lambda item: item.cumulative_seconds, reverse=True)
     return rows[:limit]
-
-
-def format_func_stat(func_stat: pstats.func_stats) -> tuple[float, float, int, int]:
-    cc, nc, tt, ct, callers = func_stat
-    return tt, ct, cc, nc
 
 
 def print_math_hotspots(profile: cProfile.Profile, *, limit: int = 20) -> None:
@@ -172,12 +188,17 @@ def print_math_hotspots(profile: cProfile.Profile, *, limit: int = 20) -> None:
         print("No frames from viterbo.math detected in the profile (implementation pending?).")
         return
 
-    header = f"{'function':60} | {'cum. time (s)':>12} | {'self time (s)':>13} | {'calls':>7}"
+    header = (
+        f"{'function':60} | {'cum. time (s)':>12} | {'self time (s)':>13} | "
+        f"{'calls':>7} | {'prim calls':>10}"
+    )
     print(header)
     print("-" * len(header))
-    for label, func_stat in rows:
-        tt, ct, cc, nc = format_func_stat(func_stat)
-        print(f"{label:60} | {ct:12.6f} | {tt:13.6f} | {nc:7d}")
+    for row in rows:
+        print(
+            f"{row.label:60} | {row.cumulative_seconds:12.6f} | "
+            f"{row.self_seconds:13.6f} | {row.total_calls:7d} | {row.primitive_calls:10d}"
+        )
 
 
 # %% [markdown]

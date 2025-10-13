@@ -38,6 +38,7 @@ Single authoritative policy for this repo.
 - Codex agents land inside a pre-provisioned environment; never run devcontainer lifecycle commands manually.
 - Git CLI (`git`) and GitHub CLI (`gh`) are available; use them for local workflow and PR creation. `gh pr create --body-file docs/tasks/PR_TEMPLATE.md` is recommended—`--body` drops formatting and leads to empty PR descriptions otherwise.
 - Dependency manager: uv (`uv run`, `uv sync`, `uv add`). Commit `uv.lock`.
+- When invoking project Python entrypoints from the shell, prefer `uv run python …` over bare `python` to stay inside the managed environment.
 - Editors: Pyright (basic) for fast feedback; Ruff for lint/format.
 - Testing: Pytest (smoke by default) + incremental selector (`scripts/inc_select.py`) for fast local loops + `pytest-benchmark` for targeted benches.
 
@@ -109,7 +110,8 @@ def support(points, direction):
 Daily development
 
 1. Read task; scan relevant code/tests.
-2. Reflect on goal and develop a short plan (4–7 steps).
+2. Perform the required investigation (code, docs, tests) so the plan is fully informed.
+3. Reflect on goal and develop a short plan (4–7 steps).
 3. Implement cohesive changes. Run `just precommit` for local gate (format, lint, type, smoke).
 4. Keep math pure; do I/O only in datasets/models/adapters.
 5. For parity, run `just ci-cpu` locally if needed; update tests/docs before pushing / opening PR.

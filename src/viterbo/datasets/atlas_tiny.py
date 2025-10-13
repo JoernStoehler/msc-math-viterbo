@@ -12,6 +12,8 @@ from dataclasses import dataclass
 import torch
 from torch.utils.data import Dataset
 
+from viterbo.math.constructions import rotated_regular_ngon2d
+from viterbo.math.polytope import vertices_to_halfspaces
 
 @dataclass
 class AtlasTinyRow:
@@ -67,15 +69,57 @@ def atlas_tiny_complete_row(row: AtlasTinyRow) -> AtlasTinyRow:
 
 
 def atlas_tiny_generate() -> list[AtlasTinyRow]:
-    """Generate a tiny list of rows with geometric data (stub).
+    """Generate a deterministic list of low-dimensional symplectic polytopes.
 
-    Notes:
-      - This stub focuses on repository plumbing. It returns an empty list by
-        default so call sites can opt into specific builders. Future versions
-        will generate 4D examples (e.g., Lagrangian products) once 4D solvers
-        are wired.
+    The current focus is 2D polygons so the symplectic helpers (capacity, minimal
+    action) can run end-to-end. Each row specifies vertices plus an H-representation;
+    derived quantities are filled by :func:`atlas_tiny_complete_row`.
     """
-    return []
+
+    def _regular_ngon_row(
+        *,
+        polytope_id: str,
+        generator: str,
+        sides: int,
+        angle: float,
+        scale: float = 1.0,
+    ) -> AtlasTinyRow:
+        vertices, normals, offsets = rotated_regular_ngon2d(sides, angle)
+        if scale != 1.0:
+            vertices = vertices * scale
+            normals, offsets = vertices_to_halfspaces(vertices)
+        dtype = torch.float64
+        return AtlasTinyRow(
+            polytope_id=polytope_id,
+            generator=generator,
+            vertices=vertices.to(dtype=dtype),
+            normals=normals.to(dtype=dtype),
+            offsets=offsets.to(dtype=dtype),
+        )
+
+    rows = [
+        _regular_ngon_row(
+            polytope_id="sq_unit",
+            generator="regular_ngon",
+            sides=4,
+            angle=0.0,
+        ),
+        _regular_ngon_row(
+            polytope_id="pentagon_rot",
+            generator="regular_ngon",
+            sides=5,
+            angle=0.35,
+        ),
+        _regular_ngon_row(
+            polytope_id="hexagon_scaled",
+            generator="regular_ngon_scaled",
+            sides=6,
+            angle=-0.2,
+            scale=1.5,
+        ),
+    ]
+
+    return rows
 
 
 class AtlasTinyDataset(Dataset[AtlasTinyRow]):

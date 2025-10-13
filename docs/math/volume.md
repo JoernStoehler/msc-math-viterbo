@@ -4,14 +4,18 @@ title: volume — polytope volumes and backends
 
 # `viterbo.math.volume`
 
-Volume for convex polytopes with planned higher-dimensional backends. Functions
-are Torch-first, pure, and preserve input dtype/device.
+Torch-first utilities to evaluate volumes of convex polytopes in arbitrary
+dimension, plus stubs for specialised backends. All functions preserve the dtype
+and device of their inputs and remain side-effect free.
 
 Functions
 
 - `volume(vertices: (M, D)) -> ()`
-  - Convex hull volume for `D ∈ {1, 2, 3}` via interval length, polygon shoelace,
-    and facet pyramids. Raises `NotImplementedError` for `D ≥ 4`.
+  - General-purpose Gauss-divergence accumulator that works for any `D ≥ 1`. Uses
+    polar/spherical decomposition for one dimension, shoelace for two, then
+    recursively integrates facet measures (via `vertices_to_halfspaces`) for higher
+    dimensions, enabling exact volumes for 4D polytopes such as hypercubes or
+    Lagrangian products.
 
 Stubs (planned)
 
@@ -23,4 +27,3 @@ Stubs (planned)
 
 - `volume_via_monte_carlo(vertices: (M, D), normals: (F, D), offsets: (F,), *, samples: int, generator: Generator|int) -> ()`
   - Quasi–Monte Carlo rejection sampling with variance reduction.
-
