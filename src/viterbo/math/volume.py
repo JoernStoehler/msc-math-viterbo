@@ -1,8 +1,4 @@
-"""Polytope volume helpers and planned higher-dimensional backends.
-
-Public API focuses on Torch-first, pure functions. Dtypes/devices follow inputs;
-no implicit moves.
-"""
+"""Polytope volume helpers with Torch-first, dimension-agnostic implementations."""
 
 from __future__ import annotations
 
@@ -20,36 +16,45 @@ def _convex_hull_order_2d(vertices: torch.Tensor) -> torch.Tensor:
     return unique_vertices[order]
 
 
-def _facet_polygon_area(vertices: torch.Tensor, normal: torch.Tensor, tol: float) -> torch.Tensor:
-    if vertices.size(0) < 3:
+def _project_onto_affine_span(vertices: torch.Tensor, tol: float) -> torch.Tensor | None:
+    """Project vertices to coordinates in their affine span."""
+
+    unique_vertices = torch.unique(vertices, dim=0)
+    if unique_vertices.size(0) <= 1:
+        return None
+
+    base = unique_vertices[0]
+    rel = unique_vertices - base
+    diffs = rel[1:]
+    if diffs.size(0) == 0:
+        return None
+    u, s, vh = torch.linalg.svd(diffs, full_matrices=False)
+    rank = int((s > tol).sum().item())
+    if rank == 0:
+        return None
+    basis = vh[:rank]  # (rank, D)
+    coords = rel @ basis.T  # (M, rank)
+    return coords
+
+
+def _facet_measure(vertices: torch.Tensor, tol: float) -> torch.Tensor:
+    """Return the (d-1)-dimensional volume of a facet defined by ``vertices``."""
+
+    coords = _project_onto_affine_span(vertices, tol)
+    if coords is None:
         return torch.zeros((), dtype=vertices.dtype, device=vertices.device)
-    centre = vertices.mean(dim=0)
-    axis = torch.tensor([1.0, 0.0, 0.0], dtype=vertices.dtype, device=vertices.device)
-    if torch.abs(normal[0]) > 0.9:
-        axis = torch.tensor([0.0, 1.0, 0.0], dtype=vertices.dtype, device=vertices.device)
-    u = torch.cross(normal, axis, dim=0)
-    if torch.linalg.norm(u) <= tol:
-        axis = torch.tensor([0.0, 0.0, 1.0], dtype=vertices.dtype, device=vertices.device)
-        u = torch.cross(normal, axis, dim=0)
-    u = u / torch.linalg.norm(u)
-    v = torch.cross(normal, u, dim=0)
-    rel = vertices - centre
-    coords = torch.stack((rel @ u, rel @ v), dim=1)
-    ordered = _convex_hull_order_2d(coords)
-    x = ordered[:, 0]
-    y = ordered[:, 1]
-    area = 0.5 * torch.abs(
-        torch.sum(x * torch.roll(y, shifts=-1)) - torch.sum(y * torch.roll(x, shifts=-1))
-    )
-    return area
+    # Remove duplicate coordinates to improve stability in lower dimensions.
+    coords = torch.unique(coords, dim=0)
+    dim = coords.size(1)
+    if dim == 0 or coords.size(0) <= 1:
+        return torch.zeros((), dtype=vertices.dtype, device=vertices.device)
+    if coords.size(0) <= dim:
+        return torch.zeros((), dtype=vertices.dtype, device=vertices.device)
+    return volume(coords)
 
 
 def volume(vertices: torch.Tensor) -> torch.Tensor:
-    """Volume of the convex hull for ``D ∈ {1, 2, 3}``.
-
-    Plans for ``D ≥ 4`` include a triangulation backend, a Lawrence sign
-    decomposition, and a quasi–Monte Carlo estimator; see the stubs below.
-    """
+    """Volume of a convex polytope in ``R^D`` for ``D >= 1``."""
     if vertices.ndim != 2:
         raise ValueError("vertices must be (M, D)")
     dim = vertices.size(1)
@@ -68,18 +73,20 @@ def volume(vertices: torch.Tensor) -> torch.Tensor:
             torch.sum(x * torch.roll(y, shifts=-1)) - torch.sum(y * torch.roll(x, shifts=-1))
         )
         return area
-    if dim != 3:
-        raise NotImplementedError("volume currently implemented for dimensions 1, 2, and 3 only")
 
     normals, offsets = vertices_to_halfspaces(vertices)
     centre = vertices.mean(dim=0)
     vol = torch.zeros((), dtype=dtype, device=device)
     for normal, offset in zip(normals, offsets):
-        mask = torch.isclose(vertices @ normal, offset, atol=tol)
+        mask = torch.isclose(vertices @ normal, offset, atol=tol, rtol=0.0)
         facet_vertices = vertices[mask]
-        area = _facet_polygon_area(facet_vertices, normal, tol)
+        if facet_vertices.size(0) < dim:
+            continue
+        facet_measure = _facet_measure(facet_vertices, tol)
         height = offset - (centre @ normal)
-        vol = vol + area * height / 3.0
+        if height < 0:
+            height = -height
+        vol = vol + facet_measure * height / dim
     return torch.abs(vol)
 
 

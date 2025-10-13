@@ -81,6 +81,13 @@ def test_volume_known_cube_value() -> None:
     torch.testing.assert_close(cube_volume, torch.tensor(8.0))
 
 
+def test_volume_known_hypercube_value_4d() -> None:
+    points = torch.tensor([-1.0, 1.0])
+    vertices = torch.cartesian_prod(points, points, points, points)
+    hypercube_volume = volume(vertices)
+    torch.testing.assert_close(hypercube_volume, torch.tensor(16.0))
+
+
 def test_capacity_algorithms_agree_on_square() -> None:
     vertices, normals, offsets = _square_geometry()
     capacity_h = capacity_ehz_algorithm1(normals, offsets)
