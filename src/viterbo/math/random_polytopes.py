@@ -24,7 +24,9 @@ def _sample_in_unit_ball(generator: torch.Generator, count: int, dimension: int)
         raise ValueError("count must be positive")
     points = torch.randn((count, dimension), generator=generator)
     norms = torch.linalg.norm(points, dim=1, keepdim=True)
-    norms = torch.clamp(norms, min=1e-12)
+    # We deliberately skip clamping tiny/zero norms: the Gaussian hits the
+    # origin with probability zero, and if the PRNG returns a degenerate draw
+    # we are happy to let it surface loudly instead of papering over it.
     directions = points / norms
     radii = torch.rand((count, 1), generator=generator) ** (1.0 / dimension)
     return directions * radii

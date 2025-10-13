@@ -59,11 +59,13 @@ Single authoritative policy for this repo.
 - Types: prefer built‑ins (`list[str]`, `dict[str, torch.Tensor]`, unions with `|`); avoid custom typedefs for shapes/dimensions.
 - Commit: Conventional Commits.
 - Placeholders: do **not** wrap `NotImplementedError` (or other TODO sentinels) in `try/except`; allow the error to surface so missing implementations remain obvious during TDD loops.
+- Assertions: if an `assert` passes during development, do not duplicate it purely to survive `python -O`.
 
 ## 4) PyTorch + C++ specifics (facts)
 
 - Device policy: math APIs accept tensors on caller’s device; no implicit device moves.
-- RNG: use `torch.Generator` or seed ints passed explicitly.
+- RNG: prefer `torch.Generator` handles over bare integer seeds; pass seeds explicitly only when bridging external APIs.
+- Runtime: assume CPU-only execution unless a task explicitly calls for CUDA.
 - C++: use `torch.utils.cpp_extension` + pybind11; start CPU‑only. Add CUDA only when required.
 - Plotting/IO: push conversions to call sites (e.g., `tensor.detach().cpu().numpy()` when needed).
 
@@ -93,6 +95,7 @@ def support(points, direction):
 - Timeouts: keep smoke tests under a few seconds locally and in CI.
 - Benchmarks: use `pytest-benchmark` with fixed RNG seeds; save artefacts under `.benchmarks/`.
 - Assertions: use `pytest.approx`, `torch.testing.assert_close`, or `math.isclose` appropriately.
+- Shape validation: rely on docstrings, inline comments, and the existing unit tests; avoid redundant shape assertions unless a bug fix demands them.
 
 ## 7) Performance (facts)
 
