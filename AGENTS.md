@@ -36,6 +36,7 @@ Single authoritative policy for this repo.
 - Stack: Python 3.12, PyTorch 2.x (CPU baseline; optional CUDA for models only). C++17 with pybind11 for custom hotspot non‑SIMD kernels.
 - Devcontainers: `.devcontainer/devcontainer.local.json` (local VS Code Remote - Containers with host volumes) and `.devcontainer/devcontainer.codespaces.json` (GitHub Codespaces without host volumes). Pick the correct definition when prompted; there is no default.
 - Codex agents land inside a pre-provisioned environment; never run devcontainer lifecycle commands manually.
+- Git CLI (`git`) and GitHub CLI (`gh`) are available; use them for local workflow and PR creation. `gh pr create --body-file docs/tasks/PR_TEMPLATE.md` is recommended—`--body` drops formatting and leads to empty PR descriptions otherwise.
 - Dependency manager: uv (`uv run`, `uv sync`, `uv add`). Commit `uv.lock`.
 - Editors: Pyright (basic) for fast feedback; Ruff for lint/format.
 - Testing: Pytest (smoke by default) + incremental selector (`scripts/inc_select.py`) for fast local loops + `pytest-benchmark` for targeted benches.
