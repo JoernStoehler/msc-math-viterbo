@@ -1,7 +1,7 @@
 ---
-title: "Datasets: AtlasTiny scaffolding and torch Dataset build"
+title: "Datasets: AtlasTiny ragged rows and collate helper"
 created: 2025-10-13
-status: ready
+status: in-progress
 owner: TBD
 branch: task/datasets-atlas-tiny
 priority: medium
@@ -14,17 +14,17 @@ deps:
 
 ## Summary
 
-Implement a small synthetic dataset of polytopes (AtlasTiny) with geometric and symplectic attributes, using math utilities for completion. Build as a `torch.utils.data.Dataset`; avoid external dataset frameworks.
+Implement a small synthetic dataset of polytopes (AtlasTiny) with geometric and symplectic attributes, using math utilities for completion. Return completed rows as typed dictionaries and provide padding/collate utilities instead of introducing a custom Dataset subclass.
 
 ## Deliverables
 
 - Implement `atlas_tiny_generate()` to yield rows with geometry fields populated (vertices/normals/offsets) via existing generators.
 - Implement `atlas_tiny_complete_row()` to fill `volume`, `capacity_ehz`, `systolic_ratio`, and `minimal_action_cycle` using `viterbo.math` APIs.
-- Implement `atlas_tiny_build()` to return a `torch.utils.data.Dataset` (`AtlasTinyDataset`) of completed rows.
-- Add smoke tests that build a tiny dataset and check length/types.
+- Implement `atlas_tiny_build()` to return a list of completed row dictionaries and add a `atlas_tiny_collate_pad()` helper for default-batching scenarios.
+- Add smoke tests that build the tiny dataset and exercise the collate helper.
 
 ## Acceptance Criteria
 
 - CI green (lint/type/smoke) with no external dataset dependency.
-- Deterministic generation given fixed seeds.
-- Clear docstrings for shapes/dtypes and invariants.
+- Deterministic generation for repeated builds.
+- Clear docstrings for shapes/dtypes, derived invariants, and collate semantics.

@@ -17,15 +17,17 @@
 # # Atlas Tiny dataset profiling
 #
 # This notebook profiles `viterbo.datasets.atlas_tiny.atlas_tiny_build` to surface
-# hotspots across the supporting `viterbo.math` helpers.  The math and dataset
-# implementations are expected to land in a follow-up PR, so this file focuses on
-# the profiling harness and reporting utilities.
+# hotspots across the supporting `viterbo.math` helpers.  The builder currently
+# returns a list of completed row dictionaries; consumers can convert it to
+# batched tensors via `atlas_tiny_collate_pad`.  The math and dataset helpers are
+# expected to land in a follow-up PR, so this file focuses on the profiling
+# harness and reporting utilities.
 #
 # ## Workflow
 #
 # 1. (Optional) edit the dataset/math code.
 # 2. Re-run the profiling cell below.  It executes `atlas_tiny_build()` inside a
-#    `cProfile` session.
+#    `cProfile` session and returns the list of rows for inspection.
 # 3. Inspect the printed tables: first a global overview, then an extraction of
 #    the functions that live under `viterbo/math`.
 #
@@ -119,9 +121,17 @@ def run_profile(
 # %%
 dataset, profiler = run_profile()
 if dataset is not None:
-    print(f"Profiled dataset with {len(dataset)} rows.")
+    print(f"Profiled AtlasTiny build with {len(dataset)} rows.")
 else:
     print("Dataset creation did not return a value (likely due to stub implementation).")
+
+
+# %% [markdown]
+# ### Batching the rows
+#
+# Use `atlas_tiny_collate_pad(dataset)` to obtain padded tensors suitable for
+# default PyTorch batching.  The helper returns masks alongside the padded
+# arrays so you can trim back to the true vertex/facet counts when needed.
 
 
 # %% [markdown]

@@ -1,151 +1,215 @@
-"""AtlasTiny dataset scaffolding (stubs).
+"""AtlasTiny dataset helpers returning completed ragged rows.
 
-Defines a small synthetic dataset of polytopes with geometric/symplectic
-attributes. This module is an adapter layer around `viterbo.math` utilities;
-it should avoid heavy dependencies at import time.
+This module assembles a deterministic roster of low-dimensional polytopes and
+uses :mod:`viterbo.math` utilities to populate symplectic invariants. The
+helpers return Python lists of typed dictionaries so callers can decide how to
+batch (pad, collate, etc.) for their pipeline.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Sequence
+from typing import TypedDict
 
 import torch
-from torch.utils.data import Dataset
 
 from viterbo.math.constructions import rotated_regular_ngon2d
 from viterbo.math.polytope import vertices_to_halfspaces
 
 
-@dataclass
-class AtlasTinyRow:
-    """Row schema for AtlasTiny.
-
-    Attributes:
-      polytope_id: unique identifier.
-      generator: name of the generator method.
-      vertices: (M, D) float tensor.
-      normals: (F, D) float tensor.
-      offsets: (F,) float tensor.
-      volume: () float tensor.
-      capacity_ehz: () float tensor.
-      systolic_ratio: () float tensor.
-      minimal_action_cycle: (K, D) float tensor points of cycle.
-    """
+class AtlasTinyRaggedRow(TypedDict):
+    """AtlasTiny row before derived quantities are attached."""
 
     polytope_id: str
     generator: str
     vertices: torch.Tensor
     normals: torch.Tensor
     offsets: torch.Tensor
-    volume: torch.Tensor | None = None
-    capacity_ehz: torch.Tensor | None = None
-    systolic_ratio: torch.Tensor | None = None
-    minimal_action_cycle: torch.Tensor | None = None
 
 
-def atlas_tiny_complete_row(row: AtlasTinyRow) -> AtlasTinyRow:
-    """Compute missing attributes for a row using math utilities.
+class AtlasTinyRow(TypedDict):
+    """Completed AtlasTiny row with derived quantities attached."""
 
-    This function imports from ``viterbo.math`` lazily to avoid import-time cost.
-    """
+    polytope_id: str
+    generator: str
+    vertices: torch.Tensor
+    normals: torch.Tensor
+    offsets: torch.Tensor
+    volume: torch.Tensor
+    capacity_ehz: torch.Tensor | None
+    systolic_ratio: torch.Tensor | None
+    minimal_action_cycle: torch.Tensor | None
+    num_vertices: int
+    num_facets: int
+    dimension: int
+
+
+def atlas_tiny_generate() -> list[AtlasTinyRaggedRow]:
+    """Generate deterministic polytopes suitable for symplectic evaluation."""
+
+    dtype = torch.float64
+    base_specs: Sequence[tuple[str, str, int, float, float]] = (
+        ("sq_unit", "regular_ngon", 4, 0.0, 1.0),
+        ("pentagon_rot", "regular_ngon", 5, 0.35, 1.0),
+        ("hexagon_scaled", "regular_ngon_scaled", 6, -0.2, 1.5),
+    )
+
+    rows: list[AtlasTinyRaggedRow] = []
+    for polytope_id, generator_name, sides, angle, scale in base_specs:
+        vertices, normals, offsets = rotated_regular_ngon2d(sides, angle)
+        vertices = vertices * scale
+        normals, offsets = vertices_to_halfspaces(vertices)
+        rows.append(
+            {
+                "polytope_id": polytope_id,
+                "generator": generator_name,
+                "vertices": vertices.to(dtype=dtype),
+                "normals": normals.to(dtype=dtype),
+                "offsets": offsets.to(dtype=dtype),
+            }
+        )
+    return rows
+
+
+def atlas_tiny_complete_row(row: AtlasTinyRaggedRow) -> AtlasTinyRow:
+    """Populate derived quantities for a ragged row using math utilities."""
 
     from viterbo.math.minimal_action import minimal_action_cycle, systolic_ratio
     from viterbo.math.volume import volume as volume_from_vertices
 
-    out = AtlasTinyRow(**{k: v for k, v in row.__dict__.items()})
-    dim = int(out.vertices.size(1))
-    # Only compute derived quantities for dimensions currently supported by the math layer.
-    # Keep 4D focus by not attempting unsupported computations.
-    if dim == 1 or dim == 2 or dim == 3:
-        if out.volume is None:
-            out.volume = volume_from_vertices(out.vertices)
+    vertices = row["vertices"]
+    normals = row["normals"]
+    offsets = row["offsets"]
+
+    if vertices.ndim != 2:
+        raise ValueError("vertices must be (M, D) tensor")
+    if normals.ndim != 2 or offsets.ndim != 1:
+        raise ValueError("normals must be (F, D) and offsets must be (F,) tensor")
+    if vertices.device != normals.device or vertices.device != offsets.device:
+        raise ValueError("vertices, normals, and offsets must share the same device")
+    if vertices.dtype != normals.dtype or vertices.dtype != offsets.dtype:
+        raise ValueError("vertices, normals, and offsets must share the same dtype")
+
+    dim = int(vertices.size(1))
+    volume = volume_from_vertices(vertices)
+    capacity: torch.Tensor | None = None
+    cycle: torch.Tensor | None = None
     if dim == 2:
-        if out.minimal_action_cycle is None or out.capacity_ehz is None:
-            capacity, cycle = minimal_action_cycle(out.vertices, out.normals, out.offsets)
-            out.capacity_ehz = capacity
-            out.minimal_action_cycle = cycle
-    if out.systolic_ratio is None and out.volume is not None and out.capacity_ehz is not None:
-        out.systolic_ratio = systolic_ratio(out.volume, out.capacity_ehz, dim)
-    return out
+        capacity, cycle = minimal_action_cycle(vertices, normals, offsets)
+
+    systolic: torch.Tensor | None = None
+    if capacity is not None:
+        systolic = systolic_ratio(volume, capacity, dim)
+
+    return AtlasTinyRow(
+        polytope_id=row["polytope_id"],
+        generator=row["generator"],
+        vertices=vertices,
+        normals=normals,
+        offsets=offsets,
+        volume=volume,
+        capacity_ehz=capacity,
+        systolic_ratio=systolic,
+        minimal_action_cycle=cycle,
+        num_vertices=int(vertices.size(0)),
+        num_facets=int(normals.size(0)),
+        dimension=dim,
+    )
 
 
-def atlas_tiny_generate() -> list[AtlasTinyRow]:
-    """Generate a deterministic list of low-dimensional symplectic polytopes.
-
-    The current focus is 2D polygons so the symplectic helpers (capacity, minimal
-    action) can run end-to-end. Each row specifies vertices plus an H-representation;
-    derived quantities are filled by :func:`atlas_tiny_complete_row`.
-    """
-
-    def _regular_ngon_row(
-        *,
-        polytope_id: str,
-        generator: str,
-        sides: int,
-        angle: float,
-        scale: float = 1.0,
-    ) -> AtlasTinyRow:
-        vertices, normals, offsets = rotated_regular_ngon2d(sides, angle)
-        if scale != 1.0:
-            vertices = vertices * scale
-            normals, offsets = vertices_to_halfspaces(vertices)
-        dtype = torch.float64
-        return AtlasTinyRow(
-            polytope_id=polytope_id,
-            generator=generator,
-            vertices=vertices.to(dtype=dtype),
-            normals=normals.to(dtype=dtype),
-            offsets=offsets.to(dtype=dtype),
-        )
-
-    rows = [
-        _regular_ngon_row(
-            polytope_id="sq_unit",
-            generator="regular_ngon",
-            sides=4,
-            angle=0.0,
-        ),
-        _regular_ngon_row(
-            polytope_id="pentagon_rot",
-            generator="regular_ngon",
-            sides=5,
-            angle=0.35,
-        ),
-        _regular_ngon_row(
-            polytope_id="hexagon_scaled",
-            generator="regular_ngon_scaled",
-            sides=6,
-            angle=-0.2,
-            scale=1.5,
-        ),
-    ]
-
-    return rows
-
-
-class AtlasTinyDataset(Dataset[AtlasTinyRow]):
-    """Torch dataset wrapping completed AtlasTiny rows."""
-
-    def __init__(self, rows: list[AtlasTinyRow]) -> None:
-        """Store precomputed rows.
-
-        Args:
-          rows: Completed rows to expose via the dataset interface.
-        """
-        self._rows = rows
-
-    def __len__(self) -> int:
-        """Return the number of rows."""
-        return len(self._rows)
-
-    def __getitem__(self, idx: int) -> AtlasTinyRow:
-        """Return the row at index ``idx``."""
-        return self._rows[idx]
-
-
-def atlas_tiny_build() -> AtlasTinyDataset:
-    """Build and return a `torch.utils.data.Dataset` of completed rows."""
+def atlas_tiny_build() -> list[AtlasTinyRow]:
+    """Return completed AtlasTiny rows as a list of typed dictionaries."""
 
     rows = atlas_tiny_generate()
-    complete_rows = [atlas_tiny_complete_row(row) for row in rows]
-    return AtlasTinyDataset(complete_rows)
+    return [atlas_tiny_complete_row(row) for row in rows]
+
+
+def atlas_tiny_collate_pad(rows: Sequence[AtlasTinyRow]) -> dict[str, torch.Tensor | list[str]]:
+    """Pad a batch of AtlasTiny rows to the maximum vertex/facet counts.
+
+    Args:
+      rows: sequence of completed AtlasTiny rows.
+
+    Returns:
+      Dictionary with padded tensors:
+        - ``polytope_id``: list[str]
+        - ``generator``: list[str]
+        - ``vertices``: (B, V_max, D)
+        - ``normals``: (B, F_max, D)
+        - ``offsets``: (B, F_max)
+        - ``minimal_action_cycle``: (B, C_max, D)
+        - ``vertex_mask``: (B, V_max) bool
+        - ``facet_mask``: (B, F_max) bool
+        - ``cycle_mask``: (B, C_max) bool
+        - scalars ``volume``, ``capacity_ehz``, ``systolic_ratio`` of shape (B,)
+    """
+
+    if not rows:
+        raise ValueError("atlas_tiny_collate_pad requires a non-empty batch")
+
+    dtype = rows[0]["vertices"].dtype
+    device = rows[0]["vertices"].device
+    dim = rows[0]["vertices"].size(1)
+
+    max_vertices = max(row["vertices"].size(0) for row in rows)
+    max_facets = max(row["normals"].size(0) for row in rows)
+    max_cycle = max(
+        row["minimal_action_cycle"].size(0) if row["minimal_action_cycle"] is not None else 0
+        for row in rows
+    )
+
+    batch_size = len(rows)
+    vertices = torch.zeros((batch_size, max_vertices, dim), dtype=dtype, device=device)
+    normals = torch.zeros((batch_size, max_facets, dim), dtype=dtype, device=device)
+    offsets = torch.zeros((batch_size, max_facets), dtype=dtype, device=device)
+    cycle = torch.zeros((batch_size, max_cycle, dim), dtype=dtype, device=device)
+
+    vertex_mask = torch.zeros((batch_size, max_vertices), dtype=torch.bool, device=device)
+    facet_mask = torch.zeros((batch_size, max_facets), dtype=torch.bool, device=device)
+    cycle_mask = torch.zeros((batch_size, max_cycle), dtype=torch.bool, device=device)
+
+    volume = torch.zeros((batch_size,), dtype=dtype, device=device)
+    capacity = torch.full((batch_size,), float("nan"), dtype=dtype, device=device)
+    systolic = torch.full((batch_size,), float("nan"), dtype=dtype, device=device)
+
+    polytope_ids: list[str] = []
+    generators: list[str] = []
+
+    for i, row in enumerate(rows):
+        polytope_ids.append(row["polytope_id"])
+        generators.append(row["generator"])
+
+        v = row["vertices"]
+        n = row["normals"]
+        o = row["offsets"]
+        vertices[i, : v.size(0)] = v
+        normals[i, : n.size(0)] = n
+        offsets[i, : o.size(0)] = o
+        vertex_mask[i, : v.size(0)] = True
+        facet_mask[i, : n.size(0)] = True
+
+        if row["minimal_action_cycle"] is not None and row["minimal_action_cycle"].size(0) > 0:
+            c = row["minimal_action_cycle"]
+            cycle[i, : c.size(0)] = c
+            cycle_mask[i, : c.size(0)] = True
+
+        volume[i] = row["volume"]
+        if row["capacity_ehz"] is not None:
+            capacity[i] = row["capacity_ehz"]
+        if row["systolic_ratio"] is not None:
+            systolic[i] = row["systolic_ratio"]
+
+    return {
+        "polytope_id": polytope_ids,
+        "generator": generators,
+        "vertices": vertices,
+        "normals": normals,
+        "offsets": offsets,
+        "minimal_action_cycle": cycle,
+        "vertex_mask": vertex_mask,
+        "facet_mask": facet_mask,
+        "cycle_mask": cycle_mask,
+        "volume": volume,
+        "capacity_ehz": capacity,
+        "systolic_ratio": systolic,
+    }
