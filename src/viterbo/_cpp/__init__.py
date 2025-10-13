@@ -34,6 +34,3 @@ def add_one(x: torch.Tensor) -> torch.Tensor:
     if _ext is not None:
         return _ext.add_one(x)
     return x + 1
-
-
-__all__ = ["add_one"]

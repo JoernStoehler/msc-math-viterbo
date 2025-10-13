@@ -51,6 +51,3 @@ def random_symplectic_matrix(dimension: int, seed: int | torch.Generator) -> tor
     lower[half:, :half] = sym_lower
     matrix = upper @ block_a @ lower
     return matrix
-
-
-__all__ = ["symplectic_form", "random_symplectic_matrix"]

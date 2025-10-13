@@ -18,7 +18,9 @@
     // Persistent bash history across container restarts
     "source=bash_history_data,target=/home/codespace/.bash_history_dir,type=volume",
     // Persist pip cache to speed up installs
-    "source=pip_cache,target=/home/codespace/.cache/pip,type=volume"
+    "source=pip_cache,target=/home/codespace/.cache/pip,type=volume",
+    // Persist uv cache so worktrees reuse downloaded wheels
+    "source=uv_cache,target=/home/codespace/.cache/uv,type=volume"
   ],
   "postCreateCommand": "/bin/bash .devcontainer/post-create.sh",
   "postStartCommand": "/bin/bash .devcontainer/post-start.sh",
