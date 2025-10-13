@@ -1,6 +1,6 @@
 {
-  // Devcontainer configuration for the Python tooling stack.
-  "name": "msc-math-viterbo",
+  // Devcontainer configuration for the local VS Code Remote - Containers workflow.
+  "name": "msc-math-viterbo (Local)",
   "image": "mcr.microsoft.com/vscode/devcontainers/universal:2",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   // Mark this container as a local VS Code devcontainer so
