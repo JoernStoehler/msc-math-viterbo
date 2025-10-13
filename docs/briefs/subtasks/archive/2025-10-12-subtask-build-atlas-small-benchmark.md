@@ -9,8 +9,11 @@ summary: Sketch the atlas-small dataset build and benchmarking run across genera
 
 ## Context
 
-- `viterbo.atlas` already exposes HF Datasets helpers and schema definitions, but no concrete atlas snapshot is shipped.
-- Generator coverage currently spans random samplers in `viterbo.basic_generators` and structured enumerations; quantity algorithms live across `viterbo.capacity`, `viterbo.volume`, `viterbo.math.spectrum`, `viterbo.math.systolic`, and `viterbo.datasets.cycles`.
+- Historical note: the modern code keeps HF Datasets helpers under `viterbo.datasets2`. The original plan assumed a `viterbo.atlas`
+  package, which never materialised.
+- Generator coverage now lives in `viterbo.math.generators`; quantity algorithms reside in `viterbo.math.capacity`,
+  `viterbo.math.volume`, `viterbo.math.spectrum`, and `viterbo.math.systolic`. The retired `viterbo.datasets.cycles` module
+  is no longer part of the tree.
 - The placeholder pipeline notebook (`notebooks/proposed/dataset_pipeline.py`) envisions chunked builders that log artefacts under `artefacts/`, but the updated scope treats the run as an in-memory pass with lightweight manifest-based resumability.
 
 ## Objectives
@@ -27,7 +30,7 @@ summary: Sketch the atlas-small dataset build and benchmarking run across genera
 
 ## Dependencies
 
-- Requires access to the generator implementations under `src/viterbo/basic_generators` and related modules.
+- Requires access to the generator implementations under `src/viterbo/math/generators.py` and related modules.
 - Requires quantity algorithms from `src/viterbo` (capacity, volume, spectrum, systolic, cycles) to be stable enough for batch execution.
 - Feeds downstream consumers including the Monday notebooks and neural-encoding exploration subtasks once published.
 

@@ -21,8 +21,8 @@ summary: Library APIs are per-instance only; batching/padding lives in ML pipeli
 
 ## Transition Plan
 
-- Legacy batched entry points have been removed from the library.
-- All docs, tests, and briefs now use per-instance APIs exclusively.
+- Legacy batched entry points have been removed from most modules.
+- All docs, tests, and briefs should use per-instance APIs exclusively.
 
 ## Guidance
 

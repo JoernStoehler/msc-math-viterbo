@@ -10,7 +10,7 @@ summary: Outline the work to finish the four Monday notebooks that visualise the
 ## Context
 
 - Four placeholder notebooks live under `notebooks/proposed/`: `dataset_pipeline.py`, `atlas_umap.py`, `polytope_tables.py`, and `minimal_action_cycle.py`.
-- Each notebook assumes an atlas dataset is available (defaulting to an `atlas-small` snapshot once produced) and currently prints placeholders or TODO lists.
+- Each notebook assumes an atlas dataset is available. Today only the `atlas_tiny` preset exists; the envisaged `atlas_small` snapshot still needs to be built once the expanded builder lands.
 - The notebooks should demonstrate realistic downstream consumption of the atlas artefacts (tables, embeddings, trajectory visualisations).
 
 ## Objectives (initial draft)
@@ -27,7 +27,7 @@ summary: Outline the work to finish the four Monday notebooks that visualise the
 
 ## Dependencies
 
-- Depends on availability of an `atlas-small` dataset (and `atlas-tiny` for smoke runs) produced by the dedicated dataset build subtask.
+- Depends on availability of an `atlas_tiny` dataset (existing) and future `atlas_small` export once the dataset build task ships.
 - Shares configuration patterns with any future documentation describing dataset consumption.
 - Requires Codex CLI MCP integration if authors intend to iterate interactively, though notebooks must remain runnable without it.
 
@@ -41,7 +41,7 @@ summary: Outline the work to finish the four Monday notebooks that visualise the
 ## Decisions and constraints
 
 - Stay on Jupytext `.py` notebooks for now; they can be executed top-to-bottom without a persistent kernel and still support presentation in VS Code later.
-- Default dataset: `atlas-small`, with `atlas-tiny` available for quick smoke runs.
+- Default dataset: `atlas_tiny` until larger presets (e.g., `atlas_small`) become available.
 - Plotting stack: Matplotlib is sufficient; extend only if specific needs arise.
 - Rendering must remain headless and avoid interactive viewers (saving figures to disk instead).
 - The notebook content itself serves as the deliverable—no separate HTML/Markdown reports required.

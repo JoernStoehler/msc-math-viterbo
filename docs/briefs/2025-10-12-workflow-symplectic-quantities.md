@@ -19,7 +19,7 @@ summary: Reference symplectic invariants and computation notes for convex polyto
 | -------- | ----------------- | --------- | ----------------- |
 | Gromov width $c_B$ | Maximal ball that symplectically embeds into $P$ | Monotone, $c_B(P)^n \le n!\, \operatorname{vol}(P)$ (Viterbo) | Optimisation over $\mathrm{Sp}(2n)$; axis-aligned relaxations give lower bounds. |
 | Cylindrical capacity $c_Z$ | Smallest cylinder $Z^{2n}(R) = B^2(R) \times \mathbb{R}^{2n-2}$ containing a symplectic image of $P$ | $c_B \le c_Z$; equals minimal area of projections onto symplectic 2-planes | Reduce to optimisation over unit vectors $u$ with $h_P(u)$ and $h_P(Ju)$. |
-| Hofer–Zehnder capacity $c_{\mathrm{HZ}}$ | Supremal action of admissible Hamiltonians | Equals $c_{\mathrm{EHZ}}$ for convex $P$ | Implemented via Minkowski billiards in `viterbo.capacity`. |
+| Hofer–Zehnder capacity $c_{\mathrm{HZ}}$ | Supremal action of admissible Hamiltonians | Equals $c_{\mathrm{EHZ}}$ for convex $P$ | Implemented via Minkowski billiards in `viterbo.math.capacity`. |
 | Higher Ekeland–Hofer capacities $c_k$ | Action spectrum ordered increasingly | Provide sharper embedding obstructions | Enumerate Minkowski billiard words; reuse Reeb cycles. |
 | Viterbo/Symplectic homology capacities $c_k^{\mathrm{SH}}$ | Spectral invariants in positive $S^1$-equivariant symplectic homology | Obey Viterbo inequality; coincide with EHZ for $k=1$ | Toric cases via lattice paths; general cases via Floer-theoretic persistence. |
 | Embedded Contact Homology (ECH) capacities (4D) | Sequence from ECH of $\partial P$ | Sharp obstructions in $\mathbb{C}^2$; equals EH for convex toric domains | Hutchings’ lattice-path algorithm for toric polytopes. |
@@ -44,7 +44,7 @@ summary: Reference symplectic invariants and computation notes for convex polyto
 
 - $c_{\mathrm{HZ}} = c_{\mathrm{EHZ}}$ for convex $P$; higher $c_k^{\mathrm{EH}}$ correspond to ordered closed characteristics.
 - Minkowski billiards give a discrete route: enumerate facet words, solve complementarity conditions, and compute actions.
-- Tests reside in `tests/viterbo/test_capacity_solvers.py`.
+- Tests reside in `tests/viterbo/test_capacity.py`, `tests/viterbo/test_capacity_area_property.py`, and related fixtures.
 
 ### 4. Symplectic-homology capacities $c_k^{\mathrm{SH}}$
 

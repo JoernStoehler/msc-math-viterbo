@@ -10,7 +10,7 @@ summary: Catalogue algorithms and references for computing the EHZ capacity of c
 ## Context
 
 - Covers high-level procedures for evaluating the Ekeland–Hofer–Zehnder (EHZ) capacity $c_{\mathrm{EHZ}}$ on convex polytopes in $\mathbb{R}^{2n}$.
-- Implementations live in `viterbo.capacity`; tolerance constants are centralised in `src/viterbo/numerics.py` to maintain consistency across capacity, cycle, and spectrum stacks.
+- Implementations live in `viterbo.math.capacity`; tolerance constants are centralised in `src/viterbo/math/numerics.py` to maintain consistency across capacity, cycle, and spectrum stacks.
 - The legacy `viterbo.symplectic` namespace has been retired; use the modern modules directly.
 
 ## Algorithms
@@ -45,7 +45,7 @@ summary: Catalogue algorithms and references for computing the EHZ capacity of c
 
 - **Reference.** Chaidez & Hutchings (2022), *Computing Reeb dynamics on four-dimensional convex polytopes*, Theorem 1.2.
 - **Idea.** Build the oriented-edge graph of $P$, enumerate admissible cycles representing Reeb orbits, and take the minimal combinatorial action.
-- **Notes.** Specific to $n=2$; integrates with the shared graph builder in `viterbo.capacity.reeb_cycles`.
+- **Notes.** Specific to $n=2$; integrates with the shared graph builder in `viterbo.math.capacity.reeb_cycles`.
 
 ### 4. Minkowski billiard search (Lagrangian products)
 
@@ -65,7 +65,7 @@ summary: Catalogue algorithms and references for computing the EHZ capacity of c
 
 ## Acceptance
 
-- Brief remains synchronised with implemented solvers and corresponding tests (e.g., `tests/viterbo/test_capacity_solvers.py`).
+- Brief remains synchronised with implemented solvers and corresponding tests (e.g., `tests/viterbo/test_capacity.py`, `tests/viterbo/test_capacity_area_property.py`).
 - Each algorithm lists a reproducible reference and highlights constraints or dimensional specialisations.
 
 ## Status Log

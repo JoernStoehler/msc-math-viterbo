@@ -47,7 +47,7 @@ in model training pipelines, not in geometry/capacity kernels.
 
 ## Follow-ups
 
-1. Implement HF Datasets atlas adapters and smoke tests.
+1. Ensure HF Datasets atlas builders ship with smoke tests (expand presets beyond `atlas_tiny`).
 2. Confirm removal of legacy batched APIs and keep the docs aligned with per-instance usage.
 3. Track ≥6D planning separately when ready (runtime envelopes, combinatorics, fixtures).
 

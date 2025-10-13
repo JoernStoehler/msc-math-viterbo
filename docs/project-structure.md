@@ -13,14 +13,13 @@
   - `pyproject.toml` / `uv.lock` — Project metadata and pinned dependency set managed via uv.
 - `src/`
   - `viterbo/` — Library package exposed to downstream experiments.
-    - `capacity/`, `cycles/`, `volume/`, `spectrum.py`, `systolic.py` — Production solvers following the shared tolerance policy in `numerics.py`.
-    - `atlas.py` — Helpers for the modern Hugging Face-backed atlas pipeline.
+    - `math/` — Pure JAX-first algorithms (capacity, spectrum, symplectic, volume, geometry utilities, numerics helpers).
+    - `datasets2/` — Lean Hugging Face Datasets builders and quantity calculators for atlas-style tables. The namespace is namespace-packaged (no `__init__.py`).
     - `_wrapped/` — Thin interoperability adapters around non-JAX primitives (e.g. SciPy, Qhull).
-    - `experiments/` — Reusable experiment utilities that consume the public namespace.
-    - `py.typed` — Signals downstream tools that type information ships with the package.
+    - `experiments/`, `visualization/`, `models/` — Placeholders for promoted helpers from research notebooks.
 - `tests/`
-  - `viterbo/` — Unit and integration tests structured by feature, each annotated with exactly one goal marker and suite tier.
-  - `performance/viterbo/` — Benchmark harnesses aligned with the test fixtures.
+  - `viterbo/` — Unit and integration tests structured by feature with goal markers and suite tiers.
+  - `performance/` — Benchmark harnesses aligned with the library surface.
   - `_baselines/` — JSON snapshots used to guard performance regressions.
 - `docs/`
   - `briefs/` — Dated briefs, ADRs, and workflow guides with YAML front matter; authored per the [brief workflow](briefs/2025-10-12-workflow-brief-authoring.md).

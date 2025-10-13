@@ -22,9 +22,12 @@ Implement and evaluate three baseline encoders for convex polytopes under affine
 
 # 1. Repository layout
 
+Proposed structure under `src/viterbo/experiments/polytope_encodings/` (directory does not yet
+exist—create it when implementation begins):
+
 ```
 
-polytope_encodings/
+src/viterbo/experiments/polytope_encodings/
 canonicalize/
 williamson.py             # symplectic eigenvalues & canonical frame
 center.py                 # centroid, Chebyshev center fallback
