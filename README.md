@@ -17,6 +17,15 @@ See AGENTS.md for the authoritative policy and workflows.
 3) Full local CI: `just ci` (lint → type → smoke tests → docs build)
 4) Notebooks: `uv run python notebooks/dummy_generate.py`, then `uv run python notebooks/dummy_plot.py`
 
+## Development containers
+
+The repository ships two development container definitions in `.devcontainer/`. VS Code and GitHub Codespaces will prompt you to
+choose a configuration; there is no default on purpose.
+
+- `devcontainer.local.json` — Local VS Code Remote - Containers workflow with host bind mounts/volumes for auth, history, and
+  caches. Use when running Docker on your workstation.
+- `devcontainer.codespaces.json` — GitHub Codespaces variant without host volumes. Select when creating or reopening a Codespace.
+
 ## Commands (common)
 
 ```
