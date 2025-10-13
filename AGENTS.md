@@ -29,10 +29,13 @@ Single authoritative policy for this repo.
 - Tests: `tests/` — smoke tests under `test_*.py`; benches under `tests/performance/`
 - Docs & Notes: `docs/` (site + task briefs), `notebooks/` (dummy examples), `artefacts/` (outputs, ignored)
   - Tasks: `docs/tasks/` (open briefs) and `docs/tasks/archived/` (examples)
+  - `notebooks/` stores Jupytext-managed `.py` notebooks; preserve the front-matter metadata when editing or adding entries.
 
 ## 2) Environment & Tooling
 
 - Stack: Python 3.12, PyTorch 2.x (CPU baseline; optional CUDA for models only). C++17 with pybind11 for custom hotspot non‑SIMD kernels.
+- Devcontainers: `.devcontainer/devcontainer.local.json` (local VS Code Remote - Containers with host volumes) and `.devcontainer/devcontainer.codespaces.json` (GitHub Codespaces without host volumes). Pick the correct definition when prompted; there is no default.
+- Codex agents land inside a pre-provisioned environment; never run devcontainer lifecycle commands manually.
 - Dependency manager: uv (`uv run`, `uv sync`, `uv add`). Commit `uv.lock`.
 - Editors: Pyright (basic) for fast feedback; Ruff for lint/format.
 - Testing: Pytest (smoke by default) + incremental selector (`scripts/inc_select.py`) for fast local loops + `pytest-benchmark` for targeted benches.
@@ -55,6 +58,7 @@ Single authoritative policy for this repo.
 - Imports & structure: absolute imports with explicit paths; no wildcard imports; No re‑export indirection; namespaced modules (no `__all__`).
 - Types: prefer built‑ins (`list[str]`, `dict[str, torch.Tensor]`, unions with `|`); avoid custom typedefs for shapes/dimensions.
 - Commit: Conventional Commits.
+- Placeholders: do **not** wrap `NotImplementedError` (or other TODO sentinels) in `try/except`; allow the error to surface so missing implementations remain obvious during TDD loops.
 
 ## 4) PyTorch + C++ specifics (facts)
 

@@ -1,7 +1,7 @@
-"""Symplectic geometry utilities and capacities (stubs).
+"""Symplectic geometry utilities and capacities.
 
 This module hosts symplectic forms, random symplectic matrices, Lagrangian
-products, and placeholders for EHZ capacity algorithms and minimal action
+products, and low-dimensional solvers for EHZ capacities and minimal action
 cycles. All functions are pure and torch-first.
 """
 
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import torch
 
-from .halfspaces import vertices_to_halfspaces
+from .halfspaces import halfspaces_to_vertices, vertices_to_halfspaces
 
 
 def symplectic_form(dimension: int) -> torch.Tensor:
@@ -157,7 +157,9 @@ def capacity_ehz_algorithm1(normals: torch.Tensor, offsets: torch.Tensor) -> tor
       Ostrover, Wagner (2014). ``On the interaction between symplectic and convex
       geometry``. Essays in Mathematics and its Applications.
     """
-    raise NotImplementedError
+    _ensure_planar(normals, offsets)
+    vertices = halfspaces_to_vertices(normals, offsets)
+    return _polygon_area(vertices)
 
 
 def capacity_ehz_algorithm2(vertices: torch.Tensor) -> torch.Tensor:
@@ -202,7 +204,13 @@ def capacity_ehz_algorithm2(vertices: torch.Tensor) -> torch.Tensor:
       Bezdek, Bezdek (2010). ``Shortest billiard trajectories``. Geometriae
       Dedicata 141(1).
     """
-    raise NotImplementedError
+    if vertices.ndim != 2:
+        raise ValueError("vertices must be a (M, d) tensor")
+    if vertices.size(1) != 2:
+        raise NotImplementedError("capacity_ehz_algorithm2 currently supports planar polytopes only")
+    if vertices.size(0) < 3:
+        raise ValueError("need at least three vertices for a 2D polygon")
+    return _polygon_area(vertices)
 
 
 def capacity_ehz_primal_dual(
@@ -238,7 +246,19 @@ def capacity_ehz_primal_dual(
       Shenfeld, van Handel (2019). ``The complexity of computing symplectic
       capacities``. J. Fixed Point Theory Appl. 21(2).
     """
-    raise NotImplementedError
+    if vertices.ndim != 2:
+        raise ValueError("vertices must be a (M, d) tensor")
+    if normals.ndim != 2 or offsets.ndim != 1:
+        raise ValueError("normals must be (F, d) and offsets must be (F,)")
+    if normals.size(1) != vertices.size(1):
+        raise ValueError("vertices and normals must share the same ambient dimension")
+    if normals.size(1) != 2:
+        raise NotImplementedError("capacity_ehz_primal_dual currently supports planar polytopes only")
+    capacity = capacity_ehz_algorithm2(vertices)
+    reference = capacity_ehz_algorithm1(normals, offsets)
+    if not torch.allclose(capacity, reference, atol=1e-8, rtol=1e-8):
+        raise ValueError("inconsistent primal and dual capacities for the provided polygon")
+    return capacity
 
 
 def minimal_action_cycle(
@@ -284,10 +304,22 @@ def minimal_action_cycle(
       Ostrover, Wagner (2014). ``On the interaction between symplectic and convex
       geometry``. Essays in Mathematics and its Applications.
     """
-    raise NotImplementedError
+    if vertices.ndim != 2:
+        raise ValueError("vertices must be a (M, d) tensor")
+    if normals.ndim != 2 or offsets.ndim != 1:
+        raise ValueError("normals must be (F, d) and offsets must be (F,)")
+    if vertices.size(1) != normals.size(1):
+        raise ValueError("vertices and normals must share the same ambient dimension")
+    if vertices.size(1) != 2:
+        raise NotImplementedError("minimal_action_cycle currently supports planar polytopes only")
+    ordered_vertices = _order_vertices_counter_clockwise(vertices)
+    capacity = _polygon_area(ordered_vertices)
+    return capacity, ordered_vertices
 
 
-def systolic_ratio(volume: torch.Tensor, capacity_ehz: torch.Tensor) -> torch.Tensor:
+def systolic_ratio(
+    volume: torch.Tensor, capacity_ehz: torch.Tensor, symplectic_dimension: int | None = None
+) -> torch.Tensor:
     """Viterbo systolic ratio ``vol(K) / c_{EHZ}(K)^{n}`` for ``2n``-dimensional bodies.
 
     Given a convex domain ``K \subset \mathbb{R}^{2n}`` with finite Lebesgue
@@ -299,21 +331,17 @@ def systolic_ratio(volume: torch.Tensor, capacity_ehz: torch.Tensor) -> torch.Te
        \rho_{sys}(K) = \frac{vol(K)}{c_{EHZ}(K)^n}.
 
     When ``K`` is a symplectic ball or ellipsoid this ratio attains the
-    conjectured upper bound ``n!`` (Viterbo 2000). The implementation will:
-
-    1. Infer ``n`` from ``volume`` and ``capacity_ehz`` metadata supplied by the
-       calling solver (the capacity routines will return ``n`` alongside the
-       scalar value) and validate that ``n`` is integral.
-    2. Enforce ``capacity_ehz > 0`` by raising ``ValueError`` otherwise and cast
-       both tensors to a common dtype to avoid overflow when ``n`` is large.
-    3. Offer optional normalisation switches (e.g., dividing by ``(2π)^n``) to
-       match competing conventions from Alvarez Paiva & Balacheff (2014).
+    conjectured upper bound ``n!`` (Viterbo 2000). The helper expects callers to
+    supply the ambient symplectic dimension ``2n`` explicitly so the exponent is
+    unambiguous.
 
     Args:
       volume: Scalar float tensor ``vol(K)`` measured in ``\mathbb{R}^{2n}``.
       capacity_ehz: Scalar float tensor ``c_{EHZ}(K)``. Must be strictly
         positive; callers are expected to validate degeneracies before invoking
         the ratio.
+      symplectic_dimension: Positive even integer ``2n`` describing the ambient
+        symplectic space.
 
     Returns:
       Scalar float tensor containing the dimensionless systolic ratio.
@@ -324,5 +352,42 @@ def systolic_ratio(volume: torch.Tensor, capacity_ehz: torch.Tensor) -> torch.Te
       Alvarez Paiva, Balacheff (2014). ``Contact geometry and isosystolic
       inequalities``. Annales Scientifiques de l'École Normale Supérieure 47(5).
     """
-    raise NotImplementedError
+    if volume.ndim != 0 or capacity_ehz.ndim != 0:
+        raise ValueError("volume and capacity_ehz must be scalar tensors")
+    if torch.any(capacity_ehz <= 0):
+        raise ValueError("capacity_ehz must be strictly positive")
+    if symplectic_dimension is None:
+        raise ValueError("symplectic_dimension must be provided for systolic_ratio")
+    if symplectic_dimension % 2 != 0 or symplectic_dimension <= 0:
+        raise ValueError("symplectic_dimension must be a positive even integer")
+    n = symplectic_dimension // 2
+    return volume / capacity_ehz.pow(n)
 
+def _ensure_planar(normals: torch.Tensor, offsets: torch.Tensor) -> None:
+    if normals.ndim != 2 or offsets.ndim != 1:
+        raise ValueError("normals must be (F, d) and offsets must be (F,)")
+    if normals.size(0) != offsets.size(0):
+        raise ValueError("normals and offsets must have matching first dimension")
+    if normals.size(1) != 2:
+        raise NotImplementedError("capacity_ehz_algorithm1 currently supports planar polytopes only")
+
+
+def _order_vertices_counter_clockwise(vertices: torch.Tensor) -> torch.Tensor:
+    if vertices.ndim != 2 or vertices.size(1) != 2:
+        raise ValueError("vertices must be (M, 2) tensor")
+    if vertices.size(0) < 3:
+        raise ValueError("need at least three vertices for a 2D polygon")
+    centroid = vertices.mean(dim=0)
+    shifted = vertices - centroid
+    angles = torch.atan2(shifted[:, 1], shifted[:, 0])
+    order = torch.argsort(angles)
+    ordered = vertices[order]
+    return ordered
+
+
+def _polygon_area(vertices: torch.Tensor) -> torch.Tensor:
+    ordered = _order_vertices_counter_clockwise(vertices)
+    rolled = ordered.roll(shifts=-1, dims=0)
+    cross = ordered[:, 0] * rolled[:, 1] - ordered[:, 1] * rolled[:, 0]
+    area = 0.5 * torch.sum(cross)
+    return area.abs()

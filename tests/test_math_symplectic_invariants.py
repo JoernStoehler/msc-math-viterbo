@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import math
 
-import pytest
 import torch
 
 from viterbo.math.geometry import matmul_vertices, translate_vertices, volume
@@ -26,13 +25,6 @@ from viterbo.math.symplectic import (
 
 
 torch.set_default_dtype(torch.float64)
-
-
-def _call_or_skip(func, *args, **kwargs):
-    try:
-        return func(*args, **kwargs)
-    except NotImplementedError:
-        pytest.skip(f"{func.__name__} is not implemented yet")
 
 
 def _unit_square_vertices() -> torch.Tensor:
@@ -89,8 +81,8 @@ def test_volume_known_cube_value() -> None:
 
 def test_capacity_algorithms_agree_on_square() -> None:
     vertices, normals, offsets = _square_geometry()
-    capacity_h = _call_or_skip(capacity_ehz_algorithm1, normals, offsets)
-    capacity_v = _call_or_skip(capacity_ehz_algorithm2, vertices)
+    capacity_h = capacity_ehz_algorithm1(normals, offsets)
+    capacity_v = capacity_ehz_algorithm2(vertices)
     torch.testing.assert_close(capacity_h, capacity_v)
 
 
@@ -100,11 +92,11 @@ def test_capacity_invariant_under_symplectic_map() -> None:
     transformed_vertices = matmul_vertices(matrix, vertices)
     inverse_matrix = torch.linalg.inv(matrix)
     transformed_normals = normals @ inverse_matrix
-    capacity_original = _call_or_skip(capacity_ehz_algorithm1, normals, offsets)
-    capacity_transformed = _call_or_skip(capacity_ehz_algorithm1, transformed_normals, offsets)
+    capacity_original = capacity_ehz_algorithm1(normals, offsets)
+    capacity_transformed = capacity_ehz_algorithm1(transformed_normals, offsets)
     torch.testing.assert_close(capacity_transformed, capacity_original, rtol=1e-6, atol=1e-6)
-    capacity_v_original = _call_or_skip(capacity_ehz_algorithm2, vertices)
-    capacity_v_transformed = _call_or_skip(capacity_ehz_algorithm2, transformed_vertices)
+    capacity_v_original = capacity_ehz_algorithm2(vertices)
+    capacity_v_transformed = capacity_ehz_algorithm2(transformed_vertices)
     torch.testing.assert_close(capacity_v_transformed, capacity_v_original, rtol=1e-6, atol=1e-6)
 
 
@@ -113,11 +105,11 @@ def test_capacity_translation_invariance() -> None:
     translation = torch.tensor([0.6, -1.2])
     translated_vertices = translate_vertices(translation, vertices)
     translated_offsets = offsets + normals @ translation
-    capacity_original = _call_or_skip(capacity_ehz_algorithm1, normals, offsets)
-    capacity_translated = _call_or_skip(capacity_ehz_algorithm1, normals, translated_offsets)
+    capacity_original = capacity_ehz_algorithm1(normals, offsets)
+    capacity_translated = capacity_ehz_algorithm1(normals, translated_offsets)
     torch.testing.assert_close(capacity_translated, capacity_original, rtol=1e-6, atol=1e-6)
-    capacity_v_original = _call_or_skip(capacity_ehz_algorithm2, vertices)
-    capacity_v_translated = _call_or_skip(capacity_ehz_algorithm2, translated_vertices)
+    capacity_v_original = capacity_ehz_algorithm2(vertices)
+    capacity_v_translated = capacity_ehz_algorithm2(translated_vertices)
     torch.testing.assert_close(capacity_v_translated, capacity_v_original, rtol=1e-6, atol=1e-6)
 
 
@@ -127,18 +119,18 @@ def test_capacity_scaling_conformality() -> None:
     scale = 1.3
     scaled_vertices = vertices * scale
     scaled_normals, scaled_offsets = vertices_to_halfspaces(scaled_vertices)
-    capacity_original = _call_or_skip(capacity_ehz_algorithm1, normals, offsets)
-    capacity_scaled = _call_or_skip(capacity_ehz_algorithm1, scaled_normals, scaled_offsets)
+    capacity_original = capacity_ehz_algorithm1(normals, offsets)
+    capacity_scaled = capacity_ehz_algorithm1(scaled_normals, scaled_offsets)
     torch.testing.assert_close(capacity_scaled, capacity_original * scale**2, rtol=1e-6, atol=1e-6)
-    capacity_v_original = _call_or_skip(capacity_ehz_algorithm2, vertices)
-    capacity_v_scaled = _call_or_skip(capacity_ehz_algorithm2, scaled_vertices)
+    capacity_v_original = capacity_ehz_algorithm2(vertices)
+    capacity_v_scaled = capacity_ehz_algorithm2(scaled_vertices)
     torch.testing.assert_close(capacity_v_scaled, capacity_v_original * scale**2, rtol=1e-6, atol=1e-6)
 
 
 def test_minimal_action_cycle_matches_capacity() -> None:
     vertices, normals, offsets = _square_geometry()
-    capacity_from_cycle, cycle = _call_or_skip(minimal_action_cycle, vertices, normals, offsets)
-    capacity_from_halfspaces = _call_or_skip(capacity_ehz_algorithm1, normals, offsets)
+    capacity_from_cycle, cycle = minimal_action_cycle(vertices, normals, offsets)
+    capacity_from_halfspaces = capacity_ehz_algorithm1(normals, offsets)
     torch.testing.assert_close(capacity_from_cycle, capacity_from_halfspaces, rtol=1e-6, atol=1e-6)
     assert cycle.ndim == 2 and cycle.size(1) == vertices.size(1)
 
@@ -148,9 +140,8 @@ def test_minimal_action_cycle_translation_covariance() -> None:
     translation = torch.tensor([-0.3, 2.7])
     translated_vertices = translate_vertices(translation, vertices)
     translated_offsets = offsets + normals @ translation
-    capacity_original, cycle = _call_or_skip(minimal_action_cycle, vertices, normals, offsets)
-    capacity_translated, cycle_translated = _call_or_skip(
-        minimal_action_cycle,
+    capacity_original, cycle = minimal_action_cycle(vertices, normals, offsets)
+    capacity_translated, cycle_translated = minimal_action_cycle(
         translated_vertices,
         normals,
         translated_offsets,
@@ -165,9 +156,8 @@ def test_minimal_action_cycle_symplectic_covariance() -> None:
     transformed_vertices = matmul_vertices(matrix, vertices)
     inverse_matrix = torch.linalg.inv(matrix)
     transformed_normals = normals @ inverse_matrix
-    capacity_original, cycle = _call_or_skip(minimal_action_cycle, vertices, normals, offsets)
-    capacity_transformed, cycle_transformed = _call_or_skip(
-        minimal_action_cycle,
+    capacity_original, cycle = minimal_action_cycle(vertices, normals, offsets)
+    capacity_transformed, cycle_transformed = minimal_action_cycle(
         transformed_vertices,
         transformed_normals,
         offsets,
@@ -179,6 +169,6 @@ def test_minimal_action_cycle_symplectic_covariance() -> None:
 def test_systolic_ratio_matches_counterexample_constant() -> None:
     volume_value = torch.tensor(1.0)
     capacity_value = torch.tensor(math.sqrt(2.0 * (math.sqrt(5.0) + 3.0) / 5.0))
-    ratio = _call_or_skip(systolic_ratio, volume_value, capacity_value)
+    ratio = systolic_ratio(volume_value, capacity_value, 4)
     expected = torch.tensor(5.0 / (2.0 * (math.sqrt(5.0) + 3.0)))
     torch.testing.assert_close(ratio, expected, rtol=1e-9, atol=1e-9)

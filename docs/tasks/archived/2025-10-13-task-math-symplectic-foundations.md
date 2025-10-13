@@ -1,7 +1,8 @@
 ---
 title: "Math/Symplectic: J, random symplectic matrices, Lagrangian product"
 created: 2025-10-13
-status: archived
+completed: 2025-10-20
+status: done
 owner: TBD
 branch: task/math-symplectic-foundations
 priority: medium
@@ -13,6 +14,11 @@ deps:
 ## Summary
 
 Provide foundations for symplectic computations: standard symplectic form `J`, random symplectic matrix generator, and Lagrangian product of polytopes given vertices.
+
+## Delivered
+
+- `symplectic_form`, `random_symplectic_matrix`, and `lagrangian_product` are implemented in `src/viterbo/math/symplectic.py` with dtype/device documentation.
+- Coverage lives in `tests/test_math_symplectic.py` for structure checks and Lagrangian products.
 
 ## Deliverables
 
