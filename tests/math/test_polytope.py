@@ -5,16 +5,12 @@ import math
 import pytest
 import torch
 
-from viterbo.math.geometry import (
+from viterbo.math.constructions import (
     matmul_vertices,
     rotated_regular_ngon2d,
     translate_vertices,
-    volume,
-    volume_via_lawrence,
-    volume_via_monte_carlo,
-    volume_via_triangulation,
 )
-
+from viterbo.math.volume import volume
 
 torch.set_default_dtype(torch.float64)
 

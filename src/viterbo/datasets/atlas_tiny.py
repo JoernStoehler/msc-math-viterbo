@@ -46,38 +46,55 @@ def atlas_tiny_complete_row(row: AtlasTinyRow) -> AtlasTinyRow:
     This function imports from ``viterbo.math`` lazily to avoid import-time cost.
     """
 
-    from viterbo.math.geometry import volume as volume_from_vertices
-    from viterbo.math.symplectic import minimal_action_cycle, systolic_ratio
+    from viterbo.math.minimal_action import minimal_action_cycle, systolic_ratio
+    from viterbo.math.volume import volume as volume_from_vertices
 
     out = AtlasTinyRow(**{k: v for k, v in row.__dict__.items()})
-    if out.volume is None:
-        out.volume = volume_from_vertices(out.vertices)
-    if out.minimal_action_cycle is None or out.capacity_ehz is None:
-        capacity, cycle = minimal_action_cycle(out.vertices, out.normals, out.offsets)
-        out.capacity_ehz = capacity
-        out.minimal_action_cycle = cycle
-    if out.systolic_ratio is None:
-        assert out.volume is not None and out.capacity_ehz is not None
-        out.systolic_ratio = systolic_ratio(out.volume, out.capacity_ehz, out.vertices.size(1))
+    dim = int(out.vertices.size(1))
+    # Only compute derived quantities for dimensions currently supported by the math layer.
+    # Keep 4D focus by not attempting unsupported computations.
+    if dim == 1 or dim == 2 or dim == 3:
+        if out.volume is None:
+            out.volume = volume_from_vertices(out.vertices)
+    if dim == 2:
+        if out.minimal_action_cycle is None or out.capacity_ehz is None:
+            capacity, cycle = minimal_action_cycle(out.vertices, out.normals, out.offsets)
+            out.capacity_ehz = capacity
+            out.minimal_action_cycle = cycle
+    if out.systolic_ratio is None and out.volume is not None and out.capacity_ehz is not None:
+        out.systolic_ratio = systolic_ratio(out.volume, out.capacity_ehz, dim)
     return out
 
 
 def atlas_tiny_generate() -> list[AtlasTinyRow]:
-    """Generate a list of rows with geometric data (stubs)."""
+    """Generate a tiny list of rows with geometric data (stub).
 
-    raise NotImplementedError
+    Notes:
+      - This stub focuses on repository plumbing. It returns an empty list by
+        default so call sites can opt into specific builders. Future versions
+        will generate 4D examples (e.g., Lagrangian products) once 4D solvers
+        are wired.
+    """
+    return []
 
 
 class AtlasTinyDataset(Dataset[AtlasTinyRow]):
     """Torch dataset wrapping completed AtlasTiny rows."""
 
     def __init__(self, rows: list[AtlasTinyRow]) -> None:
+        """Store precomputed rows.
+
+        Args:
+          rows: Completed rows to expose via the dataset interface.
+        """
         self._rows = rows
 
-    def __len__(self) -> int:  # noqa: D401 - brief
+    def __len__(self) -> int:
+        """Return the number of rows."""
         return len(self._rows)
 
-    def __getitem__(self, idx: int) -> AtlasTinyRow:  # noqa: D401 - brief
+    def __getitem__(self, idx: int) -> AtlasTinyRow:
+        """Return the row at index ``idx``."""
         return self._rows[idx]
 
 

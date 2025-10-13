@@ -3,7 +3,7 @@ from __future__ import annotations
 import torch
 from torch.utils.data import DataLoader
 
-from viterbo.math.geometry import support
+from viterbo.math.polytope import support
 
 
 def run_probe(

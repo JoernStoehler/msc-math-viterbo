@@ -73,6 +73,7 @@ WARMUP_REPEATS = 0
 # `cProfile.Profile`.  The raw profiler object is returned alongside the dataset
 # instance so that you can perform additional analyses (e.g. export to SnakeViz).
 
+
 # %%
 def run_profile(
     *,
@@ -129,6 +130,7 @@ else:
 # `print_profile_overview` shows a global summary sorted by cumulative time.
 # `collect_math_hotspots` extracts only the frames coming from modules under
 # ``viterbo/math`` so we can focus optimization work on our own kernels.
+
 
 # %%
 def print_profile_overview(profile: cProfile.Profile, *, limit: int = 30) -> None:
@@ -199,4 +201,3 @@ print_math_hotspots(profiler)
 # * Re-run the profiling cells after every optimization pass.
 # * Consider exporting the profiler data with `profiler.dump_stats('atlas_tiny.prof')`
 #   for visualization tools such as SnakeViz.
-

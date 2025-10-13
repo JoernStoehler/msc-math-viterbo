@@ -1,16 +1,84 @@
-"""Half-space (H-rep) utilities and conversions.
+"""Geometry of a fixed convex polytope (representations and queries).
 
-This module focuses on conversions between vertex and half-space representations
-of convex polytopes and simple transformations applied in H-rep. All functions
-are pure and torch-first (accept caller's device; no implicit moves).
+This module focuses on per-body geometry:
+- H/V representations and conversions
+- basic queries (support, distances, bounding boxes, halfspace violations)
+
+All functions are pure and Torch-first (preserve dtype/device; no implicit moves).
 """
 
 from __future__ import annotations
 
 import itertools
-from typing import Iterable
 
 import torch
+
+# ---- Basic queries -----------------------------------------------------------
+
+
+def support(points: torch.Tensor, direction: torch.Tensor) -> torch.Tensor:
+    """Support function of a finite point set.
+
+    Args:
+      points: (N, D) float tensor.
+      direction: (D,) float tensor. Not required to be normalized.
+
+    Returns:
+      Scalar tensor: max_i <points[i], direction>.
+    """
+    return (points @ direction).max()
+
+
+def support_argmax(points: torch.Tensor, direction: torch.Tensor) -> tuple[torch.Tensor, int]:
+    """Support value and index of the maximiser.
+
+    Args:
+      points: (N, D) float tensor.
+      direction: (D,) float tensor.
+
+    Returns:
+      (value, index) where value is scalar tensor and index is Python int.
+    """
+    vals = points @ direction
+    val, idx = torch.max(vals, dim=0)
+    return val, int(idx.item())
+
+
+def pairwise_squared_distances(points: torch.Tensor) -> torch.Tensor:
+    """Compute pairwise squared Euclidean distances.
+
+    Args:
+      points: (N, D) float tensor.
+
+    Returns:
+      (N, N) float tensor of squared distances.
+    """
+    x2 = (points * points).sum(dim=1, keepdim=True)
+    y2 = x2.transpose(0, 1)
+    xy = points @ points.T
+    d2 = x2 + y2 - 2.0 * xy
+    return d2.clamp_min_(0.0)
+
+
+def halfspace_violations(
+    points: torch.Tensor, normals: torch.Tensor, offsets: torch.Tensor
+) -> torch.Tensor:
+    """Compute positive violations of halfspaces for each point.
+
+    Given halfspaces Bx <= c (normals = B, offsets = c), returns relu(Bx - c).
+    """
+    bx = points @ normals.T  # (N, F)
+    c = offsets.unsqueeze(0)  # (1, F)
+    viol = bx - c
+    return torch.clamp_min(viol, 0.0)
+
+
+def bounding_box(points: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    """Axis-aligned bounding box (min, max) for a point cloud."""
+    return points.min(dim=0).values, points.max(dim=0).values
+
+
+# ---- H/V representations -----------------------------------------------------
 
 
 def _ensure_full_dimension(vertices: torch.Tensor) -> None:
@@ -32,9 +100,7 @@ def _lexicographic_order(points: torch.Tensor) -> torch.Tensor:
 
 
 def _pairwise_unique(
-    normals: Iterable[torch.Tensor],
-    offsets: Iterable[torch.Tensor],
-    tol: float,
+    normals: list[torch.Tensor], offsets: list[torch.Tensor], tol: float
 ) -> tuple[list[torch.Tensor], list[torch.Tensor]]:
     uniq_normals: list[torch.Tensor] = []
     uniq_offsets: list[torch.Tensor] = []
@@ -84,17 +150,7 @@ def _facet_from_indices(
 def vertices_to_halfspaces(vertices: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
     """Convert vertices to half-space representation ``Bx <= c``.
 
-    Args:
-      vertices: (M, D) float tensor of vertices.
-
-    Returns:
-      (normals, offsets):
-        - normals: (F, D) float tensor of facet normals (rows of ``B``).
-        - offsets: (F,) float tensor of facet offsets (``c``).
-
-    Notes:
-      - Dtype/device follow ``vertices``; no implicit casts or moves.
-      - Robustness/degeneracy handling is implementation-defined.
+    Returns ``(normals, offsets)`` with shapes ``(F, D)`` and ``(F,)``.
     """
     _ensure_full_dimension(vertices)
     dtype = vertices.dtype
@@ -126,18 +182,15 @@ def vertices_to_halfspaces(vertices: torch.Tensor) -> tuple[torch.Tensor, torch.
     normals_unique, offsets_unique = _pairwise_unique(candidate_normals, candidate_offsets, tol)
     normals_tensor = torch.stack(normals_unique)
     offsets_tensor = torch.stack(offsets_unique)
-    return normals_tensor.to(device=device, dtype=dtype), offsets_tensor.to(device=device, dtype=dtype)
+    return normals_tensor.to(device=device, dtype=dtype), offsets_tensor.to(
+        device=device, dtype=dtype
+    )
 
 
 def halfspaces_to_vertices(normals: torch.Tensor, offsets: torch.Tensor) -> torch.Tensor:
     """Convert half-space representation to vertices.
 
-    Args:
-      normals: (F, D) float tensor of facet normals (rows of ``B``).
-      offsets: (F,) float tensor of facet offsets (``c``).
-
-    Returns:
-      vertices: (M, D) float tensor of vertices in V-rep order (implementation-defined).
+    Returns vertices ``(M, D)`` in lexicographic order.
     """
     if normals.ndim != 2 or offsets.ndim != 1:
         raise ValueError("normals must be (F, D) and offsets must be (F,)")
@@ -154,80 +207,26 @@ def halfspaces_to_vertices(normals: torch.Tensor, offsets: torch.Tensor) -> torc
         try:
             vertex = torch.linalg.solve(sub_normals, sub_offsets)
         except RuntimeError:
-            # Singular system -> skip
             continue
         if torch.max(normals @ vertex - offsets) > tol:
             continue
-        if any(
-            torch.allclose(vertex, existing, atol=tol, rtol=0.0)
-            for existing in candidates
-        ):
+        if any(torch.allclose(vertex, existing, atol=tol, rtol=0.0) for existing in candidates):
             continue
         candidates.append(vertex)
     if not candidates:
         raise ValueError("no feasible vertices found for the provided halfspaces")
     vertices_tensor = torch.stack(candidates)
-    # Deterministic ordering via lexicographic sort on CPU, then move back
     cpu_vertices = vertices_tensor.detach().cpu()
     order = _lexicographic_order(cpu_vertices)
     ordered = vertices_tensor[order.to(vertices_tensor.device)]
     return ordered
 
 
-def matmul_halfspace(
-    matrix: torch.Tensor, normals: torch.Tensor, offsets: torch.Tensor
-) -> tuple[torch.Tensor, torch.Tensor]:
-    """Apply linear map ``x -> A x`` to an H-rep ``Bx <= c``.
-
-    The image polytope is ``{Ax | Bx <= c}``. Its H-rep can be expressed via
-    transformed normals/offsets.
-
-    Args:
-      matrix: (D, D) float tensor ``A``.
-      normals: (F, D) float tensor ``B``.
-      offsets: (F,) float tensor ``c``.
-
-    Returns:
-      (new_normals, new_offsets): transformed H-rep with shapes matching inputs.
-    """
-    if matrix.ndim != 2:
-        raise ValueError("matrix must be 2D square tensor")
-    if normals.ndim != 2 or offsets.ndim != 1:
-        raise ValueError("normals must be (F, D) and offsets must be (F,)")
-    if matrix.size(0) != matrix.size(1):
-        raise ValueError("matrix must be square")
-    if matrix.size(1) != normals.size(1):
-        raise ValueError("matrix and normals dimensions are inconsistent")
-    transformed_normals = torch.linalg.solve(matrix.T, normals.T).T
-    norms = torch.linalg.norm(transformed_normals, dim=1, keepdim=True)
-    if torch.any(norms <= 0):
-        raise ValueError("transformed normals contain zero norm rows")
-    transformed_normals = transformed_normals / norms
-    new_offsets = offsets / norms.squeeze(1)
-    return transformed_normals, new_offsets
+# ---- Incidence/adjacency (stubs) --------------------------------------------
 
 
-def translate_halfspace(
-    translation: torch.Tensor, normals: torch.Tensor, offsets: torch.Tensor
-) -> tuple[torch.Tensor, torch.Tensor]:
-    """Translate an H-rep polytope by ``t``.
-
-    For ``P = {x | Bx <= c}``, ``P + t = {y | B(y - t) <= c}`` which yields
-    new offsets ``c' = c + B t`` and unchanged normals.
-
-    Args:
-      translation: (D,) float tensor ``t``.
-      normals: (F, D) float tensor ``B``.
-      offsets: (F,) float tensor ``c``.
-
-    Returns:
-      (new_normals, new_offsets): ``(B, c + B t)`` with broadcasting rules applied.
-    """
-    if translation.ndim != 1:
-        raise ValueError("translation must be a 1D tensor")
-    if normals.ndim != 2 or offsets.ndim != 1:
-        raise ValueError("normals must be (F, D) and offsets must be (F,)")
-    if translation.size(0) != normals.size(1):
-        raise ValueError("translation and normals dimensions mismatch")
-    new_offsets = offsets + normals @ translation
-    return normals.clone(), new_offsets
+def facet_vertex_incidence(
+    vertices: torch.Tensor, normals: torch.Tensor, offsets: torch.Tensor
+) -> torch.Tensor:
+    """Return a boolean incidence matrix of shape ``(F, M)`` (stub)."""
+    raise NotImplementedError

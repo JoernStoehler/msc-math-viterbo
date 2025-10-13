@@ -11,7 +11,7 @@ else:
 
 def test_support_benchmark(benchmark):
     """Benchmark the support function for a moderately sized point cloud."""
-    from viterbo.math.geometry import support
+    from viterbo.math.polytope import support
 
     torch.manual_seed(0)
     pts = torch.randn(2000, 16)

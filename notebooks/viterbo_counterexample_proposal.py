@@ -111,6 +111,7 @@ MOCK_CYCLE_PATH = np.array(
 # %% [markdown]
 # ## Inspect the mock dataset
 
+
 # %%
 def print_cycle(path: np.ndarray) -> None:
     for idx, vertex in enumerate(path):
@@ -135,6 +136,7 @@ print_cycle(MOCK_CYCLE_PATH)
 
 # %% [markdown]
 # ## Visualization helper
+
 
 # %%
 def regular_pentagon(scale: float = 1.0, rotation: float = 0.0) -> np.ndarray:

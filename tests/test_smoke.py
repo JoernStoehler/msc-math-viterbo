@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from viterbo.datasets.core import RaggedPointsDataset, collate_list, collate_pad
-from viterbo.math.geometry import (
+from viterbo.math.polytope import (
     bounding_box,
     halfspace_violations,
     pairwise_squared_distances,

@@ -1,7 +1,7 @@
 """Smoke tests for symplectic invariants and capacities.
 
 The tests in this module target high-level mathematical behaviour that the
-placeholder implementations in :mod:`viterbo.math.symplectic` must satisfy once
+placeholder implementations in :mod:`viterbo.math.minimal_action` must satisfy once
 completed.  They focus on invariance properties, scaling laws, and benchmark
 values extracted from the literature (notably the 2024 counterexample to
 Viterbo's conjecture recorded in the thesis notes).
@@ -13,16 +13,16 @@ import math
 
 import torch
 
-from viterbo.math.geometry import matmul_vertices, translate_vertices, volume
-from viterbo.math.halfspaces import vertices_to_halfspaces
-from viterbo.math.symplectic import (
+from viterbo.math.constructions import matmul_vertices, translate_vertices
+from viterbo.math.minimal_action import (
     capacity_ehz_algorithm1,
     capacity_ehz_algorithm2,
     minimal_action_cycle,
-    random_symplectic_matrix,
     systolic_ratio,
 )
-
+from viterbo.math.polytope import vertices_to_halfspaces
+from viterbo.math.symplectic import random_symplectic_matrix
+from viterbo.math.volume import volume
 
 torch.set_default_dtype(torch.float64)
 
@@ -59,7 +59,9 @@ def test_volume_scaling_homogeneity() -> None:
     scaled_volume = volume(scaled_vertices)
     base_volume = volume(vertices)
     dimension = vertices.size(1)
-    torch.testing.assert_close(scaled_volume, base_volume * scale**dimension, atol=1e-10, rtol=1e-10)
+    torch.testing.assert_close(
+        scaled_volume, base_volume * scale**dimension, atol=1e-10, rtol=1e-10
+    )
 
 
 def test_volume_known_cube_value() -> None:
@@ -124,7 +126,9 @@ def test_capacity_scaling_conformality() -> None:
     torch.testing.assert_close(capacity_scaled, capacity_original * scale**2, rtol=1e-6, atol=1e-6)
     capacity_v_original = capacity_ehz_algorithm2(vertices)
     capacity_v_scaled = capacity_ehz_algorithm2(scaled_vertices)
-    torch.testing.assert_close(capacity_v_scaled, capacity_v_original * scale**2, rtol=1e-6, atol=1e-6)
+    torch.testing.assert_close(
+        capacity_v_scaled, capacity_v_original * scale**2, rtol=1e-6, atol=1e-6
+    )
 
 
 def test_minimal_action_cycle_matches_capacity() -> None:

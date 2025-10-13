@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import torch
 
-from viterbo.math.geometry import matmul_vertices, translate_vertices
-from viterbo.math.halfspaces import (
-    halfspaces_to_vertices,
+from viterbo.math.constructions import (
     matmul_halfspace,
+    matmul_vertices,
     translate_halfspace,
-    vertices_to_halfspaces,
+    translate_vertices,
 )
-
+from viterbo.math.polytope import halfspaces_to_vertices, vertices_to_halfspaces
 
 torch.set_default_dtype(torch.float64)
 
@@ -73,7 +72,9 @@ def test_halfspace_transforms_agree_with_vertices() -> None:
     translation = torch.tensor([0.5, -2.0])
     translated_vertices = translate_vertices(translation, transformed_vertices)
     expected_normals, expected_offsets = vertices_to_halfspaces(translated_vertices)
-    actual_normals, actual_offsets = translate_halfspace(translation, actual_normals, actual_offsets)
+    actual_normals, actual_offsets = translate_halfspace(
+        translation, actual_normals, actual_offsets
+    )
     torch.testing.assert_close(
         _sorted_rows(expected_normals),
         _sorted_rows(actual_normals),

@@ -18,3 +18,12 @@ markdown_extensions:
 nav:
   - Home: README.md
   - Architecture: architecture/overview.md
+  - Math API:
+      - Overview: math/index.md
+      - polytope: math/polytope.md
+      - constructions: math/constructions.md
+      - volume: math/volume.md
+      - symplectic: math/symplectic.md
+      - minimal_action: math/minimal_action.md
+      - similarity: math/similarity.md
+      - polar: math/polar.md

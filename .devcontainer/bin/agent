@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Agent multiplexer for managing per-branch/pr worktrees and tmux Codex sessions.
-# Wires git worktrees + tmux; launches the real `codex` CLI by default.
+# Agent tool for managing per-branch/PR worktrees without tmux.
 #
 # Key design:
-# - One tmux session per worktree: session name `agent__<slug>`.
 # - Worktrees live under: /workspaces/<repo>.agents/<slug>
 # - We operate the central git repo in the main worktree for all worktree ops.
 
@@ -24,8 +22,8 @@ usage() {
 Usage:
   agent list
   agent create <branch>
-  agent open pr <number> [--no-attach|--here]
-  agent open <branch-or-slug> [--no-attach|--here]
+  agent open pr <number>
+  agent open <branch-or-slug>
   agent remove pr <number> [--force]
   agent remove <branch-or-slug> [--force]
   agent gc [--dry-run] [--force]
@@ -33,20 +31,18 @@ Usage:
   agent install-completion
 
 Notes:
-  - Uses tmux sessions named agent:<slug>.
   - Adds worktrees under ${AGENTS_ROOT}.
-  - Runs 'codex' by default. Set AGENT_CODEX_CMD to override.
+  - "open" ensures the worktree exists, runs setup, and opens a shell there.
 Semantics:
   - create: For novel work only. Errors if a worktree, local branch, remote branch,
     or PR already matches the given branch.
   - open: For resuming work. Requires an existing PR (for 'pr <n>') OR an existing
-    worktree/local/remote branch. Ensures the worktree/session exists before attaching.
+    worktree/local/remote branch. Ensures the worktree exists, runs setup, then opens a shell.
 EOF
 }
 
 ensure_tools() {
   command -v git >/dev/null 2>&1 || { echo "ERROR: git not found" >&2; exit 1; }
-  # tmux is optional for list/create/remove, required for open.
 }
 
 slugify() {
@@ -60,11 +56,6 @@ slugify() {
 worktree_path_for() {
   local slug="$1"
   printf "%s/%s" "$AGENTS_ROOT" "$slug"
-}
-
-session_name_for() {
-  local slug="$1"
-  printf "agent__%s" "$slug"
 }
 
 git_fetch_all() {
@@ -169,20 +160,7 @@ cmd_gc() {
     shift || true
   done
 
-  echo "[gc] Scanning for stale tmux sessions and orphaned worktrees under $AGENTS_ROOT"
-
-  # Kill dangling tmux sessions whose worktree folder is gone.
-  if command -v tmux >/dev/null 2>&1; then
-    tmux list-sessions -F '#S' 2>/dev/null | grep '^agent__' || true | while read -r s; do
-      local slug path
-      slug="${s#agent__}"
-      path="$(worktree_path_for "$slug")"
-      if [[ ! -d "$path" ]]; then
-        echo "[gc] kill tmux session $s (no worktree dir)"
-        if [[ "$dry_run" -eq 0 ]]; then tmux kill-session -t "$s" || true; fi
-      fi
-    done
-  fi
+  echo "[gc] Scanning for orphaned worktrees under $AGENTS_ROOT"
 
   # Identify orphaned worktree dirs not registered with git worktree.
   declare -A ACTIVE_WT
@@ -245,7 +223,7 @@ _agent_completion() {
       if [[ "$prev" == "pr" ]]; then
         COMPREPLY=( $(compgen -W "$(_agent_prs)" -- "$cur") )
       else
-        local opts="--no-attach --here pr $(_agent_slugs) $(_agent_branches)"
+        local opts="pr $(_agent_slugs) $(_agent_branches)"
         COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
       fi
       ;;
@@ -297,10 +275,6 @@ cmd_list() {
     while IFS= read -r -d '' path; do
       local slug
       slug="$(basename "$path")"
-      local session
-      session="$(session_name_for "$slug")"
-      local active="inactive"
-      if command -v tmux >/dev/null 2>&1 && tmux has-session -t "$session" 2>/dev/null; then active="active"; fi
       # Determine branch of worktree
       local branch
       if [[ -d "$path/.git" || -f "$path/.git" ]]; then
@@ -313,7 +287,7 @@ cmd_list() {
       if command -v gh >/dev/null 2>&1; then
         pr_info=$(gh pr list --head "$branch" --state all --json number,state --jq '.[0] | if . then "PR #"+(.number|tostring)+" ("+.state+")" else "" end' 2>/dev/null || true)
       fi
-      echo "- ${slug} [${active}] branch=${branch} ${pr_info}"
+      echo "- ${slug} branch=${branch} ${pr_info}"
     done < <(find "$AGENTS_ROOT" -maxdepth 1 -mindepth 1 -type d -print0 | sort -z)
   else
     echo "(none)"
@@ -331,6 +305,17 @@ cmd_list() {
     done
 }
 
+run_setup_in_worktree() {
+  local wt="$1"
+  echo "[open] Running setup in '$wt'"
+  if command -v uv >/dev/null 2>&1; then
+    # Prefer quiet sync; fall back to noisy if quiet fails for any reason
+    (cd "$wt" && uv sync --extra dev >/dev/null) || (cd "$wt" && uv sync --extra dev)
+  else
+    echo "[open] WARN: uv not found; skipping dependency sync" >&2
+  fi
+}
+
 cmd_open() {
   if [[ "$1" == "pr" ]]; then
     shift
@@ -345,8 +330,8 @@ cmd_open() {
   local user_codex_cmd="${AGENT_CODEX_CMD:-codex}"
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --no-attach) no_attach=1 ;;
-      --here) here_mode=1 ;;
+      --no-attach|--here)
+        echo "[open] Note: '$1' is deprecated; tmux is no longer used." >&2 ;;
       *) echo "Unknown option for open: $1" >&2; exit 1 ;;
     esac
     shift || true
@@ -375,34 +360,17 @@ cmd_open() {
       exit 1
     fi
   fi
-  # Derive slug from actual path to be consistent
-  # Normalize path to absolute
+  # Normalize path to absolute and derive slug from actual path
   if cd "$wt" 2>/dev/null; then wt="$(pwd)"; else echo "ERROR: cannot cd to worktree: $wt" >&2; exit 1; fi
   slug="$(basename "$wt")"
-  local session; session="$(session_name_for "$slug")"
-  local CODEX_CMD
-  CODEX_CMD="$user_codex_cmd"
-
-  if [[ "$here_mode" -eq 1 ]]; then
-    echo "Launching $CODEX_CMD here in '$wt' (no tmux)"
-    cd "$wt" && exec "$CODEX_CMD"
-  fi
-
-  if ! command -v tmux >/dev/null 2>&1; then
-    echo "ERROR: tmux is required for 'open' unless you use --here." >&2
-    exit 1
-  fi
-  if ! tmux has-session -t "$session" 2>/dev/null; then
-    # Double-ensure cwd; avoid extra env tweaks to keep things simple and robust
-    tmux new-session -d -s "$session" -c "$wt" "bash -lc 'cd \"$wt\" && exec $CODEX_CMD'"
-    # Add to VS Code just in case
-    if command -v code >/dev/null 2>&1; then code --add "$wt" >/dev/null 2>&1 || true; fi
-  fi
-  if [[ "$no_attach" -eq 1 ]]; then
-    echo "Session '$session' ensured (running: $CODEX_CMD) in '$wt'"
-  else
-    tmux attach -t "$session"
-  fi
+  # Add to VS Code just in case
+  if command -v code >/dev/null 2>&1; then code --add "$wt" >/dev/null 2>&1 || true; fi
+  # Run setup and drop into a shell in the worktree
+  run_setup_in_worktree "$wt"
+  local shell_bin
+  shell_bin="${SHELL:-bash}"
+  echo "[open] Entering shell in '$wt'"
+  cd "$wt" && exec "$shell_bin" -l
 }
 
 cmd_create() {
@@ -485,11 +453,6 @@ cmd_remove() {
     # PR path: branch already set above
     slug="$(slugify "$branch")"
     wt="$(worktree_path_for "$slug")"
-  fi
-  local session; session="$(session_name_for "$slug")"
-
-  if tmux has-session -t "$session" 2>/dev/null; then
-    tmux kill-session -t "$session" || true
   fi
   if [[ -d "$wt" ]]; then
     # Remove worktree and attempt to delete branch if safe.
