@@ -15,6 +15,7 @@ from torch.utils.data import Dataset
 from viterbo.math.constructions import rotated_regular_ngon2d
 from viterbo.math.polytope import vertices_to_halfspaces
 
+
 @dataclass
 class AtlasTinyRow:
     """Row schema for AtlasTiny.
