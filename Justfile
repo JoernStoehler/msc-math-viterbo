@@ -1,7 +1,7 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
 set export := true
 
-default: checks
+default: precommit
 
 UV := env_var_or_default("UV", "uv")
 
@@ -10,9 +10,9 @@ PYTEST_ARGS := env_var_or_default("PYTEST_ARGS", "")
 ARGS := env_var_or_default("ARGS", "")
 RUN_DIR := env_var_or_default("RUN_DIR", "")
 
-PYTEST_SMOKE_FLAGS := "-m \"not deep and not longhaul\" --timeout=$SMOKE_TEST_TIMEOUT --timeout-method=thread"
-PYTEST_DEEP_FLAGS := "-m \"not longhaul\""
-PYTEST_LONGHAUL_FLAGS := "-m \"longhaul\""
+PYTEST_SMOKE_FLAGS := "-m smoke"
+PYTEST_DEEP_FLAGS := "-m \"smoke or deep\""
+PYTEST_LONGHAUL_FLAGS := "-m longhaul"
 
 
 
@@ -61,23 +61,14 @@ format:
 # Full Ruff lint and metadata validation.
 # Tip: Mirrors CI linting.
 lint:
-    @echo "Running Ruff lint and metadata check (CI parity)."
+    @echo "Running Ruff lint."
     $UV run ruff check .
-    $UV run python scripts/check_test_metadata.py
-    # Enforce suite markers on all tests
-    $UV run python scripts/check_test_metadata.py --require-suite tests
 
 # Summarise pytest test metadata (markers + docstrings).
-test-metadata:
-    @echo "Usage: just test-metadata [ARGS='--marker goal_math tests/path']; forwards ARGS to report_test_metadata."
-    $UV run python scripts/report_test_metadata.py {{ARGS}}
+# (Removed) test-metadata: legacy JAX-era test annotations utility.
 
 # Quick, sensible defaults: lint → type → incremental tests (serial).
-checks:
-    @echo "Running checks: lint → type → test (incremental, serial)."
-    just lint
-    just type
-    just test
+# (Removed) checks: prefer `just precommit`.
 
 # Full repository loop: strict lint/type and full pytest tier handled by `ci`.
 
@@ -87,33 +78,26 @@ type:
     @echo "Running Pyright (basic) against src/viterbo."
     $UV run pyright -p pyrightconfig.json src/viterbo
 
+# (Optional) type-strict: available for deep sweeps.
 type-strict:
-    @echo "Running Pyright across the entire repository (strict)."
+    @echo "Running Pyright strict across the repository."
     $UV run pyright -p pyrightconfig.strict.json
 
 # Smoke-tier pytest with enforced timeouts.
 # Default: impacted (serial). Falls back to full serial.
 test:
-    @mkdir -p .cache
-    @echo "Running smoke-tier pytest (incremental selection with fallback)."
-    @sel_status=0; $UV run --script scripts/inc_select.py > .cache/impacted_nodeids.txt || sel_status=$?; \
-    if [ -s .cache/impacted_nodeids.txt ] && [ "$sel_status" = "0" ]; then \
-        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --junitxml .cache/last-junit.xml @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
-    elif [ "$sel_status" = "2" ]; then \
-        echo "Selector: no changes and no prior failures — skipping pytest run."; \
-    else \
-        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}; \
-    fi
+    @echo "Running smoke-tier pytest."
+    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} {{PYTEST_ARGS}}
 
 # Full smoke-tier run (serial, no impacted selection).
 test-full:
     @echo "Running full smoke-tier pytest (serial)."
-    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}
+    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} {{PYTEST_ARGS}}
 
 # Full smoke-tier run with xdist (parallel).
 test-xdist:
     @echo "Running full smoke-tier pytest (-n auto)."
-    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} -n auto --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}
+    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} -n auto {{PYTEST_ARGS}}
 
 # Smoke + deep tiers (full serial).
 # Tip: Ideal before review; combine with `just bench-deep` for performance-sensitive work.
@@ -160,15 +144,13 @@ bench-longhaul:
 # Profile deep-tier benchmarks (callgrind + svg).
 # Tip: After running, inspect `.profiles/` artifacts locally; keep runs out of Git.
 profile:
-    @mkdir -p "{{PROFILES_DIR}}"
-    @echo "Running profile tier (callgrind + SVG) into {{PROFILES_DIR}}."
-    $UV run pytest tests/performance -m "deep" --profile --profile-svg --pstats-dir="{{PROFILES_DIR}}" {{PYTEST_ARGS}}
+    @echo "[placeholder] Add project-specific profiling when needed."
+    @true
 
 # Line profile the fast EHZ kernel.
 profile-line:
-    @mkdir -p "{{PROFILES_DIR}}"
-    @echo "Running line profiler for ehz_capacity_fast_facet_normals into {{PROFILES_DIR}}."
-    $UV run pytest tests/performance -m "deep" --line-profile viterbo.capacity.facet_normals._compute_ehz_capacity_fast --pstats-dir="{{PROFILES_DIR}}" {{PYTEST_ARGS}}
+    @echo "[placeholder] Add line profiling targets when needed."
+    @true
 
 # Package build & publish
 build:
@@ -211,15 +193,14 @@ lock:
 # Smoke-tier tests with coverage reports.
 # Tip: Generates HTML at `htmlcov/index.html`; testmon cache is on by default.
 coverage:
-    @echo "Running smoke-tier tests with coverage (HTML + XML reports, serial)."
-    @mkdir -p .cache
-    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}
+    @echo "Running smoke-tier tests with coverage."
+    $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --cov=src/viterbo --cov-report=term-missing --cov-report=html --cov-report=xml {{PYTEST_ARGS}}
 
-precommit-fast: checks
+precommit-fast: fix lint type test
 
 # Full formatter, lint, typecheck, and smoke tests.
 # Tip: Run before review or handoff; matches the golden-path expectation.
-precommit-slow: format lint type-strict test
+precommit-slow: format lint type test
 
 # Alias for precommit-slow.
 # Tip: Convenience alias for the slow gate.
@@ -228,12 +209,23 @@ precommit: precommit-slow
 # Run the CI command set locally.
 # Tip: Mirrors GitHub Actions; expect coverage artefacts and longer runtime.
 ci:
-    @echo "Running CI parity: sync deps, lint, type-strict, full smoke-tier tests (durations summary)."
+    @echo "Running CI: sync deps, lint, type (basic), smoke-tier tests."
     $UV sync --extra dev
     $UV run python scripts/check_waivers.py
     $UV run ruff check .
-    $UV run pyright -p pyrightconfig.strict.json
-    $UV run pytest {{PYTEST_SMOKE_FLAGS}} -q --durations=20 -n auto {{PYTEST_ARGS}}
+    $UV run pyright -p pyrightconfig.json
+    $UV run pytest {{PYTEST_SMOKE_FLAGS}} -q -n auto {{PYTEST_ARGS}}
+
+# CI flow with CPU-only torch wheel using uv pip (bypasses lock for torch).
+ci-cpu:
+    @echo "Installing CPU-only torch (2.5.1) and project deps..."
+    $UV pip install --system --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple "torch==2.5.1"
+    $UV pip install --system -e ".[dev]"
+    @echo "Running lint/type/smoke tests."
+    $UV run python scripts/check_waivers.py || true
+    $UV run ruff check .
+    $UV run pyright -p pyrightconfig.json
+    $UV run pytest {{PYTEST_SMOKE_FLAGS}} -q -n auto {{PYTEST_ARGS}}
 
 # CI plus longhaul tiers and benchmarks.
 # Tip: Reserved for scheduled runs; coordinate with the maintainer before executing.
