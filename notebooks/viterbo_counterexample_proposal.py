@@ -49,10 +49,15 @@
 from __future__ import annotations
 
 from pathlib import Path
+import math
 
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
+
+from viterbo.math.constructions import lagrangian_product, rotated_regular_ngon2d
+from viterbo.math.polytope import vertices_to_halfspaces
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_PATH = PROJECT_ROOT / "src"
@@ -60,79 +65,144 @@ if str(SRC_PATH) not in __import__("sys").path:
     __import__("sys").path.insert(0, str(SRC_PATH))
 
 # %% [markdown]
-# ## Mock counterexample data
-#
-# These arrays only demonstrate the expected shapes and layout.  Replace them
-# with real outputs once the geometry code is available.
+# ## Counterexample geometry in torch
 
 # %%
-MOCK_SYSTOLIC_RATIO = 1.234
-MOCK_CAPACITY = 3.14159
-MOCK_VOLUME = 2.71828
+torch.set_default_dtype(torch.float64)
 
-MOCK_FACET_NORMALS = np.array(
-    [
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [0.0, 0.0, 0.0, 1.0],
-        [-1.0, -1.0, 0.0, 0.0],
-        [0.0, 0.0, -1.0, -1.0],
-    ]
-)
-MOCK_FACET_OFFSETS = np.array([1.0, 1.0, 1.0, 1.0, 0.25, 0.25])
 
-MOCK_VERTICES = np.array(
-    [
-        [0.8, 0.1, 0.0, 0.0],
-        [0.4, 0.7, 0.0, 0.0],
-        [0.0, 0.6, 0.2, -0.3],
-        [-0.5, 0.2, 0.4, 0.5],
-        [-0.3, -0.4, 0.6, 0.2],
-        [0.2, -0.7, -0.2, 0.6],
-        [0.7, -0.2, -0.4, -0.4],
-    ]
-)
+def split_pq(points: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    """Split 4D points into their (q, p) components."""
+    if points.ndim != 2 or points.size(1) != 4:
+        raise ValueError("expected points shaped (N, 4)")
+    return points[:, :2], points[:, 2:]
 
-MOCK_CYCLE_PATH = np.array(
-    [
-        [0.8, 0.0, 0.1, 0.0],
-        [0.6, 0.4, 0.2, -0.2],
-        [0.2, 0.8, 0.3, -0.1],
-        [-0.2, 0.5, 0.5, 0.2],
-        [-0.4, 0.1, 0.6, 0.4],
-        [-0.1, -0.3, 0.4, 0.6],
-        [0.3, -0.5, 0.1, 0.4],
-        [0.6, -0.2, -0.1, 0.1],
-        [0.8, 0.0, 0.1, 0.0],
-    ]
-)
+
+def polygon_area(vertices: torch.Tensor) -> torch.Tensor:
+    """Signed area of a planar polygon provided in counter-clockwise order."""
+    if vertices.ndim != 2 or vertices.size(1) != 2:
+        raise ValueError("expected planar vertices (N, 2)")
+    rolled = torch.roll(vertices, shifts=-1, dims=0)
+    cross = vertices[:, 0] * rolled[:, 1] - vertices[:, 1] * rolled[:, 0]
+    return 0.5 * torch.sum(cross).abs()
+
+
+def dual_vertices(normals: torch.Tensor, offsets: torch.Tensor) -> torch.Tensor:
+    """Vertices of the polar body determined by (normals, offsets)."""
+    if offsets.ndim != 1 or normals.ndim != 2 or normals.size(0) != offsets.size(0):
+        raise ValueError("invalid half-space representation")
+    return normals / offsets.unsqueeze(1)
+
+
+def two_bounce_cycle(
+    vertices_q: torch.Tensor,
+    vertices_p: torch.Tensor,
+    normals_p: torch.Tensor,
+    offsets_p: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Minimal action two-bounce Minkowski billiard along a diagonal of K."""
+    polar_vertices = dual_vertices(normals_p, offsets_p)
+    polar_normals, polar_offsets = vertices_to_halfspaces(polar_vertices)
+    count = vertices_q.size(0)
+    best: dict[str, torch.Tensor] | None = None
+    for i in range(count):
+        for skip in range(2, count - 1):
+            j = (i + skip) % count
+            direction = vertices_q[j] - vertices_q[i]
+            forward_gauge = torch.max((polar_normals @ direction) / polar_offsets)
+            backward_gauge = torch.max((polar_normals @ (-direction)) / polar_offsets)
+            action = forward_gauge + backward_gauge
+            if action <= 0:
+                continue
+            if best is None or action < best["action"]:
+                forward_idx = torch.argmax(vertices_p @ direction)
+                backward_idx = torch.argmax(vertices_p @ (-direction))
+                best = {
+                    "i": i,
+                    "j": j,
+                    "forward_value": forward_gauge,
+                    "backward_value": backward_gauge,
+                    "forward_vertex": vertices_p[forward_idx],
+                    "backward_vertex": vertices_p[backward_idx],
+                    "action": action,
+                }
+    if best is None:
+        raise RuntimeError("failed to locate a billiard trajectory")
+    q_start = vertices_q[best["i"]]
+    q_end = vertices_q[best["j"]]
+    p_forward = best["forward_vertex"]
+    p_backward = best["backward_vertex"]
+    cycle = torch.stack(
+        [
+            torch.cat([q_start, p_forward]),
+            torch.cat([q_end, p_forward]),
+            torch.cat([q_end, p_backward]),
+            torch.cat([q_start, p_backward]),
+            torch.cat([q_start, p_forward]),
+        ]
+    )
+    capacity = best["forward_value"] + best["backward_value"]
+    return capacity, cycle
+
+
+def counterexample_geometry() -> dict[str, torch.Tensor]:
+    """Construct the pentagon × rotated pentagon counterexample."""
+    vertices_q, normals_q, offsets_q = rotated_regular_ngon2d(5, 0.0)
+    vertices_p, normals_p, offsets_p = rotated_regular_ngon2d(5, -math.pi / 2)
+    vertices_4d, normals_4d, offsets_4d = lagrangian_product(vertices_q, vertices_p)
+    capacity, cycle = two_bounce_cycle(vertices_q, vertices_p, normals_p, offsets_p)
+    area_q = polygon_area(vertices_q)
+    area_p = polygon_area(vertices_p)
+    volume_4d = area_q * area_p
+    systolic_ratio_value = volume_4d / capacity.pow(2)
+    return {
+        "vertices_q": vertices_q,
+        "normals_q": normals_q,
+        "offsets_q": offsets_q,
+        "vertices_p": vertices_p,
+        "normals_p": normals_p,
+        "offsets_p": offsets_p,
+        "vertices_4d": vertices_4d,
+        "normals_4d": normals_4d,
+        "offsets_4d": offsets_4d,
+        "capacity": capacity,
+        "cycle": cycle,
+        "area_q": area_q,
+        "area_p": area_p,
+        "volume_4d": volume_4d,
+        "systolic_ratio": systolic_ratio_value,
+    }
+
+
+GEOMETRY = counterexample_geometry()
 
 # %% [markdown]
-# ## Inspect the mock dataset
+# ## Inspect the counterexample dataset
 
 
 # %%
-def print_cycle(path: np.ndarray) -> None:
+def print_cycle(path: torch.Tensor) -> None:
     for idx, vertex in enumerate(path):
         label = f"v{idx:02d}"
-        coords = ", ".join(f"{value:+.3f}" for value in vertex)
+        coords = ", ".join(f"{value.item():+.3f}" for value in vertex)
         print(f"{label}: [{coords}]")
 
 
-print("Systolic ratio:", MOCK_SYSTOLIC_RATIO)
-print("Capacity:", MOCK_CAPACITY)
-print("Volume:", MOCK_VOLUME)
+print("Systolic ratio:", GEOMETRY["systolic_ratio"].item())
+print("Capacity:", GEOMETRY["capacity"].item())
+print("Volume:", GEOMETRY["volume_4d"].item())
+print("Area(K):", GEOMETRY["area_q"].item())
+print("Area(T):", GEOMETRY["area_p"].item())
 print("\nFacet normals and offsets:")
-for normal, offset in zip(MOCK_FACET_NORMALS, MOCK_FACET_OFFSETS):
-    normal_str = ", ".join(f"{value:+.2f}" for value in normal)
-    print(f"  n = [{normal_str}], offset = {offset:+.2f}")
+for normal, offset in zip(GEOMETRY["normals_4d"], GEOMETRY["offsets_4d"]):
+    normal_str = ", ".join(f"{value.item():+.2f}" for value in normal)
+    print(f"  n = [{normal_str}], offset = {offset.item():+.2f}")
 
 print("\nVertices:")
-print_cycle(MOCK_VERTICES)
+print_cycle(GEOMETRY["vertices_4d"])
 
 print("\nCycle path:")
-print_cycle(MOCK_CYCLE_PATH)
+print_cycle(GEOMETRY["cycle"])
 
 # %% [markdown]
 # ## Visualization helper
@@ -145,15 +215,18 @@ def regular_pentagon(scale: float = 1.0, rotation: float = 0.0) -> np.ndarray:
 
 
 def plot_counterexample(
-    path: np.ndarray,
+    path: torch.Tensor,
     *,
+    q_vertices: torch.Tensor | None = None,
+    p_vertices: torch.Tensor | None = None,
     pentagon_scale: float = 0.9,
     line_alpha: float = 0.85,
     label_offset: float = 0.04,
 ) -> None:
-    p_coords = path[:, :2]
-    q_coords = path[:, 2:]
-    colors = cm.rainbow(np.linspace(0.0, 1.0, len(path) - 1))
+    path_np = path.detach().cpu().numpy()
+    p_coords = path_np[:, :2]
+    q_coords = path_np[:, 2:]
+    colors = cm.rainbow(np.linspace(0.0, 1.0, len(path_np) - 1))
 
     fig, (ax_p, ax_q) = plt.subplots(1, 2, figsize=(12, 6))
 
@@ -182,7 +255,7 @@ def plot_counterexample(
             va="bottom",
         )
 
-    for idx in range(len(path) - 1):
+    for idx in range(len(path_np) - 1):
         ax_p.plot(
             p_coords[idx : idx + 2, 0],
             p_coords[idx : idx + 2, 1],
@@ -201,20 +274,30 @@ def plot_counterexample(
     draw_panel(ax_p, p_coords, "p")
     draw_panel(ax_q, q_coords, "q")
 
-    pentagon = regular_pentagon(scale=pentagon_scale)
-    rotated_pentagon = regular_pentagon(scale=pentagon_scale, rotation=np.pi / 2)
+    if q_vertices is None:
+        base = regular_pentagon(scale=pentagon_scale)
+        pentagon = np.vstack([base, base[0]])
+    else:
+        q_vertices_np = q_vertices.detach().cpu().numpy()
+        pentagon = np.vstack([q_vertices_np, q_vertices_np[0]])
+    if p_vertices is None:
+        base_rot = regular_pentagon(scale=pentagon_scale, rotation=np.pi / 2)
+        rotated_pentagon = np.vstack([base_rot, base_rot[0]])
+    else:
+        p_vertices_np = p_vertices.detach().cpu().numpy()
+        rotated_pentagon = np.vstack([p_vertices_np, p_vertices_np[0]])
 
     ax_p.plot(
-        np.append(pentagon[:, 0], pentagon[0, 0]),
-        np.append(pentagon[:, 1], pentagon[0, 1]),
+        pentagon[:, 0],
+        pentagon[:, 1],
         color="dimgray",
         linewidth=1.5,
         linestyle="--",
         label="Lagrangian factor",
     )
     ax_q.plot(
-        np.append(rotated_pentagon[:, 0], rotated_pentagon[0, 0]),
-        np.append(rotated_pentagon[:, 1], rotated_pentagon[0, 1]),
+        rotated_pentagon[:, 0],
+        rotated_pentagon[:, 1],
         color="dimgray",
         linewidth=1.5,
         linestyle="--",
@@ -229,7 +312,11 @@ def plot_counterexample(
     plt.tight_layout()
 
 
-plot_counterexample(MOCK_CYCLE_PATH)
+plot_counterexample(
+    GEOMETRY["cycle"],
+    q_vertices=GEOMETRY["vertices_q"],
+    p_vertices=GEOMETRY["vertices_p"],
+)
 
 # %% [markdown]
 # ## Next steps
