@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 import jax.numpy as jnp
 from jaxtyping import Array, Bool, Float, PRNGKeyArray
@@ -197,3 +198,15 @@ def enumerate_product_ngons(
         incidence = _incidence(normals, offsets, vertices)
         samples.append(PolytopeSample(vertices, normals, offsets, incidence))
     return tuple(samples)
+
+
+def pentagon_product_4d_sample(
+    *, rotation: float = math.pi / 2.0, area: float | None = None, radius: float | None = None
+) -> PolytopeSample:
+    """Return the 4D pentagon product counterexample as a PolytopeSample."""
+
+    vertices, normals, offsets = _gen.pentagon_product_4d(
+        rotation=rotation, area=area, radius=radius
+    )
+    incidence = _incidence(normals, offsets, vertices)
+    return PolytopeSample(vertices, normals, offsets, incidence)
