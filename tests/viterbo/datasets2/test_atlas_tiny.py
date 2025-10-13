@@ -10,11 +10,11 @@ from viterbo.datasets2 import atlas_tiny, generators, quantities
 @pytest.mark.goal_code
 @pytest.mark.smoke
 def test_build_returns_expected_structure() -> None:
-    """Atlas tiny build returns 8 rows with expected columns and non-empty data."""
+    """Atlas tiny build returns 6 rows with expected columns and non-empty data."""
 
     dataset = atlas_tiny.build()
     assert dataset.num_rows == len(atlas_tiny.rows())
-    assert dataset.num_rows == 8
+    assert dataset.num_rows == 6
     expected_columns = {
         "polytope_id",
         "generator",
@@ -36,6 +36,10 @@ def test_build_returns_expected_structure() -> None:
     assert first["normals"], "normals column should contain data"
     assert first["offsets"], "offsets column should contain data"
     assert first["incidence"], "incidence column should contain data"
+
+    row_generators = {row["generator"] for row in atlas_tiny.rows()}
+    assert "pentagon_product_4d" in row_generators
+    assert all(row["dimension"] == 4 for row in atlas_tiny.rows())
 
 
 @pytest.mark.goal_code
@@ -79,22 +83,22 @@ def test_random_generators_cover_all_cases() -> None:
     """Random/tangent/sphere/ball/product generators produce non-empty samples."""
 
     halfspace = generators.sample_halfspace(
-        jax.random.PRNGKey(0), dimension=2, num_facets=6, num_samples=2
+        jax.random.PRNGKey(0), dimension=4, num_facets=10, num_samples=2
     )
     assert len(halfspace) == 2
     assert all(sample.vertices.size > 0 for sample in halfspace)
 
     tangent = generators.sample_halfspace_tangent(
-        jax.random.PRNGKey(1), dimension=2, num_facets=5, num_samples=1
+        jax.random.PRNGKey(1), dimension=4, num_facets=8, num_samples=1
     )
     assert len(tangent) == 1
     assert all(sample.vertices.size > 0 for sample in tangent)
 
-    sphere = generators.sample_uniform_sphere(jax.random.PRNGKey(2), dimension=2, num_samples=1)
+    sphere = generators.sample_uniform_sphere(jax.random.PRNGKey(2), dimension=4, num_samples=1)
     assert len(sphere) == 1
     assert all(sample.vertices.size > 0 for sample in sphere)
 
-    ball = generators.sample_uniform_ball(jax.random.PRNGKey(3), dimension=2, num_samples=1)
+    ball = generators.sample_uniform_ball(jax.random.PRNGKey(3), dimension=4, num_samples=1)
     assert len(ball) == 1
     assert all(sample.vertices.size > 0 for sample in ball)
 
