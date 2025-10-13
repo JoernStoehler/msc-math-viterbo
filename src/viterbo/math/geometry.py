@@ -78,3 +78,60 @@ def bounding_box(points: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
       (mins, maxs): each (D,)
     """
     return points.min(dim=0).values, points.max(dim=0).values
+
+
+def matmul_vertices(matrix: torch.Tensor, vertices: torch.Tensor) -> torch.Tensor:
+    """Apply linear map ``x -> A x`` to a vertex set.
+
+    Args:
+      matrix: (D, D) float tensor ``A``.
+      vertices: (M, D) float tensor.
+
+    Returns:
+      new_vertices: (M, D) float tensor ``vertices @ A.T`` (implementation may differ).
+    """
+    raise NotImplementedError
+
+
+def translate_vertices(translation: torch.Tensor, vertices: torch.Tensor) -> torch.Tensor:
+    """Translate a vertex set by ``t``.
+
+    Args:
+      translation: (D,) float tensor ``t``.
+      vertices: (M, D) float tensor.
+
+    Returns:
+      new_vertices: (M, D) float tensor of translated points.
+    """
+    raise NotImplementedError
+
+
+def volume(vertices: torch.Tensor) -> torch.Tensor:
+    """Volume of a convex polytope given its vertices.
+
+    Intended as a reference implementation (e.g., via hull + simplices). Must be
+    deterministic for a fixed input without hidden RNG.
+
+    Args:
+      vertices: (M, D) float tensor.
+
+    Returns:
+      volume: scalar float tensor.
+    """
+    raise NotImplementedError
+
+
+def rotated_regular_ngon2d(k: int, angle: float) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Rotated regular n-gon in 2D.
+
+    Args:
+      k: number of sides ``k >= 3``.
+      angle: rotation angle in radians.
+
+    Returns:
+      (vertices, normals, offsets):
+        - vertices: (k, 2)
+        - normals: (k, 2)
+        - offsets: (k,)
+    """
+    raise NotImplementedError
