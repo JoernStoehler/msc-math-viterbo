@@ -9,10 +9,14 @@ SMOKE_TEST_TIMEOUT := env_var_or_default("SMOKE_TEST_TIMEOUT", "10")
 PYTEST_ARGS := env_var_or_default("PYTEST_ARGS", "")
 ARGS := env_var_or_default("ARGS", "")
 RUN_DIR := env_var_or_default("RUN_DIR", "")
+INC_ARGS := env_var_or_default("INC_ARGS", "")
 
 PYTEST_SMOKE_FLAGS := "-m smoke"
 PYTEST_DEEP_FLAGS := "-m \"smoke or deep\""
 PYTEST_LONGHAUL_FLAGS := "-m longhaul"
+
+
+PYTEST_JUNIT := ".cache/last-junit.xml"
 
 
 
@@ -86,16 +90,7 @@ type-strict:
 # Smoke-tier pytest with enforced timeouts.
 # Default: impacted (serial). Falls back to full serial.
 test:
-    @mkdir -p .cache
-    @echo "Running incremental smoke-tier pytest."
-    @sel_status=0; $UV run --script scripts/inc_select.py > .cache/impacted_nodeids.txt || sel_status=$?; \
-    if [ -s .cache/impacted_nodeids.txt ] && [ "$sel_status" = "0" ]; then \
-        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --junitxml .cache/last-junit.xml @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
-    elif [ "$sel_status" = "2" ]; then \
-        echo "Selector: no changes and no prior failures — skipping pytest run."; \
-    else \
-        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}; \
-    fi
+    just _pytest-incremental "{{PYTEST_SMOKE_FLAGS}}" "smoke-tier pytest"
 
 # Full smoke-tier run (serial, no impacted selection).
 test-full:
@@ -229,15 +224,18 @@ checks:
 
 # Incremental smoke tests only (no lint/type)
 test-incremental:
+    just _pytest-incremental "{{PYTEST_SMOKE_FLAGS}}" "smoke-tier pytest"
+
+_pytest-incremental FLAGS DESCRIPTION:
     @mkdir -p .cache
-    @echo "Running incremental smoke tests."
-    @sel_status=0; $UV run --script scripts/inc_select.py > .cache/impacted_nodeids.txt || sel_status=$?; \
+    @echo "Running {{DESCRIPTION}} (incremental selector)."
+    @sel_status=0; $UV run --script scripts/inc_select.py {{INC_ARGS}} > .cache/impacted_nodeids.txt || sel_status=$?; \
     if [ -s .cache/impacted_nodeids.txt ] && [ "$sel_status" = "0" ]; then \
-        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --junitxml .cache/last-junit.xml @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
+        $UV run pytest -q {{FLAGS}} --junitxml {{PYTEST_JUNIT}} @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
     elif [ "$sel_status" = "2" ]; then \
         echo "Selector: no changes and no prior failures — skipping pytest run."; \
     else \
-        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} --junitxml .cache/last-junit.xml {{PYTEST_ARGS}}; \
+        $UV run pytest -q {{FLAGS}} --junitxml {{PYTEST_JUNIT}} {{PYTEST_ARGS}}; \
     fi
 
 # CI flow with CPU-only torch wheel using uv pip (bypasses lock for torch).
