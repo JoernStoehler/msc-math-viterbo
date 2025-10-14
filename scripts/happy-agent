@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE' >&2
+Usage: scripts/happy-agent <branch> <model> '<prompt>'
+
+Example:
+  scripts/happy-agent task/new-feature gpt-5-high 'Implement the foo helper'
+USAGE
+  exit 1
+}
+
+if [[ $# -ne 3 ]]; then
+  usage
+fi
+
+branch="$1"
+model="$2"
+prompt="$3"
+
+if ! command -v git >/dev/null 2>&1; then
+  echo "happy-agent: git is required on PATH" >&2
+  exit 1
+fi
+
+if ! command -v tmux >/dev/null 2>&1; then
+  echo "happy-agent: tmux is required on PATH" >&2
+  exit 1
+fi
+
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+  echo "happy-agent: must run inside a git worktree" >&2
+  exit 1
+}
+
+worktree_dir="${repo_root}/../${branch}"
+session_name="$(echo "${branch}" | tr '/-' '__')"
+worktree_status="reused existing worktree"
+
+if git worktree list --porcelain | awk '/^worktree /{print $2}' | grep -Fxq "${worktree_dir}"; then
+  : # worktree already attached; nothing to do
+else
+  mkdir -p "$(dirname "${worktree_dir}")"
+  if git show-ref --verify --quiet "refs/heads/${branch}"; then
+    git worktree add "${worktree_dir}" "${branch}"
+    worktree_status="attached existing branch"
+  else
+    git worktree add "${worktree_dir}" -b "${branch}"
+    worktree_status="created new branch from HEAD"
+  fi
+fi
+
+if tmux has-session -t "${session_name}" 2>/dev/null; then
+  echo "happy-agent: tmux session '${session_name}' already exists; aborting to avoid reuse" >&2
+  exit 1
+fi
+
+printf -v cd_part "%q" "${worktree_dir}"
+printf -v model_arg "%q" "${model}"
+printf -v prompt_arg "%q" "${prompt}"
+
+tmux_cmd="cd ${cd_part} && just setup && happy codex --yolo --model ${model_arg} ${prompt_arg}"
+
+tmux new-session -d -s "${session_name}" "${tmux_cmd}"
+
+cat <<EOF
+happy-agent launch complete
+  branch         : ${branch}
+  worktree       : ${worktree_dir}
+  worktree status: ${worktree_status}
+  model          : ${model}
+  prompt         : ${prompt}
+  tmux session   : ${session_name}
+  command        : ${tmux_cmd}
+EOF
