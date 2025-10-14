@@ -1,8 +1,8 @@
 ---
 title: "math: implement Minkowski two-bounce billiard solver"
 created: 2025-10-13
-status: proposed
-owner: TBD
+status: in-review
+owner: codex
 branch: task/math-minkowski-billiard
 priority: high
 labels: [task]
@@ -14,17 +14,16 @@ deps:
 
 ## Summary
 
-Lift the notebook’s two-bounce Minkowski billiard routine into `viterbo.math.minimal_action`. The goal is a reusable API that, given the Lagrangian product of planar polytopes, recovers the minimal-action Reeb orbit and EHZ capacity by inspecting the dual billiard in the polar.
+ - Implemented `minimal_action_cycle_lagrangian_product`, following Rudolf’s ≤3 bounce guarantee for planar Minkowski billiards.
+- Enumerates two- and three-bounce candidates, enforces strong billiard reflection conditions, and returns closed Reeb cycles with consistent device/dtype semantics.
+- Counterexample notebook now calls the library API; the bespoke dual-polar helper has been removed.
 
-## Deliverables
+## Validation
 
-- New torch-first function (e.g., `minimal_action_cycle_lagrangian_product`) accepting `q`-vertices and `p`-halfspaces, returning the cycle and scalar capacity.
-- Robust handling of diagonal selection (choose the minimiser, not maximiser) with clear error messages when no valid orbit exists.
-- Unit tests covering the regular pentagon example and at least one synthetic polygon pair, confirming invariance under permutation and translation of vertices.
-- Optional refactor of existing stubs in `minimal_action.py` to reuse the new routine for 4D Lagrangian products.
+- `uv run pytest tests/math/test_minkowski_billiard.py`
+- `just test-full`
 
-## Acceptance Criteria
+## Notes
 
-- Tests pass and pin the known constant `2 cos(pi/10) (1 + cos(pi/5))`.
-- API surfaces torch tensors on caller device/dtype, no implicit moves.
-- Notebook `viterbo_counterexample_proposal.py` calls into the library function instead of shipping its own Minkowski logic.
+- Tests cover the regular pentagon constant, a synthetic instance where the optimal orbit needs three bounces, and permutation/translation invariance.
+- The solver currently assumes bounce points coincide with supplied polygon vertices; extending to facet-interior contacts would require a continuous optimisation pass. A stub (`minimal_action_cycle_lagrangian_product_generic`) documents the intended follow-up.
