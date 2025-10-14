@@ -1,9 +1,9 @@
 ---
 title: "math: implement Minkowski two-bounce billiard solver"
 created: 2025-10-13
-status: in-review
-owner: codex
-branch: task/math-minkowski-billiard
+status: completed
+owner: Codex agent
+branch: main
 priority: high
 labels: [task]
 deps:

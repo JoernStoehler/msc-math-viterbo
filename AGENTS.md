@@ -18,7 +18,7 @@ Single authoritative policy for this repo.
 ## 1) Sources of Truth & Layout
 
 - AGENTS.md (this file, read first)
-- MIGRATION.md (PyTorch+C++ migration log)
+- Historical migration notes live in git history; rely on this file for onboarding.
 - Config: `pyproject.toml` (deps, Ruff), `pyrightconfig.json` (basic), `pytest.ini` (smoke defaults), `.github/workflows/ci.yml` (CI), `.devcontainer/` (environment)
 - Task runner: `Justfile` (common commands)
 - Library: `src/viterbo/`

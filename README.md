@@ -12,6 +12,7 @@ See AGENTS.md for the authoritative policy and workflows.
 
 ## Quickstart
 
+0) Ensure [`uv`](https://docs.astral.sh/uv/getting-started/installation/) is available (pipx install uv, standalone binary, or your package manager).
 1) Sync deps: `just sync`
 2) Fast loop: `just checks` (format → lint → type → test incremental)
 3) Full local CI: `just ci` (lint → type → smoke tests → docs build)

@@ -8,8 +8,10 @@ priority: medium
 labels: [task]
 deps:
   - src/viterbo/datasets/atlas_tiny.py
-  - src/viterbo/math/geometry.py
-  - src/viterbo/math/symplectic.py
+  - src/viterbo/math/constructions.py
+  - src/viterbo/math/polytope.py
+  - src/viterbo/math/minimal_action.py
+  - src/viterbo/math/volume.py
 ---
 
 ## Summary
