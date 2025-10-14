@@ -75,8 +75,10 @@ if ! command -v just >/dev/null 2>&1; then
   exit 1
 fi
 
-# Install the Codex CLI if Node/npm is present so collaborators can use familiar tooling.
+# Install the Happy CLI (npm package: happy-coder) and Codex CLI when npm is present.
 if command -v npm >/dev/null 2>&1; then
+  echo "[post-create] Installing Happy CLI (happy-coder)"
+  npm install -g happy-coder >/dev/null 2>&1 || true
   echo "[post-create] Installing Codex CLI (@openai/codex)"
   npm i -g @openai/codex >/dev/null 2>&1 || true
 fi
