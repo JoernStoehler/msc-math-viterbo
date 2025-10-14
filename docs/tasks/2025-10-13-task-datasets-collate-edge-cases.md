@@ -1,9 +1,9 @@
 ---
 title: "Datasets: collate edge cases and masks"
 created: 2025-10-13
-status: ready
-owner: TBD
-branch: task/datasets-collate-edge-cases
+status: completed
+owner: Codex agent
+branch: main
 priority: medium
 labels: [task]
 deps:
@@ -26,3 +26,6 @@ Harden `collate_list` and `collate_pad` for edge cases (empty batches, 1-sample 
 - CI green with additional tests.
 - Collators robustly handle documented edge cases.
 
+## Status Log
+
+- 2025-10-15 — Hardened `collate_list`/`collate_pad` validation, added mask handling, and landed regression coverage in `tests/test_collate.py`; merged to `main`.

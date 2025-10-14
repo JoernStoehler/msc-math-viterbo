@@ -1,9 +1,9 @@
 ---
 title: "C++ extension harness: multi-file + docs"
 created: 2025-10-13
-status: ready
-owner: TBD
-branch: task/cpp-harness-docs
+status: completed
+owner: Codex agent
+branch: main
 priority: medium
 labels: [task]
 deps:
@@ -27,3 +27,6 @@ Extend the C++ extension scaffold to support multi-file builds and add brief doc
 - CI smoke remains green (fallback when build unavailable).
 - Local build instructions tested in devcontainer.
 
+## Status Log
+
+- 2025-10-15 — Added multi-file affine example with lazy loader and benchmark, documented extension workflow in `docs/architecture/overview.md`; merged to `main`.

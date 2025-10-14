@@ -1,9 +1,9 @@
 ---
 title: "CI: enforce CPU-only Torch wheels via uv"
 created: 2025-10-13
-status: in-review
+status: completed
 owner: Codex agent
-branch: task/ci-cpu-torch-index
+branch: main
 priority: medium
 labels: [task]
 deps:
@@ -29,3 +29,4 @@ Harden the CI installation so Torch CPU wheels are always used (no accidental CU
 ## Status Log
 
 - 2025-10-14 — Rebased CI on CPU-only Torch index via env overrides, added guard script, documented policy, and validated `just ci-cpu` under the constrained indexes.
+- 2025-10-15 — Merged to `main`; CI now installs `torch==2.5.1` from the CPU wheel index and verifies the build via `scripts/verify_cpu_torch.py`.

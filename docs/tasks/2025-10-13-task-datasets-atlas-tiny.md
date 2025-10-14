@@ -1,9 +1,9 @@
 ---
 title: "Datasets: AtlasTiny ragged rows and collate helper"
 created: 2025-10-13
-status: in-progress
-owner: TBD
-branch: task/datasets-atlas-tiny
+status: completed
+owner: Codex agent
+branch: main
 priority: medium
 labels: [task]
 deps:
@@ -28,3 +28,7 @@ Implement a small synthetic dataset of polytopes (AtlasTiny) with geometric and 
 - CI green (lint/type/smoke) with no external dataset dependency.
 - Deterministic generation for repeated builds.
 - Clear docstrings for shapes/dtypes, derived invariants, and collate semantics.
+
+## Status Log
+
+- 2025-10-15 — Implemented deterministic generators/completion/collate helpers in `atlas_tiny.py` with smoke coverage under `tests/datasets/test_atlas_tiny.py`; merged to `main`.
