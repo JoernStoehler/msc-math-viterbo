@@ -57,7 +57,7 @@ import numpy as np
 import torch
 
 from viterbo.math.constructions import lagrangian_product, rotated_regular_ngon2d
-from viterbo.math.polytope import vertices_to_halfspaces
+from viterbo.math.minimal_action import minimal_action_cycle_lagrangian_product
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_PATH = PROJECT_ROOT / "src"
@@ -87,70 +87,12 @@ def polygon_area(vertices: torch.Tensor) -> torch.Tensor:
     return 0.5 * torch.sum(cross).abs()
 
 
-def dual_vertices(normals: torch.Tensor, offsets: torch.Tensor) -> torch.Tensor:
-    """Vertices of the polar body determined by (normals, offsets)."""
-    if offsets.ndim != 1 or normals.ndim != 2 or normals.size(0) != offsets.size(0):
-        raise ValueError("invalid half-space representation")
-    return normals / offsets.unsqueeze(1)
-
-
-def two_bounce_cycle(
-    vertices_q: torch.Tensor,
-    vertices_p: torch.Tensor,
-    normals_p: torch.Tensor,
-    offsets_p: torch.Tensor,
-) -> tuple[torch.Tensor, torch.Tensor]:
-    """Minimal action two-bounce Minkowski billiard along a diagonal of K."""
-    polar_vertices = dual_vertices(normals_p, offsets_p)
-    polar_normals, polar_offsets = vertices_to_halfspaces(polar_vertices)
-    count = vertices_q.size(0)
-    best: dict[str, torch.Tensor] | None = None
-    for i in range(count):
-        for skip in range(2, count - 1):
-            j = (i + skip) % count
-            direction = vertices_q[j] - vertices_q[i]
-            forward_gauge = torch.max((polar_normals @ direction) / polar_offsets)
-            backward_gauge = torch.max((polar_normals @ (-direction)) / polar_offsets)
-            action = forward_gauge + backward_gauge
-            if action <= 0:
-                continue
-            if best is None or action < best["action"]:
-                forward_idx = torch.argmax(vertices_p @ direction)
-                backward_idx = torch.argmax(vertices_p @ (-direction))
-                best = {
-                    "i": i,
-                    "j": j,
-                    "forward_value": forward_gauge,
-                    "backward_value": backward_gauge,
-                    "forward_vertex": vertices_p[forward_idx],
-                    "backward_vertex": vertices_p[backward_idx],
-                    "action": action,
-                }
-    if best is None:
-        raise RuntimeError("failed to locate a billiard trajectory")
-    q_start = vertices_q[best["i"]]
-    q_end = vertices_q[best["j"]]
-    p_forward = best["forward_vertex"]
-    p_backward = best["backward_vertex"]
-    cycle = torch.stack(
-        [
-            torch.cat([q_start, p_forward]),
-            torch.cat([q_end, p_forward]),
-            torch.cat([q_end, p_backward]),
-            torch.cat([q_start, p_backward]),
-            torch.cat([q_start, p_forward]),
-        ]
-    )
-    capacity = best["forward_value"] + best["backward_value"]
-    return capacity, cycle
-
-
 def counterexample_geometry() -> dict[str, torch.Tensor]:
     """Construct the pentagon × rotated pentagon counterexample."""
     vertices_q, normals_q, offsets_q = rotated_regular_ngon2d(5, 0.0)
     vertices_p, normals_p, offsets_p = rotated_regular_ngon2d(5, -math.pi / 2)
     vertices_4d, normals_4d, offsets_4d = lagrangian_product(vertices_q, vertices_p)
-    capacity, cycle = two_bounce_cycle(vertices_q, vertices_p, normals_p, offsets_p)
+    capacity, cycle = minimal_action_cycle_lagrangian_product(vertices_q, normals_p, offsets_p)
     area_q = polygon_area(vertices_q)
     area_p = polygon_area(vertices_p)
     volume_4d = area_q * area_p
