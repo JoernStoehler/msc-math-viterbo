@@ -12,3 +12,4 @@ This directory tracks idea-stage briefs that are not yet scheduled. Each item li
 - [Future: analyze dataset PCA](2025-10-13-future-dataset-pca.md)
 - [Future: report all discovered sys > 1 polytopes](2025-10-13-future-report-high-sys-polytopes.md)
 - [Future: enumerate Mahler-like polytopes](2025-10-13-future-enumerate-mahler-polytopes.md)
+- [Future: symplectic capacity milestone roadmap](2025-10-14-future-symplectic-capacity-milestones.md)

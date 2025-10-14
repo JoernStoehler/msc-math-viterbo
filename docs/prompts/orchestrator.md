@@ -18,6 +18,7 @@ This prompt is for the repository orchestrator. Use it to keep the backlog tidy 
 
 ## Launching a Task Agent
 
+- Start from a clean `git status` on `main`; land backlog edits before you spin the worktree.
 - Use `scripts/happy-agent` to create the worktree and boot the tmux session:
 
   ```bash

@@ -41,18 +41,18 @@ clean queue for new agents.
 
 ### Active backlog snapshot
 
-- `2025-10-13-task-math-counterexample-loader.md` *(proposed)* — dataset for
-  repro cases around Minkowski billiards.
-- `2025-10-14-task-datasets-atlas-tiny-4d.md` *(draft)* — extend AtlasTiny to 4D
-  Lagrangian products.
-- `2025-10-14-task-math-4d-capacity.md` *(draft)* — generalise EHZ capacities
-  beyond the planar solver.
+- `2025-10-14-task-math-4d-capacity.md` *(draft)* — unblock 4D EHZ capacity and minimal-action solvers.
+- `2025-10-14-task-datasets-atlas-tiny-4d.md` *(draft)* — refresh AtlasTiny once 4D invariants exist.
+- `2025-10-13-task-math-counterexample-loader.md` *(proposed)* — expose the 5×5 counterexample helper.
+- `2025-10-13-task-math-minkowski-billiard.md` *(in-review)* — planar solver pending merge.
 
 ### Follow-ups worth tracking
 
-- [ ] Keep `docs/tasks/` limited to adoptable briefs; archive or delete files
-      immediately after their implementation merges.
-- [ ] Periodically prune the archived directory when a brief no longer adds
-      context worth keeping.
-- [ ] Keep future ideas in `docs/tasks/future/` and promote them only when
-      scoping work begins.
+- [ ] Final review and merge for `task/math-minkowski-billiard`.
+- [ ] Confirm algorithm direction for the 4D capacity solver and assign an owner.
+- [ ] Start the counterexample loader once the 4D math stack stabilises.
+- [ ] Schedule the AtlasTiny 4D upgrade immediately after the math task progresses.
+- [ ] Use the symplectic capacity milestone roadmap (`docs/tasks/future/2025-10-14-future-symplectic-capacity-milestones.md`) to plan medium-term delegations.
+- [ ] Keep `docs/tasks/` limited to adoptable briefs; archive or delete files immediately after their implementation merges.
+- [ ] Periodically prune the archived directory when a brief no longer adds context worth keeping.
+- [ ] Keep future ideas in `docs/tasks/future/` and promote them only when scoping work begins.
