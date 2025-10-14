@@ -2,8 +2,7 @@
 # /// script
 # requires-python = ">=3.12"
 # ///
-"""
-Incremental test selector — module import graph + file hashes (KISS).
+"""Incremental test selector — module import graph + file hashes (KISS).
 
 Why this exists
   - Keep local feedback loops fast by running only the tests that plausibly
@@ -49,7 +48,7 @@ Notes on precision and limits
     ignored (they are outside the repo and assumed stable in local loops).
 
 Usage
-  - Called by the Justfile target ``just test-incremental`` roughly as:
+  - Called by the Justfile target ``just test`` (and ``just test-incremental``) roughly as:
         uv run --script scripts/inc_select.py > .cache/impacted_nodeids.txt || sel_status=$?
         if [ -s .cache/impacted_nodeids.txt ] && [ "$sel_status" = "0" ]; then
             pytest @.cache/impacted_nodeids.txt
@@ -64,12 +63,17 @@ Usage
 
 from __future__ import annotations
 
+import argparse
 import ast
 import hashlib
 import json
 import os
 import sys
+from collections.abc import Iterable
+from dataclasses import dataclass
+from importlib.util import resolve_name
 from pathlib import Path
+from typing import NamedTuple
 from xml.etree import ElementTree as ET
 
 ROOT = Path.cwd()
@@ -77,7 +81,44 @@ CACHE_DIR = ROOT / ".cache"
 GRAPH_JSON = CACHE_DIR / "inc_graph.json"
 LAST_JUNIT = CACHE_DIR / "last-junit.xml"
 
+SELECTION_THRESHOLD = 0.4
+
 EXCLUDE_DIRS = {".git", ".venv", "node_modules", ".cache", "build", "dist", "site"}
+
+class ExitCodes(NamedTuple):
+    """Exit status constants used by the selector."""
+
+    success: int = 0
+    skip: int = 2
+    advise_full: int = 3
+
+
+EXIT = ExitCodes()
+
+
+def _log(msg: str) -> None:
+    _stderr(f"[inc] {msg}")
+
+
+def to_repo_path(path: Path) -> str:
+    """Return the repository-relative POSIX path for ``path``."""
+
+    try:
+        return path.relative_to(ROOT).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def normalize_path_str(path_str: str) -> str:
+    """Normalise stored path strings to repository-relative POSIX form."""
+
+    path_obj = Path(path_str)
+    if path_obj.is_absolute():
+        try:
+            return path_obj.relative_to(ROOT).as_posix()
+        except ValueError:
+            return path_obj.as_posix()
+    return path_obj.as_posix()
 
 
 def _stderr(msg: str) -> None:
@@ -101,11 +142,11 @@ def walk_py_files() -> list[Path]:
     """Return all Python files under the repo, excluding cache/vendor dirs."""
     files: list[Path] = []
     for dirpath, dirnames, filenames in os.walk(ROOT):
-        # prune excluded dirs
         dirnames[:] = [d for d in dirnames if d not in EXCLUDE_DIRS and not d.startswith(".")]
-        for f in filenames:
-            if f.endswith(".py"):
-                files.append(Path(dirpath) / f)
+        for fname in filenames:
+            if fname.endswith(".py"):
+                files.append(Path(dirpath) / fname)
+    files.sort()
     return files
 
 
@@ -118,84 +159,119 @@ def sha256_of_file(p: Path) -> str:
     return h.hexdigest()
 
 
-def build_module_index(files: list[Path]) -> dict[str, Path]:
-    """Build a best‑effort map from dotted module names to repo paths.
+@dataclass(frozen=True)
+class ModuleInfo:
+    """Metadata about a Python module in the repository."""
 
-    Rationale
-      - Static import nodes carry dotted names; we need to map those back to
-        files in the repo to build edges.
-      - We normalize common layouts: stripping a leading ``src/``, collapsing
-        ``__init__.py`` to the package name, and indexing both full and tail
-        dotted names (``viterbo.a.b`` and ``a.b``) so imports within the
-        package resolve.
-    """
-    idx: dict[str, Path] = {}
-    for p in files:
-        rel = p.relative_to(ROOT)
-        parts = list(rel.parts)
-        if parts and parts[0] == "src":
-            parts = parts[1:]
-        if parts and parts[-1] == "__init__.py":
-            dotted = ".".join(parts[:-1])
-        else:
-            dotted = ".".join(parts)[:-3]  # strip .py
-        dotted = dotted.replace("/", ".").replace("\\", ".")
-        if dotted:
-            idx[dotted] = p
-            # also index without top-level when under src/<top>/...
-            if dotted.count(".") >= 1 and dotted.split(".")[0] not in {"tests"}:
-                idx[".".join(dotted.split(".")[1:])] = p
-    return idx
+    module: str
+    package: str
+    is_package: bool
 
 
-def resolve_import(from_path: Path, node: ast.AST, idx: dict[str, Path]) -> list[Path]:
-    """Resolve an import node to internal module paths.
+def module_info_for_path(path: Path) -> ModuleInfo:
+    """Return dotted module metadata for ``path`` relative to the repo root."""
 
-    We handle two cases:
-      - ``import a.b`` → look up ``a.b`` in the index
-      - ``from .x import y`` with levels → compute a base dotted path relative
-        to the file's package and attempt both ``base.y`` and ``base``
-
-    This is deliberately simple; it is fine to miss third‑party modules — we only
-    care about edges within the repo.
-    """
-    rel = from_path.relative_to(ROOT)
-    # compute base dotted path
+    rel = path.relative_to(ROOT)
     parts = list(rel.parts)
     if parts and parts[0] == "src":
         parts = parts[1:]
-    if parts and parts[-1].endswith(".py"):
-        parts[-1] = parts[-1][:-3]
-    base_dotted = ".".join(parts[:-1])
-    out: list[Path] = []
+    if not parts:
+        return ModuleInfo(module="", package="", is_package=False)
+
+    if parts[-1] == "__init__.py":
+        module_parts = parts[:-1]
+        is_package = True
+    else:
+        module_parts = parts[:-1] + [parts[-1][:-3]]
+        is_package = False
+
+    module_parts = [p for p in module_parts if p]
+    module = ".".join(module_parts)
+    if is_package:
+        package_parts = module_parts
+    else:
+        package_parts = module_parts[:-1]
+    package = ".".join(package_parts)
+    return ModuleInfo(module=module, package=package, is_package=is_package)
+
+
+def build_module_index(files: list[Path], infos: dict[Path, ModuleInfo]) -> dict[str, Path]:
+    """Build a best-effort map from dotted module names to repo paths."""
+
+    idx: dict[str, Path] = {}
+    for path in files:
+        info = infos[path]
+        if info.module:
+            idx[info.module] = path
+            parts = info.module.split(".")
+            if len(parts) > 1 and parts[0] != "tests":
+                idx[".".join(parts[1:])] = path
+    return idx
+
+
+def resolve_import(
+    info: ModuleInfo, node: ast.AST, idx: dict[str, Path]
+) -> list[Path]:
+    """Resolve an import node to internal module paths."""
 
     if isinstance(node, ast.Import):
-        for alias in node.names:
-            cand = alias.name
-            if cand in idx:
-                out.append(idx[cand])
-    elif isinstance(node, ast.ImportFrom):
-        mod = node.module or ""
-        level = node.level or 0
-        if level:
-            base_parts = base_dotted.split(".") if base_dotted else []
-            parent = ".".join(base_parts[: max(0, len(base_parts) - level + (1 if mod else 0))])
-            target = (parent + ("." if parent and mod else "") + mod) if (parent or mod) else ""
-        else:
-            target = mod
-        if target and target in idx:
-            out.append(idx[target])
-        else:
-            # sometimes names point directly to modules
-            for alias in node.names:
-                name = alias.name
-                dn = (target + "." + name) if target else name
-                if dn in idx:
-                    out.append(idx[dn])
-    return out
+        return dedupe_paths(idx[alias.name] for alias in node.names if alias.name in idx)
+
+    if not isinstance(node, ast.ImportFrom):
+        return []
+
+    level = node.level or 0
+    module = node.module or ""
+
+    base_name = module
+    if level:
+        package = info.module if info.is_package else info.package
+        if package:
+            try:
+                relative = ("." * level) + module
+                base_name = resolve_name(relative or ".", package)
+            except ValueError:
+                base_name = module
+
+    candidates: list[str] = []
+    if base_name:
+        candidates.append(base_name)
+
+    for alias in node.names:
+        if alias.name == "*":
+            continue
+        dotted = ".".join(part for part in (base_name, alias.name) if part)
+        if dotted:
+            candidates.append(dotted)
+
+    if not candidates:
+        return []
+
+    seen: set[Path] = set()
+    resolved: list[Path] = []
+    for cand in candidates:
+        path = idx.get(cand)
+        if path and path not in seen:
+            resolved.append(path)
+            seen.add(path)
+    return resolved
 
 
-def parse_imports(files: list[Path], idx: dict[str, Path]) -> dict[Path, list[Path]]:
+def dedupe_paths(paths: Iterable[Path]) -> list[Path]:
+    """Return ``paths`` without duplicates while preserving order."""
+
+    seen: set[Path] = set()
+    unique: list[Path] = []
+    for path in paths:
+        if path not in seen:
+            unique.append(path)
+            seen.add(path)
+    return unique
+
+
+def parse_imports(
+    files: list[Path], idx: dict[str, Path], infos: dict[Path, ModuleInfo]
+) -> dict[Path, list[Path]]:
     """Parse imports for each file and return a mapping ``file -> deps``.
 
     Any parse or decode error yields an empty dependency list — failing closed is
@@ -210,17 +286,11 @@ def parse_imports(files: list[Path], idx: dict[str, Path]) -> dict[Path, list[Pa
             edges[p] = []
             continue
         deps: list[Path] = []
+        info = infos[p]
         for n in ast.walk(tree):
             if isinstance(n, (ast.Import, ast.ImportFrom)):
-                deps.extend(resolve_import(p, n, idx))
-        # dedupe and keep only internal files
-        uniq = []
-        seen: set[Path] = set()
-        for d in deps:
-            if d not in seen:
-                uniq.append(d)
-                seen.add(d)
-        edges[p] = uniq
+                deps.extend(resolve_import(info, n, idx))
+        edges[p] = dedupe_paths(deps)
     return edges
 
 
@@ -271,6 +341,45 @@ def parse_junit_failures(path: Path) -> set[str]:
     return failed
 
 
+def persist_snapshot(
+    files: list[Path], file_hashes: dict[Path, str], edges: dict[Path, list[Path]]
+) -> None:
+    """Persist the graph snapshot derived from ``files`` and ``edges``."""
+
+    nodes = {
+        to_repo_path(path): {"hash": file_hashes[path], "is_test": is_test_file(path)}
+        for path in files
+    }
+    edges_out = {
+        to_repo_path(path): sorted(to_repo_path(dep) for dep in deps)
+        for path, deps in edges.items()
+    }
+    save_graph({"nodes": nodes, "edges": edges_out})
+
+
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments for the selector."""
+
+    parser = argparse.ArgumentParser(
+        description="Incremental pytest selector using the module import graph."
+    )
+    parser.add_argument(
+        "--plumbing",
+        action="append",
+        default=None,
+        help=(
+            "Additional file suffixes to mark as plumbing (e.g. --plumbing config.yaml). "
+            "May be passed multiple times."
+        ),
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Print additional diagnostics about the resolved selection.",
+    )
+    return parser.parse_args()
+
+
 def main() -> int:
     """Compute dirty tests, emit selection, and persist the updated graph.
 
@@ -281,25 +390,37 @@ def main() -> int:
         sentinel so callers can skip invoking pytest.
     """
     prev = load_graph()
-    prev_nodes: dict[str, dict] = prev.get("nodes", {})
-    prev_edges: dict[str, list[str]] = prev.get("edges", {})
+    prev_nodes: dict[str, dict] = {}
+    for raw_path, meta in prev.get("nodes", {}).items():
+        if isinstance(meta, dict):
+            prev_nodes[normalize_path_str(raw_path)] = meta
+    prev_edges: dict[str, list[str]] = {}
+    for raw_src, raw_targets in prev.get("edges", {}).items():
+        norm_src = normalize_path_str(raw_src)
+        prev_edges.setdefault(norm_src, [])
+        if not isinstance(raw_targets, list):
+            continue
+        for target in raw_targets:
+            norm_target = normalize_path_str(target)
+            if norm_target not in prev_edges[norm_src]:
+                prev_edges[norm_src].append(norm_target)
+
+    args = parse_args()
 
     files = walk_py_files()
     # compute hashes and classify
     current_hash: dict[Path, str] = {p: sha256_of_file(p) for p in files}
-    current_set = {p.as_posix() for p in files}
+    current_set = {to_repo_path(p) for p in files}
 
     # Determine changed set by comparing against previous graph hashes.
-    current_set = {p.as_posix() for p in files}
     added = current_set - set(prev_nodes.keys())
     deleted = set(prev_nodes.keys()) - current_set
     modified = {
-        p.as_posix()
+        to_repo_path(p)
         for p, h in current_hash.items()
-        if prev_nodes.get(p.as_posix(), {}).get("hash") not in {None, h}
+        if prev_nodes.get(to_repo_path(p), {}).get("hash") not in {None, h}
     }
     changed = set(added | deleted | modified)
-    changed = changed - set([__file__])
 
     # Invalidation: plumbing
     plumbing_patterns = [
@@ -309,44 +430,41 @@ def main() -> int:
         "uv.lock",
         "scripts/inc_select.py",
     ]
+    if args.plumbing:
+        plumbing_patterns.extend(args.plumbing)
     # Robust plumbing detection against absolute paths
     overlap = {p for p in changed for pat in plumbing_patterns if p.endswith(pat)}
     if len(overlap) > 0:
-        _stderr("[inc] plumbing: " + ", ".join(sorted(overlap)))
-        # Persist the current graph as a new baseline before advising fallback
-        idx = build_module_index(files)
-        edges_cur = parse_imports(files, idx)
-        nodes_out: dict[str, dict] = {
-            p.as_posix(): {"hash": h, "is_test": is_test_file(p)} for p, h in current_hash.items()
-        }
-        edges_out: dict[str, list[str]] = {
-            k.as_posix(): [t.as_posix() for t in v] for k, v in edges_cur.items()
-        }
-        save_graph({"nodes": nodes_out, "edges": edges_out})
-        _stderr("[inc] plumbing changed; fall back to full run")
-        return 0
+        _log("plumbing: " + ", ".join(sorted(overlap)))
+        infos = {path: module_info_for_path(path) for path in files}
+        idx = build_module_index(files, infos)
+        edges_cur = parse_imports(files, idx, infos)
+        persist_snapshot(files, current_hash, edges_cur)
+        _log("plumbing changed; fall back to full run")
+        return EXIT.success
 
     # Build import graph from current files
-    idx = build_module_index(files)
-    edges_cur = parse_imports(files, idx)
+    infos = {path: module_info_for_path(path) for path in files}
+    idx = build_module_index(files, infos)
+    edges_cur = parse_imports(files, idx, infos)
     # Build reverse edges; use the union of previous and current edges for safety.
     # If imports moved since the last run, unioning avoids missing dependency paths
     # and under‑selecting. This keeps the bias conservative and the code simple.
     all_edges: dict[str, list[str]] = {}
     # Seed with previous edges
-    for k, v in prev_edges.items():
-        all_edges.setdefault(k, [])
-        for t in v:
-            if t not in all_edges[k]:
-                all_edges[k].append(t)
+    for src, targets in prev_edges.items():
+        all_edges.setdefault(src, [])
+        for target in targets:
+            if target not in all_edges[src]:
+                all_edges[src].append(target)
     # Add current edges
-    for k, vs in edges_cur.items():
-        ks = k.as_posix()
-        all_edges.setdefault(ks, [])
-        for t in vs:
-            ts = t.as_posix()
-            if ts not in all_edges[ks]:
-                all_edges[ks].append(ts)
+    for path, deps in edges_cur.items():
+        src = to_repo_path(path)
+        all_edges.setdefault(src, [])
+        for dep in deps:
+            tgt = to_repo_path(dep)
+            if tgt not in all_edges[src]:
+                all_edges[src].append(tgt)
 
     # Build reverse edges
     rev: dict[str, list[str]] = {}
@@ -359,24 +477,16 @@ def main() -> int:
 
     # If nothing changed, but there are prior failures, we still want to run them
     try:
-        if not dirty and LAST_JUNIT.exists():
-            if parse_junit_failures(LAST_JUNIT):
-                _stderr("[inc] no Python changes; running previously failing tests only")
-                # Emit only failing nodeids and return success. Pytest will run just these.
-                for nid in sorted(parse_junit_failures(LAST_JUNIT)):
-                    sys.stdout.write(nid + "\n")
-                # Persist baseline graph before advising fallback
-                nodes_out: dict[str, dict] = {
-                    p.as_posix(): {"hash": h, "is_test": is_test_file(p)}
-                    for p, h in current_hash.items()
-                }
-                edges_out: dict[str, list[str]] = {
-                    k.as_posix(): [t.as_posix() for t in v] for k, v in edges_cur.items()
-                }
-                save_graph({"nodes": nodes_out, "edges": edges_out})
-                return 0
+        prior_failures = parse_junit_failures(LAST_JUNIT)
     except OSError:
-        pass
+        prior_failures = set()
+
+    if not dirty and prior_failures:
+        _log("no Python changes; running previously failing tests only")
+        for nid in sorted(prior_failures):
+            sys.stdout.write(nid + "\n")
+        persist_snapshot(files, current_hash, edges_cur)
+        return EXIT.success
 
     # propagate to importers (tests or code), and compute distance levels
     queue = list(dirty)
@@ -404,7 +514,7 @@ def main() -> int:
             dirty_tests.add(p_str)
 
     # previous failures
-    prev_fail = parse_junit_failures(LAST_JUNIT)
+    prev_fail = prior_failures
 
     # Gather totals for threshold decisions
     total_tests = sum(1 for p in files if is_test_file(p)) or 1
@@ -413,37 +523,20 @@ def main() -> int:
     if not dirty_tests and not prev_fail:
         _stderr("[inc] no Python changes and no prior failures; skipping test run")
         # Persist baseline to ensure future diffs work even if none existed before
-        nodes_out: dict[str, dict] = {
-            p.as_posix(): {"hash": h, "is_test": is_test_file(p)} for p, h in current_hash.items()
-        }
-        edges_out: dict[str, list[str]] = {
-            k.as_posix(): [t.as_posix() for t in v] for k, v in edges_cur.items()
-        }
-        save_graph({"nodes": nodes_out, "edges": edges_out})
-        return 2
+        persist_snapshot(files, current_hash, edges_cur)
+        return EXIT.skip
 
     # Large-change fallback: if selection would be too large, advise full run
     # Compute selection size in terms of test files only.
     selected_test_files = set(dirty_tests)
-    try:
-        threshold = float(os.environ.get("INC_THRESHOLD", "0.4"))
-    except ValueError:
-        threshold = 0.4
     fraction = (len(selected_test_files) / total_tests) if total_tests else 1.0
-    if selected_test_files and fraction > threshold:
-        _stderr(
-            f"[inc] large impact: selected_test_files={len(selected_test_files)}/"
-            f"{total_tests} (p={fraction:.2f}) — advise full run"
+    if selected_test_files and fraction > SELECTION_THRESHOLD:
+        _log(
+            "large impact: selected_test_files="
+            f"{len(selected_test_files)}/{total_tests} (p={fraction:.2f}) — advise full run"
         )
-        # Persist baseline graph before advising full run
-        nodes_out: dict[str, dict] = {
-            p.as_posix(): {"hash": h, "is_test": is_test_file(p)} for p, h in current_hash.items()
-        }
-        edges_out: dict[str, list[str]] = {
-            k.as_posix(): [t.as_posix() for t in v] for k, v in edges_cur.items()
-        }
-        save_graph({"nodes": nodes_out, "edges": edges_out})
-        return 3
+        persist_snapshot(files, current_hash, edges_cur)
+        return EXIT.advise_full
 
     # emit selection: order test files by relevance and add failing nodeids whose files aren't selected
     selected: list[str] = []
@@ -466,30 +559,30 @@ def main() -> int:
             failing_extra.append(nid)
 
     if selected or failing_extra:
-        _stderr(
-            f"[inc] module-graph selection: dirty_test_files={len(selected_test_files)} "
-            f"prior_failures={len(prev_fail)} selected={len(selected) + len(failing_extra)} — "
-            "pytest will only run these; absent tests were skipped as unaffected"
+        summary = (
+            "module-graph selection: dirty_test_files="
+            f"{len(selected_test_files)} prior_failures={len(prev_fail)} "
+            f"selected={len(selected) + len(failing_extra)}"
         )
+        if selected:
+            summary += f" first={selected[0]}"
+        _log(summary)
+        if args.debug:
+            _log(
+                "debug: changed="
+                + ", ".join(sorted(changed))
+                + " | selected="
+                + ", ".join(selected)
+            )
     # Print selection: test files (ordered) then failing nodeids for non-selected files
     for it in selected:
         sys.stdout.write(it + "\n")
     for nid in failing_extra:
         sys.stdout.write(nid + "\n")
 
-    # persist current graph (hashes + current edges)
-    nodes_out: dict[str, dict] = {}
-    for p, h in current_hash.items():
-        nodes_out[p.as_posix()] = {
-            "hash": h,
-            "is_test": is_test_file(p),
-        }
-    edges_out: dict[str, list[str]] = {
-        k.as_posix(): [t.as_posix() for t in v] for k, v in edges_cur.items()
-    }
-    save_graph({"nodes": nodes_out, "edges": edges_out})
+    persist_snapshot(files, current_hash, edges_cur)
 
-    return 0
+    return EXIT.success
 
 
 if __name__ == "__main__":

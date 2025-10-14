@@ -48,6 +48,7 @@ Single authoritative policy for this repo.
 - `just checks` - for quick feedback, runs `just format && just lint && just type && just test`
 - `just fix` - auto-fix formatting/linting issues
 - `just test` - incremental smoke tests (fast)
+- `INC_ARGS="…" just test` - forward options to `scripts/inc_select.py` (e.g., `--debug`)
 - `just bench` - smoke benchmarks (saves under `.benchmarks/`)
 - `just ci` - CI parity, non-incremental test run, pass before pushing/PR
 
