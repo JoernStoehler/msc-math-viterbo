@@ -27,3 +27,4 @@ nav:
       - minimal_action: math/minimal_action.md
       - similarity: math/similarity.md
       - polar: math/polar.md
+  - Tasks backlog: tasks/README.md
