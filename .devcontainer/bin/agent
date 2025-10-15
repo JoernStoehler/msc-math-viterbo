@@ -1,530 +1,149 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Agent tool for managing per-branch/PR worktrees without tmux.
+# agent — unified CLI for *this repo only* (no env/config required)
+# Repo: ~/workspaces/msc-math-viterbo
+# Host alias (ssh config): joern-pc
+# No tmux. Works the same on phone (Termux) and Ubuntu host.
 #
-# Key design:
-# - Worktrees live under: /workspaces/<repo>.agents/<slug>
-# - We operate the central git repo in the main worktree for all worktree ops.
+# Examples:
+#   agent --connect                  # phone → mosh/ssh joern-pc
+#   agent --up --shell               # ensure devcontainer, enter shell
+#   agent --open feat-123 --codex    # ensure worktree, then run Codex inside container
+#   agent --open pr:42 --shell       # open by PR number
+#   agent --create exp-foo --shell   # new branch from main
+#   agent --exec "pytest -q"         # one-off in container
+#   agent --list                     # list worktrees
+#   agent --remove feat-123 --force  # delete worktree/branch
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MAIN_REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-REPO_NAME="$(basename "$MAIN_REPO_ROOT")"
-AGENTS_ROOT="/workspaces/${REPO_NAME}.agents"
-if ! mkdir -p "$AGENTS_ROOT" 2>/dev/null; then
-  echo "ERROR: Cannot create $AGENTS_ROOT. Rebuild the devcontainer to enable the parent mount at /workspaces." >&2
-  echo "Hint: The devcontainer now bind-mounts the host parent dir to /workspaces; after rebuild, this path will be writable and persistent." >&2
-  exit 1
-fi
+# ---------- fixed repo/host settings (YAGNI: no env, no multi-repo) ----------
+HOST_ALIAS="joern-pc"                          # must match ~/.ssh/config
+MAIN_REPO_ROOT="$HOME/workspaces/msc-math-viterbo"
+DEVCONF_REL=".devcontainer/local/devcontainer.json"
+DEVCONTAINER_BIN="devcontainer"
+CODEX_CMD_DEFAULT="codex --yolo --model gpt-5-high"
+USE_MOSH_DEFAULT=1                              # use mosh on phone
 
-usage() {
-  cat <<EOF
-Usage:
-  agent list
-  agent create <branch>
-  agent open pr <number>
-  agent open <branch-or-slug>
-  agent remove pr <number> [--force]
-  agent remove <branch-or-slug> [--force]
-  agent gc [--dry-run] [--force]
-  agent completion [--bash|--zsh]
-  agent install-completion
+# Computes writable agents root: prefer /workspaces (inside container), else .. near repo
+choose_agents_root(){
+  if [[ -d /workspaces && -w /workspaces ]]; then
+    echo "/workspaces/msc-math-viterbo.agents"
+  else
+    echo "$MAIN_REPO_ROOT/../msc-math-viterbo.agents"
+  fi
+}
+AGENTS_ROOT="$(choose_agents_root)"; mkdir -p "$AGENTS_ROOT" 2>/dev/null || true
 
-Notes:
-  - Adds worktrees under ${AGENTS_ROOT}.
-  - "open" ensures the worktree exists, runs setup, and opens a shell there.
-  - "remove" requires '--force' only when the target worktree has uncommitted changes.
-Semantics:
-  - create: For novel work only. Errors if a worktree, local branch, remote branch,
-    or PR already matches the given branch.
-  - open: For resuming work. Requires an existing PR (for 'pr <n>') OR an existing
-    worktree/local/remote branch. Ensures the worktree exists, runs setup, then opens a shell.
+# ---------- helpers ----------
+usage(){ cat <<'EOF'
+Usage: agent [flags]
+
+Connect (phone; executes immediately):
+  --connect            Connect via mosh (falls back to ssh if mosh missing)
+  --ssh                Connect via plain ssh
+
+Worktrees:
+  --list               List worktrees under msc-math-viterbo.agents
+  --open TOKEN         Ensure worktree exists and cd into it (TOKEN or pr:NUM)
+  --create BRANCH      Create new branch+worktree from main
+  --remove TOKEN       Remove worktree/branch (use with --force for dirty)
+  --gc                 Remove orphaned dirs under agents root (use with --force)
+
+Devcontainer actions (chainable, run after worktree ops):
+  --up                 Ensure devcontainer is up for current worktree (or MAIN)
+  --shell              Enter login shell inside the devcontainer
+  --exec CMD           Run command in container and exit
+  --codex [ARGS...]    Launch Codex in container (default: codex --yolo --model gpt-5-high)
+
+Other:
+  --force              Force for remove/gc
+  --doctor             Check tools/paths
+  --env                Print derived config
+  -h, --help           Show help
 EOF
 }
 
-ensure_tools() {
-  command -v git >/dev/null 2>&1 || { echo "ERROR: git not found" >&2; exit 1; }
+is_termux(){ [[ "${PREFIX-}" == */com.termux/* ]]; }
+require(){ command -v "$1" >/dev/null 2>&1 || { echo "ERROR: missing tool: $1" >&2; exit 127; }; }
+abs_repo(){ cd "$MAIN_REPO_ROOT" 2>/dev/null && pwd; }
+print_cfg(){ cat <<EOF
+whoami=$(whoami)
+HOST_ALIAS=$HOST_ALIAS
+MAIN_REPO_ROOT=$MAIN_REPO_ROOT
+DEVCONF_REL=$DEVCONF_REL
+DEVCONTAINER_BIN=$DEVCONTAINER_BIN
+AGENTS_ROOT=$AGENTS_ROOT
+EOF
 }
 
-slugify() {
-  # Replace slashes/invalid chars with dashes; trim to reasonable length.
-  local s="$1"
-  s="${s//\//-}"
-  s="${s//[^A-Za-z0-9._-]/-}"
-  printf "%s" "$s"
-}
+in_container(){ [[ -f /.dockerenv ]] || [[ -n "${DEVCONTAINER:-}" ]] || [[ -d /workspaces ]]; }
 
-worktree_path_for() {
-  local slug="$1"
-  printf "%s/%s" "$AGENTS_ROOT" "$slug"
-}
+# ---------- devcontainer helpers ----------
+dc_up(){ local repo; repo="$(abs_repo)" || { echo "Repo not found: $MAIN_REPO_ROOT" >&2; exit 1; }; require "$DEVCONTAINER_BIN"; cd "$repo"; "$DEVCONTAINER_BIN" up --workspace-folder . --config "$DEVCONF_REL" >/dev/null; }
 
-git_fetch_all() {
-  git -C "$MAIN_REPO_ROOT" fetch --all -p >/dev/null 2>&1 || true
-}
+dc_exec(){ local repo; repo="$(abs_repo)" || { echo "Repo not found: $MAIN_REPO_ROOT" >&2; exit 1; }; require "$DEVCONTAINER_BIN"; cd "$repo"; "$DEVCONTAINER_BIN" exec --workspace-folder . bash -lc "$*"; }
 
-worktree_exists_slug() {
-  local slug="$1"
-  [[ -d "$(worktree_path_for "$slug")" ]]
-}
+enter_shell(){ dc_up; export TERM="${TERM:-xterm-256color}"; exec "$DEVCONTAINER_BIN" exec --workspace-folder "$(abs_repo)" bash -lc 'exec ${SHELL:-bash} -l'; }
 
-has_local_branch() {
-  local branch="$1"
-  git -C "$MAIN_REPO_ROOT" show-ref --verify --quiet "refs/heads/${branch}"
-}
+# ---------- git/worktree helpers ----------
+slugify(){ local s="$1"; s="${s//\//-}"; s="${s//[^A-Za-z0-9._-]/-}"; printf "%s" "$s"; }
+worktree_path_for(){ printf "%s/%s" "$AGENTS_ROOT" "$(slugify "$1")"; }
+git_fetch_all(){ git -C "$MAIN_REPO_ROOT" fetch --all -p >/dev/null 2>&1 || true; }
+has_local(){ git -C "$MAIN_REPO_ROOT" show-ref --verify --quiet "refs/heads/$1"; }
+has_remote(){ [[ $(git -C "$MAIN_REPO_ROOT" ls-remote --heads origin "$1" | wc -l | tr -d ' ') -gt 0 ]]; }
+resolve_pr(){ command -v gh >/dev/null 2>&1 && gh pr view "$1" --json headRefName --jq '.headRefName' 2>/dev/null || true; }
 
-has_remote_branch() {
-  local branch="$1"
-  [[ $(git -C "$MAIN_REPO_ROOT" ls-remote --heads origin "${branch}" | wc -l | tr -d ' ') -gt 0 ]]
-}
+ensure_wt(){ local branch="$1"; local slug="$(slugify "$branch")"; local wt="$(worktree_path_for "$slug")"; git_fetch_all; if [[ ! -d "$wt" ]]; then mkdir -p "$AGENTS_ROOT"; if has_local "$branch"; then git -C "$MAIN_REPO_ROOT" worktree add -f "$wt" "$branch"; elif has_remote "$branch"; then git -C "$MAIN_REPO_ROOT" worktree add -f -B "$branch" "$wt" "origin/$branch"; else local base; if git -C "$MAIN_REPO_ROOT" rev-parse --verify origin/main >/dev/null 2>&1; then base=origin/main; else base=main; fi; git -C "$MAIN_REPO_ROOT" worktree add -f -b "$branch" "$wt" "$base"; fi; fi; cd "$wt" && pwd; }
 
-branch_has_any_pr() {
-  local branch="$1"
-  if command -v gh >/dev/null 2>&1; then
-    local n
-    n=$(gh pr list --head "$branch" --state all --json number --jq 'length' 2>/dev/null || echo 0)
-    [[ "${n:-0}" -gt 0 ]]
-  else
-    return 1
-  fi
-}
+run_setup(){ local wt="$1"; if command -v uv >/dev/null 2>&1; then (cd "$wt" && uv sync --extra dev >/dev/null) || (cd "$wt" && uv sync --extra dev); fi; }
 
-resolve_branch_for_pr() {
-  local pr_number="$1"
-  if command -v gh >/dev/null 2>&1; then
-    # headRefName is the branch name on the fork or origin; may include owner if cross-repo.
-    local head
-    head=$(gh pr view "$pr_number" --json headRefName,state,url --jq '.headRefName' 2>/dev/null || true)
-    if [[ -n "${head:-}" ]]; then
-      printf "%s" "$head"
-      return 0
-    fi
-  fi
-  # Fallback heuristic: try to find a matching remote ref via refs/pull.
-  # Not all remotes expose this; leave empty on failure.
-  return 1
-}
+list_wt(){ git_fetch_all; echo "Worktrees under $AGENTS_ROOT:"; [[ -d "$AGENTS_ROOT" ]] || { echo "(none)"; return; } ; find "$AGENTS_ROOT" -maxdepth 1 -mindepth 1 -type d -print0 | sort -z | while IFS= read -r -d '' p; do local slug="$(basename "$p")"; local br="$(git -C "$p" rev-parse --abbrev-ref HEAD 2>/dev/null || echo '?')"; echo "- $slug branch=$br"; done; }
 
-ensure_worktree() {
-  local branch="$1"; shift
-  local slug="$(slugify "$branch")"
-  local wt_path
-  wt_path="$(worktree_path_for "$slug")"
+remove_wt(){ local token="$1" force="$2"; local slug="$(slugify "$token")"; local wt="$(worktree_path_for "$slug")"; local br="$token"; if [[ -d "$wt" ]]; then br=$(git -C "$wt" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "$token"); local dirty=0; [[ -n "$(git -C "$wt" status --porcelain 2>/dev/null)" ]] && dirty=1; [[ $dirty -eq 1 && $force -ne 1 ]] && { echo "Refusing to remove dirty worktree: $wt (use --force)" >&2; return 1; }; git -C "$MAIN_REPO_ROOT" worktree remove ${force:+--force} "$wt" || true; if git -C "$MAIN_REPO_ROOT" show-ref --verify --quiet "refs/heads/$br"; then [[ $force -eq 1 ]] && git -C "$MAIN_REPO_ROOT" branch -D "$br" || git -C "$MAIN_REPO_ROOT" branch -d "$br" || true; fi; fi }
 
-  git_fetch_all
+gc_wt(){ local force="$1"; declare -A ACTIVE; while IFS= read -r p; do ACTIVE["$p"]=1; done < <(git -C "$MAIN_REPO_ROOT" worktree list --porcelain | awk '/^worktree /{print $2}'); if [[ -d "$AGENTS_ROOT" ]]; then find "$AGENTS_ROOT" -maxdepth 1 -mindepth 1 -type d -print0 | while IFS= read -r -d '' d; do [[ -z "${ACTIVE["$d"]+x}" ]] && { echo "[gc] orphan: $d"; [[ $force -eq 1 ]] && rm -rf "$d"; }; done; fi; }
 
-  # Determine branch presence locally/remotely.
-  local has_remote_branch has_local_branch
-  has_remote_branch=$(git -C "$MAIN_REPO_ROOT" ls-remote --heads origin "${branch}" | wc -l | tr -d ' ')
-  if git -C "$MAIN_REPO_ROOT" rev-parse --verify --quiet "refs/heads/${branch}" >/dev/null 2>&1; then
-    has_local_branch=1
-  else
-    has_local_branch=0
-  fi
+# ---------- parse flags ----------
+force=0; do_connect=0; do_ssh=0; do_up=0; do_shell=0; do_list=0; do_gc=0
+open_token=""; create_branch=""; remove_token=""; exec_cmd=""; codex_args=()
 
-  if [[ ! -d "$wt_path" ]]; then
-    mkdir -p "$AGENTS_ROOT"
-    if [[ "$has_local_branch" -eq 1 ]]; then
-      # Use existing local branch
-      git -C "$MAIN_REPO_ROOT" worktree add -f "$wt_path" "$branch"
-    elif [[ "$has_remote_branch" -gt 0 ]]; then
-      # Create/track from remote branch
-      git -C "$MAIN_REPO_ROOT" worktree add -f -B "$branch" "$wt_path" "origin/${branch}"
-    else
-      # Create new branch from base (prefer origin/main)
-      local base_ref
-      if git -C "$MAIN_REPO_ROOT" rev-parse --verify origin/main >/dev/null 2>&1; then
-        base_ref="origin/main"
-      else
-        base_ref="main"
-      fi
-      git -C "$MAIN_REPO_ROOT" worktree add -f -b "$branch" "$wt_path" "$base_ref"
-    fi
-    # Best-effort: make visible in VS Code
-    if command -v code >/dev/null 2>&1; then
-      code --add "$wt_path" >/dev/null 2>&1 || true
-    fi
-  fi
-  # Normalize to absolute
-  if cd "$wt_path" 2>/dev/null; then wt_path="$(pwd)"; else echo "ERROR: cannot cd to worktree: $wt_path" >&2; exit 1; fi
-  printf "%s" "$wt_path"
-}
+while [[ $# -gt 0 ]]; do case "$1" in
+  --connect) do_connect=1; shift ;;
+  --ssh) do_ssh=1; shift ;;
+  --up) do_up=1; shift ;;
+  --shell) do_shell=1; shift ;;
+  --exec) shift; exec_cmd="${1:-}"; [[ -n "$exec_cmd" ]] || { echo "--exec needs a command" >&2; exit 2; }; shift ;;
+  --codex) shift; codex_args=("$@"); set -- ;; # consume rest at run time
+  --list) do_list=1; shift ;;
+  --open) shift; open_token="${1:-}"; [[ -n "$open_token" ]] || { echo "--open needs token (branch or pr:NUM)" >&2; exit 2; }; shift ;;
+  --create) shift; create_branch="${1:-}"; [[ -n "$create_branch" ]] || { echo "--create needs branch" >&2; exit 2; }; shift ;;
+  --remove) shift; remove_token="${1:-}"; [[ -n "$remove_token" ]] || { echo "--remove needs token" >&2; exit 2; }; shift ;;
+  --gc) do_gc=1; shift ;;
+  --force) force=1; shift ;;
+  --doctor) print_cfg; echo "--- tools ---"; for b in ssh "$DEVCONTAINER_BIN" bash git; do printf '%-14s ' "$b"; command -v "$b" || true; done; echo; exit 0 ;;
+  --env) print_cfg; exit 0 ;;
+  -h|--help) usage; exit 0 ;;
+  *) echo "Unknown arg: $1" >&2; usage; exit 1 ;;
+esac; done
 
-cmd_gc() {
-  local dry_run=1 force=0
-  while [[ $# -gt 0 ]]; do
-    case "$1" in
-      --dry-run) dry_run=1 ;;
-      --force) dry_run=0; force=1 ;;
-      *) echo "Unknown option for gc: $1" >&2; exit 1 ;;
-    esac
-    shift || true
-  done
+# ---------- connect (immediate) ----------
+if (( do_connect )); then if (( USE_MOSH_DEFAULT )); then if command -v mosh >/dev/null 2>&1; then exec mosh --ssh="ssh" "$HOST_ALIAS"; else echo "[info] mosh not installed; falling back to ssh"; exec ssh "$HOST_ALIAS"; fi; else exec ssh "$HOST_ALIAS"; fi; fi
+if (( do_ssh )); then exec ssh "$HOST_ALIAS"; fi
 
-  echo "[gc] Scanning for orphaned worktrees under $AGENTS_ROOT"
+# ---------- worktree queries ----------
+if (( do_list )); then list_wt; fi
 
-  # Identify orphaned worktree dirs not registered with git worktree.
-  declare -A ACTIVE_WT
-  while IFS= read -r p; do ACTIVE_WT["$p"]=1; done < <(git -C "$MAIN_REPO_ROOT" worktree list --porcelain | awk '/^worktree /{print $2}')
+# ---------- worktree mutations ----------
+if [[ -n "$create_branch" ]]; then [[ "$create_branch" == main ]] && { echo "Refuse to manage 'main'" >&2; exit 1; }; require git; wt="$(ensure_wt "$create_branch")"; run_setup "$wt"; cd "$wt" || exit 1; fi
+if [[ -n "$open_token" ]]; then require git; token="$open_token"; if [[ "$token" == pr:* ]]; then prn="${token#pr:}"; token="$(resolve_pr "$prn")"; [[ -n "$token" ]] || { echo "Cannot resolve PR #$prn" >&2; exit 1; }; fi; [[ "$token" == main ]] && { echo "Refuse to manage 'main'" >&2; exit 1; }; wt="$(ensure_wt "$token")"; run_setup "$wt"; cd "$wt" || exit 1; fi
+if [[ -n "$remove_token" ]]; then remove_wt "$remove_token" "$force"; fi
+if (( do_gc )); then gc_wt "$force"; fi
 
-  if [[ -d "$AGENTS_ROOT" ]]; then
-    while IFS= read -r -d '' dir; do
-      if [[ -z "${ACTIVE_WT["$dir"]+x}" ]]; then
-        echo "[gc] orphan worktree dir: $dir"
-        if [[ "$dry_run" -eq 0 ]]; then rm -rf "$dir"; fi
-      fi
-    done < <(find "$AGENTS_ROOT" -maxdepth 1 -mindepth 1 -type d -print0)
-  fi
+# ---------- container ops ----------
+if (( do_up )); then dc_up; fi
+if [[ -n "$exec_cmd" ]]; then dc_exec "$exec_cmd"; fi
+if [[ ${#codex_args[@]} -gt 0 ]]; then cmd="$CODEX_CMD_DEFAULT ${codex_args[*]}"; if in_container; then export TERM="${TERM:-xterm-256color}"; exec bash -lc "$cmd"; else dc_exec "$cmd"; fi; fi
+if (( do_shell )); then enter_shell; fi
 
-  # Suggest git-internal prune if anything looks stale.
-  echo "[gc] Note: you can also run 'git -C "$MAIN_REPO_ROOT" worktree prune' manually if needed."
-}
-
-cmd_completion() {
-  local shell="bash"
-  case "${1:-}" in
-    --bash|bash) shell="bash" ;;
-    --zsh|zsh) shell="zsh" ;;
-    "" ) shell="bash" ;;
-    *) echo "Unknown option for completion: $1" >&2; exit 1 ;;
-  esac
-  if [[ "$shell" == "zsh" ]]; then
-    cat <<'EOS'
-autoload -Uz bashcompinit
-bashcompinit
-EOS
-  fi
-  cat <<'EOS'
-_agent_completion() {
-  local cur prev words cword
-  COMPREPLY=()
-  cur=${COMP_WORDS[COMP_CWORD]}
-  prev=${COMP_WORDS[COMP_CWORD-1]}
-  local sub=${COMP_WORDS[1]:-}
-
-  # Helpers to fetch dynamic lists
-  _agent_slugs() { agent __list_slugs 2>/dev/null; }
-  _agent_branches() { agent __list_branches 2>/dev/null; }
-  _agent_prs() { agent __list_pr_numbers 2>/dev/null; }
-
-  if [[ $COMP_CWORD -le 1 ]]; then
-    COMPREPLY=( $(compgen -W "list create open remove gc completion install-completion help --help" -- "$cur") )
-    return 0
-  fi
-
-  case "$sub" in
-    list)
-      COMPREPLY=()
-      ;;
-    create)
-      # Encourage novel names; no suggestions by default. Uncomment to include branches:
-      # COMPREPLY=( $(compgen -W "$(_agent_branches)" -- "$cur") )
-      ;;
-    open)
-      if [[ "$prev" == "pr" ]]; then
-        COMPREPLY=( $(compgen -W "$(_agent_prs)" -- "$cur") )
-      else
-        local opts="pr $(_agent_slugs) $(_agent_branches)"
-        COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
-      fi
-      ;;
-    remove)
-      if [[ "$prev" == "pr" ]]; then
-        COMPREPLY=( $(compgen -W "$(_agent_prs)" -- "$cur") )
-      else
-        local opts="--force pr $(_agent_slugs) $(_agent_branches)"
-        COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
-      fi
-      ;;
-    gc)
-      COMPREPLY=( $(compgen -W "--dry-run --force" -- "$cur") )
-      ;;
-    completion)
-      COMPREPLY=( $(compgen -W "--bash --zsh" -- "$cur") )
-      ;;
-    install-completion)
-      COMPREPLY=()
-      ;;
-    *)
-      COMPREPLY=()
-      ;;
-  esac
-}
-
-complete -o default -F _agent_completion agent
-EOS
-}
-
-cmd_install_completion() {
-  local target="$HOME/.agent_completion.bash"
-  mkdir -p "$(dirname "$target")"
-  agent completion --bash > "$target"
-  if ! grep -qs "agent_completion.bash" "$HOME/.bashrc" 2>/dev/null; then
-    {
-      echo ''
-      echo '# Agent CLI completion'
-      echo "test -f \"$target\" && . \"$target\""
-    } >> "$HOME/.bashrc"
-  fi
-  echo "Installed bash completion to $target and updated ~/.bashrc (new shells will have it)."
-}
-
-cmd_list() {
-  git_fetch_all
-  echo "Worktrees under ${AGENTS_ROOT}:"
-  if [[ -d "$AGENTS_ROOT" ]]; then
-    while IFS= read -r -d '' path; do
-      local slug
-      slug="$(basename "$path")"
-      # Determine branch of worktree
-      local branch
-      if [[ -d "$path/.git" || -f "$path/.git" ]]; then
-        branch=$(git -C "$path" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "?")
-      else
-        branch="?"
-      fi
-      # PR status via gh (best-effort)
-      local pr_info=""
-      if command -v gh >/dev/null 2>&1; then
-        pr_info=$(gh pr list --head "$branch" --state all --json number,state --jq '.[0] | if . then "PR #"+(.number|tostring)+" ("+.state+")" else "" end' 2>/dev/null || true)
-      fi
-      echo "- ${slug} branch=${branch} ${pr_info}"
-    done < <(find "$AGENTS_ROOT" -maxdepth 1 -mindepth 1 -type d -print0 | sort -z)
-  else
-    echo "(none)"
-  fi
-
-  # Also show remote branches without worktrees (summary)
-  echo "Remote branches without worktrees (origin/*):"
-  git -C "$MAIN_REPO_ROOT" ls-remote --heads origin | awk '{print $2}' | sed 's#^refs/heads/##' | sort | \
-    while read -r rb; do
-      # Hide the primary branch 'main' from suggestions
-      if [[ "$rb" == "main" ]]; then continue; fi
-      local slug; slug="$(slugify "$rb")"; local wt
-      wt="$(worktree_path_for "$slug")"
-      if [[ ! -d "$wt" ]]; then echo "  - ${rb}"; fi
-    done
-}
-
-run_setup_in_worktree() {
-  local wt="$1"
-  echo "[open] Running setup in '$wt'"
-  if command -v uv >/dev/null 2>&1; then
-    # Prefer quiet sync; fall back to noisy if quiet fails for any reason
-    (cd "$wt" && uv sync --extra dev >/dev/null) || (cd "$wt" && uv sync --extra dev)
-  else
-    echo "[open] WARN: uv not found; skipping dependency sync" >&2
-  fi
-}
-
-cmd_open() {
-  if [[ "$1" == "pr" ]]; then
-    shift
-    local pr_num="$1"; shift || true
-    [[ -n "${pr_num:-}" ]] || { echo "ERROR: missing PR number" >&2; exit 1; }
-    local branch
-    branch=$(resolve_branch_for_pr "$pr_num") || { echo "ERROR: cannot resolve branch for PR #$pr_num (ensure gh is installed and authenticated)" >&2; exit 1; }
-    set -- "$branch" "$@"
-  fi
-  local token="$1"; shift || true
-  local no_attach=0 here_mode=0
-  local user_codex_cmd="${AGENT_CODEX_CMD:-codex}"
-  while [[ $# -gt 0 ]]; do
-    case "$1" in
-      --no-attach|--here)
-        echo "[open] Note: '$1' is deprecated; tmux is no longer used." >&2 ;;
-      *) echo "Unknown option for open: $1" >&2; exit 1 ;;
-    esac
-    shift || true
-  done
-  local slug; slug="$(slugify "$token")"
-  local wt
-  # Guard against opening 'main' as an agent-managed worktree
-  if [[ "$token" == "main" ]]; then
-    if worktree_exists_slug "main"; then
-      echo "ERROR: Refusing to open agent-managed worktree for 'main'. Use the primary repo checkout instead, or 'agent remove main' to clean it." >&2
-    else
-      echo "ERROR: Refusing to create/open agent-managed worktree for 'main'. Use the primary repo checkout instead." >&2
-    fi
-    exit 1
-  fi
-
-  # If a worktree with this slug already exists, use it; else treat token as branch.
-  if worktree_exists_slug "$slug"; then
-    wt="$(worktree_path_for "$slug")"
-  else
-    # Require that at least a local or remote branch exists for open; else error.
-    if has_local_branch "$token" || has_remote_branch "$token"; then
-      wt="$(ensure_worktree "$token")"
-    else
-      echo "ERROR: no matching worktree or branch found for '$token'. Use 'agent create <branch>' to start novel work." >&2
-      exit 1
-    fi
-  fi
-  # Normalize path to absolute and derive slug from actual path
-  if cd "$wt" 2>/dev/null; then wt="$(pwd)"; else echo "ERROR: cannot cd to worktree: $wt" >&2; exit 1; fi
-  slug="$(basename "$wt")"
-  # Add to VS Code just in case
-  if command -v code >/dev/null 2>&1; then code --add "$wt" >/dev/null 2>&1 || true; fi
-  # Run setup and drop into a shell in the worktree
-  run_setup_in_worktree "$wt"
-  local shell_bin
-  shell_bin="${SHELL:-bash}"
-  echo "[open] Entering shell in '$wt'"
-  cd "$wt" && exec "$shell_bin" -l
-}
-
-cmd_create() {
-  if [[ "$1" == "pr" ]]; then
-    echo "ERROR: 'agent create pr <n>' is not allowed. Use 'agent open pr <n>' to resume an existing PR." >&2
-    exit 1
-  fi
-  local branch="$1"; shift || true
-  if [[ "$branch" == "main" ]]; then
-    echo "ERROR: Refusing to create agent-managed worktree for 'main'. Use the primary repo checkout instead." >&2
-    exit 1
-  fi
-  local slug; slug="$(slugify "$branch")"
-  git_fetch_all
-  # Error if any match exists: worktree, local branch, remote branch, or PR
-  if worktree_exists_slug "$slug"; then
-    echo "ERROR: worktree already exists for slug '$slug'. Use 'agent open $slug'." >&2
-    exit 1
-  fi
-  if has_local_branch "$branch"; then
-    echo "ERROR: local branch '$branch' already exists. Use 'agent open $branch'." >&2
-    exit 1
-  fi
-  if has_remote_branch "$branch"; then
-    echo "ERROR: remote branch '$branch' already exists. Use 'agent open $branch'." >&2
-    exit 1
-  fi
-  if branch_has_any_pr "$branch"; then
-    echo "ERROR: a PR already references branch '$branch'. Use 'agent open pr <n>' or 'agent open $branch'." >&2
-    exit 1
-  fi
-  # Create new worktree + branch from base
-  local base_ref
-  if git -C "$MAIN_REPO_ROOT" rev-parse --verify origin/main >/dev/null 2>&1; then
-    base_ref="origin/main"
-  else
-    base_ref="main"
-  fi
-  local wt
-  wt="$(worktree_path_for "$slug")"
-  mkdir -p "$AGENTS_ROOT"
-  git -C "$MAIN_REPO_ROOT" worktree add -f -b "$branch" "$wt" "$base_ref"
-  if command -v code >/dev/null 2>&1; then code --add "$wt" >/dev/null 2>&1 || true; fi
-  # Attach session
-  cmd_open "$branch"
-}
-
-cmd_remove() {
-  local force=0
-  if [[ "$1" == "pr" ]]; then
-    shift
-    local pr_num="$1"; shift || true
-    [[ -n "${pr_num:-}" ]] || { echo "ERROR: missing PR number" >&2; exit 1; }
-    local branch
-    branch=$(resolve_branch_for_pr "$pr_num") || { echo "ERROR: cannot resolve branch for PR #$pr_num" >&2; exit 1; }
-  else
-    local branch_or_slug="$1"; shift || true
-  fi
-  while [[ $# -gt 0 ]]; do
-    case "$1" in
-      --force) force=1 ;;
-      *) echo "Unknown option: $1" >&2; exit 1 ;;
-    esac
-    shift
-  done
-
-  local slug wt branch
-  if [[ -n "${branch_or_slug:-}" ]]; then
-    slug="$(slugify "$branch_or_slug")"
-    if [[ -d "$(worktree_path_for "$slug")" ]]; then
-      wt="$(worktree_path_for "$slug")"
-      branch=$(git -C "$wt" rev-parse --abbrev-ref HEAD 2>/dev/null || true)
-    else
-      # Treat as branch name
-      branch="$branch_or_slug"
-      slug="$(slugify "$branch")"
-      wt="$(worktree_path_for "$slug")"
-    fi
-  else
-    # PR path: branch already set above
-    slug="$(slugify "$branch")"
-    wt="$(worktree_path_for "$slug")"
-  fi
-  if [[ -d "$wt" ]]; then
-    local head_commit="" upstream_ref="" ahead_count=""
-    if git -C "$wt" rev-parse --verify HEAD >/dev/null 2>&1; then
-      head_commit=$(git -C "$wt" rev-parse HEAD 2>/dev/null || true)
-      upstream_ref=$(git -C "$wt" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)
-      if [[ -n "${upstream_ref:-}" ]]; then
-        ahead_count=$(git -C "$wt" rev-list --count "${upstream_ref}..HEAD" 2>/dev/null || echo 0)
-      fi
-    fi
-    local is_dirty=0
-    if git -C "$wt" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-      if [[ -n "$(git -C "$wt" status --porcelain 2>/dev/null)" ]]; then
-        is_dirty=1
-      fi
-    fi
-    if [[ "$is_dirty" -eq 1 && "$force" -ne 1 ]]; then
-      echo "Worktree at $wt has uncommitted changes; re-run with '--force' to delete it." >&2
-      return 1
-    fi
-    if [[ -n "${head_commit:-}" ]]; then
-      if [[ -n "${upstream_ref:-}" && "${ahead_count:-0}" -gt 0 ]]; then
-        echo "Removing worktree $slug; head commit ${head_commit} is ${ahead_count} ahead of ${upstream_ref}. Save it with 'git checkout ${head_commit}' if needed." >&2
-      elif [[ -z "${upstream_ref:-}" ]]; then
-        echo "Removing worktree $slug; head commit ${head_commit} has no tracked upstream. Record the hash if you need to recover it later." >&2
-      fi
-    fi
-    # Remove worktree and attempt to delete branch if safe.
-    local remove_args=()
-    if [[ "$force" -eq 1 ]]; then
-      remove_args+=(--force)
-    fi
-    git -C "$MAIN_REPO_ROOT" worktree remove "${remove_args[@]}" "$wt" || true
-    if git -C "$MAIN_REPO_ROOT" show-ref --verify --quiet "refs/heads/${branch}"; then
-      if [[ "$force" -eq 1 ]]; then
-        git -C "$MAIN_REPO_ROOT" branch -D "$branch" || true
-      else
-        git -C "$MAIN_REPO_ROOT" branch -d "$branch" || true
-      fi
-    fi
-  fi
-  # Best-effort: close PR if one exists (only with --force)
-  if [[ "$force" -eq 1 ]] && command -v gh >/dev/null 2>&1; then
-    prn=$(gh pr list --head "$branch" --state open --json number --jq '.[0].number' 2>/dev/null || true)
-    if [[ -n "${prn:-}" ]]; then gh pr close "$prn" --delete-branch=false || true; fi
-  fi
-}
-
-main() {
-  ensure_tools
-  local cmd="${1:-}"; shift || true
-  case "$cmd" in
-    __list_slugs)
-      if [[ -d "$AGENTS_ROOT" ]]; then find "$AGENTS_ROOT" -maxdepth 1 -mindepth 1 -type d -printf '%f\n' | sort; fi; exit 0 ;;
-    __list_branches)
-      {
-        git -C "$MAIN_REPO_ROOT" for-each-ref --format='%(refname:short)' refs/heads || true
-        git -C "$MAIN_REPO_ROOT" ls-remote --heads origin 2>/dev/null | awk '{print $2}' | sed 's#^refs/heads/##' || true
-      } | sort -u | grep -Ev '^(main|HEAD|origin)$'; exit 0 ;;
-    __list_pr_numbers)
-      if command -v gh >/dev/null 2>&1; then gh pr list --state open --json number --jq '.[].number' 2>/dev/null; fi; exit 0 ;;
-    list)   cmd_list "$@" ;;
-    open)   cmd_open "$@" ;;
-    create) cmd_create "$@" ;;
-    remove) cmd_remove "$@" ;;
-    gc)     cmd_gc "$@" ;;
-    completion) cmd_completion "$@" ;;
-    install-completion) cmd_install_completion "$@" ;;
-    -h|--help|help|"") usage ;;
-    *) echo "Unknown subcommand: $cmd" >&2; usage; exit 1 ;;
-  esac
-}
-
-main "$@"
+# If nothing executed, show help
+if ! (( do_list || do_gc || do_up || do_shell || [[ -n "$exec_cmd$remove_token$create_branch$open_token" ]] || ${#codex_args[@]} )); then usage; fi
