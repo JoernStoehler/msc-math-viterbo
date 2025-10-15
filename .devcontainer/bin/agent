@@ -55,6 +55,11 @@ Devcontainer actions (chainable, run after worktree ops):
   --exec CMD           Run command in container and exit
   --codex [ARGS...]    Launch Codex in container (default: codex --yolo --model gpt-5 --config model_reasoning_effort=high)
 
+Tunnel (opinionated):
+  --tunnel             Ensure a VS Code Tunnel is running (background/nohup)
+  --tunnel-bg          Start tunnel in background (nohup)
+  --tunnel-tmux        Start tunnel in tmux (detached)
+
 Other:
   --force              Force for remove/gc
   --doctor             Check tools/paths
@@ -78,6 +83,79 @@ EOF
 
 
 in_container(){ [[ -f /.dockerenv ]] || [[ -n "${DEVCONTAINER:-}" ]] || [[ -d /workspaces ]]; }
+
+# ---------- tunnel helpers ----------
+install_tunnel_cli(){
+  if in_container; then
+    if command -v code >/dev/null 2>&1 && code --help 2>/dev/null | grep -q "tunnel"; then
+      return 0
+    fi
+    echo "[agent] Installing VS Code Tunnel CLI"
+    mkdir -p "$HOME/.local/bin"
+    export PATH="$HOME/.local/bin:$PATH"
+    if command -v wget >/dev/null 2>&1; then
+      bash -lc "wget -O- https://aka.ms/install-vscode-server/setup.sh | sh" || true
+    else
+      curl -fsSL https://aka.ms/install-vscode-server/setup.sh | sh || true
+    fi
+    command -v code >/dev/null 2>&1 && code --help 2>/dev/null | grep -q "tunnel"
+  else
+    # Ensure inside-container install
+    dc_exec "bash -lc 'if ! command -v code >/dev/null 2>&1 || ! code --help | grep -q tunnel; then mkdir -p \$HOME/.local/bin; (command -v wget >/dev/null 2>&1 && wget -O- https://aka.ms/install-vscode-server/setup.sh | sh) || (curl -fsSL https://aka.ms/install-vscode-server/setup.sh | sh); fi'"
+  fi
+}
+
+tunnel_default_name(){
+  local name
+  if [[ -n "${open_token:-}" ]]; then
+    name="$(slugify "$open_token")"
+  elif [[ -d .git ]]; then
+    name="$(basename "$(pwd)")"
+  else
+    name="$(hostname -s 2>/dev/null || echo vsc)"
+  fi
+  printf "%s" "$name"
+}
+
+# Returns 0 if a tunnel appears to be running
+tunnel_is_running(){
+  if in_container; then
+    code tunnel status >/dev/null 2>&1
+  else
+    dc_exec "code tunnel status >/dev/null 2>&1"
+  fi
+}
+
+tunnel_start(){
+  local name="$1" mode="$2"
+  local cmd="code tunnel --accept-server-license-terms --name $name"
+  if in_container; then
+    case "$mode" in
+      tmux)
+        if command -v tmux >/dev/null 2>&1; then
+          tmux new -d -s vsc-tunnel "$cmd"
+          echo "[agent] Tunnel started in tmux session 'vsc-tunnel'"
+        else
+          echo "[agent] tmux not found; starting in foreground" >&2
+          exec bash -lc "$cmd"
+        fi
+        ;;
+      bg)
+        nohup bash -lc "$cmd" >/dev/null 2>&1 &
+        echo "[agent] Tunnel started in background (nohup)"
+        ;;
+      *)
+        exec bash -lc "$cmd"
+        ;;
+    esac
+  else
+    case "$mode" in
+      tmux) dc_exec "tmux new -d -s vsc-tunnel '$cmd'" ; echo "[agent] Tunnel started in tmux (container)" ;;
+      bg)   dc_exec "nohup bash -lc '$cmd' >/dev/null 2>&1 &" ; echo "[agent] Tunnel started in background (container)" ;;
+      *)    dc_exec "$cmd" ;;
+    esac
+  fi
+}
 
 # ---------- devcontainer helpers ----------
 dc_up(){
@@ -136,6 +214,7 @@ gc_wt(){ local force="$1"; declare -A ACTIVE; while IFS= read -r p; do ACTIVE["$
 
 # ---------- parse flags ----------
 force=0; do_connect=0; do_ssh=0; do_up=0; do_shell=0; do_list=0; do_gc=0; do_codex=0
+do_tunnel=0; do_tunnel_bg=0; do_tunnel_tmx=0
 open_token=""; create_branch=""; remove_token=""; exec_cmd=""; codex_args=()
 
 while [[ $# -gt 0 ]]; do case "$1" in
@@ -145,6 +224,9 @@ while [[ $# -gt 0 ]]; do case "$1" in
   --shell) do_shell=1; shift ;;
   --exec) shift; exec_cmd="${1:-}"; [[ -n "$exec_cmd" ]] || { echo "--exec needs a command" >&2; exit 2; }; shift ;;
   --codex) shift; do_codex=1; codex_args=("$@"); set -- ;; # consume rest at run time
+  --tunnel) do_tunnel=1; shift ;;
+  --tunnel-bg) do_tunnel_bg=1; shift ;;
+  --tunnel-tmux) do_tunnel_tmx=1; shift ;;
   --list) do_list=1; shift ;;
   --open) shift; open_token="${1:-}"; [[ -n "$open_token" ]] || { echo "--open needs token (branch or pr:NUM)" >&2; exit 2; }; shift ;;
   --create) shift; create_branch="${1:-}"; [[ -n "$create_branch" ]] || { echo "--create needs branch" >&2; exit 2; }; shift ;;
@@ -180,5 +262,30 @@ if (( do_codex )); then
 fi
 if (( do_shell )); then enter_shell; fi
 
+# ---------- tunnel op (opinionated) ----------
+if (( do_tunnel || do_tunnel_bg || do_tunnel_tmx )); then
+  install_tunnel_cli || true
+  name="$(tunnel_default_name)"
+  # Resolve desired mode: CLI flag > env > default
+  mode=""
+  if (( do_tunnel_bg )); then mode="bg"; fi
+  if (( do_tunnel_tmx )); then mode="tmux"; fi
+  if [[ -z "$mode" && -n "${VSC_TUNNEL_MODE:-}" ]]; then
+    case "$VSC_TUNNEL_MODE" in
+      bg|BG|background) mode="bg" ;;
+      tmux|TMUX)        mode="tmux" ;;
+    esac
+  fi
+  if [[ -z "$mode" ]]; then
+    mode="bg"
+  fi
+  if tunnel_is_running; then
+    echo "[agent] VS Code Tunnel is running. Name: $name"
+  else
+    tunnel_start "$name" "$mode"
+  fi
+  echo "[agent] Connect via: https://vscode.dev/tunnel/$name"
+fi
+
 # If nothing executed, show help
-if ! { (( do_list || do_gc || do_up || do_shell || do_codex )) || [[ -n "$exec_cmd$remove_token$create_branch$open_token" ]]; }; then usage; fi
+if ! { (( do_list || do_gc || do_up || do_shell || do_codex || do_tunnel || do_tunnel_bg || do_tunnel_tmx )) || [[ -n "$exec_cmd$remove_token$create_branch$open_token" ]]; }; then usage; fi
