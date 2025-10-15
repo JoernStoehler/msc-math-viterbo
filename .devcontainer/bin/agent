@@ -21,7 +21,7 @@ HOST_ALIAS="joern-pc"                          # must match ~/.ssh/config
 MAIN_REPO_ROOT="$HOME/workspaces/msc-math-viterbo"
 DEVCONF_REL=".devcontainer/local/devcontainer.json"
 DEVCONTAINER_BIN="devcontainer"
-CODEX_CMD_DEFAULT="codex --yolo --model gpt-5-high"
+CODEX_CMD_DEFAULT="codex --yolo --model gpt-5 --config model_reasoning_effort=high"
 USE_MOSH_DEFAULT=1                              # use mosh on phone
 
 # Computes writable agents root: prefer /workspaces (inside container), else .. near repo
@@ -53,7 +53,7 @@ Devcontainer actions (chainable, run after worktree ops):
   --up                 Ensure devcontainer is up for current worktree (or MAIN)
   --shell              Enter login shell inside the devcontainer
   --exec CMD           Run command in container and exit
-  --codex [ARGS...]    Launch Codex in container (default: codex --yolo --model gpt-5-high)
+  --codex [ARGS...]    Launch Codex in container (default: codex --yolo --model gpt-5 --config model_reasoning_effort=high)
 
 Other:
   --force              Force for remove/gc

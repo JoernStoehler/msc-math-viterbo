@@ -19,15 +19,18 @@ This prompt is for the repository orchestrator. Use it to keep the backlog tidy 
 ## Launching a Task Agent
 
 - Start from a clean `git status` on `main`; land backlog edits before you spin the worktree.
-- Use `scripts/happy-agent` to create the worktree and boot the tmux session:
+- Use the unified agent helper to create the worktree and run Codex:
 
   ```bash
-  scripts/happy-agent task/slug gpt-5-high 'Short task prompt for the agent'
+  .devcontainer/bin/agent --create task/slug --codex "--model gpt-5 --config model_reasoning_effort=high 'Short task prompt for the agent'"
   ```
 
-- Ensure the brief commit has landed on `main` before running the script so the branch inherits the status change.
-- After launch, `tmux ls` should show a session named after the branch; attach if you need to inspect setup logs.
-- Let the PI handle cleanup (`git worktree remove`, killing tmux sessions) unless explicitly asked.
+  Tips:
+  - `--open task/slug --codex "…"` to reuse an existing branch/worktree
+  - `--shell` to open an interactive shell in the container
+
+- Ensure the brief commit has landed on `main` before launch so the branch inherits the status change.
+- After launch, manage sessions/containers via the same helper; see `-h` for options.
 
 ## Notes to Future You
 
