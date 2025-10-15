@@ -34,17 +34,16 @@ Single authoritative policy for this repo.
 - Tests: `tests/` — smoke tests under `test_*.py`; benches under `tests/performance/`
 - Docs & Notes: `docs/` (site + task briefs), `notebooks/` (dummy examples), `artefacts/` (outputs, ignored)
   - Tasks: `docs/tasks/` (open briefs) and `docs/tasks/archived/` (examples)
-    * The Maintainer actively works through `docs/tasks/`; treat those briefs as the canonical backlog and update them whenever scope or status changes.
+    * The Project Owner actively works through `docs/tasks/`; treat those briefs as the canonical backlog and update them whenever scope or status changes.
   - `notebooks/` stores Jupytext-managed `.py` notebooks; preserve the front-matter metadata when editing or adding entries.
 
 ## 2) Environment & Tooling
 
 - Stack: Python 3.12, PyTorch 2.x (CPU baseline; optional CUDA for models only). C++17 with pybind11 for custom hotspot non‑SIMD kernels.
-- Devcontainers: `.devcontainer/devcontainer.local.json` (local VS Code Remote - Containers with host volumes) and `.devcontainer/devcontainer.codespaces.json` (GitHub Codespaces without host volumes). Pick the correct definition when prompted; there is no default.
-- Codex agents land inside a pre-provisioned environment; never run devcontainer lifecycle commands manually.
-- Git CLI (`git`) and GitHub CLI (`gh`) are available; use them for local workflow and PR creation. `gh pr create --body-file docs/tasks/PR_TEMPLATE.md` is recommended—`--body` drops formatting and leads to empty PR descriptions otherwise.
-- Dependency manager: uv (`uv run`, `uv sync`, `uv add`). Commit `uv.lock`.
-- When invoking project Python entrypoints from the shell, prefer `uv run python …` over bare `python` to stay inside the managed environment.
+- Three supported environments: local devcontainer, github codespaces, and codex cloud bare container. Shared lifecycle scripts (`.devcontainer/{post-create.sh,post-start.sh}`) manage environment setup.
+- Codex agents land inside a pre-provisioned environment.
+- PRs: use `gh`; prefer `gh pr create --body-file docs/tasks/PR_TEMPLATE.md` (avoid `--body`).
+- Python/uv: use `uv run python …`; commit `uv.lock`.
 - Editors: Pyright (basic) for fast feedback; Ruff for lint/format.
 - Testing: Pytest (smoke by default) + incremental selector (`scripts/inc_select.py`) for fast local loops + `pytest-benchmark` for targeted benches.
 - Shell I/O: prefer `rg` for search; when reading files in the shell, stream ≤250-line chunks.
@@ -143,10 +142,9 @@ PR message:
 
 ## 10) Architecture Overview (everyday reference)
 
-- Layering: `math` (pure, stateless) ← `datasets` (adapters, ragged collation) ← `models` (experiments; may use GPU). C++ kernels live under `_cpp` with Python fallbacks.
-- Ragged patterns: use lists of tensors or padded tensors + masks; provide collate functions (`collate_list`, `collate_pad`).
-- Devices: accept caller’s device; do not move implicitly. Dtypes are documented at each function.
-- C++ interop: CPU‑only baseline via `torch.utils.cpp_extension`; no CUDA unless required; keep fallbacks to Python/Torch.
+- Layering: `math` (pure) ← `datasets` (adapters) ← `models` (experiments); C++ kernels in `_cpp` without fallbacks.
+- Ragged data: lists or padded tensors + masks; we offer collate functions in `datasets`.
+- Devices/dtypes: accept caller’s device; no implicit moves; CPU-only is fine in `math`; document dtypes per function.
 
 ## 11) Current Focus
 
