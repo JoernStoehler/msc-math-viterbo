@@ -76,14 +76,45 @@ AGENTS_ROOT=$AGENTS_ROOT
 EOF
 }
 
+
 in_container(){ [[ -f /.dockerenv ]] || [[ -n "${DEVCONTAINER:-}" ]] || [[ -d /workspaces ]]; }
 
 # ---------- devcontainer helpers ----------
-dc_up(){ local repo; repo="$(abs_repo)" || { echo "Repo not found: $MAIN_REPO_ROOT" >&2; exit 1; }; require "$DEVCONTAINER_BIN"; cd "$repo"; "$DEVCONTAINER_BIN" up --workspace-folder . --config "$DEVCONF_REL" >/dev/null; }
+dc_up(){
+  local repo
+  if [[ -f "$PWD/$DEVCONF_REL" || -d "$PWD/.devcontainer" ]]; then
+    repo="$PWD"
+  else
+    repo="$(abs_repo)"; [[ -n "$repo" ]] || { echo "Repo not found: $MAIN_REPO_ROOT" >&2; exit 1; }
+  fi
+  require "$DEVCONTAINER_BIN"
+  cd "$repo"
+  "$DEVCONTAINER_BIN" up --workspace-folder . --config "$DEVCONF_REL" >/dev/null
+}
 
-dc_exec(){ local repo; repo="$(abs_repo)" || { echo "Repo not found: $MAIN_REPO_ROOT" >&2; exit 1; }; require "$DEVCONTAINER_BIN"; cd "$repo"; "$DEVCONTAINER_BIN" exec --workspace-folder . bash -lc "$*"; }
+dc_exec(){
+  local repo
+  if [[ -f "$PWD/$DEVCONF_REL" || -d "$PWD/.devcontainer" ]]; then
+    repo="$PWD"
+  else
+    repo="$(abs_repo)"; [[ -n "$repo" ]] || { echo "Repo not found: $MAIN_REPO_ROOT" >&2; exit 1; }
+  fi
+  require "$DEVCONTAINER_BIN"
+  cd "$repo"
+  "$DEVCONTAINER_BIN" exec --workspace-folder . --config "$DEVCONF_REL" bash -lc "$*"
+}
 
-enter_shell(){ dc_up; export TERM="${TERM:-xterm-256color}"; exec "$DEVCONTAINER_BIN" exec --workspace-folder "$(abs_repo)" bash -lc 'exec ${SHELL:-bash} -l'; }
+enter_shell(){
+  if in_container; then
+    exec "${SHELL:-bash}" -l
+  else
+    dc_up
+    local term="${TERM:-xterm-256color}"
+    # Start a login shell inside the devcontainer using the common exec helper.
+    # Expand ${SHELL} inside the container, not on host.
+    dc_exec "export TERM='$term'; exec \${SHELL:-bash} -l"
+  fi
+}
 
 # ---------- git/worktree helpers ----------
 slugify(){ local s="$1"; s="${s//\//-}"; s="${s//[^A-Za-z0-9._-]/-}"; printf "%s" "$s"; }
@@ -104,7 +135,7 @@ remove_wt(){ local token="$1" force="$2"; local slug="$(slugify "$token")"; loca
 gc_wt(){ local force="$1"; declare -A ACTIVE; while IFS= read -r p; do ACTIVE["$p"]=1; done < <(git -C "$MAIN_REPO_ROOT" worktree list --porcelain | awk '/^worktree /{print $2}'); if [[ -d "$AGENTS_ROOT" ]]; then find "$AGENTS_ROOT" -maxdepth 1 -mindepth 1 -type d -print0 | while IFS= read -r -d '' d; do [[ -z "${ACTIVE["$d"]+x}" ]] && { echo "[gc] orphan: $d"; [[ $force -eq 1 ]] && rm -rf "$d"; }; done; fi; }
 
 # ---------- parse flags ----------
-force=0; do_connect=0; do_ssh=0; do_up=0; do_shell=0; do_list=0; do_gc=0
+force=0; do_connect=0; do_ssh=0; do_up=0; do_shell=0; do_list=0; do_gc=0; do_codex=0
 open_token=""; create_branch=""; remove_token=""; exec_cmd=""; codex_args=()
 
 while [[ $# -gt 0 ]]; do case "$1" in
@@ -113,7 +144,7 @@ while [[ $# -gt 0 ]]; do case "$1" in
   --up) do_up=1; shift ;;
   --shell) do_shell=1; shift ;;
   --exec) shift; exec_cmd="${1:-}"; [[ -n "$exec_cmd" ]] || { echo "--exec needs a command" >&2; exit 2; }; shift ;;
-  --codex) shift; codex_args=("$@"); set -- ;; # consume rest at run time
+  --codex) shift; do_codex=1; codex_args=("$@"); set -- ;; # consume rest at run time
   --list) do_list=1; shift ;;
   --open) shift; open_token="${1:-}"; [[ -n "$open_token" ]] || { echo "--open needs token (branch or pr:NUM)" >&2; exit 2; }; shift ;;
   --create) shift; create_branch="${1:-}"; [[ -n "$create_branch" ]] || { echo "--create needs branch" >&2; exit 2; }; shift ;;
@@ -142,8 +173,12 @@ if (( do_gc )); then gc_wt "$force"; fi
 # ---------- container ops ----------
 if (( do_up )); then dc_up; fi
 if [[ -n "$exec_cmd" ]]; then dc_exec "$exec_cmd"; fi
-if [[ ${#codex_args[@]} -gt 0 ]]; then cmd="$CODEX_CMD_DEFAULT ${codex_args[*]}"; if in_container; then export TERM="${TERM:-xterm-256color}"; exec bash -lc "$cmd"; else dc_exec "$cmd"; fi; fi
+if (( do_codex )); then
+  cmd="$CODEX_CMD_DEFAULT"
+  if [[ ${#codex_args[@]} -gt 0 ]]; then cmd+=" ${codex_args[*]}"; fi
+  if in_container; then export TERM="${TERM:-xterm-256color}"; exec bash -lc "$cmd"; else dc_exec "$cmd"; fi
+fi
 if (( do_shell )); then enter_shell; fi
 
 # If nothing executed, show help
-if ! { (( do_list || do_gc || do_up || do_shell )) || [[ -n "$exec_cmd$remove_token$create_branch$open_token" ]] || (( ${#codex_args[@]} > 0 )); }; then usage; fi
+if ! { (( do_list || do_gc || do_up || do_shell || do_codex )) || [[ -n "$exec_cmd$remove_token$create_branch$open_token" ]]; }; then usage; fi
