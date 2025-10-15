@@ -48,6 +48,13 @@ Single authoritative policy for this repo.
 - Editors: Pyright (basic) for fast feedback; Ruff for lint/format.
 - Testing: Pytest (smoke by default) + incremental selector (`scripts/inc_select.py`) for fast local loops + `pytest-benchmark` for targeted benches.
 
+PDF text extraction (for inbox/notes)
+- Prefer `pdftotext -layout -nopgbrk` for fast, readable plain text.
+- Fallback to Python `pypdf` when CLI tools are unavailable.
+- For metadata, use `pdfinfo` (Poppler) or `exiftool` when present.
+- For scanned PDFs, use OCR (`tesseract`) only if necessary.
+- When reading in the shell, stream in 250‑line chunks to avoid truncation.
+
 ### Quick Commands
 
 - `just checks` - for quick feedback, runs `just format && just lint && just type && just test`
