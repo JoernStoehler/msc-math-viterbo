@@ -48,10 +48,12 @@ Single authoritative policy for this repo.
 - Editors: Pyright (basic) for fast feedback; Ruff for lint/format.
 - Testing: Pytest (smoke by default) + incremental selector (`scripts/inc_select.py`) for fast local loops + `pytest-benchmark` for targeted benches.
 
-PDF text extraction (for inbox/notes)
-- Prefer `pdftotext -layout -nopgbrk` for fast, readable plain text.
-- Fallback to Python `pypdf` when CLI tools are unavailable.
-- For metadata, use `pdfinfo` (Poppler) or `exiftool` when present.
+PDF ingestion (for inbox/notes)
+- Standard: convert PDFs to a single Markdown file and read that.
+  - Command: `pdftotext -layout -nopgbrk input.pdf output.md` (treat plain text as Markdown).
+  - Store the `.md` alongside the PDF under `mail/private/` (git‑ignored).
+- Fallback: if `pdftotext` is unavailable, dump text via Python `pypdf` and save as `.md`.
+- Metadata is niche; only use `pdfinfo`/`exiftool` when needed.
 - For scanned PDFs, use OCR (`tesseract`) only if necessary.
 - When reading in the shell, stream in 250‑line chunks to avoid truncation.
 
