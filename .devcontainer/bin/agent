@@ -146,4 +146,4 @@ if [[ ${#codex_args[@]} -gt 0 ]]; then cmd="$CODEX_CMD_DEFAULT ${codex_args[*]}"
 if (( do_shell )); then enter_shell; fi
 
 # If nothing executed, show help
-if ! (( do_list || do_gc || do_up || do_shell || [[ -n "$exec_cmd$remove_token$create_branch$open_token" ]] || ${#codex_args[@]} )); then usage; fi
+if ! { (( do_list || do_gc || do_up || do_shell )) || [[ -n "$exec_cmd$remove_token$create_branch$open_token" ]] || (( ${#codex_args[@]} > 0 )); }; then usage; fi
