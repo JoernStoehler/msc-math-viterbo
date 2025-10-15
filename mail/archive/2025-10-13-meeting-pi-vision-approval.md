@@ -84,8 +84,6 @@
 - Student: Prepare architecture choices for early NN surrogate experiments; agent to implement/run once green‑lit.
 - Agent: Maintain project conventions (PyTorch‑first, math purity in `viterbo.math`, no silent dtype/device moves); keep notes updated under `mail/archive/`.
 
-## Open Questions (please confirm/clarify)
+## Remaining Open Question
 
-- Evaluation: Are the above criteria complete/correct? Any additional hard metrics (dataset size targets, acceptable error for surrogates)?
-- Approvals: Any constraints on sharing intermediate plots/benchmarks with collaborators beyond the advisor?
-- Tools: Any CS resources (e.g., specific servers/quotas) to assume for the ~1 CPU‑day budget, or remain local only?
+- Surrogates: define acceptable error/tolerance targets and validation protocol for NN predictors (given dataset target ~1e5 and augmentation plan).
