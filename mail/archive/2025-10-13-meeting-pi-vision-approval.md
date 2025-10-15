@@ -12,6 +12,7 @@
 
 - Approach: Implement literature-grounded and custom algorithms, leveraging “vibecoding” agents to accelerate implementation. Validate via hand-checked examples and property tests (e.g., invariances, transformation behavior, known relations/lemmas).
 - Dataset: Generate a large corpus of 4D polytopes first (random; structured families like Lagrangian products; canonical examples such as 5‑gon × rotated 5‑gon), then scale to higher dimensions as feasible.
+ - Dataset: Generate a large corpus of 4D polytopes first (random; structured families like Lagrangian products; canonical examples such as 5‑gon × rotated 5‑gon), then scale to higher dimensions as feasible. Plan to reach ~1e5 distinct base polytopes, and enrich via augmentations (Sp(2n)+translations; local gradient‑informed vertex moves preserving combinatorics; light noise with superfluous vertices and small jitters).
 - Quantities: Compute and store symplectic and non‑symplectic quantities and pairwise relations (e.g., EHZ capacity/minimal action; volume; systolic ratio; geometry/topology similarity metrics, symplectomorphism‑invariant features).
 - Algorithms: Start with PyTorch + C++ baselines to avoid MATLAB bottlenecks. Explore a specialized 4D algorithm that may sidestep hardness results proved for unbounded dimensions.
 - Analysis/ML: Run PCA and topology/similarity analyses, search for large systolic ratio examples, perform gradient‑based refinement at fixed/variable vertex counts, and use NNs/RL for surrogate modeling and constructive search (e.g., learn faster predictors or synthesize polytopes with target properties). Also search for the simplest/smallest counterexample (minimal vertex count) per advisor suggestion.
@@ -39,10 +40,10 @@
 - Compute stack: PyTorch + C++ (pybind11) for speed; scikit‑learn + standard Python libs for analysis; internal library under `src/viterbo/` adhering to project conventions.
 - Algorithms: Implement EHZ capacity (minimal action), volume, derived systolic ratio; topology/similarity metrics; gradient‑based refinement; exploratory surrogates (NNs) and constructive RL.
 
-## Evaluation Criteria (draft — please confirm)
+## Evaluation Criteria (updated)
 
 - Correctness: Reproduce known values on hand‑crafted examples; property‑based tests of invariances/relations; cross‑check against literature examples.
-- Performance: Achieve throughput to compute a “moderately large” 4D dataset within ~1 CPU‑day; C++ accelerations where Python/Torch bottlenecks appear.
+- Performance: Achieve throughput to compute a “moderately large” 4D dataset of ~1e5 4D polytopes within ~1 CPU‑day (or a comparable budget via batching); C++ accelerations where Python/Torch bottlenecks appear.
 - Discovery: Existence of new examples with systolic ratio ≥ 1; search coverage across families; ability to climb to local maxima via refinement.
 - Surrogate quality: NN predictors improve throughput accuracy/speed on larger polytopes; constructive RL yields candidates matching targets.
 
