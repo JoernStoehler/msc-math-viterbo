@@ -4,13 +4,18 @@ Single authoritative policy for this repo.
 
 ## 0) Roles & Scope
 
-- Maintainer (PI)
+- Project Owner/Maintainer (Jörn Stöhler)
+  - Owns vision, scope, and research/engineering roadmap.
   - Approves task briefs and larger directional changes.
-  - Owns DevOps/CI, merges PRs, and steers research/architecture.
+  - Owns DevOps/CI and merges PRs (may delegate merge on a case-by-case basis).
+- Academic Advisor (Kai Cieliebak)
+  - Provides scientific guidance and week-scale reorientation.
+  - Reviews and signs off on the final thesis text.
+  - Not a gating approver for code or merges; rarely uses the repo directly.
 - Codex agents (ephemeral)
   - Implement focused, incremental changes (task level).
   - Escalate uncertainties early.
-  - Open PRs and iterate until CI is green; PI merges.
+  - Open PRs and iterate until CI is green; Owner merges (or explicitly delegates).
 - Escalation triggers (PR description with `Needs-Unblock: <topic>` or issue)
   - Ambiguous acceptance criteria; policy conflicts; larger env/CI changes.
   - Cross‑task architecture choices; performance regressions beyond thresholds.
@@ -144,3 +149,10 @@ PR message:
 ## 14) Current Focus
 
 - Primary research target: 4D polytopes in the symplectic standard setting.
+
+## 15) Collaboration & Sharing
+
+- Repo access: Only the Project Owner and Codex agents use GitHub for code/docs. The Academic Advisor does not routinely use the repo; coordination is via meetings and email updates.
+- Email hygiene: Do not commit verbatim emails from third parties. Record paraphrased summaries under `mail/archive/` with context and links. Handle private attachments cautiously; prefer summaries/metadata unless explicitly cleared.
+- Preprints: Treat non-public preprints as private unless clearly published (e.g., on arXiv). Avoid redistribution; cite conservatively.
+- Reporting: Weekly cadence via `mail/` folder. Owner decides when to open PRs for reports; Advisor receives emails and in-person demos rather than repo browsing.

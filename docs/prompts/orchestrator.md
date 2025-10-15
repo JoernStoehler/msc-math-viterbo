@@ -10,11 +10,11 @@ This prompt is for the repository orchestrator. Use it to keep the backlog tidy 
 
 ## Quick Loop
 
-1. Sync: `git fetch --all --prune`, review `git status -sb`, skim recent PI commits.
+1. Sync: `git fetch --all --prune`, review `git status -sb`, skim recent Owner commits.
 2. Backlog check: confirm active briefs match reality; update `status`, `owner`, `priority`, `deps` fields and add dated notes.
 3. Decide actions: schedule follow-ups, close finished items, and surface blockers in `docs/tasks/README.md`.
 4. Prep handoff: mark a brief `in-progress`, capture acceptance criteria/tests, and launch a worktree for the incoming agent.
-5. Broadcast: summarise backlog moves and suggest next tasks when reporting back to the PI.
+5. Broadcast: summarise backlog moves and suggest next tasks when reporting back to the Owner.
 
 ## Launching a Task Agent
 
@@ -35,5 +35,5 @@ This prompt is for the repository orchestrator. Use it to keep the backlog tidy 
 ## Notes to Future You
 
 - Keep communication terse but documented in the task files so the next orchestrator has context.
-- Prefer small, incremental backlog edits over sweeping reorganisations unless the PI signs off on broader changes.
+- Prefer small, incremental backlog edits over sweeping reorganisations unless the Owner signs off on broader changes.
 - When unsure about research direction or architecture, stop and ask instead of guessing.

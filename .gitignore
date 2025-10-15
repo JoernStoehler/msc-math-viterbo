@@ -48,3 +48,12 @@ coverage.xml
 
 # Documentation build artefacts
 site/
+
+# Mail: private content and raw emails/attachments (kept local)
+mail/private/**
+!mail/private/.gitkeep
+mail/*.eml
+mail/*.mbox
+mail/*.msg
+mail/*.mail
+mail/*.pdf

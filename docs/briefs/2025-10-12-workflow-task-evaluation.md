@@ -12,7 +12,7 @@ summary: Updated task/experiment evaluation methodology for the modern program.
 1. Collect context from code, briefs, and recent PRs.
 2. Clarify the task nucleus (core question, artefacts produced).
 3. Map outcomes → information value; assign rough odds where helpful.
-4. Score utilities by downstream leverage; estimate costs (agent time, compute, PI time).
+4. Score utilities by downstream leverage; estimate costs (agent time, compute, Owner time).
 5. Decide and communicate; track dependencies inline; keep a short Status Log.
 
 ## Cadence
@@ -25,4 +25,3 @@ summary: Updated task/experiment evaluation methodology for the modern program.
 
 - Every test declares exactly one goal marker and one suite marker; docstrings state the invariant.
 - Deterministic seeds, x64; use clear assertions with context-appropriate tolerances.
-
