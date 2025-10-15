@@ -47,6 +47,7 @@ Single authoritative policy for this repo.
 - When invoking project Python entrypoints from the shell, prefer `uv run python …` over bare `python` to stay inside the managed environment.
 - Editors: Pyright (basic) for fast feedback; Ruff for lint/format.
 - Testing: Pytest (smoke by default) + incremental selector (`scripts/inc_select.py`) for fast local loops + `pytest-benchmark` for targeted benches.
+- Shell I/O: prefer `rg` for search; when reading files in the shell, stream ≤250-line chunks.
 
 PDF ingestion (for inbox/notes)
 - Standard: convert PDFs to a single Markdown file and read that.
@@ -72,6 +73,7 @@ PDF ingestion (for inbox/notes)
 - Precision: set dtype per function/docstring (math often float64; ML often float32). Avoid silent downcasts; document deviations.
 - Ragged data: allow Python lists of tensors or padded tensors with masks; expose `collate_fn`s in `datasets`.
 - Purity: `viterbo.math` is pure (no I/O, no hidden state). Keep side‑effects in adapters.
+- Strict layering: `math` ← `datasets` ← `models`; `math` must not depend upward.
 - Docstrings: concise Google‑style focusing on semantics, invariants, units and shapes. Add shape/dtype comments where non‑obvious.
 - Imports & structure: absolute imports with explicit paths; no wildcard imports; No re‑export indirection; namespaced modules (no `__all__`).
 - Types: prefer built‑ins (`list[str]`, `dict[str, torch.Tensor]`, unions with `|`); avoid custom typedefs for shapes/dimensions.
@@ -108,12 +110,10 @@ def support(points, direction):
 
 ## 6) Testing (facts)
 
-- Keep tests pragmatic and fast. Prefer smoke tests and representative benchmarks.
-- Structure: organize by module (`tests/test_*.py`, `tests/performance/test_*.py`).
-- Timeouts: keep smoke tests under a few seconds locally and in CI.
-- Benchmarks: use `pytest-benchmark` with fixed RNG seeds; save artefacts under `.benchmarks/`.
-- Assertions: use `pytest.approx`, `torch.testing.assert_close`, or `math.isclose` appropriately.
-- Shape validation: rely on docstrings, inline comments, and the existing unit tests; avoid redundant shape assertions unless a bug fix demands them.
+- Smoke-first and fast: a few seconds locally/CI; organize by module; benches under `tests/performance/` with fixed RNG (artefacts in `.benchmarks/`).
+- Invariants: prefer invariance/property tests with deterministic seeds; docstrings state the invariant.
+- Tolerances: use `torch.testing.assert_close`, `pytest.approx`, or `math.isclose` appropriately; avoid redundant shape asserts unless fixing a bug.
+- Pragmatism: keep tests small and representative of the real API usage by our own repo and its expected future features.
 
 ## 7) Performance (facts)
 
@@ -125,12 +125,11 @@ def support(points, direction):
 
 Daily development
 
-1. Read task; scan relevant code/tests.
-2. Perform the required investigation (code, docs, tests) so the plan is fully informed.
-3. Reflect on goal and develop a short plan (4–7 steps).
-3. Implement cohesive changes. Run `just precommit` for local gate (format, lint, type, smoke).
+1. Read task; scan relevant code/tests/docs.
+2. Investigate enough to plan; write a short plan (4–7 steps).
+3. Implement cohesive changes. Run `just checks` locally (format, lint, type, smoke).
 4. Keep math pure; do I/O only in datasets/models/adapters.
-5. For parity, run `just ci-cpu` locally if needed; update tests/docs before pushing / opening PR.
+5. For parity, run `just ci` if needed; update tests/docs; open a PR with a clear description.
 
 PR message:
 
@@ -142,24 +141,18 @@ PR message:
 - Avoid dataclasses in `math`; return tensors/tuples of tensors.
 - Keep `datasets` simple; no DSL; explicit functions and small classes.
 
-## 12) Policy Notes (imperative)
-
-- Strict layering: `math` must not depend on `datasets`/`models`.
-- No `__all__`; avoid re‑export indirection (no aggregator re‑exports in `__init__.py`).
-- Prefer small, focused cleanups over exceptions.
-
-## 13) Architecture Overview (everyday reference)
+## 10) Architecture Overview (everyday reference)
 
 - Layering: `math` (pure, stateless) ← `datasets` (adapters, ragged collation) ← `models` (experiments; may use GPU). C++ kernels live under `_cpp` with Python fallbacks.
 - Ragged patterns: use lists of tensors or padded tensors + masks; provide collate functions (`collate_list`, `collate_pad`).
 - Devices: accept caller’s device; do not move implicitly. Dtypes are documented at each function.
 - C++ interop: CPU‑only baseline via `torch.utils.cpp_extension`; no CUDA unless required; keep fallbacks to Python/Torch.
 
-## 14) Current Focus
+## 11) Current Focus
 
 - Primary research target: 4D polytopes in the symplectic standard setting.
 
-## 15) Collaboration & Sharing
+## 12) Collaboration & Sharing
 
 - Repo access: Only the Project Owner and Codex agents use GitHub for code/docs. The Academic Advisor does not routinely use the repo; coordination is via meetings and email updates.
 - Email hygiene: Do not commit verbatim emails from third parties. Record paraphrased summaries under `mail/archive/` with context and links. Handle private attachments cautiously; prefer summaries/metadata unless explicitly cleared.
