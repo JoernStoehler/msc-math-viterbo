@@ -83,33 +83,36 @@ if command -v npm >/dev/null 2>&1; then
   npm i -g @openai/codex >/dev/null 2>&1 || true
 fi
 
-echo "[post-create] Preparing VS Code Tunnel CLI (optional)"
+echo "[post-create] Ensuring VS Code CLI (with 'tunnel') is installed"
 
-# Install the VS Code Server CLI that provides `code tunnel`, if missing.
-install_vscode_tunnel_cli(){
-  if command -v code >/dev/null 2>&1; then
-    # Ensure this is the server CLI (has the 'tunnel' subcommand)
-    if code --help 2>/dev/null | grep -q "tunnel"; then
-      echo "[post-create] VS Code Tunnel CLI already present"
-      return 0
-    fi
+install_vscode_cli_simple(){
+  # Single path: download CLI tarball from Microsoft CDN and install 'code'.
+  local arch; arch="$(uname -m)"
+  local os_flavor="cli-linux-x64"
+  if [[ "$arch" == "aarch64" || "$arch" == "arm64" ]]; then os_flavor="cli-linux-arm64"; fi
+  if command -v code >/dev/null 2>&1 && code --help 2>/dev/null | grep -q "tunnel"; then
+    echo "[post-create] VS Code CLI already present"
+    return 0
   fi
-  echo "[post-create] Installing VS Code Server CLI (code + tunnel)"
   mkdir -p "${HOME}/.local/bin"
   export PATH="$HOME/.local/bin:$PATH"
-  # Prefer wget, fall back to curl
-  if command -v wget >/dev/null 2>&1; then
-    bash -lc "wget -O- https://aka.ms/install-vscode-server/setup.sh | sh" >/dev/null 2>&1 || true
-  else
-    curl -fsSL https://aka.ms/install-vscode-server/setup.sh | sh >/dev/null 2>&1 || true
+  local url="https://update.code.visualstudio.com/latest/${os_flavor}/stable"
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  if curl -fsSLo "${tmpdir}/cli.tar.gz" "$url"; then
+    if tar -xzf "${tmpdir}/cli.tar.gz" -C "$tmpdir" code; then
+      install -m 0755 "${tmpdir}/code" "${HOME}/.local/bin/code"
+    fi
   fi
+  rm -rf "$tmpdir"
   if command -v code >/dev/null 2>&1 && code --help 2>/dev/null | grep -q "tunnel"; then
-    echo "[post-create] Installed VS Code Tunnel CLI"
+    echo "[post-create] Installed VS Code CLI"
   else
-    echo "[post-create] WARNING: Failed to install VS Code Tunnel CLI (offline?)" >&2
+    echo "[post-create] ERROR: VS Code CLI not available; required for tunnels." >&2
+    exit 1
   fi
 }
 
-install_vscode_tunnel_cli || true
+install_vscode_cli_simple
 
 echo "[post-create] Post-create steps complete"

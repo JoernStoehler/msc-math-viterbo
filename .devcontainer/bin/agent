@@ -59,6 +59,7 @@ Tunnel (opinionated):
   --tunnel             Ensure a VS Code Tunnel is running (background/nohup)
   --tunnel-bg          Start tunnel in background (nohup)
   --tunnel-tmux        Start tunnel in tmux (detached)
+  --tunnel-kill        Stop any running tunnel and prune stale state
 
 Other:
   --force              Force for remove/gc
@@ -86,22 +87,34 @@ in_container(){ [[ -f /.dockerenv ]] || [[ -n "${DEVCONTAINER:-}" ]] || [[ -d /w
 
 # ---------- tunnel helpers ----------
 install_tunnel_cli(){
+  # Single, explicit path: install the standalone VS Code CLI from Microsoft CDN
+  local arch; arch="$(uname -m)"
+  local os_flavor="cli-linux-x64"
+  if [[ "$arch" == "aarch64" || "$arch" == "arm64" ]]; then os_flavor="cli-linux-arm64"; fi
   if in_container; then
     if command -v code >/dev/null 2>&1 && code --help 2>/dev/null | grep -q "tunnel"; then
       return 0
     fi
-    echo "[agent] Installing VS Code Tunnel CLI"
+    echo "[agent] Installing VS Code CLI"
     mkdir -p "$HOME/.local/bin"
     export PATH="$HOME/.local/bin:$PATH"
-    if command -v wget >/dev/null 2>&1; then
-      bash -lc "wget -O- https://aka.ms/install-vscode-server/setup.sh | sh" || true
-    else
-      curl -fsSL https://aka.ms/install-vscode-server/setup.sh | sh || true
-    fi
+    local url="https://update.code.visualstudio.com/latest/${os_flavor}/stable"
+    local tmpdir; tmpdir="$(mktemp -d)"
+    (curl -fsSLo "${tmpdir}/cli.tar.gz" "$url" && tar -xzf "${tmpdir}/cli.tar.gz" -C "$tmpdir" code && install -m 0755 "${tmpdir}/code" "$HOME/.local/bin/code") || true
+    rm -rf "$tmpdir"
     command -v code >/dev/null 2>&1 && code --help 2>/dev/null | grep -q "tunnel"
   else
     # Ensure inside-container install
-    dc_exec "bash -lc 'if ! command -v code >/dev/null 2>&1 || ! code --help | grep -q tunnel; then mkdir -p \$HOME/.local/bin; (command -v wget >/dev/null 2>&1 && wget -O- https://aka.ms/install-vscode-server/setup.sh | sh) || (curl -fsSL https://aka.ms/install-vscode-server/setup.sh | sh); fi'"
+    dc_exec "bash -lc 'if ! command -v code >/dev/null 2>&1 || ! code --help 2>/dev/null | grep -q tunnel; then mkdir -p \$HOME/.local/bin; url=https://update.code.visualstudio.com/latest/${os_flavor}/stable; tmp=\$(mktemp -d); curl -fsSLo \"\$tmp/cli.tar.gz\" \"\$url\" && tar -xzf \"\$tmp/cli.tar.gz\" -C \"\$tmp\" code && install -m 0755 \"\$tmp/code\" \"\$HOME/.local/bin/code\"; rm -rf \"\$tmp\"; fi'"
+  fi
+}
+
+tunnel_is_logged_in(){
+  if in_container; then
+    # Prints 'not logged in' when unauthenticated
+    local out; out="$(code tunnel user show 2>/dev/null || true)"; [[ "$out" != *"not logged in"* ]]
+  else
+    dc_exec "out=\$(code tunnel user show 2>/dev/null || true); [[ \"$out\" != *not logged in* ]]"
   fi
 }
 
@@ -117,18 +130,20 @@ tunnel_default_name(){
   printf "%s" "$name"
 }
 
-# Returns 0 if a tunnel appears to be running
+# Returns 0 only if a tunnel is Connected (not just CLI present)
 tunnel_is_running(){
   if in_container; then
-    code tunnel status >/dev/null 2>&1
+    code tunnel status 2>/dev/null | grep -q '"tunnel":"Connected"'
   else
-    dc_exec "code tunnel status >/dev/null 2>&1"
+    dc_exec "code tunnel status 2>/dev/null | grep -q '\\"tunnel\\":\\"Connected\\"'"
   fi
 }
 
 tunnel_start(){
   local name="$1" mode="$2"
-  local cmd="code tunnel --accept-server-license-terms --name $name"
+  # Always pass explicit CLI data dir to avoid env/path surprises
+  local cli_dir="${VSCODE_CLI_DATA_DIR:-$HOME/.vscode/cli}"
+  local cmd="code --cli-data-dir \"$cli_dir\" tunnel --accept-server-license-terms --name $name"
   if in_container; then
     case "$mode" in
       tmux)
@@ -214,7 +229,7 @@ gc_wt(){ local force="$1"; declare -A ACTIVE; while IFS= read -r p; do ACTIVE["$
 
 # ---------- parse flags ----------
 force=0; do_connect=0; do_ssh=0; do_up=0; do_shell=0; do_list=0; do_gc=0; do_codex=0
-do_tunnel=0; do_tunnel_bg=0; do_tunnel_tmx=0
+do_tunnel=0; do_tunnel_bg=0; do_tunnel_tmx=0; do_tunnel_kill=0
 open_token=""; create_branch=""; remove_token=""; exec_cmd=""; codex_args=()
 
 while [[ $# -gt 0 ]]; do case "$1" in
@@ -227,6 +242,7 @@ while [[ $# -gt 0 ]]; do case "$1" in
   --tunnel) do_tunnel=1; shift ;;
   --tunnel-bg) do_tunnel_bg=1; shift ;;
   --tunnel-tmux) do_tunnel_tmx=1; shift ;;
+  --tunnel-kill) do_tunnel_kill=1; shift ;;
   --list) do_list=1; shift ;;
   --open) shift; open_token="${1:-}"; [[ -n "$open_token" ]] || { echo "--open needs token (branch or pr:NUM)" >&2; exit 2; }; shift ;;
   --create) shift; create_branch="${1:-}"; [[ -n "$create_branch" ]] || { echo "--create needs branch" >&2; exit 2; }; shift ;;
@@ -262,10 +278,24 @@ if (( do_codex )); then
 fi
 if (( do_shell )); then enter_shell; fi
 
+# ---------- tunnel kill (explicit cleanup) ----------
+if (( do_tunnel_kill )); then
+  if in_container; then
+    code tunnel kill >/dev/null 2>&1 || true
+    code tunnel prune >/dev/null 2>&1 || true
+    pkill -f "code( |$).*tunnel" >/dev/null 2>&1 || true
+  else
+    dc_exec "code tunnel kill >/dev/null 2>&1 || true" || true
+    dc_exec "code tunnel prune >/dev/null 2>&1 || true" || true
+    dc_exec "pkill -f 'code( |$).*tunnel' >/dev/null 2>&1 || true" || true
+  fi
+  echo "[agent] Tunnel processes stopped and servers pruned"
+fi
+
 # ---------- tunnel op (opinionated) ----------
 if (( do_tunnel || do_tunnel_bg || do_tunnel_tmx )); then
   install_tunnel_cli || true
-  name="$(tunnel_default_name)"
+    name="$(tunnel_default_name)"
   # Resolve desired mode: CLI flag > env > default
   mode=""
   if (( do_tunnel_bg )); then mode="bg"; fi
@@ -279,12 +309,36 @@ if (( do_tunnel || do_tunnel_bg || do_tunnel_tmx )); then
   if [[ -z "$mode" ]]; then
     mode="bg"
   fi
-  if tunnel_is_running; then
+  if ! tunnel_is_logged_in; then
+    echo "[agent] VS Code CLI not logged in. Run: code tunnel user login --provider github" >&2
+    exit 1
+  elif tunnel_is_running; then
     echo "[agent] VS Code Tunnel is running. Name: $name"
   else
+    # If a tunnel process exists but is not connected, cleanly stop it to avoid stale singletons
+    if in_container; then
+      code tunnel kill >/dev/null 2>&1 || true
+      code tunnel prune >/dev/null 2>&1 || true
+      # Hard-kill any stray tunnel clients if singleton was confused
+      pkill -f "code( |$).*tunnel" >/dev/null 2>&1 || true
+    else
+      dc_exec "code tunnel kill >/dev/null 2>&1 || true" || true
+      dc_exec "code tunnel prune >/dev/null 2>&1 || true" || true
+      dc_exec "pkill -f 'code( |$).*tunnel' >/dev/null 2>&1 || true" || true
+    fi
     tunnel_start "$name" "$mode"
   fi
-  echo "[agent] Connect via: https://vscode.dev/tunnel/$name"
+  # Briefly wait for connection and report status
+  connected=0
+  for _ in 1 2 3 4 5; do
+    if tunnel_is_running; then connected=1; break; fi
+    sleep 1
+  done
+  if (( connected )); then
+    echo "[agent] Tunnel connected. Open: https://vscode.dev/tunnel/$name"
+  else
+    echo "[agent] Tunnel starting (not connected yet). Check: code tunnel status"
+  fi
 fi
 
 # If nothing executed, show help
