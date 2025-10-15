@@ -5,7 +5,7 @@ status: proposed
 priority: medium
 labels: [future, math, minkowski-billiard]
 deps:
-  - src/viterbo/math/minimal_action.py
+  - src/viterbo/math/capacity_ehz/
   - tests/math/test_minkowski_billiard.py
   - docs/tasks/2025-10-13-task-math-minkowski-billiard.md
 ---

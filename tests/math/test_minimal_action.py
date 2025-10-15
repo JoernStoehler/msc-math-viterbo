@@ -4,13 +4,13 @@ import math
 
 import torch
 
-from viterbo.math.minimal_action import (
+from viterbo.math.capacity_ehz.algorithms import (
     capacity_ehz_algorithm1,
     capacity_ehz_algorithm2,
     capacity_ehz_primal_dual,
-    minimal_action_cycle,
-    systolic_ratio,
 )
+from viterbo.math.capacity_ehz.cycle import minimal_action_cycle
+from viterbo.math.capacity_ehz.ratios import systolic_ratio
 from viterbo.math.polytope import vertices_to_halfspaces
 
 torch.set_default_dtype(torch.float64)

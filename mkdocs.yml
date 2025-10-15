@@ -24,7 +24,7 @@ nav:
       - constructions: math/constructions.md
       - volume: math/volume.md
       - symplectic: math/symplectic.md
-      - minimal_action: math/minimal_action.md
+      - capacity_ehz: math/capacity_ehz.md
       - similarity: math/similarity.md
       - polar: math/polar.md
   - Tasks backlog: tasks/README.md

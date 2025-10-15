@@ -57,7 +57,7 @@ import numpy as np
 import torch
 
 from viterbo.math.constructions import lagrangian_product, rotated_regular_ngon2d
-from viterbo.math.minimal_action import minimal_action_cycle_lagrangian_product
+from viterbo.math.capacity_ehz.lagrangian_product import minimal_action_cycle_lagrangian_product
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_PATH = PROJECT_ROOT / "src"

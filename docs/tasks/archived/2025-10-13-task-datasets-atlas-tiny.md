@@ -10,7 +10,7 @@ deps:
   - src/viterbo/datasets/atlas_tiny.py
   - src/viterbo/math/constructions.py
   - src/viterbo/math/polytope.py
-  - src/viterbo/math/minimal_action.py
+  - src/viterbo/math/capacity_ehz/
   - src/viterbo/math/volume.py
 ---
 

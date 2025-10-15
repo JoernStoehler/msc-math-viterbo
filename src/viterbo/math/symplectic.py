@@ -1,8 +1,8 @@
 """Symplectic linear algebra utilities.
 
 This module exposes the standard symplectic form and a random symplectic
-matrix generator. Constructions and capacity solvers live in
-``viterbo.math.constructions`` and ``viterbo.math.minimal_action``.
+matrix generator. Constructions live in ``viterbo.math.constructions`` and
+capacity/cycle solvers live in ``viterbo.math.capacity_ehz.*``.
 """
 
 from __future__ import annotations

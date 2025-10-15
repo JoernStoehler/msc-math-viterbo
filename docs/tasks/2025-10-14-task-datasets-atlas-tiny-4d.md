@@ -9,7 +9,7 @@ deps:
   - src/viterbo/datasets/atlas_tiny.py
   - notebooks/atlas_tiny_profile.py
   - docs/math/volume.md
-  - docs/math/minimal_action.md
+  - docs/math/capacity_ehz.md
 ---
 
 ## Summary

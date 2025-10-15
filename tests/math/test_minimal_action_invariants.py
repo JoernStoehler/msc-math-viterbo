@@ -1,7 +1,7 @@
 """Smoke tests for symplectic invariants and capacities.
 
 The tests in this module target high-level mathematical behaviour that the
-placeholder implementations in :mod:`viterbo.math.minimal_action` must satisfy once
+placeholder implementations in :mod:`viterbo.math.capacity_ehz.*` must satisfy once
 completed.  They focus on invariance properties, scaling laws, and benchmark
 values extracted from the literature (notably the 2024 counterexample to
 Viterbo's conjecture recorded in the thesis notes).
@@ -13,13 +13,13 @@ import math
 
 import torch
 
-from viterbo.math.constructions import matmul_vertices, translate_vertices
-from viterbo.math.minimal_action import (
+from viterbo.math.capacity_ehz.algorithms import (
     capacity_ehz_algorithm1,
     capacity_ehz_algorithm2,
-    minimal_action_cycle,
-    systolic_ratio,
 )
+from viterbo.math.capacity_ehz.cycle import minimal_action_cycle
+from viterbo.math.capacity_ehz.ratios import systolic_ratio
+from viterbo.math.constructions import matmul_vertices, translate_vertices
 from viterbo.math.polytope import vertices_to_halfspaces
 from viterbo.math.symplectic import random_symplectic_matrix
 from viterbo.math.volume import volume

@@ -43,6 +43,8 @@ if command -v apt-get >/dev/null 2>&1; then
   if ! command -v tmux >/dev/null 2>&1; then $SUDO apt-get install -y tmux >/dev/null || true; fi
   # Install extra terminfo entries (tmux-256color) for proper color support
   $SUDO apt-get install -y ncurses-term >/dev/null || true
+  # Install Poppler utils for PDF -> text/markdown extraction (pdftotext)
+  if ! command -v pdftotext >/dev/null 2>&1; then $SUDO apt-get install -y poppler-utils >/dev/null || true; fi
 fi
 
 if command -v rg >/dev/null 2>&1 && rg --version | head -n1 | grep -q "rg ${RG_VERSION}"; then

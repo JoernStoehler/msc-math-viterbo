@@ -74,7 +74,8 @@ def atlas_tiny_generate() -> list[AtlasTinyRaggedRow]:
 def atlas_tiny_complete_row(row: AtlasTinyRaggedRow) -> AtlasTinyRow:
     """Populate derived quantities for a ragged row using math utilities."""
 
-    from viterbo.math.minimal_action import minimal_action_cycle, systolic_ratio
+    from viterbo.math.capacity_ehz.cycle import minimal_action_cycle
+    from viterbo.math.capacity_ehz.ratios import systolic_ratio
     from viterbo.math.volume import volume as volume_from_vertices
 
     vertices = row["vertices"]

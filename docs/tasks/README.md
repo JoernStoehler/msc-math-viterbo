@@ -56,3 +56,6 @@ clean queue for new agents.
 - [ ] Keep `docs/tasks/` limited to adoptable briefs; archive or delete files immediately after their implementation merges.
 - [ ] Periodically prune the archived directory when a brief no longer adds context worth keeping.
 - [ ] Keep future ideas in `docs/tasks/future/` and promote them only when scoping work begins.
+ - [ ] Exact 4D EHZ via facet enumeration (Haim–Kislev): `docs/tasks/future/2025-10-15-future-ehz-4d-exact-enumeration.md`.
+ - [ ] Convex QP and LP/SOCP paths for c_EHZ: `docs/tasks/future/2025-10-15-future-ehz-qp-lp-paths.md`.
+ - [ ] Oriented‑edge action spectrum in ℝ⁴: `docs/tasks/future/2025-10-15-future-oriented-edge-spectrum-4d.md`.

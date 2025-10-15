@@ -8,7 +8,7 @@ priority: medium
 labels: [task]
 deps:
   - src/viterbo/math/constructions.py
-  - src/viterbo/math/minimal_action.py
+  - src/viterbo/math/capacity_ehz/
   - notebooks/viterbo_counterexample_proposal.py
 ---
 

@@ -85,6 +85,7 @@ SELECTION_THRESHOLD = 0.4
 
 EXCLUDE_DIRS = {".git", ".venv", "node_modules", ".cache", "build", "dist", "site"}
 
+
 class ExitCodes(NamedTuple):
     """Exit status constants used by the selector."""
 
@@ -209,9 +210,7 @@ def build_module_index(files: list[Path], infos: dict[Path, ModuleInfo]) -> dict
     return idx
 
 
-def resolve_import(
-    info: ModuleInfo, node: ast.AST, idx: dict[str, Path]
-) -> list[Path]:
+def resolve_import(info: ModuleInfo, node: ast.AST, idx: dict[str, Path]) -> list[Path]:
     """Resolve an import node to internal module paths."""
 
     if isinstance(node, ast.Import):

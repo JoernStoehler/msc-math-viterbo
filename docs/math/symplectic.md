@@ -19,4 +19,4 @@ Functions
 Notes
 
 - Use `viterbo.math.constructions.lagrangian_product` for polytope products and
-  `viterbo.math.minimal_action` for capacity/cycle computation.
+  `viterbo.math.capacity_ehz.*` for capacity/cycle computation.

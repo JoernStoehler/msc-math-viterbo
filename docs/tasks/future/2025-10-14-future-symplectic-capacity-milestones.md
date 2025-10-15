@@ -28,8 +28,8 @@ Track the staged rollout for reliable symplectic capacity, volume, and cycle com
 
 ## Dependencies
 
-- `src/viterbo/math/minimal_action.py`
-- `src/viterbo/math/capacity.py` (or equivalent module implementing EHZ)
+- `src/viterbo/math/capacity_ehz/`
+- `src/viterbo/math/capacity_ehz/` (EHZ solvers)
 - `src/viterbo/math/volume.py`
 - Dataset tooling under `src/viterbo/datasets/`
 - Benchmarking hooks (`tests/performance/`)

@@ -7,7 +7,7 @@ branch: main
 priority: high
 labels: [task]
 deps:
-  - src/viterbo/math/minimal_action.py
+  - src/viterbo/math/capacity_ehz/
   - src/viterbo/math/polytope.py
   - tests/math/test_minimal_action_invariants.py
 ---

@@ -6,7 +6,7 @@ owner: TBD
 priority: high
 labels: [task, math, symplectic]
 deps:
-  - src/viterbo/math/minimal_action.py
+  - src/viterbo/math/capacity_ehz/
   - src/viterbo/math/constructions.py
   - src/viterbo/math/volume.py
 ---
@@ -18,7 +18,7 @@ Restore 4D coverage for symplectic invariants so datasets and notebooks can oper
 ## Background
 
 - `volume` now supports arbitrary dimension (Gauss-divergence fallback), so missing pieces are the symplectic solvers.
-- Current `minimal_action` implementations short-circuit at 2D, preventing 4D dataset rows from being completed.
+- Current `capacity_ehz` implementations focus on 2D and Lagrangian products; general 4D coverage is the target.
 - Atlas notebooks and downstream experiments depend on these invariants to study systolic ratios in the 4D setting.
 
 ## Deliverables
@@ -27,7 +27,7 @@ Restore 4D coverage for symplectic invariants so datasets and notebooks can oper
 2. Provide a minimal-action cycle extractor in 4D that returns an ordered orbit compatible with the dataset schema.
 3. Update docstrings to describe supported dimensions, references, and numerical tolerances.
 4. Add smoke tests under `tests/math/` covering canonical 4D bodies (hypercube, Lagrangian product, known counterexample) and verifying scaling/invariance.
-5. Document limitations or approximations (e.g., combinatorial explosion, degeneracy handling) in `docs/math/minimal_action.md`.
+5. Document limitations or approximations (e.g., combinatorial explosion, degeneracy handling) in `docs/math/capacity_ehz.md`.
 
 ## Acceptance Criteria
 

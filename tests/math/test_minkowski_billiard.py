@@ -6,8 +6,8 @@ import math
 
 import torch
 
+from viterbo.math.capacity_ehz.lagrangian_product import minimal_action_cycle_lagrangian_product
 from viterbo.math.constructions import rotated_regular_ngon2d
-from viterbo.math.minimal_action import minimal_action_cycle_lagrangian_product
 from viterbo.math.polytope import vertices_to_halfspaces
 
 torch.set_default_dtype(torch.float64)

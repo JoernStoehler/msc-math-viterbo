@@ -20,6 +20,6 @@ Modules
 - [constructions](constructions.md) — builders and linear transforms.
 - [volume](volume.md) — volume routines and future backends.
 - [symplectic](symplectic.md) — symplectic form and random symplectomorphisms.
-- [minimal_action](minimal_action.md) — EHZ capacities, cycles, spectra (4D focus).
+- [capacity_ehz](capacity_ehz.md) — EHZ capacities, cycles, spectra (4D focus).
 - [similarity](similarity.md) — distances between polytopes (stubs).
 - [polar](polar.md) — polar body helpers and Mahler links (stubs).
