@@ -19,7 +19,7 @@
 
 ## Attachment Status
 
-- File: `mail/Optimization_on_Symplectic_Embeddings (1).pdf`
+- File: `mail/private/Optimization_on_Symplectic_Embeddings (1).pdf`
 - PDF metadata (extracted):
   - Title: Optimization on Symplectic Embeddings
   - Authors: Alexander Gajewski, Eli Goldin, Jakwanul Safin, Navtej Singh, Junhui Zhang
