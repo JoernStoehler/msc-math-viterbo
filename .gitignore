@@ -19,6 +19,7 @@ dist/
 .python-version
 .venv/
 .uv/
+.uv-cache/
 .pytest_cache/
 .benchmarks/
 .mypy_cache/

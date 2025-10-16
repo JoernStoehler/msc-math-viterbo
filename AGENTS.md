@@ -40,13 +40,14 @@ Single authoritative policy for this repo.
 ## 2) Environment & Tooling
 
 - Stack: Python 3.12, PyTorch 2.x (CPU baseline; optional CUDA for models only). C++17 with pybind11 for custom hotspot non‑SIMD kernels.
-- Three supported environments: local devcontainer, github codespaces, and codex cloud bare container. Shared lifecycle scripts (`.devcontainer/{post-create.sh,post-start.sh}`) manage environment setup.
+- Supported environment: local devcontainer (golden path). Shared lifecycle scripts (`.devcontainer/{post-create.sh,post-start.sh}`) manage environment setup. Codespaces/Codex Cloud are not used.
 - Codex agents land inside a pre-provisioned environment.
 - PRs: use `gh`; prefer `gh pr create --body-file docs/tasks/PR_TEMPLATE.md` (avoid `--body`).
 - Python/uv: use `uv run python …`; commit `uv.lock`.
 - Editors: Pyright (basic) for fast feedback; Ruff for lint/format.
 - Testing: Pytest (smoke by default) + incremental selector (`scripts/inc_select.py`) for fast local loops + `pytest-benchmark` for targeted benches.
 - Shell I/O: prefer `rg` for search; when reading files in the shell, stream ≤250-line chunks.
+ - Environment reference: see `docs/environment.md` for the Project Owner’s golden-path environment (devcontainer + VibeKanban + tunnels).
 
 PDF ingestion (for inbox/notes)
 - Standard: convert PDFs to a single Markdown file and read that.

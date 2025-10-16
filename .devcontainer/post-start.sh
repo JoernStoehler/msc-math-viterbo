@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Purpose: run lightweight tasks every time the devcontainer boots.
-# 1. Persist bash history to a mounted volume.
-# 2. Re-sync dependencies with uv to catch pyproject edits between boots.
+# post-start — clean, opinionated bootstrap for the project owner workflow.
+# - Keep shell ergonomics sane
+# - Ensure permissions for bind-mounted dirs
+# - Fast idempotent uv sync
+# - Print actionable hints (auth status), but do not auto-start services
+# - All service control lives in .devcontainer/Justfile
 
-echo "[post-start] Container started."
+echo "[post-start] Booting environment (owner workflow)."
 
-export JAX_ENABLE_X64=1
-
+# Persist bash history to a mounted volume
 HIST_DIR="$HOME/.bash_history_dir"
 HIST_FILE="$HIST_DIR/.bash_history"
 mkdir -p "$HIST_DIR" && touch "$HIST_FILE"
 export HISTFILE="$HIST_FILE" || true
 
-if [ ! -f "$HOME/.bashrc" ]; then touch "$HOME/.bashrc"; fi
+touch "$HOME/.bashrc" "$HOME/.bash_profile"
 if ! grep -qE 'HISTFILE=.*\\.bash_history_dir/.bash_history' "$HOME/.bashrc" 2>/dev/null; then
   {
     echo ''
@@ -22,73 +24,104 @@ if ! grep -qE 'HISTFILE=.*\\.bash_history_dir/.bash_history' "$HOME/.bashrc" 2>/
     echo 'export HISTFILE="$HOME/.bash_history_dir/.bash_history"'
   } >> "$HOME/.bashrc"
 fi
-
-if ! grep -q 'export JAX_ENABLE_X64=1' "$HOME/.bashrc" 2>/dev/null; then
-  {
-    echo ''
-    echo '# Enable 64-bit precision for JAX by default'
-    echo 'export JAX_ENABLE_X64=1'
-  } >> "$HOME/.bashrc"
-fi
-
-
-
-if [ ! -f "$HOME/.bash_profile" ]; then touch "$HOME/.bash_profile"; fi
 if ! grep -q '\\.bashrc' "$HOME/.bash_profile" 2>/dev/null; then
   echo 'test -f ~/.bashrc && . ~/.bashrc' >> "$HOME/.bash_profile"
 fi
 
-if [ -f "pyproject.toml" ]; then
-  if command -v uv >/dev/null 2>&1; then
-    echo "[post-start] Syncing dependencies with uv (idempotent)"
-    uv sync --extra dev >/dev/null || true
-  else
-    echo "[post-start] WARN: uv missing; run .devcontainer/post-create.sh" >&2
-  fi
-fi
-
-# If running inside the local VS Code devcontainer, ensure Git uses gh for credentials.
-if [ "${LOCAL_DEVCONTAINER:-}" = "1" ]; then
-  if command -v gh >/dev/null 2>&1; then
-    echo "[post-start] Configuring Git to use gh credential helper (local devcontainer)"
-    # Remove any VS Code Remote Containers helper from the GLOBAL scope to avoid precedence issues.
-    # (System-level helper may remain; Git will fall through to gh if system helper returns no creds.)
-    if git config --global --get-all credential.helper | grep -q 'vscode-remote-containers'; then
-      git config --global --unset-all credential.helper || true
-    fi
-    # Ensure gh uses HTTPS for git operations and installs its credential helper.
-    gh config set git_protocol https >/dev/null 2>&1 || true
-    gh auth setup-git >/dev/null 2>&1 || true
-    # As a deterministic fallback in this repo: clear inherited helpers and set gh explicitly.
-    git config --local credential.helper "" || true
-    git config --local credential.helper "!gh auth git-credential" || true
-    # Brief diagnostics (non-fatal if they fail):
-    git config --global --get-all credential.helper || true
-    git config --local --get-all credential.helper || true
-  else
-    echo "[post-start] WARN: gh not found; skipping credential helper setup" >&2
-  fi
-fi
-
-echo "[post-start] Environment ready."
-
-# Install/update convenience symlinks for agent tooling and ensure local bin precedence.
-REPO_ROOT="$(pwd)"
+# Ensure PATH precedence for user-local bin
 mkdir -p "$HOME/.local/bin"
-# Prepend repo-local bin to PATH for this session
-export PATH="$REPO_ROOT/.devcontainer/bin:$HOME/.local/bin:$PATH"
-if ! grep -q "\.devcontainer/bin" "$HOME/.bashrc" 2>/dev/null; then
+if ! grep -q '\.local/bin' "$HOME/.bashrc" 2>/dev/null; then
   {
     echo ''
-    echo '# Add repo-local agent tools to PATH'
-    echo "export PATH=\"$REPO_ROOT/.devcontainer/bin:\$HOME/.local/bin:\$PATH\""
+    echo '# Ensure user-local bin precedes system'
+    echo 'export PATH="$HOME/.local/bin:$PATH"'
   } >> "$HOME/.bashrc"
 fi
+export PATH="$HOME/.local/bin:$PATH"
 
-# Symlink stable entrypoint so it works from any worktree
-ln -sf "$REPO_ROOT/.devcontainer/bin/agent" "$HOME/.local/bin/agent" || true
+# Fix permissions on bind-mounted folders (idempotent)
+echo "[post-start] Verifying ownership for mounted folders (idempotent)."
+for d in \
+  "$HOME/.config/gh" \
+  "$HOME/.vscode" \
+  "$HOME/.config/codex" \
+  "$HOME/.cloudflared" \
+  "$HOME/.cache/uv" \
+  "$HOME/.local/share/ai/bloop/vibe-kanban" \
+  "/var/tmp/vibe-kanban/worktrees" \
+; do
+  [ -d "$d" ] || continue
+  chown -R "$USER:$USER" "$d" || true
+done
 
-# Install shell completion (idempotent)
-"$REPO_ROOT/.devcontainer/bin/agent" install-completion >/dev/null 2>&1 || true
+# Idempotent uv sync (fast when nothing changed)
+if [ -f "pyproject.toml" ] && command -v uv >/dev/null 2>&1; then
+  echo "[post-start] uv sync (dev extras, idempotent)."
+  uv sync --extra dev >/dev/null || true
+fi
 
-:
+# Diagnostics (non-fatal but actionable)
+echo "[post-start] Diagnostics:"
+
+# VS Code CLI
+if command -v code >/dev/null 2>&1; then
+  if code --help 2>/dev/null | grep -q "tunnel"; then
+    echo "  - VS Code CLI: ok (tunnel supported)."
+  else
+    echo "  - VS Code CLI: present, but tunnel subcommand missing."
+  fi
+else
+  echo "  - VS Code CLI: not found (will limit tunnel usage)."
+fi
+
+# GitHub CLI
+if command -v gh >/dev/null 2>&1; then
+  if gh auth status -h github.com >/dev/null 2>&1; then
+    echo "  - gh: authenticated."
+  else
+    echo "  - gh: not authenticated. Run 'gh auth login'."
+  fi
+else
+  echo "  - gh: not found."
+fi
+
+# Cloudflared status
+CF_TUNNEL="${CF_TUNNEL:-vibekanban}"
+if command -v cloudflared >/dev/null 2>&1; then
+  if [ -s "$HOME/.cloudflared/cert.pem" ]; then
+    if cloudflared tunnel list 2>/dev/null | grep -qE "^\s*${CF_TUNNEL}\b"; then
+      echo "  - cloudflared: logged in; tunnel '${CF_TUNNEL}' defined."
+    else
+      echo "  - cloudflared: logged in; tunnel '${CF_TUNNEL}' not found. Create with: cloudflared tunnel create ${CF_TUNNEL}"
+    fi
+  else
+    echo "  - cloudflared: not logged in. Run 'cloudflared tunnel login'."
+  fi
+else
+  echo "  - cloudflared: not found."
+fi
+
+# Wrangler (Cloudflare) status
+if command -v wrangler >/dev/null 2>&1; then
+  echo "  - wrangler: installed. Use 'just -f .devcontainer/Justfile cf-worker-deploy' to deploy the font worker."
+else
+  echo "  - wrangler: not found. Install with 'npm i -g wrangler' if you plan to deploy the font worker."
+fi
+
+# Mount presence (informational)
+for d in \
+  "$HOME/.config/gh" \
+  "$HOME/.vscode" \
+  "$HOME/.config/codex" \
+  "$HOME/.cloudflared" \
+  "$HOME/.cache/uv" \
+  "$HOME/.local/share/ai/bloop/vibe-kanban" \
+  "/var/tmp/vibe-kanban/worktrees" \
+; do
+  [ -d "$d" ] || echo "  - mount missing (expected directory): $d"
+done
+
+echo "[post-start] Done. Use '.devcontainer/Justfile' to start services:"
+echo "  - just -f .devcontainer/Justfile start-vibe"
+echo "  - just -f .devcontainer/Justfile start-tunnel"
+echo "  - just -f .devcontainer/Justfile start-cf"

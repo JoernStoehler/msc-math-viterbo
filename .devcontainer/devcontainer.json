@@ -1,0 +1,37 @@
+{
+  "name": "viterbo-dev",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "remoteUser": "codespace",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "bash .devcontainer/post-start.sh",
+  "containerEnv": {
+    "FRONTEND_PORT": "3000",
+    "TUNNEL_NAME": "viterbo-dev",
+    "CF_TUNNEL": "vibekanban",
+    "HOST": "0.0.0.0",
+    "HISTFILE": "/home/codespace/.bash_history_dir/.bash_history",
+    "HISTSIZE": "50000",
+    "HISTCONTROL": "ignoredups:erasedups",
+    "VSCODE_CLI_DATA_DIR": "/home/codespace/.vscode",
+    "XDG_CONFIG_HOME": "/home/codespace/.config",
+    "XDG_DATA_HOME": "/home/codespace/.local/share",
+    "XDG_CACHE_HOME": "/home/codespace/.cache"
+  },
+  "mounts": [
+    "source=/srv/devhome/.config/gh,target=/home/codespace/.config/gh,type=bind,consistency=cached",
+    "source=/srv/devhome/.vscode,target=/home/codespace/.vscode,type=bind,consistency=cached",
+    "source=/srv/devhome/.config/codex,target=/home/codespace/.config/codex,type=bind,consistency=cached",
+    "source=/srv/devhome/.cloudflared,target=/home/codespace/.cloudflared,type=bind,consistency=cached",
+    "source=/srv/devhome/.cache/uv,target=/home/codespace/.cache/uv,type=bind,consistency=cached",
+    "source=/srv/devhome/.local/share/ai/bloop/vibe-kanban,target=/home/codespace/.local/share/ai/bloop/vibe-kanban,type=bind,consistency=cached",
+    "source=/srv/devworktrees/vibe-kanban/worktrees,target=/var/tmp/vibe-kanban/worktrees,type=bind,consistency=cached"
+  ],
+  "features": {}
+}

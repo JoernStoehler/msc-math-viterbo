@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# RETIRED: This wrapper has been superseded by the new owner workflow.
+# See:
+#   - .devcontainer/Justfile (service control: VibeKanban, VS Code Tunnel, cloudflared)
+#   - .devcontainer/README.md (how to start/stop services)
+#   - docs/environment.md (environment reference)
+#
+# Keeping this stub to avoid surprises for old aliases or muscle memory.
+echo "This agent wrapper is retired. Use '.devcontainer/Justfile' tasks instead."
+echo "Examples:"
+echo "  just -f .devcontainer/Justfile start-vibe"
+echo "  just -f .devcontainer/Justfile start-tunnel"
+echo "  just -f .devcontainer/Justfile start-cf"

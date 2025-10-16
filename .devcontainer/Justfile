@@ -1,0 +1,160 @@
+set shell := ["bash", "-euo", "pipefail", "-c"]
+set export := true
+
+# Local, scoped task runner for environment services (runs inside the devcontainer).
+# Do not add project tasks here — keep those in the repo's root Justfile.
+
+# Configuration (container)
+FRONTEND_PORT := env_var_or_default("FRONTEND_PORT", "3000")
+TUNNEL_NAME := env_var_or_default("TUNNEL_NAME", "viterbo-dev")
+CF_TUNNEL := env_var_or_default("CF_TUNNEL", "vibekanban")
+HOST_BIND := env_var_or_default("HOST", "0.0.0.0")
+
+# Configuration (host)
+WORKSPACE_DIR := env_var_or_default("WORKSPACE_DIR", "/srv/workspaces/msc-math-viterbo")
+
+# Helpers
+is_container := "test -f /.dockerenv -o -n \"${DEVCONTAINER:-}\" -o -d /workspaces"
+
+help:
+  @echo "Environment commands (scoped to .devcontainer/Justfile):"
+  @echo ""
+  @echo "One-time (host):"
+  @echo "  just -f .devcontainer/Justfile host-once-setup           # Create /srv/devhome + /srv/devworktrees; chown"
+  @echo "  just -f .devcontainer/Justfile host-install-tailscale     # Install Tailscale (Ubuntu)"
+  @echo "  just -f .devcontainer/Justfile host-install-devcontainer  # Install devcontainer CLI (via npm)"
+  @echo ""
+  @echo "Daily (host):"
+  @echo "  just -f .devcontainer/Justfile host-dev-up                # devcontainer up ({{WORKSPACE_DIR}})"
+  @echo "  just -f .devcontainer/Justfile host-dev-shell             # enter container shell"
+  @echo ""
+  @echo "In-container (dev):"
+  @echo "  just -f .devcontainer/Justfile start-vibe        # Start VibeKanban UI on :{{FRONTEND_PORT}}"
+  @echo "  just -f .devcontainer/Justfile start-mcp         # Start VibeKanban MCP server"
+  @echo "  just -f .devcontainer/Justfile start-tunnel      # Start VS Code Tunnel ({{TUNNEL_NAME}})"
+  @echo "  just -f .devcontainer/Justfile start-cf          # Run cloudflared named tunnel ({{CF_TUNNEL}})"
+  @echo "  just -f .devcontainer/Justfile owner-start       # Suggested start sequence (prints commands)"
+  @echo "  just -f .devcontainer/Justfile owner-status      # Show process status"
+  @echo "  just -f .devcontainer/Justfile owner-stop        # Best-effort stop of vibe/tunnel/cloudflared"
+  @echo ""
+  @echo "Cloudflare Worker (in-container):"
+  @echo "  just -f .devcontainer/Justfile cf-worker-deploy  # Deploy font-injector worker via wrangler"
+  @echo "  just -f .devcontainer/Justfile cf-worker-tail    # Tail worker logs"
+  @echo ""
+  @echo "Diagnostics (in-container):"
+  @echo "  just -f .devcontainer/Justfile owner-check       # Print auth/mounts/tooling diagnostics"
+
+# ---------------------------
+# One-time (host) commands
+# ---------------------------
+host-once-setup:
+  @if {{is_container}}; then echo "Run this on the HOST, not inside the container."; exit 1; fi
+  sudo mkdir -p \
+    /srv/devhome/.config/gh \
+    /srv/devhome/.vscode \
+    /srv/devhome/.config/codex \
+    /srv/devhome/.cloudflared \
+    /srv/devhome/.cache/uv \
+    /srv/devhome/.local/share/ai/bloop/vibe-kanban \
+    /srv/devworktrees/vibe-kanban/worktrees
+  OWNER="$${SUDO_USER:-$${USER}}"; sudo chown -R "$$OWNER:$$OWNER" /srv/devhome /srv/devworktrees
+  @echo "Created and owned /srv/devhome and /srv/devworktrees."
+
+host-install-tailscale:
+  @if {{is_container}}; then echo "Run this on the HOST, not inside the container."; exit 1; fi
+  @echo "Installing Tailscale via official script (Ubuntu)..."
+  curl -fsSL https://tailscale.com/install.sh | sudo sh
+  @echo "Run 'sudo tailscale up' to authenticate."
+
+host-install-devcontainer:
+  @if {{is_container}}; then echo "Run this on the HOST, not inside the container."; exit 1; fi
+  if command -v devcontainer >/dev/null 2>&1; then \
+    echo "devcontainer CLI already installed."; \
+  else \
+    if command -v npm >/dev/null 2>&1; then \
+      npm i -g @devcontainers/cli; \
+    else \
+      echo "npm not found; install Node.js/npm or follow devcontainer CLI docs."; exit 1; \
+    fi \
+  fi
+  devcontainer --version
+
+host-dev-up:
+  @if {{is_container}}; then echo "Run this on the HOST, not inside the container."; exit 1; fi
+  devcontainer up --workspace-folder "{{WORKSPACE_DIR}}"
+
+host-dev-shell:
+  @if {{is_container}}; then echo "Already inside container. Open a new terminal for a login shell."; exit 0; fi
+  devcontainer exec --workspace-folder "{{WORKSPACE_DIR}}" bash -l
+
+# ---------------------------
+# In-container commands
+# ---------------------------
+
+# Start VibeKanban UI
+start-vibe:
+  @if ! {{is_container}}; then echo "Run this INSIDE the devcontainer."; exit 1; fi
+  echo "Starting VibeKanban on {{HOST_BIND}}:{{FRONTEND_PORT}}"
+  HOST="{{HOST_BIND}}" FRONTEND_PORT="{{FRONTEND_PORT}}" npx vibe-kanban
+
+# Start only the MCP server (stdio)
+start-mcp:
+  @if ! {{is_container}}; then echo "Run this INSIDE the devcontainer."; exit 1; fi
+  echo "Starting VibeKanban MCP server"
+  npx vibe-kanban --mcp
+
+# VS Code Tunnel
+start-tunnel:
+  @if ! {{is_container}}; then echo "Run this INSIDE the devcontainer."; exit 1; fi
+  code tunnel --accept-server-license-terms --name "{{TUNNEL_NAME}}"
+
+# Cloudflared named tunnel
+start-cf:
+  @if ! {{is_container}}; then echo "Run this INSIDE the devcontainer."; exit 1; fi
+  cloudflared tunnel run "{{CF_TUNNEL}}"
+
+# Owner helpers
+owner-start:
+  @echo "Suggested sequence (run these each in its own terminal INSIDE the container):"
+  @echo "  1) just -f .devcontainer/Justfile start-vibe"
+  @echo "  2) just -f .devcontainer/Justfile start-tunnel"
+  @echo "  3) just -f .devcontainer/Justfile start-cf"
+  @echo ""
+  @echo "VibeKanban URL (via Cloudflare): https://vibekanban.joernstoehler.com"
+
+owner-status:
+  @if ! {{is_container}}; then echo "Run this INSIDE the devcontainer."; exit 1; fi
+  @echo "VibeKanban UI:"; (pgrep -a vibe-kanban || pgrep -fa 'npx .*vibe-kanban' || true)
+  @echo "VS Code Tunnel:"; (pgrep -a code || true)
+  @echo "cloudflared:"; (pgrep -a cloudflared || true)
+
+owner-stop:
+  @if ! {{is_container}}; then echo "Run this INSIDE the devcontainer."; exit 1; fi
+  @echo "Stopping VibeKanban / Tunnel / Cloudflared (best-effort)."
+  pkill -f 'npx .*vibe-kanban' || true
+  pkill -f 'vibe-kanban' || true
+  pkill -f 'code tunnel' || true
+  pkill -f 'cloudflared.*tunnel' || true
+  @echo "Stopped (if running)."
+
+# Cloudflare Worker (wrangler)
+cf-worker-deploy:
+  @if ! {{is_container}}; then echo "Run this INSIDE the devcontainer."; exit 1; fi
+  @echo "Deploying Cloudflare Worker (font injector) with wrangler..."
+  cd .devcontainer/cloudflare && wrangler deploy
+
+cf-worker-tail:
+  @if ! {{is_container}}; then echo "Run this INSIDE the devcontainer."; exit 1; fi
+  @echo "Tailing Cloudflare Worker logs..."
+  cd .devcontainer/cloudflare && wrangler tail
+
+# Diagnostics (in-container)
+owner-check:
+  @if ! {{is_container}}; then echo "Run this INSIDE the devcontainer."; exit 1; fi
+  @echo "[owner-check] Tools:"
+  @if command -v code >/dev/null 2>&1; then code --help 2>/dev/null | grep -q tunnel && echo "  - code: ok (tunnel supported)" || echo "  - code: present (no tunnel subcommand)"; else echo "  - code: not found"; fi
+  @if command -v gh >/dev/null 2>&1; then gh auth status -h github.com >/dev/null 2>&1 && echo "  - gh: authenticated" || echo "  - gh: not authenticated"; else echo "  - gh: not found"; fi
+  @if command -v cloudflared >/dev/null 2>&1; then test -s "$$HOME/.cloudflared/cert.pem" && echo "  - cloudflared: logged in" || echo "  - cloudflared: not logged in"; else echo "  - cloudflared: not found"; fi
+  @if command -v wrangler >/dev/null 2>&1; then echo "  - wrangler: installed"; else echo "  - wrangler: not found"; fi
+  @echo "[owner-check] Mounts:"
+  @for d in "$$HOME/.config/gh" "$$HOME/.vscode" "$$HOME/.config/codex" "$$HOME/.cloudflared" "$$HOME/.cache/uv" "$$HOME/.local/share/ai/bloop/vibe-kanban" "/var/tmp/vibe-kanban/worktrees"; do test -d "$$d" && echo "  - $$d: ok" || echo "  - $$d: missing"; done

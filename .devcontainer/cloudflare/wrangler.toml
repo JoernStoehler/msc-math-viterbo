@@ -1,0 +1,14 @@
+name = "vk-font"
+main = "worker-font-injector.js"
+compatibility_date = "2024-10-01"
+
+# Configure your production route and zone. Adjust to your domain.
+routes = [
+  { pattern = "vibekanban.joernstoehler.com/*", zone_name = "joernstoehler.com" }
+]
+
+# Optional dev server binding.
+# [dev]
+# host = "127.0.0.1"
+# port = 8787
+

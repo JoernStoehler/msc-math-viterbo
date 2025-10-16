@@ -16,3 +16,6 @@ The published docs mirror the material most contributors need after reading
 Everything else (datasets, notebooks, artefacts) is discoverable by browsing
 this directory tree directly. Read individual briefs or module docs only when
 they are relevant to the task you are implementing.
+
+- Owner workflow. See `docs/workflows-project-owner-vibekanban.md` for the end-to-end
+  VibeKanban + devcontainer + remote access runbook used by the Project Owner.
