@@ -195,10 +195,28 @@ def capacity_ehz_4d_exact(normals: (F,4), offsets: (F,)) -> float:
 Complexity is combinatorial in the number of facets `F`, but tractable for
 small polytopes (`|S| ≤ 5`, at most `5! = 120` permutations per support).
 
-Correctness in 4D follows from the extreme‑support argument and the variational
-equivalence; see Haim–Kislev for rigorous proofs and related convex‑optimisation
+Correctness in 4D follows from the extreme-support argument and the variational
+equivalence; see Haim–Kislev for rigorous proofs and related convex-optimisation
 reductions (e.g., QP/SOCP relaxations). Our repository exposes stubs for a QP
 path and will align its implementation to this outline.
+
+### Backend implementation status
+
+The function `capacity_ehz_haim_kislev(B, c)` now implements the exact facet
+programme. It enumerates all subsets of at most `d + 1` facets (the extreme ray
+support bound from Haim–Kislev, Prop. 3.4), solves the one-dimensional nullspace
+of `B_S^⊤`, and maximises the triangular part of `W = B J B^⊤` over all
+permutations. Numerical tolerances follow `tol = max(√ε, 1e-9)` in the solver’s
+dtype and device. The routine raises a `ValueError` if:
+
+- the ambient dimension is odd or fewer than `d + 1` facets are supplied,
+- offsets are non-positive (no bounded polytope),
+- or no feasible non-negative multiplier satisfies the constraints within the
+  tolerance budget (this indicates a degenerate facet configuration).
+
+For validation we compare this backend against the planar polygon formula and
+the Lagrangian-product billiard solver on cubes, pentagon products, and random
+low-facet seeds in the regression suite (`tests/math/test_capacity_ehz_haim_kislev.py`).
 
 ### Relation to Minkowski billiards
 
