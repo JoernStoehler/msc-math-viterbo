@@ -147,10 +147,10 @@ for d in \
   "$HOME/.config/gh" \
   "$HOME/.config/.wrangler" \
   "$HOME/.vscode" \
-  "$HOME/.config/codex" \
+  "$HOME/.codex" \
   "$HOME/.cloudflared" \
   "$HOME/.cache/uv" \
-  "$HOME/.local/share/ai/bloop/vibe-kanban" \
+  "$HOME/.local/share/vibe-kanban" \
   "/var/tmp/vibe-kanban/worktrees" \
 ; do
   [ -d "$d" ] || echo "  - mount missing (expected directory): $d"
