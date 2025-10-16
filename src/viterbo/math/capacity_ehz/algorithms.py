@@ -6,6 +6,7 @@ import torch
 
 from viterbo.math.capacity_ehz.common import polygon_area, split_lagrangian_product_vertices
 from viterbo.math.capacity_ehz.lagrangian_product import minimal_action_cycle_lagrangian_product
+from viterbo.math.capacity_ehz.stubs import oriented_edge_spectrum_4d
 from viterbo.math.polytope import halfspaces_to_vertices, vertices_to_halfspaces
 
 
@@ -36,7 +37,13 @@ def capacity_ehz_algorithm2(vertices: torch.Tensor) -> torch.Tensor:
         raise ValueError("ambient dimension must be even (2n) for symplectic problems")
     if d == 4:
         tol = max(float(torch.finfo(vertices.dtype).eps) ** 0.5, 1e-9)
-        vertices_q, vertices_p = split_lagrangian_product_vertices(vertices, tol)
+        try:
+            vertices_q, vertices_p = split_lagrangian_product_vertices(vertices, tol)
+        except NotImplementedError:
+            normals, offsets = vertices_to_halfspaces(vertices)
+            return oriented_edge_spectrum_4d(vertices, normals, offsets).to(
+                dtype=vertices.dtype, device=vertices.device
+            )
         normals_p, offsets_p = vertices_to_halfspaces(vertices_p)
         capacity, _ = minimal_action_cycle_lagrangian_product(vertices_q, normals_p, offsets_p)
         return capacity.to(dtype=vertices.dtype, device=vertices.device)

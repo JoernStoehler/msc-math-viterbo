@@ -13,7 +13,7 @@ from viterbo.math.capacity_ehz.algorithms import (
 )
 from viterbo.math.capacity_ehz.common import polygon_area
 from viterbo.math.capacity_ehz.stubs import capacity_ehz_haim_kislev
-from viterbo.math.polytope import halfspaces_to_vertices, vertices_to_halfspaces
+from viterbo.math.polytope import vertices_to_halfspaces
 
 torch.set_default_dtype(torch.float64)
 

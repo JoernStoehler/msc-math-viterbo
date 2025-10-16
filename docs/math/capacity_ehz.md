@@ -19,7 +19,7 @@ Lagrangian products in 4D. The public API is split across small modules:
   - `systolic_ratio(volume, capacity_ehz, symplectic_dimension)`
 - `viterbo.math.capacity_ehz.stubs` (planned backends)
   - `capacity_ehz_haim_kislev(...)`, `capacity_ehz_via_qp(...)`,
-    `capacity_ehz_via_lp(...)`, `oriented_edge_spectrum_4d(...)`
+    `capacity_ehz_via_lp(...)`, `oriented_edge_spectrum_4d(...)` (implemented)
 
 ## Imports (examples)
 
@@ -231,3 +231,4 @@ exploits. This justifies the vertex‑billiard algorithm for the product case.
 - All functions are Torch‑first; return tensors and preserve dtype/device.
 - Planar (2D) helpers are implemented; higher‑dimensional solvers are staged.
 - A facet‑interior refinement of the billiard search is planned.
+- `oriented_edge_spectrum_4d(vertices, normals, offsets)` — constructs the Chaidez–Hutchings oriented-edge graph of a 4D polytope, enumerates admissible cycles (respecting first-hit constraints on supporting facets), and returns the minimal combinatorial action. The solver backs `capacity_ehz_algorithm2` whenever the Lagrangian-product split is unavailable.

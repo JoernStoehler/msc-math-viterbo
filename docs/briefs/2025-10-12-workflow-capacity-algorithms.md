@@ -46,7 +46,8 @@ summary: Catalogue algorithms and references for computing the EHZ capacity of c
 
 - **Reference.** Chaidez & Hutchings (2022), *Computing Reeb dynamics on four-dimensional convex polytopes*, Theorem 1.2.
 - **Idea.** Build the oriented-edge graph of $P$, enumerate admissible cycles representing Reeb orbits, and take the minimal combinatorial action.
-- **Notes.** Specific to $n=2$; integrates with the oriented-edge graph builder scheduled for `src/viterbo/math/symplectic.py` once the solver lands.
+- **Implementation.** `viterbo.math.capacity_ehz.stubs.oriented_edge_spectrum_4d` assembles the Chaidez–Hutchings oriented-edge graph directly from `vertices`, `normals`, `offsets`, enumerates cycles up to 12 oriented edges, and minimises the combinatorial action subject to the first-hit constraint on each facet.
+- **Integration.** `capacity_ehz_algorithm2` keeps the Lagrangian-product fast path, falling back to `oriented_edge_spectrum_4d` for generic 4D inputs; smoke tests cover pentagon×rotated-pentagon, cubes, translation/scaling invariance, and random polytopes.
 
 ### 4. Minkowski billiard search (Lagrangian products)
 
