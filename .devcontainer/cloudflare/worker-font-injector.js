@@ -26,8 +26,9 @@ export default {
           `<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">`,
           { html: true },
         );
+        // Override upstream body font (Chivo Mono) without touching their bundle.
         el.append(
-          `<style>html{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji"}</style>`,
+          `<style>html,body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji" !important;}</style>`,
           { html: true },
         );
       },
@@ -35,4 +36,3 @@ export default {
     return rewriter.transform(response);
   },
 };
-
