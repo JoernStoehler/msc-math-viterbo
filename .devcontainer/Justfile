@@ -109,7 +109,8 @@ start-mcp:
 # VS Code Tunnel
 start-tunnel:
   @if ! {{is_container}}; then echo "Run this INSIDE the devcontainer."; exit 1; fi
-  code tunnel --accept-server-license-terms --name "{{TUNNEL_NAME}}"
+  root="$(git rev-parse --show-toplevel 2>/dev/null)" || root="$(cd .. && pwd)"
+  cd "$root" && code tunnel --accept-server-license-terms --name "{{TUNNEL_NAME}}"
 
 # Cloudflared named tunnel
 start-cf:
