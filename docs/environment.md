@@ -12,7 +12,7 @@ Host (one-time)
 - Install Tailscale; log in.
 - Install devcontainer CLI.
 - Create bind-mount roots (example):
-  - sudo mkdir -p /srv/devhome/.config/gh /srv/devhome/.vscode /srv/devhome/.config/codex /srv/devhome/.cloudflared /srv/devhome/.cache/uv /srv/devhome/.local/share/ai/bloop/vibe-kanban
+  - sudo mkdir -p /srv/devhome/.config/gh /srv/devhome/.vscode /srv/devhome/.config/codex /srv/devhome/.config/.wrangler /srv/devhome/.cloudflared /srv/devhome/.cache/uv /srv/devhome/.local/share/ai/bloop/vibe-kanban
   - sudo mkdir -p /srv/devworktrees/vibe-kanban/worktrees
   - sudo chown -R "$USER:$USER" /srv/devhome /srv/devworktrees
 - Clone repo under `/srv/workspaces/msc-math-viterbo` (preferred single path for simplicity).

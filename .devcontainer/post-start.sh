@@ -43,6 +43,7 @@ export PATH="$HOME/.local/bin:$PATH"
 echo "[post-start] Verifying ownership for mounted folders (idempotent)."
 for d in \
   "$HOME/.config/gh" \
+  "$HOME/.config/.wrangler" \
   "$HOME/.vscode" \
   "$HOME/.config/codex" \
   "$HOME/.cloudflared" \
@@ -87,10 +88,19 @@ fi
 
 # Cloudflared status
 CF_TUNNEL="${CF_TUNNEL:-vibekanban}"
+CF_HOSTNAME="${CF_HOSTNAME:-vibekanban.joernstoehler.com}"
+FRONTEND_PORT="${FRONTEND_PORT:-3000}"
 if command -v cloudflared >/dev/null 2>&1; then
   if [ -s "$HOME/.cloudflared/cert.pem" ]; then
-    if cloudflared tunnel list 2>/dev/null | grep -qE "^\s*${CF_TUNNEL}\b"; then
+    if cloudflared tunnel info "${CF_TUNNEL}" >/dev/null 2>&1; then
       echo "  - cloudflared: logged in; tunnel '${CF_TUNNEL}' defined."
+
+      CF_CONFIG="${CLOUDFLARED_CONFIG:-$HOME/.cloudflared/config-${CF_TUNNEL}.yml}"
+      if [ -f "$CF_CONFIG" ]; then
+        echo "  - cloudflared: config $(basename "$CF_CONFIG") present."
+      else
+        echo "  - cloudflared: config $(basename "$CF_CONFIG") missing; run 'just -f .devcontainer/Justfile owner-cloudflare-setup'."
+      fi
     else
       echo "  - cloudflared: logged in; tunnel '${CF_TUNNEL}' not found. Create with: cloudflared tunnel create ${CF_TUNNEL}"
     fi
@@ -103,7 +113,31 @@ fi
 
 # Wrangler (Cloudflare) status
 if command -v wrangler >/dev/null 2>&1; then
-  echo "  - wrangler: installed. Use 'just -f .devcontainer/Justfile cf-worker-deploy' to deploy the font worker."
+  WRANGLER_DIR=".devcontainer/cloudflare"
+  WRANGLER_TOML="${WRANGLER_DIR}/wrangler.toml"
+  if [ -f "$WRANGLER_TOML" ]; then
+    WORKER_NAME="$(grep -E '^name\s*=' "$WRANGLER_TOML" | head -n1 | sed -E 's/.*"([^"]+)".*/\1/')"
+  fi
+  WORKER_NAME="${WORKER_NAME:-vk-font}"
+  if [ -d "$WRANGLER_DIR" ]; then
+    if DEPLOYMENTS_JSON=$(cd "$WRANGLER_DIR" && wrangler deployments list --name "$WORKER_NAME" --json 2>/dev/null); then
+      if printf '%s' "$DEPLOYMENTS_JSON" | grep -q '"created_on"'; then
+        echo "  - wrangler: worker '${WORKER_NAME}' deployed."
+      elif printf '%s' "$DEPLOYMENTS_JSON" | grep -Eq '^\s*\[\s*\]\s*$'; then
+        echo "  - wrangler: authenticated; worker '${WORKER_NAME}' has no deployments yet. Run 'just -f .devcontainer/Justfile cf-worker-deploy' to deploy."
+      else
+        echo "  - wrangler: installed; deployment status unknown (check 'wrangler deployments list')."
+      fi
+    else
+      if [ -n "${CLOUDFLARE_API_TOKEN:-}" ] || [ -n "${CLOUDFLARE_API_KEY:-}" ]; then
+        echo "  - wrangler: installed; failed to query deployments (see 'wrangler deployments list')."
+      else
+        echo "  - wrangler: installed (set CLOUDFLARE_API_TOKEN to check deployment status)."
+      fi
+    fi
+  else
+    echo "  - wrangler: installed."
+  fi
 else
   echo "  - wrangler: not found. Install with 'npm i -g wrangler' if you plan to deploy the font worker."
 fi
@@ -111,6 +145,7 @@ fi
 # Mount presence (informational)
 for d in \
   "$HOME/.config/gh" \
+  "$HOME/.config/.wrangler" \
   "$HOME/.vscode" \
   "$HOME/.config/codex" \
   "$HOME/.cloudflared" \

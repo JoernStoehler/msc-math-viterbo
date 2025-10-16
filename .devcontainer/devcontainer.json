@@ -6,7 +6,18 @@
     "vscode": {
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash"
-      }
+      },
+      "extensions": [
+        "openai.chatgpt",
+        "tamasfe.even-better-toml",
+        "ms-toolsai.jupyter",
+        "skellock.just",
+        "ms-python.vscode-pylance",
+        "ms-python.python",
+        "charliermarsh.ruff",
+        "bloop.vibe-kanban",
+        "redhat.vscode-yaml"
+      ]
     }
   },
   "postCreateCommand": "bash .devcontainer/post-create.sh",
@@ -25,12 +36,18 @@
     "XDG_CACHE_HOME": "/home/codespace/.cache"
   },
   "mounts": [
-    "source=/srv/devhome/.config/gh,target=/home/codespace/.config/gh,type=bind,consistency=cached",
+    // oauth
     "source=/srv/devhome/.vscode,target=/home/codespace/.vscode,type=bind,consistency=cached",
-    "source=/srv/devhome/.config/codex,target=/home/codespace/.config/codex,type=bind,consistency=cached",
+    "source=/srv/devhome/.codex,target=/home/codespace/.codex,type=bind,consistency=cached",
+    "source=/srv/devhome/.config/gh,target=/home/codespace/.config/gh,type=bind,consistency=cached",
+    "source=/srv/devhome/.config/.wrangler,target=/home/codespace/.config/.wrangler,type=bind,consistency=cached",
     "source=/srv/devhome/.cloudflared,target=/home/codespace/.cloudflared,type=bind,consistency=cached",
+    // caches and history
+    "source=/srv/devhome/.cache/pip,target=/home/codespace/.cache/pip,type=bind,consistency=cached",
     "source=/srv/devhome/.cache/uv,target=/home/codespace/.cache/uv,type=bind,consistency=cached",
-    "source=/srv/devhome/.local/share/ai/bloop/vibe-kanban,target=/home/codespace/.local/share/ai/bloop/vibe-kanban,type=bind,consistency=cached",
+    "source=/srv/devhome/.bash_history_dir,target=/home/codespace/.bash_history_dir,type=bind,consistency=cached",
+    // data
+    "source=/srv/devhome/.local/share/vibe-kanban,target=/home/codespace/.local/share/vibe-kanban,type=bind,consistency=cached",
     "source=/srv/devworktrees/vibe-kanban/worktrees,target=/var/tmp/vibe-kanban/worktrees,type=bind,consistency=cached"
   ],
   "features": {}

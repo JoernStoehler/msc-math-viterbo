@@ -23,6 +23,7 @@ Prerequisites (one‑time on the host)
   - `/srv/devhome/.config/gh` for `gh` CLI auth
   - `/srv/devhome/.vscode` for VS Code Tunnel state
   - `/srv/devhome/.config/codex` for Codex CLI auth
+  - `/srv/devhome/.config/.wrangler` for Cloudflare Wrangler config/state
   - `/srv/devhome/.cloudflared` for Cloudflare tunnel credentials
   - `/srv/devhome/.cache/uv` for `uv` cache (PyTorch wheels, etc.)
   - `/srv/devhome/.local/share/ai/bloop/vibe-kanban` for VibeKanban data
