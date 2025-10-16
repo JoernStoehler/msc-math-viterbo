@@ -16,6 +16,7 @@ Host (one-time)
   - sudo mkdir -p /srv/devworktrees/vibe-kanban/worktrees
   - sudo chown -R "$USER:$USER" /srv/devhome /srv/devworktrees
 - Clone repo under `/srv/workspaces/msc-math-viterbo` (preferred single path for simplicity).
+- In Cloudflare Zero Trust, create the `VibeKanban Owner Board` Access application that protects `https://vibekanban.joernstoehler.com` (see `.devcontainer/README.md` for the exact choices).
 
 Devcontainer (start on host)
 devcontainer up --workspace-folder /srv/workspaces/msc-math-viterbo
@@ -35,6 +36,7 @@ Daily start (inside the container)
   - VibeKanban: just -f .devcontainer/Justfile start-vibe
   - VS Code Tunnel: just -f .devcontainer/Justfile start-tunnel
   - Cloudflared: just -f .devcontainer/Justfile start-cf
+- Cloudflare Access: the public URL (`https://vibekanban.joernstoehler.com`) is gated by a Zero Trust Access application. Maintain the allowlist under Zero Trust → Access → Applications, and sign in with the configured IdP/OTP before using the board. Issue a service token only if non-browser automation needs to reach the board.
 - Status/Stop:
   - just -f .devcontainer/Justfile owner-status
   - just -f .devcontainer/Justfile owner-stop

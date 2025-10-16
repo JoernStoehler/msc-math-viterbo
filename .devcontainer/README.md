@@ -45,6 +45,36 @@ Cloudflared installation (deterministic)
 - Failures are surfaced explicitly so you can fix the image or install manually. Adjust the suite (e.g. jammy) if you change the base image.
 - After installing and authenticating, run `just -f .devcontainer/Justfile owner-cloudflare-setup` once to wire the hostname to the tunnel.
 
+Cloudflare Access (one-time, host-side)
+---------------------------------------
+Goal: require authentication before anyone reaches `https://vibekanban.joernstoehler.com`. Follow Cloudflare’s official guide (“[Create an Access application](https://developers.cloudflare.com/learning-paths/clientless-access/access-application/create-access-app/)”) with the concrete choices below so naming stays consistent.
+
+### Prerequisites
+- Cloudflare Zero Trust account with the `joernstoehler.com` zone already connected.
+- Identity provider ready for Access (e.g. “One-time PIN” email IdP or GitHub). Keep it simple to start; you can layer more providers later.
+
+### Step-by-step (Zero Trust dashboard)
+1. Sign in at <https://one.dash.cloudflare.com> using the account that owns the zone.
+2. Navigate to **Zero Trust** → **Access** → **Applications**.
+3. Click **Add an application** → choose **Self-hosted**.
+4. Fill out the application card:
+   - **Name**: `VibeKanban Owner Board`
+   - **Domain**: select `vibekanban.joernstoehler.com`
+   - **Session Duration**: `1w` (Cloudflare’s max; adjust downward if you prefer more frequent re-auth).
+   - Leave the rest at defaults unless you have a reason to change them (no browser rendering needed for a standard web UI).
+5. Select **Next** to configure policies, then add a single **Allow** policy named `Owner-only`:
+   - **Action**: *Allow*
+   - **Include** rule: pick your primary auth method. For a minimal setup choose **Emails** and list the addresses that should reach the board (e.g. `joern@joernstoehler.com`). Alternatively, select the GitHub IdP and point at your organization if you already use it.
+   - You can leave **Exclude** and **Require** empty for now.
+6. (Optional) Add a **Service Auth** policy if you ever need automation. Give it a descriptive name (e.g. `ci-service-token`), set **Decision** to *Allow*, and choose **Service Tokens** → **Create new token**. Store the generated client ID/secret somewhere safe.
+7. Click **Next**, skip App Launcher/block page customisation, then **Save**.
+8. Test in a clean browser (or private window) on each device (Android tablet, university Windows PC). You should hit the Cloudflare Access login first, complete the OTP/IdP flow, then reach VibeKanban.
+
+### Maintenance
+- Whenever you on-board someone else, revisit **Zero Trust** → **Access** → **Applications** → `VibeKanban Owner Board` → **Policies** and extend the allowlist instead of cloning the app.
+- If you revoke access, remove the email/org or delete the service token so old sessions expire naturally at the next validation.
+- Record any additions/removals in `mail/` weekly status notes so the audit trail stays outside the dashboard.
+
 Rebuild / test the environment
 - Rebuild the devcontainer (Reopen/Rebuild in Container) and review the post-create logs.
 - Or run inside the container:
