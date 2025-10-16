@@ -42,5 +42,5 @@ It is intended for maintainers or agents working on architecture/conventions.
   - No `__all__` surfaces. Import paths should remain stable by direct module references.
 
 - Tasks & parallelization
-  - Author small, self-contained briefs under `docs/tasks/` (YAML front matter, clear scope, ACs).
+- Author small, self-contained tickets directly in the VibeKanban board (clear scope, ACs) and link to supporting briefs in `docs/` as needed.
   - Keep branches short-lived; ensure CI green before review; record any deviations.

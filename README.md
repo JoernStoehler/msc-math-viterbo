@@ -47,7 +47,7 @@ just docs-build  # Build MkDocs site (strict)
   - `models/` — experiments; may use GPU; no core math here
   - `_cpp/` — C++/pybind11 extensions (CPU baseline) with safe Python fallbacks
 - `tests/` — smoke tests under `test_*.py`; benchmarks under `tests/performance/`
-- `docs/` — site content (see Architecture below) + tasks
+- `docs/` — site content (architecture, math docs, workflows, briefs)
 - `notebooks/` — minimal examples for artefacts I/O
 
 ## Architecture (reference)
@@ -55,10 +55,10 @@ just docs-build  # Build MkDocs site (strict)
 - Everyday overview lives in `AGENTS.md` (“Architecture Overview”).
 - Deeper rationale and decisions: `docs/architecture/overview.md`.
 
-## Tasks (parallel development)
+## Task Management
 
-- Task briefs live under `docs/tasks/` (YAML front matter + clear scope + acceptance criteria).
-- Start with the open tasks in that folder; see archived examples under `docs/tasks/archived/`.
+- Use the VibeKanban project `Msc Math Viterbo` as the single backlog; adopt tickets there when starting work.
+- Supporting context (workflows, briefs, references) lives in `docs/` and is linked from tickets when relevant.
 
 ## License
 

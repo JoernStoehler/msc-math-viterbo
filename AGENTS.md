@@ -32,9 +32,8 @@ Single authoritative policy for this repo.
   - `models/` — experiments/training loops; may use GPU; no core math here.
   - `_cpp/` — C++/pybind11 extensions (CPU baseline) with Python fallbacks.
 - Tests: `tests/` — smoke tests under `test_*.py`; benches under `tests/performance/`
-- Docs & Notes: `docs/` (site + task briefs), `notebooks/` (dummy examples), `artefacts/` (outputs, ignored)
-  - Tasks: `docs/tasks/` (open briefs) and `docs/tasks/archived/` (examples)
-    * The Project Owner actively works through `docs/tasks/`; treat those briefs as the canonical backlog and update them whenever scope or status changes.
+- Docs & Notes: `docs/` (site content, briefs, workflows), `notebooks/` (dummy examples), `artefacts/` (outputs, ignored)
+  - Tasks live in the VibeKanban project `Msc Math Viterbo`; treat that board as the canonical backlog. Tickets link back to supporting docs when needed.
   - `notebooks/` stores Jupytext-managed `.py` notebooks; preserve the front-matter metadata when editing or adding entries.
 
 ## 2) Environment & Tooling
@@ -42,7 +41,7 @@ Single authoritative policy for this repo.
 - Stack: Python 3.12, PyTorch 2.x (CPU baseline; optional CUDA for models only). C++17 with pybind11 for custom hotspot non‑SIMD kernels.
 - Supported environment: local devcontainer (golden path). Shared lifecycle scripts (`.devcontainer/{post-create.sh,post-start.sh}`) manage environment setup. Codespaces/Codex Cloud are not used.
 - Codex agents land inside a pre-provisioned environment.
-- PRs: use `gh`; prefer `gh pr create --body-file docs/tasks/PR_TEMPLATE.md` (avoid `--body`).
+- PRs: use `gh`; prefer `gh pr create --body-file docs/PR_TEMPLATE.md` (avoid `--body`).
 - Python/uv: use `uv run python …`; commit `uv.lock`.
 - Editors: Pyright (basic) for fast feedback; Ruff for lint/format.
 - Testing: Pytest (smoke by default) + incremental selector (`scripts/inc_select.py`) for fast local loops + `pytest-benchmark` for targeted benches.
@@ -133,7 +132,14 @@ Daily development
 
 PR message:
 
-- Feature changes, scope, files touched, how tested (Ruff/Pyright/pytest), perf delta if relevant, limitations and follow‑ups.
+- Feature changes, scope, files touched, how tested (Ruff/Pyright/pytest), perf delta if relevant, limitations and follow-ups.
+
+## VibeKanban (task tracking)
+
+- Work from the `Msc Math Viterbo` board—it is the canonical backlog.
+- Keep ticket descriptions concise; link supporting docs/briefs when extra context is required.
+- Optional: add a single-line keywords header near the top of a ticket description (e.g., `Keywords: prio:3, math, tests`) when it genuinely improves search/triage; skip it otherwise.
+- Let the board columns encode status; do not repeat state strings inside the description.
 
 ## 9) Conventions
 

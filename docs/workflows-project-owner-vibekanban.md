@@ -95,7 +95,7 @@ Backlog structure changes
 - Canonical backlog moves to VibeKanban (projects + tickets).
 - Long specifications, surveys, and algorithm docs live in `docs/briefs/`.
 - Tickets reference briefs by path (e.g., `docs/briefs/2025-10-12-workflow-capacity-algorithms.md`).
-- `docs/tasks/` becomes deprecated for active work; keep only archival or transitional items.
+- The old `docs/tasks/` tree has been retired; any straggling briefs should be migrated into tickets before merging.
 
 Performance and caches (uv, PyTorch)
 - Goal: fast cold starts while avoiding cross‑filesystem hardlink warnings.
@@ -119,13 +119,10 @@ Daily start sequence (owner)
   - Start Cloudflared: `just -f .devcontainer/Justfile start-cf`
   - Open `https://vibekanban.joernstoehler.com` in your browser and work the board.
 
-Migration from docs/tasks to VibeKanban
-- Strategy:
-  - Identify live briefs in `docs/tasks/` and map each to 1‑N tickets.
-  - Store the brief, rationale, and references in `docs/briefs/` and link from the ticket’s “why”.
-  - Create tickets via the VibeKanban UI, or start the MCP server (`npx vibe-kanban --mcp`) and use its `create_ticket` tool from your editor/agent.
-  - Optionally script migration with a small Python parser for YAML front‑matter in `docs/tasks/`.
-  - Archive superseded items under `docs/tasks/archived/`.
+Migration from docs/tasks to VibeKanban (completed 2025-10-16)
+- All legacy briefs were converted to tickets in the `Msc Math Viterbo` project and the `docs/tasks/` directory was removed.
+- New scoping notes belong in `docs/briefs/` (or directly on tickets) with links from the board.
+- If a feature branch still introduces `docs/tasks/*`, stop and migrate that content into VibeKanban before landing.
 
 Font choice in the VibeKanban UI
 - KISS, no fork: inject Inter at the edge using Cloudflare Wrangler. We provide a worker and config under `.devcontainer/cloudflare/`:
@@ -161,7 +158,7 @@ Answers to current questions
 - uv sync hardlink warning: expected with current mounts. Either accept the ~5s penalty or co‑locate `.venv` and `~/.cache/uv` to enable hardlinks. Document as OK in this workflow.
 - Documenting the workflow: this file is the canonical workflow; link it when onboarding agents and in ticket “why”.
 - MCP quality: upstream `--mcp` binary exposes tools for list/create/update/comment. For Codex CLI, the `vibe_kanban` tools support create/list/update and starting task attempts. If we see gaps (bulk migration, richer fields), we can add MCP helper scripts.
-- Migrate old tasks: recommended. Convert live `docs/tasks/*` to VibeKanban tickets, link to briefs in `docs/briefs/`, archive the old files.
+- Task migration: complete. Continue creating/updating tickets directly in VibeKanban and keep supporting material in `docs/briefs/`.
 - Faster daily bring‑up: the current stack is solid. The fastest reliable loop remains Tailscale + SSH → devcontainer CLI → start independent components (VibeKanban, Code Tunnel, Cloudflared). We can add a `just up-dev` helper that starts all three with tmux panes if you want a single command.
 
 Suggested improvements
@@ -191,5 +188,5 @@ Open questions for the Owner
 - Shall I switch to host bind mounts for VibeKanban app data (`~/.local/share/ai/bloop/vibe-kanban/`) and also mount `/var/tmp/vibe-kanban/worktrees` to persist worktrees?
 - Preferred font: Inter, or another (e.g., IBM Plex Sans, SF Pro)?
 - Do you want me to add the `scripts/owner_*` start/stop scripts and `just` wrappers (`owner-start`, `owner-stop`) now?
-- For ticket migration: prefer a one‑off script to convert `docs/tasks/*` or manual triage with selective splitting?
+- Need an importer for future bulk ticket creation (from spreadsheets, briefs, etc.)?
 - Should we add a standard ticket template (fields for `why`, acceptance criteria, test steps, reference docs) and enforce it in the UI?
