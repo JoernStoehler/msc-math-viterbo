@@ -261,9 +261,7 @@ def _hypercube_4d_unit() -> StandardPolytope:
 def _pentagon_product_counterexample() -> StandardPolytope:
     vertices_q, _, _ = rotated_regular_ngon2d(5, 0.0)
     vertices_p, _, _ = rotated_regular_ngon2d(5, -0.5 * torch.pi)
-    vertices, normals, offsets = lagrangian_product(
-        vertices_q.to(DTYPE), vertices_p.to(DTYPE)
-    )
+    vertices, normals, offsets = lagrangian_product(vertices_q.to(DTYPE), vertices_p.to(DTYPE))
     volume = volume_from_vertices(vertices)
     capacity = 2.0 * math.cos(math.pi / 10.0) * (1.0 + math.cos(math.pi / 5.0))
     return StandardPolytope(

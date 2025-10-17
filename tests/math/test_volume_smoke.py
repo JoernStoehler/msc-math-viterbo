@@ -3,8 +3,8 @@ from __future__ import annotations
 import math
 
 import torch
-
 from tests.polytopes import STANDARD_POLYTOPES_BY_NAME
+
 from viterbo.math.volume import volume
 
 torch.set_default_dtype(torch.float64)

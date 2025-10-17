@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import torch
-
 from tests.polytopes import STANDARD_POLYTOPES_BY_NAME
+
 from viterbo.math.constructions import (
     matmul_halfspace,
     matmul_vertices,

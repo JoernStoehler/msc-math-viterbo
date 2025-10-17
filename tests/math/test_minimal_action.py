@@ -3,8 +3,8 @@ from __future__ import annotations
 import math
 
 import torch
-
 from tests.polytopes import STANDARD_POLYTOPES_BY_NAME
+
 from viterbo.math.capacity_ehz.algorithms import (
     capacity_ehz_algorithm1,
     capacity_ehz_algorithm2,

@@ -232,9 +232,7 @@ def capacity_ehz_haim_kislev(normals: torch.Tensor, offsets: torch.Tensor) -> to
                     best_value = value
 
     if best_value is None:
-        raise ValueError(
-            "Haim–Kislev programme failed to locate a feasible maximizing multiplier"
-        )
+        raise ValueError("Haim–Kislev programme failed to locate a feasible maximizing multiplier")
     return (0.5 / best_value).to(dtype=dtype, device=device)
 
 
@@ -286,9 +284,7 @@ def oriented_edge_spectrum_4d(
         facet_to_faces[face.facets[1]].append(face.index)
 
     reeb_vectors = _facet_reeb_vectors(normals, offsets, j_matrix)
-    edges = _enumerate_oriented_edges(
-        normals, offsets, reeb_vectors, faces, facet_to_faces, tol
-    )
+    edges = _enumerate_oriented_edges(normals, offsets, reeb_vectors, faces, facet_to_faces, tol)
     if not edges:
         raise ValueError("no admissible oriented edges detected")
 
@@ -328,9 +324,7 @@ def oriented_edge_spectrum_4d(
                 if canonical not in seen_cycles:
                     seen_cycles.add(canonical)
                     action = _evaluate_cycle(path, faces, normals, offsets, tol, identity)
-                    if action is not None and (
-                        best_action is None or action < best_action - tol
-                    ):
+                    if action is not None and (best_action is None or action < best_action - tol):
                         best_action = action
             dfs(start_face, edge.to_face, path, visited_edges, depth + 1)
             visited_edges.remove(edge.id)
@@ -425,9 +419,7 @@ def _enumerate_two_faces(
     for i in range(normals.size(0)):
         for j in range(i + 1, normals.size(0)):
             shared_vertices = [
-                idx
-                for idx, facets in enumerate(vertex_facets)
-                if i in facets and j in facets
+                idx for idx, facets in enumerate(vertex_facets) if i in facets and j in facets
             ]
             if len(shared_vertices) < 3:
                 continue
@@ -544,9 +536,7 @@ def _enumerate_oriented_edges(
                     competitor_indices=torch.tensor(
                         competitor_indices, dtype=torch.int64, device=device
                     ),
-                    competitor_alphas=torch.tensor(
-                        competitor_alphas, dtype=dtype, device=device
-                    ),
+                    competitor_alphas=torch.tensor(competitor_alphas, dtype=dtype, device=device),
                 )
             )
             edge_id += 1
@@ -639,9 +629,7 @@ def _edge_affine_map(
 def _canonical_cycle_id(edge_ids: tuple[int, ...]) -> tuple[int, ...]:
     if not edge_ids:
         return edge_ids
-    rotations = [
-        tuple(itertools.chain(edge_ids[i:], edge_ids[:i])) for i in range(len(edge_ids))
-    ]
+    rotations = [tuple(itertools.chain(edge_ids[i:], edge_ids[:i])) for i in range(len(edge_ids))]
     return min(rotations)
 
 
@@ -702,9 +690,7 @@ def _edge_domain_check(
 ) -> bool:
     if not _point_inside(point, normals, offsets, tol):
         return False
-    numerator_target = offsets[edge.target_facet] - torch.dot(
-        normals[edge.target_facet], point
-    )
+    numerator_target = offsets[edge.target_facet] - torch.dot(normals[edge.target_facet], point)
     alpha_target = torch.dot(normals[edge.target_facet], edge.reeb_vector)
     if alpha_target <= tol:
         return False

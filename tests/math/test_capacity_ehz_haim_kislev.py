@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 import torch
+from tests.polytopes import STANDARD_POLYTOPES_BY_NAME, StandardPolytope
 
 from viterbo.math.capacity_ehz.algorithms import (
     capacity_ehz_algorithm1,
@@ -9,7 +10,6 @@ from viterbo.math.capacity_ehz.algorithms import (
     capacity_ehz_primal_dual,
 )
 from viterbo.math.capacity_ehz.stubs import capacity_ehz_haim_kislev
-from tests.polytopes import STANDARD_POLYTOPES_BY_NAME, StandardPolytope
 
 torch.set_default_dtype(torch.float64)
 

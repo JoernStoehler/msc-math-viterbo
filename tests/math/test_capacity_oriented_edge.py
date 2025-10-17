@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import math
-
 import pytest
 import torch
-
 from tests.polytopes import PLANAR_POLYTOPE_PAIRS
+
 from viterbo.math.capacity_ehz.algorithms import capacity_ehz_algorithm2
 from viterbo.math.capacity_ehz.lagrangian_product import minimal_action_cycle_lagrangian_product
 from viterbo.math.capacity_ehz.stubs import oriented_edge_spectrum_4d
@@ -43,7 +41,9 @@ def test_capacity_algorithm2_falls_back_to_oriented_edge(monkeypatch: pytest.Mon
     sentinel = torch.tensor(3.14159, dtype=vertices.dtype)
     called: dict[str, bool] = {"flag": False}
 
-    def fake_oriented(edge_vertices: torch.Tensor, edge_normals: torch.Tensor, edge_offsets: torch.Tensor) -> torch.Tensor:
+    def fake_oriented(
+        edge_vertices: torch.Tensor, edge_normals: torch.Tensor, edge_offsets: torch.Tensor
+    ) -> torch.Tensor:
         called["flag"] = True
         assert edge_vertices.shape[1] == 4
         assert edge_normals.shape[1] == 4

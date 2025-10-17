@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 import torch
-
 from tests.polytopes import STANDARD_POLYTOPES_BY_NAME
+
 from viterbo.math.polytope import halfspaces_to_vertices, vertices_to_halfspaces
 
 

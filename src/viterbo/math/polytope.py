@@ -178,7 +178,9 @@ def vertices_to_halfspaces(vertices: torch.Tensor) -> tuple[torch.Tensor, torch.
     unique_normals, unique_offsets = _pairwise_unique(normals_list, offsets_list, tol)
     normals_final = torch.stack(unique_normals)
     offsets_final = torch.stack(unique_offsets)
-    return normals_final.to(device=device, dtype=dtype), offsets_final.to(device=device, dtype=dtype)
+    return normals_final.to(device=device, dtype=dtype), offsets_final.to(
+        device=device, dtype=dtype
+    )
 
 
 def halfspaces_to_vertices(normals: torch.Tensor, offsets: torch.Tensor) -> torch.Tensor:

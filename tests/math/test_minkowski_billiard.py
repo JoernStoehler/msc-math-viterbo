@@ -5,8 +5,8 @@ from __future__ import annotations
 import math
 
 import torch
-
 from tests.polytopes import PLANAR_POLYTOPE_PAIRS
+
 from viterbo.math.capacity_ehz.lagrangian_product import minimal_action_cycle_lagrangian_product
 
 torch.set_default_dtype(torch.float64)

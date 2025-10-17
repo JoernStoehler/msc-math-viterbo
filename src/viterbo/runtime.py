@@ -66,7 +66,9 @@ def enforce_time_budget(seconds: float | None = None) -> Callable[[Callable[P, R
 
         @functools.wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-            def _handle_timeout(signum: int, frame: FrameType | None) -> None:  # pragma: no cover - signal path
+            def _handle_timeout(
+                signum: int, frame: FrameType | None
+            ) -> None:  # pragma: no cover - signal path
                 raise TimeBudgetExceededError(
                     f"{func.__name__} exceeded allotted {timeout} seconds"
                 )
