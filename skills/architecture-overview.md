@@ -1,6 +1,6 @@
 ---
 name: architecture-overview
-description: Understand the layering, data flow, and extension points across math, datasets, models, and C++ bindings.
+description: This skill should be used when understanding layer responsibilities, data flow, and extension points across math, datasets, models, and C++ bindings.
 last-updated: 2025-10-17
 ---
 

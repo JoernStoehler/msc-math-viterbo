@@ -1,6 +1,6 @@
 ---
 name: repo-layout
-description: Navigate sources of truth, repository structure, and documentation locations for the project.
+description: This skill should be used when navigating repository structure, sources of truth, and documentation locations.
 last-updated: 2025-10-17
 ---
 

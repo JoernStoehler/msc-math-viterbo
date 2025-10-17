@@ -1,6 +1,6 @@
 ---
 name: roles-scope
-description: Clarify governance, maintainer responsibilities, and escalation triggers for the Viterbo project.
+description: This skill should be used when clarifying governance, maintainer responsibilities, and escalation triggers.
 last-updated: 2025-10-17
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: repo-onboarding
-description: Establish a reliable first workflow when joining the Viterbo project branch and align with the board-driven process within the first task.
+description: This skill should be used when starting a new task or resuming work to follow the repository’s startup sequence.
 last-updated: 2025-10-17
 ---
 

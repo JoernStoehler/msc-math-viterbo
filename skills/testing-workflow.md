@@ -1,6 +1,6 @@
 ---
 name: testing-workflow
-description: Run and interpret the project’s testing and linting suite efficiently using shared just/uv commands.
+description: This skill should be used when running linting, typing, tests, and troubleshooting CI.
 last-updated: 2025-10-17
 ---
 

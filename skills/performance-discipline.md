@@ -1,6 +1,6 @@
 ---
 name: performance-discipline
-description: Manage performance investigations, benchmarking, and profiling without premature optimization.
+description: This skill should be used when benchmarking, profiling, or addressing performance regressions.
 last-updated: 2025-10-17
 ---
 

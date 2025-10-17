@@ -1,6 +1,6 @@
 ---
 name: vibekanban
-description: Use the Msc Math Viterbo Kanban board effectively for scoping, updates, and escalation.
+description: This skill should be used when working with the Msc Math Viterbo Kanban board for scoping, updates, and escalation.
 last-updated: 2025-10-17
 ---
 

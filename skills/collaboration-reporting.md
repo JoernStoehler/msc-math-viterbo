@@ -1,6 +1,6 @@
 ---
 name: collaboration-reporting
-description: Handle communication hygiene, weekly reporting, and information sharing norms with maintainers and advisors.
+description: This skill should be used when communicating progress, handling weekly reporting, or managing email/artefacts with maintainers and advisors.
 last-updated: 2025-10-17
 ---
 

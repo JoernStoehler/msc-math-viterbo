@@ -1,6 +1,6 @@
 ---
 name: devcontainer-ops
-description: Operate the project owner’s devcontainer lifecycle scripts safely during development or debugging sessions.
+description: This skill should be used when starting, stopping, or troubleshooting the devcontainer and its services.
 last-updated: 2025-10-17
 ---
 

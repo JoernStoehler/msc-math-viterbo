@@ -1,6 +1,6 @@
 ---
 name: coding-standards
-description: Apply project-wide coding conventions with emphasis on math purity, Torch usage, and architectural layering.
+description: This skill should be used when applying project-wide coding conventions for PyTorch-first design, math purity, and strict layering.
 last-updated: 2025-10-17
 ---
 

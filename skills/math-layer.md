@@ -1,6 +1,6 @@
 ---
 name: math-layer
-description: Deliver reliable symplectic geometry computations in `src/viterbo/math` while respecting purity and tensor semantics.
+description: This skill should be used when implementing or modifying math-layer geometry utilities in `src/viterbo/math`.
 last-updated: 2025-10-17
 ---
 
@@ -31,19 +31,25 @@ Covers implementing or modifying utilities under `src/viterbo/math/` and related
 ## Naming & Structure
 
 - Modules should group related concepts (e.g., `support.py`, `convex.py`) rather than accumulating miscellaneous helpers.
-- Exported functions should have docstrings in Google style, highlighting tensor shapes:
-  ```python
-  def support(points: torch.Tensor, direction: torch.Tensor) -> torch.Tensor:
-      """Support function for a finite point set.
+- Exported functions should have docstrings in Google style, highlighting tensor shapes.
 
-      Args:
-          points: (N, D) tensor of vertices (float64).
-          direction: (D,) tensor describing the query direction (float64).
+### Minimal Example (PyTorch)
+```python
+import torch
 
-      Returns:
-          Scalar tensor equal to `max_i <points[i], direction>`.
-      """
-  ```
+def support(points, direction):
+    """Support function of a finite point set.
+
+    Args:
+      points: (N, D) float64
+      direction: (D,) float64, not normalized
+
+    Returns:
+      () float64 tensor:
+        max_i <points[i], direction>
+    """
+    return (points @ direction).max()
+```
 - Keep module-level comments minimal; prefer coverage in docstrings or `docs/` when detailed exposition is necessary.
 
 ## Testing & Validation

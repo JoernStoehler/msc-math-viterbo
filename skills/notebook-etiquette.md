@@ -1,6 +1,6 @@
 ---
 name: notebook-etiquette
-description: Maintain reproducible Jupytext-managed notebooks and artefact hygiene when working under `notebooks/`.
+description: This skill should be used when editing or creating Jupytext-managed notebooks and managing their artefacts.
 last-updated: 2025-10-17
 ---
 

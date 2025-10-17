@@ -1,6 +1,6 @@
 ---
 name: daily-development
-description: Execute the standard daily workflow, planning cadence, and PR expectations for tasks.
+description: This skill should be used when executing the daily workflow, planning tasks, and preparing PRs.
 last-updated: 2025-10-17
 ---
 

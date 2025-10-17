@@ -1,6 +1,6 @@
 ---
 name: skill-authoring
-description: Create or update skills aligned with Anthropic’s guidance; combine facts with imperative steps; keep content concise.
+description: This skill should be used when creating or updating skills aligned with Anthropic’s guidance, combining facts with imperative steps.
 last-updated: 2025-10-17
 ---
 

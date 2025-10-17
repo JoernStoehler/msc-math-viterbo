@@ -1,6 +1,6 @@
 ---
 name: environment-tooling
-description: Manage the devcontainer, command-line tooling, and utility workflows (including PDF ingestion).
+description: This skill should be used when working with the environment, CLI tooling, or PDF ingestion workflows.
 last-updated: 2025-10-17
 ---
 
