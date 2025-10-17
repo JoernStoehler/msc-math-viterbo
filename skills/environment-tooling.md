@@ -21,6 +21,8 @@ last-updated: 2025-10-17
 - `just ci` — CI parity (lint, type, tests) before handoff or PR creation.
 - `uv run ...` — execute Python scripts/tests with dependencies resolved via `uv.lock`.
 - `rg` — preferred code/search tool; stream ≤250 lines when reading in shell.
+ - Editors: use Pyright for fast type feedback and Ruff for lint/format.
+ - Dependency lockfile: commit `uv.lock` when dependencies change.
 
 ## PDF Ingestion Workflow
 

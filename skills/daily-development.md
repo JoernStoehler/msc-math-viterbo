@@ -27,6 +27,7 @@ last-updated: 2025-10-17
   - Feature changes and scope.
   - Files touched and validation evidence (Ruff/Pyright/Pytest, benchmarks if relevant).
   - Performance delta (if measured), limitations, and follow-ups.
+ - Open PRs with GitHub CLI: `gh pr create --body-file docs/PR_TEMPLATE.md` (prefer this over `--body`).
 
 ## Related Skills
 
