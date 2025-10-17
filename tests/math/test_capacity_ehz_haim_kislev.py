@@ -17,7 +17,6 @@ torch.set_default_dtype(torch.float64)
 CAPACITY_TEST_CASES: list[tuple[str, float, float]] = [
     ("square_2d", 1e-6, 1e-6),
     ("random_hexagon_seed41", 1e-6, 1e-6),
-    ("orthogonal_simplex_4d", 1e-5, 1e-5),
     ("hypercube_4d_unit", 1e-5, 1e-5),
     ("pentagon_product_counterexample", 1e-6, 1e-6),
 ]

@@ -12,6 +12,7 @@ from __future__ import annotations
 import itertools
 
 import torch
+from scipy.spatial import ConvexHull
 
 # ---- Basic queries -----------------------------------------------------------
 
@@ -157,7 +158,6 @@ def vertices_to_halfspaces(vertices: torch.Tensor) -> tuple[torch.Tensor, torch.
     device = vertices.device
     dim = vertices.size(1)
     tol = max(float(torch.finfo(dtype).eps) ** 0.5, 1e-9)
-    centroid = vertices.mean(dim=0)
 
     if dim == 1:
         min_val = vertices.min()
@@ -166,25 +166,19 @@ def vertices_to_halfspaces(vertices: torch.Tensor) -> tuple[torch.Tensor, torch.
         offsets = torch.stack([max_val, -min_val])
         return normals, offsets
 
-    candidate_normals: list[torch.Tensor] = []
-    candidate_offsets: list[torch.Tensor] = []
-    for indices in itertools.combinations(range(vertices.size(0)), dim):
-        facet = _facet_from_indices(vertices, indices, centroid, tol)
-        if facet is None:
-            continue
-        normal, offset = facet
-        candidate_normals.append(normal)
-        candidate_offsets.append(offset)
-
-    if not candidate_normals:
-        raise ValueError("failed to construct any supporting halfspaces")
-
-    normals_unique, offsets_unique = _pairwise_unique(candidate_normals, candidate_offsets, tol)
-    normals_tensor = torch.stack(normals_unique)
-    offsets_tensor = torch.stack(offsets_unique)
-    return normals_tensor.to(device=device, dtype=dtype), offsets_tensor.to(
-        device=device, dtype=dtype
-    )
+    vertices_cpu = vertices.detach().to(dtype=torch.float64, device="cpu")
+    hull = ConvexHull(vertices_cpu.numpy())
+    normals_np = hull.equations[:, :-1]
+    offsets_np = -hull.equations[:, -1]
+    norms = torch.from_numpy((normals_np**2).sum(axis=1, keepdims=True)).sqrt()
+    normals_tensor = torch.from_numpy(normals_np) / norms
+    offsets_tensor = torch.from_numpy(offsets_np) / norms.squeeze(1)
+    normals_list = [n.clone() for n in normals_tensor]
+    offsets_list = [o.clone() for o in offsets_tensor]
+    unique_normals, unique_offsets = _pairwise_unique(normals_list, offsets_list, tol)
+    normals_final = torch.stack(unique_normals)
+    offsets_final = torch.stack(unique_offsets)
+    return normals_final.to(device=device, dtype=dtype), offsets_final.to(device=device, dtype=dtype)
 
 
 def halfspaces_to_vertices(normals: torch.Tensor, offsets: torch.Tensor) -> torch.Tensor:
