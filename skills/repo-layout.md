@@ -43,7 +43,7 @@ last-updated: 2025-10-17
 ## Documentation & Notes
 
 - `docs/` — public-facing site content, briefs, workflows.
-- `notebooks/` — Jupytext-managed `.py` notebooks; retain metadata headers (see `skills/notebook-etiquette.md`).
+- `notebooks/` — Jupytext-managed `.py` notebooks; retain metadata headers (see `skills/experiments-notebooks-artefacts.md`).
 - `mail/` — archived summaries, private attachments, and weekly reports (follow `skills/collaboration-reporting.md`).
 
 ## Related Skills

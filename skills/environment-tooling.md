@@ -1,16 +1,15 @@
 ---
 name: environment-tooling
-description: This skill should be used when working with the environment, CLI tooling, or PDF ingestion workflows.
+description: Troubleshooting environment/tooling deviations from the golden path and keeping flows healthy.
 last-updated: 2025-10-17
 ---
 
-# Environment & Tooling
+# Environment & Tooling (Troubleshooting)
 
 ## Instructions
-- Run `just checks` for a quick health pass (format, lint, type, smoke tests); use `just ci` before PRs.
-- Use `uv run ...` for commands needing the Python environment; avoid manual pip installs.
-- Follow the PDF ingestion steps below for `mail/private/` and prefer Markdown summaries alongside originals.
-- If environment deviates from `docs/environment.md`, document differences in task notes and escalate for persistent gaps.
+- If the environment deviates from `docs/environment.md`, document differences in task notes and escalate persistent gaps.
+- Prefer `uv run ...` for Python entry points; avoid manual pip installs.
+- Use this skill to diagnose failing `just`/`uv` commands or editor tooling mismatches.
 
 ## Supported Stack
 
@@ -18,27 +17,16 @@ last-updated: 2025-10-17
 - C++17 with pybind11 for performance-critical extensions.
 - Development happens inside the project owner’s devcontainer; see `skills/devcontainer-ops.md` for lifecycle scripts.
 
-## Core Commands
+## Diagnostics
 
-- `just checks` — run lint, type checks, and smoke tests.
-- `just lint` — Ruff lint + skill metadata validation (`scripts/load_skills_metadata.py --quiet`).
-- `just type` — Pyright (basic) against `src/viterbo`.
-- `just test` — incremental pytest smoke tier.
-- `just ci` — CI parity (lint, type, tests) before handoff or PR creation.
-- `uv run ...` — execute Python scripts/tests with dependencies resolved via `uv.lock`.
-- `rg` — preferred code/search tool; stream ≤250 lines when reading in shell.
- - Editors: use Pyright for fast type feedback and Ruff for lint/format.
- - Dependency lockfile: commit `uv.lock` when dependencies change.
+- Verify `uv` version and environment activation; re-run `uv run python -V` to confirm.
+- Inspect `Justfile` targets when a command fails; run sub-steps manually to isolate issues.
+- Check editor tooling (Pyright/Ruff) aligns with project config; prefer in-repo settings.
 
-## PDF Ingestion Workflow
+## When to Rebuild
 
-1. Convert PDFs to Markdown using:
-   ```
-   pdftotext -layout -nopgbrk input.pdf output.md
-   ```
-2. Store the `.md` alongside the original under `mail/private/` (ignored by Git).
-3. If `pdftotext` is unavailable, use a Python fallback (e.g., `pypdf`) and keep the Markdown summary.
-4. Apply OCR (`tesseract`) only for scanned PDFs when necessary.
+- After dependency or base image updates fail locally, follow `devcontainer-ops` rebuild guidance.
+- Avoid ad-hoc cache wipes; capture exact error and command history first.
 
 ## Shell Practices
 
@@ -49,5 +37,6 @@ last-updated: 2025-10-17
 ## Related Skills
 
 - `devcontainer-ops` — host/container start-stop procedures.
-- `repo-onboarding` — startup checklist and command quick reference.
-- `notebook-etiquette` — reproducibility when working in notebooks.
+- `basic-environment` — golden commands and navigation.
+- `repo-layout` — structure and sources of truth.
+- `experiments-notebooks-artefacts` — notebook execution environment and artefacts.

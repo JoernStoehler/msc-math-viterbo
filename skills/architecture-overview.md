@@ -1,45 +1,18 @@
 ---
 name: architecture-overview
-description: This skill should be used when understanding layer responsibilities, data flow, and extension points across math, datasets, models, and C++ bindings.
+description: Layering and boundaries are maintained under Good Code Loop; keep this for quick reference.
 last-updated: 2025-10-17
 ---
 
-# Architecture Overview
+# Architecture Overview (Condensed)
 
-## Instructions
-- Validate intended changes against layer responsibilities below; never import upward (`math` ← `datasets` ← `models`).
-- Keep math-layer APIs pure and device-agnostic; move side effects to adapters or call sites.
-- For performance work, start in Python/Torch and escalate before adding C++ or CUDA.
-- If a change crosses layers or adds new dependencies, flag the task with `Needs-Unblock: architecture`.
+For authoritative rules and review checklists, use `skills/good-code-loop.md`.
 
-## Layering
+## Layering (Quick Reference)
 
-1. **Math (`src/viterbo/math/`)**
-   - Pure tensor utilities; no I/O or hidden state.
-   - Accept caller devices, return tensors, and maintain deterministic behavior.
-2. **Datasets (`src/viterbo/datasets/`)**
-   - Adapters and collate functions that wrap math utilities.
-   - Handle ragged data via Python lists of tensors or padded tensors with masks.
-3. **Models (`src/viterbo/models/`)**
-   - Training loops and experiment orchestration.
-   - May use CUDA but must not introduce math-layer dependencies.
-4. **C++ Extensions (`src/viterbo/_cpp/`)**
-   - Performance hotspots implemented via pybind11.
-   - Provide Python fallbacks where feasible; coordinate with maintainers before adding new bindings.
+1. Math (`src/viterbo/math/`): pure tensor utilities; no I/O or hidden state; accept caller devices, return tensors.
+2. Datasets (`src/viterbo/datasets/`): adapters and `collate_fn`s; handle ragged data via lists or padding+mask.
+3. Models (`src/viterbo/models/`): training/experiments; optional CUDA; no math-layer dependencies introduced here.
+4. C++ (`src/viterbo/_cpp/`): hotspots via pybind11; provide Python fallbacks; guard imports.
 
-## Data Handling
-
-- Ragged inputs: prefer explicit masks or lists; expose `collate_fn`s for DataLoaders.
-- Device management: no implicit `.to()` calls; leave device decisions to callers.
-- Precision: math defaults to float64, models to float32. Document any deviations.
-
-## Extension Strategy
-
-- Start with pure Python/Torch; introduce C++ only for demonstrable hotspots.
-- When adding extensions, document build requirements and guard imports to degrade gracefully.
-
-## Related Skills
-
-- `math-layer` — detailed guidance for geometry modules.
-- `coding-standards` — cross-cutting style and purity rules.
-- `performance-discipline` — governs profiling and regression handling.
+See also `skills/data-collation.md` for batching, and `skills/performance-discipline.md` for extensions driven by measured hotspots.

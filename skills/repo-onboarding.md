@@ -22,12 +22,13 @@ Ensure new agents follow the mandatory startup sequence before making code chang
 3. Run `uv run python scripts/load_skills_metadata.py` to load current skill metadata into context.
 4. Load additional skills based on task type:
    - Environment or container change → `skills/devcontainer-ops.md`
-   - Library or math code change → `skills/coding-standards.md`
+   - Golden commands & repo nav → `skills/basic-environment.md`
+   - Library or math code change → `skills/good-code-loop.md`
    - Math-layer geometry work → `skills/math-layer.md`
-   - Test or CI related change → `skills/testing-workflow.md`
+   - Data batching/collation → `skills/data-collation.md`
    - Cross-team communication or weekly updates → `skills/collaboration-reporting.md`
    - Performance analysis or benchmarking → `skills/performance-discipline.md`
-   - Notebook or exploratory analysis → `skills/notebook-etiquette.md`
+   - Notebook or exploratory analysis → `skills/experiments-notebooks-artefacts.md`
 5. Inspect `git status -sb` to check for existing worktree changes; do not revert files you did not touch.
 6. If the task spans notebooks or artefacts, verify whether the files are under git ignore before editing.
 7. Capture outstanding questions for the maintainer early; flag blockers in the task description using `Needs-Unblock: <topic>` when required.
@@ -68,6 +69,7 @@ Ensure new agents follow the mandatory startup sequence before making code chang
 ## Related Skills
 
 - `roles-scope` — governance, responsibilities, and escalation triggers.
-- `environment-tooling` — environment commands and PDF ingestion.
+- `basic-environment` — golden command palette and shell practices.
+- `environment-tooling` — troubleshooting deviations from the golden path.
 - `devcontainer-ops` — container lifecycle and troubleshooting.
 - `vibekanban` — backlog usage and coordination.
