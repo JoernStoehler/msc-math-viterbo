@@ -6,6 +6,12 @@ last-updated: 2025-10-17
 
 # Architecture Overview
 
+## Instructions
+- Validate intended changes against layer responsibilities below; never import upward (`math` ← `datasets` ← `models`).
+- Keep math-layer APIs pure and device-agnostic; move side effects to adapters or call sites.
+- For performance work, start in Python/Torch and escalate before adding C++ or CUDA.
+- If a change crosses layers or adds new dependencies, flag the task with `Needs-Unblock: architecture`.
+
 ## Layering
 
 1. **Math (`src/viterbo/math/`)**

@@ -6,6 +6,12 @@ last-updated: 2025-10-17
 
 # Repository Layout & Sources of Truth
 
+## Instructions
+- Read `AGENTS.md` to align on sources of truth, then use this skill to locate files and policies quickly.
+- Prefer `rg` for navigation (e.g., `rg --files`, `rg -n <term>`); keep reads ≤250 lines in the shell.
+- When changing structure, preserve layering and update cross-links (skills and docs) in the same PR; escalate larger reorganizations.
+- If you find conflicting guidance across files, add `Needs-Unblock: repo-layout` to the task and propose a single canonical location.
+
 ## Primary References
 
 - `AGENTS.md` — top-level index; load relevant skills after running the metadata script.

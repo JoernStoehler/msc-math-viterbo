@@ -6,6 +6,11 @@ last-updated: 2025-10-17
 
 # VibeKanban Workflow
 
+## Instructions
+- Track work on project `Msc Math Viterbo`, updating the ticket description/comments with concise progress and blockers.
+- Use `Needs-Unblock: <topic>` in the ticket for escalations; link artefacts from `artefacts/` or `mail/`.
+- Keep ticket text lean; let board columns encode status and link out to skills/docs for context.
+
 ## Board Basics
 
 - Canonical backlog: project `Msc Math Viterbo` on VibeKanban.
