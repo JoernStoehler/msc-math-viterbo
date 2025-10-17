@@ -4,6 +4,7 @@ import math
 
 import pytest
 import torch
+from tests.polytopes import STANDARD_POLYTOPES_BY_NAME
 
 from viterbo.math.constructions import (
     matmul_vertices,
@@ -16,10 +17,10 @@ torch.set_default_dtype(torch.float64)
 
 
 def test_matmul_and_translate_vertices() -> None:
-    vertices = torch.tensor([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
+    vertices = STANDARD_POLYTOPES_BY_NAME["right_triangle_area_one"].vertices
     matrix = torch.tensor([[2.0, 0.0], [0.0, 3.0]])
     transformed = matmul_vertices(matrix, vertices)
-    expected = torch.tensor([[0.0, 0.0], [2.0, 0.0], [0.0, 3.0]])
+    expected = vertices @ matrix.T
     torch.testing.assert_close(transformed, expected)
     translation = torch.tensor([1.0, -1.0])
     translated = translate_vertices(translation, transformed)
@@ -28,30 +29,15 @@ def test_matmul_and_translate_vertices() -> None:
 
 
 def test_volume_known_shapes() -> None:
-    square = torch.tensor(
-        [
-            [0.0, 0.0],
-            [1.0, 0.0],
-            [1.0, 1.0],
-            [0.0, 1.0],
-        ]
-    )
-    assert math.isclose(volume(square).item(), 1.0, rel_tol=1e-6, abs_tol=1e-6)
-    cube = torch.tensor(
-        [
-            [0.0, 0.0, 0.0],
-            [1.0, 0.0, 0.0],
-            [0.0, 1.0, 0.0],
-            [0.0, 0.0, 1.0],
-            [1.0, 1.0, 0.0],
-            [1.0, 0.0, 1.0],
-            [0.0, 1.0, 1.0],
-            [1.0, 1.0, 1.0],
-        ]
-    )
-    assert math.isclose(volume(cube).item(), 1.0, rel_tol=1e-6, abs_tol=1e-6)
-    points = torch.tensor([-1.0, 1.0])
-    hypercube_vertices = torch.cartesian_prod(points, points, points, points)
+    square = STANDARD_POLYTOPES_BY_NAME["square_2d"].vertices
+    unit_square = (square + 1.0) * 0.5
+    assert math.isclose(volume(unit_square).item(), 1.0, rel_tol=1e-6, abs_tol=1e-6)
+
+    cube = STANDARD_POLYTOPES_BY_NAME["hypercube_3d_unit"].vertices
+    unit_cube = (cube + 1.0) * 0.5
+    assert math.isclose(volume(unit_cube).item(), 1.0, rel_tol=1e-6, abs_tol=1e-6)
+
+    hypercube_vertices = STANDARD_POLYTOPES_BY_NAME["hypercube_4d_unit"].vertices
     torch.testing.assert_close(
         volume(hypercube_vertices), torch.tensor(16.0, dtype=torch.get_default_dtype())
     )

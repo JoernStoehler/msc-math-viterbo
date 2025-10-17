@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import torch
+from tests.polytopes import STANDARD_POLYTOPES_BY_NAME
 
 from viterbo.math.constructions import (
     matmul_halfspace,
@@ -19,18 +20,7 @@ def _sorted_rows(tensor: torch.Tensor) -> torch.Tensor:
 
 
 def test_vertices_halfspaces_roundtrip_cube() -> None:
-    vertices = torch.tensor(
-        [
-            [-1.0, -1.0, -1.0],
-            [-1.0, -1.0, 1.0],
-            [-1.0, 1.0, -1.0],
-            [-1.0, 1.0, 1.0],
-            [1.0, -1.0, -1.0],
-            [1.0, -1.0, 1.0],
-            [1.0, 1.0, -1.0],
-            [1.0, 1.0, 1.0],
-        ]
-    )
+    vertices = STANDARD_POLYTOPES_BY_NAME["hypercube_3d_unit"].vertices
     normals, offsets = vertices_to_halfspaces(vertices)
     reconstructed = halfspaces_to_vertices(normals, offsets)
     torch.testing.assert_close(
@@ -42,14 +32,7 @@ def test_vertices_halfspaces_roundtrip_cube() -> None:
 
 
 def test_halfspace_transforms_agree_with_vertices() -> None:
-    square = torch.tensor(
-        [
-            [-1.0, -1.0],
-            [-1.0, 1.0],
-            [1.0, -1.0],
-            [1.0, 1.0],
-        ]
-    )
+    square = STANDARD_POLYTOPES_BY_NAME["square_2d"].vertices
     normals, offsets = vertices_to_halfspaces(square)
     matrix = torch.tensor([[2.0, 1.0], [0.5, 3.0]])
     transformed_vertices = matmul_vertices(matrix, square)

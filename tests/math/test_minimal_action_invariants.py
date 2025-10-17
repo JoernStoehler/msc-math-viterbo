@@ -12,6 +12,7 @@ from __future__ import annotations
 import math
 
 import torch
+from tests.polytopes import STANDARD_POLYTOPES_BY_NAME
 
 from viterbo.math.capacity_ehz.algorithms import (
     capacity_ehz_algorithm1,
@@ -27,33 +28,22 @@ from viterbo.math.volume import volume
 torch.set_default_dtype(torch.float64)
 
 
-def _unit_square_vertices() -> torch.Tensor:
-    return torch.tensor(
-        [
-            [-1.0, -1.0],
-            [-1.0, 1.0],
-            [1.0, -1.0],
-            [1.0, 1.0],
-        ]
-    )
-
-
 def _square_geometry():
-    vertices = _unit_square_vertices()
-    normals, offsets = vertices_to_halfspaces(vertices)
-    return vertices, normals, offsets
+    square = STANDARD_POLYTOPES_BY_NAME["square_2d"]
+    return square.vertices, square.normals, square.offsets
 
 
 def test_volume_translation_invariance() -> None:
-    vertices = torch.tensor([[-1.0, 0.0], [0.0, 2.0], [2.0, 0.0]])
-    translated = translate_vertices(torch.tensor([3.5, -1.25]), vertices)
-    original_volume = volume(vertices)
+    poly = STANDARD_POLYTOPES_BY_NAME["random_hexagon_seed41"]
+    translation = torch.tensor([3.5, -1.25], dtype=poly.vertices.dtype)
+    translated = translate_vertices(translation, poly.vertices)
+    original_volume = volume(poly.vertices)
     translated_volume = volume(translated)
     torch.testing.assert_close(translated_volume, original_volume)
 
 
 def test_volume_scaling_homogeneity() -> None:
-    vertices = _unit_square_vertices()
+    vertices = STANDARD_POLYTOPES_BY_NAME["square_2d"].vertices
     scale = 1.75
     scaled_vertices = vertices * scale
     scaled_volume = volume(scaled_vertices)
@@ -65,27 +55,21 @@ def test_volume_scaling_homogeneity() -> None:
 
 
 def test_volume_known_cube_value() -> None:
-    vertices = torch.tensor(
-        [
-            [-1.0, -1.0, -1.0],
-            [-1.0, -1.0, 1.0],
-            [-1.0, 1.0, -1.0],
-            [-1.0, 1.0, 1.0],
-            [1.0, -1.0, -1.0],
-            [1.0, -1.0, 1.0],
-            [1.0, 1.0, -1.0],
-            [1.0, 1.0, 1.0],
-        ]
+    cube = STANDARD_POLYTOPES_BY_NAME["hypercube_3d_unit"]
+    cube_volume = volume(cube.vertices)
+    torch.testing.assert_close(
+        cube_volume,
+        torch.tensor(cube.volume_reference, dtype=cube.volume.dtype),
     )
-    cube_volume = volume(vertices)
-    torch.testing.assert_close(cube_volume, torch.tensor(8.0))
 
 
 def test_volume_known_hypercube_value_4d() -> None:
-    points = torch.tensor([-1.0, 1.0])
-    vertices = torch.cartesian_prod(points, points, points, points)
-    hypercube_volume = volume(vertices)
-    torch.testing.assert_close(hypercube_volume, torch.tensor(16.0))
+    hypercube = STANDARD_POLYTOPES_BY_NAME["hypercube_4d_unit"]
+    hypercube_volume = volume(hypercube.vertices)
+    torch.testing.assert_close(
+        hypercube_volume,
+        torch.tensor(hypercube.volume_reference, dtype=hypercube.volume.dtype),
+    )
 
 
 def test_capacity_algorithms_agree_on_square() -> None:
