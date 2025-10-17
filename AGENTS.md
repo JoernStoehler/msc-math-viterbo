@@ -16,6 +16,10 @@ This file is an index. Load the right skill guides for your task.
 - `skills/collaboration-reporting.md` — communication hygiene, weekly reporting, artefact handling.
 - `skills/vibekanban.md` *(if present)* — board workflows (fallback to `skills/daily-development.md` otherwise).
 
+### Maintaining Skills & Docs
+
+- `skills/skill-authoring.md` — how to create or update skills to Anthropic spec. See also `docs/creating_skills.md` for extended notes.
+
 ### Environment & Tooling
 
 - `skills/devcontainer-ops.md` — host/container lifecycle scripts.
