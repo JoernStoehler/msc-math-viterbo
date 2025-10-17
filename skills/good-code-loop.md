@@ -38,11 +38,12 @@ last-updated: 2025-10-17
 - Handle RNG via `torch.Generator`; avoid int seeds except at boundaries (document conversions).
 - Do not move tensors across devices implicitly; callers control `.to(device)`.
 
-## Testing Patterns
+## Testing Quickstart
 
 - Favor invariants/property tests for geometry; seed generators for determinism.
 - Use `torch.testing.assert_close`, `pytest.approx`, or `math.isclose`; avoid raw float equality.
-- Tests must cover ragged data when applicable; use representative inputs instead of exhaustive permutations.
+- Cover ragged data when applicable with representative inputs.
+- See `skills/testing-and-ci.md` for incremental selection, static analysis, CI parity, and troubleshooting.
 
 ## PR & Commits
 
@@ -65,4 +66,3 @@ last-updated: 2025-10-17
 - `math-layer` — detailed math implementation guidance.
 - `performance-discipline` — measuring and addressing bottlenecks.
 - `basic-environment` — golden commands and repo navigation.
-

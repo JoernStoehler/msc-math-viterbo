@@ -38,7 +38,8 @@ This file is an index. Load the right skill guides for your task.
 ### Daily Execution
 
 - `skills/repo-onboarding.md` — startup checklist and command quick reference.
-- `skills/good-code-loop.md` — coding standards, tests/CI, architecture boundaries, PR hygiene.
+- `skills/good-code-loop.md` — coding standards, architecture guardrails, PR hygiene.
+- `skills/testing-and-ci.md` — detailed testing, static analysis, incremental selection, CI parity.
 - `skills/vibekanban.md` — planning cadence and escalation on the board.
 
 ### Code & Architecture

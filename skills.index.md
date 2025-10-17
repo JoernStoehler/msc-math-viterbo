@@ -10,6 +10,7 @@ Use this index to load the smallest set of skills that match your task. Each clu
 
 ## Good Code Loop (includes Architecture Boundaries)
 - skills/good-code-loop.md
+- skills/testing-and-ci.md
 - Related: skills/math-layer.md, skills/data-collation.md, skills/performance-discipline.md, skills/basic-environment.md
 
 ## Data & Collation
