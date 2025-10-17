@@ -40,6 +40,8 @@ Single authoritative policy for this repo.
 
 - Stack: Python 3.12, PyTorch 2.x (CPU baseline; optional CUDA for models only). C++17 with pybind11 for custom hotspot non‑SIMD kernels.
 - Supported environment: local devcontainer (golden path). Shared lifecycle scripts (`.devcontainer/{post-create.sh,post-start.sh}`) manage environment setup. Codespaces/Codex Cloud are not used.
+- Host orchestration: prefer `.devcontainer/bin/owner-up.sh` to bring up the container and start services (VS Code Tunnel, Cloudflared, VibeKanban) safely; `.devcontainer/bin/owner-down.sh` to stop; `.devcontainer/bin/owner-rebuild.sh` to rebuild the container. Non-destructive host status: `.devcontainer/bin/owner-status-host.sh`.
+- In-container service control lives in `.devcontainer/bin/` scripts (idempotent): `dev-start.sh`, `dev-status.sh`, `dev-stop.sh`. Host orchestration via `owner-up.sh`/`owner-down.sh`.
 - Codex agents land inside a pre-provisioned environment.
 - PRs: use `gh`; prefer `gh pr create --body-file docs/PR_TEMPLATE.md` (avoid `--body`).
 - Python/uv: use `uv run python …`; commit `uv.lock`.
@@ -65,6 +67,11 @@ PDF ingestion (for inbox/notes)
 - `INC_ARGS="…" just test` - forward options to `scripts/inc_select.py` (e.g., `--debug`)
 - `just bench` - smoke benchmarks (saves under `.benchmarks/`)
 - `just ci` - CI parity, non-incremental test run, pass before pushing/PR
+
+Environment (host/devcontainer)
+- `bash .devcontainer/bin/owner-up.sh` — start container + services (recommended)
+- `bash .devcontainer/bin/owner-down.sh` — stop services + container
+- `bash .devcontainer/bin/owner-status-host.sh` — non-destructive host status
 
 ## 3) Coding Conventions (facts)
 

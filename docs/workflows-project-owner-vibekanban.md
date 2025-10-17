@@ -30,11 +30,13 @@ Prerequisites (one‑time on the host)
   - Worktrees base: `/srv/devworktrees/vibe-kanban/worktrees`
   - `sudo chown -R $USER:$USER /srv/devhome /srv/devworktrees` after first creation
 
-Start the devcontainer
-- Mounts are defined in `.devcontainer/devcontainer.json` (binds to `/srv/devhome/*` and `/srv/devworktrees/*`). On the host:
-  - `devcontainer up --workspace-folder /srv/workspaces/msc-math-viterbo`
-- Enter the container shell:
-  - `devcontainer exec --workspace-folder /srv/workspaces/msc-math-viterbo bash -l`
+Start the environment
+- Recommended (one-shot from host):
+  - `bash .devcontainer/bin/owner-up.sh`
+  - Brings up the devcontainer, runs preflight, starts VS Code Tunnel + Cloudflared + VibeKanban (detached), then verifies.
+- Low-level alternative:
+  - On host: `devcontainer up --workspace-folder /srv/workspaces/msc-math-viterbo`
+  - Enter shell: `devcontainer exec --workspace-folder /srv/workspaces/msc-math-viterbo bash -l`
 
 Inside the devcontainer: baseline bootstrap
 - Ensure tooling (post‑create already handles most of this):
@@ -110,14 +112,12 @@ Performance and caches (uv, PyTorch)
 - Recommendation: document that the warning is OK and expected with current mounts; revisit co‑location if first‑run cost grows materially.
 
 Daily start sequence (owner)
-- SSH via Tailscale into host, start or attach the devcontainer:
-  - `devcontainer up --workspace-folder /srv/workspaces/msc-math-viterbo`
-  - `devcontainer exec --workspace-folder /srv/workspaces/msc-math-viterbo bash -l`
-- Inside the container:
-  - Start VibeKanban UI: `just -f .devcontainer/Justfile start-vibe`
-  - Start VS Code Tunnel: `just -f .devcontainer/Justfile start-tunnel`
-  - Start Cloudflared: `just -f .devcontainer/Justfile start-cf`
-  - Open `https://vibekanban.joernstoehler.com` in your browser and work the board.
+- Fast path: `bash .devcontainer/bin/owner-up.sh` (host)
+- Or inside the container:
+  - Preflight: `bash .devcontainer/bin/dev-install.sh --preflight`
+  - Start all (detached): `bash .devcontainer/bin/dev-start.sh --detached`
+  - Verify: `bash .devcontainer/bin/dev-status.sh`
+  - Then open `https://vibekanban.joernstoehler.com` and work the board.
 
 Migration from docs/tasks to VibeKanban (completed 2025-10-16)
 - All legacy briefs were converted to tickets in the `Msc Math Viterbo` project and the `docs/tasks/` directory was removed.
@@ -126,8 +126,8 @@ Migration from docs/tasks to VibeKanban (completed 2025-10-16)
 
 Font choice in the VibeKanban UI
 - KISS, no fork: inject Inter at the edge using Cloudflare Wrangler. We provide a worker and config under `.devcontainer/cloudflare/`:
-  - Deploy in container: `just -f .devcontainer/Justfile cf-worker-deploy`
-  - Tail logs: `just -f .devcontainer/Justfile cf-worker-tail`
+  - Deploy in container: `cd .devcontainer/cloudflare && wrangler deploy`
+  - Tail logs: `cd .devcontainer/cloudflare && wrangler tail`
   - Edit `wrangler.toml` to adjust the route/domain if needed.
 
 VS Code “Open in Remote” button (from VibeKanban)
@@ -159,18 +159,13 @@ Answers to current questions
 - Documenting the workflow: this file is the canonical workflow; link it when onboarding agents and in ticket “why”.
 - MCP quality: upstream `--mcp` binary exposes tools for list/create/update/comment. For Codex CLI, the `vibe_kanban` tools support create/list/update and starting task attempts. If we see gaps (bulk migration, richer fields), we can add MCP helper scripts.
 - Task migration: complete. Continue creating/updating tickets directly in VibeKanban and keep supporting material in `docs/briefs/`.
-- Faster daily bring‑up: the current stack is solid. The fastest reliable loop remains Tailscale + SSH → devcontainer CLI → start independent components (VibeKanban, Code Tunnel, Cloudflared). We can add a `just up-dev` helper that starts all three with tmux panes if you want a single command.
+- Faster daily bring‑up: the current stack is solid. The fastest reliable loop remains Tailscale + SSH → devcontainer CLI → start independent components (VibeKanban, Code Tunnel, Cloudflared). Use `bash .devcontainer/bin/owner-up.sh` (host) or `bash .devcontainer/bin/dev-start.sh --detached` (inside) to start all in one go.
 
 Suggested improvements
-- Add small scripts under `scripts/` for composable bring‑up/tear‑down:
-  - `scripts/owner_start_vibekanban.sh`: runs `HOST=0.0.0.0 FRONTEND_PORT=3000 npx vibe-kanban`.
-  - `scripts/owner_start_cflared.sh`: runs the named tunnel.
-  - `scripts/owner_start_code_tunnel.sh`: starts VS Code tunnel.
-  - `scripts/owner_stop_all.sh`: stops them (best‑effort).
-  - Then wrap with Justfile conveniences:
-    - `just owner-start` → call the three start scripts (or pick individually).
-    - `just owner-stop` → stop script.
-  - This keeps logic in scripts (easier to evolve), with simple `just` wrappers for ergonomics.
+- Compose bring‑up/tear‑down via `.devcontainer/bin` scripts that already exist:
+  - Start all (detached): `bash .devcontainer/bin/dev-start.sh --detached`
+  - Stop all: `bash .devcontainer/bin/dev-stop.sh`
+  - Status: `bash .devcontainer/bin/dev-status.sh`
  - Persist VibeKanban Data:
   - Data directory is already bind-mounted via `/srv/devhome/.local/share/ai/bloop/vibe-kanban` for durability across container rebuilds.
 - uv performance:
@@ -187,6 +182,6 @@ Open questions for the Owner
 - Do you want `.venv` and uv cache co‑located for maximum speed, or keep the current “external cache + internal venv” with the small penalty?
 - Shall I switch to host bind mounts for VibeKanban app data (`~/.local/share/ai/bloop/vibe-kanban/`) and also mount `/var/tmp/vibe-kanban/worktrees` to persist worktrees?
 - Preferred font: Inter, or another (e.g., IBM Plex Sans, SF Pro)?
-- Do you want me to add the `scripts/owner_*` start/stop scripts and `just` wrappers (`owner-start`, `owner-stop`) now?
+- Do you want me to extend the `.devcontainer/bin` helpers (e.g., add a single `dev-restart.sh`) now?
 - Need an importer for future bulk ticket creation (from spreadsheets, briefs, etc.)?
 - Should we add a standard ticket template (fields for `why`, acceptance criteria, test steps, reference docs) and enforce it in the UI?

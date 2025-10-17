@@ -18,28 +18,42 @@ Host (one-time)
 - Clone repo under `/srv/workspaces/msc-math-viterbo` (preferred single path for simplicity).
 - In Cloudflare Zero Trust, create the `VibeKanban Owner Board` Access application that protects `https://vibekanban.joernstoehler.com` (see `.devcontainer/README.md` for the exact choices).
 
-Devcontainer (start on host)
-devcontainer up --workspace-folder /srv/workspaces/msc-math-viterbo
+One-shot host startup (recommended)
+- Start everything from the host:
+  - `bash .devcontainer/bin/owner-up.sh`
+- What it does: brings up the devcontainer, runs preflight, starts VS Code tunnel + Cloudflared + VibeKanban (detached), then verifies.
+
+Devcontainer (low-level alternative)
+- `devcontainer up --workspace-folder /srv/workspaces/msc-math-viterbo`
 
 Notes
 - Data dir (Linux): ~/.local/share/ai/bloop/vibe-kanban (contains db.sqlite, config.json, profiles.json).
 - Worktrees base: /var/tmp/vibe-kanban/worktrees.
 - Cloudflare Worker: configured under `.devcontainer/cloudflare/` and deployed with wrangler via:
-  - `just -f .devcontainer/Justfile cf-worker-deploy`
+  - `cd .devcontainer/cloudflare && wrangler deploy`
   - Requires `wrangler login` (browser flow) in the container once.
 - Keep .venv per worktree; keep uv cache central (~/.cache/uv). A small hardlink→copy fallback cost on first sync is expected and acceptable.
-- post-create.sh installs uv, just, VS Code CLI and performs a light uv sync.
-- post-start.sh fixes permissions idempotently and prints diagnostics; it does not auto-start services.
+- post-create.sh installs uv and delegates service tooling to dev-install.sh.
+- post-start.sh fixes permissions idempotently and prints diagnostics (no auto-start).
 
 Daily start (inside the container)
-- Start services (each in its own terminal):
-  - VibeKanban: just -f .devcontainer/Justfile start-vibe
-  - VS Code Tunnel: just -f .devcontainer/Justfile start-tunnel
-  - Cloudflared: just -f .devcontainer/Justfile start-cf
+- Start all (detached): `bash .devcontainer/bin/dev-start.sh --detached`
+- Status: `bash .devcontainer/bin/dev-status.sh`
+- Stop: `bash .devcontainer/bin/dev-stop.sh`
 - Cloudflare Access: the public URL (`https://vibekanban.joernstoehler.com`) is gated by a Zero Trust Access application. Maintain the allowlist under Zero Trust → Access → Applications, and sign in with the configured IdP/OTP before using the board. Issue a service token only if non-browser automation needs to reach the board.
-- Status/Stop:
-  - just -f .devcontainer/Justfile owner-status
-  - just -f .devcontainer/Justfile owner-stop
+- Status/Stop (alternative): see the commands above.
+
+One-shot host shutdown
+- From host: `bash .devcontainer/bin/owner-down.sh` (best-effort stop in container, then `devcontainer down`, plus a non-destructive host scan)
+
+Rebuild (host)
+- Rebuild and restart the devcontainer (safe if not running):
+  - `bash .devcontainer/bin/owner-rebuild.sh`
+- Force a clean image build:
+  - `bash .devcontainer/bin/owner-rebuild.sh --no-cache`
+
+Host diagnostics
+- Non-destructive host status: `bash .devcontainer/bin/owner-status-host.sh`
 
 Client (Android Chrome)
 - Open VS Code Tunnel URL and https://vibekanban.joernstoehler.com

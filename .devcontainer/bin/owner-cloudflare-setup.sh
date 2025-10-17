@@ -20,6 +20,10 @@ warn() {
   printf '[owner-cloudflare-setup] WARNING: %s\n' "$*" >&2
 }
 
+if [ -z "$LOCAL_DEVCONTAINER" ]; then
+  fail "must be run in a local devcontainer"
+fi
+
 command -v cloudflared >/dev/null 2>&1 || fail "cloudflared not installed."
 
 if [ ! -s "$HOME/.cloudflared/cert.pem" ]; then

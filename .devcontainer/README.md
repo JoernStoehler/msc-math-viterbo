@@ -4,27 +4,61 @@ This directory contains the environment scaffolding for the “Project Owner” 
 
 Components
 - `devcontainer.json`: base image + post-create/post-start hooks
-- `post-create.sh`: install uv, just, VS Code CLI; quick project sync
-- `post-start.sh`: idempotent ownership fixups, fast uv sync, diagnostics
-- `Justfile`: scoped task runner for environment services (VibeKanban, VS Code Tunnel, Cloudflared)
+- `post-create.sh`: install uv and delegate service tooling to `bin/dev-install.sh`; quick project sync
+- `post-start.sh`: idempotent ownership fixups, fast uv sync, diagnostics (no auto-start)
+- `bin/dev-*.sh`: in-container service control (start/stop/status/install)
+- `bin/owner-*.sh`: host-side orchestration helpers
+
+One-shot host startup (recommended)
+- Prereq (host): devcontainer CLI installed. If missing, run on host:
+  - `bash .devcontainer/bin/host-install.sh`
+- Start everything from the host:
+  - `bash .devcontainer/bin/owner-up.sh`
+- What it does:
+  - Brings up the devcontainer for this workspace
+  - Inside container: preflight checks → start VS Code tunnel, Cloudflared tunnel, VibeKanban (detached) → post-check
+- Logs/interactive:
+  - Attach inside container if needed (e.g., first-time tunnel auth):
+    - `devcontainer exec --workspace-folder /srv/workspaces/msc-math-viterbo bash -lc 'tmux attach -t viterbo-owner'`
+- Stop services (inside container):
+  - `bash .devcontainer/bin/dev-stop.sh`
+
+One-shot host shutdown
+- Stop services and the container from the host:
+  - `bash .devcontainer/bin/owner-down.sh`
+- What it does:
+  - Best-effort `dev-stop` inside the container
+  - `devcontainer down` for this workspace
+  - Prints a brief scan for any stray host `code tunnel`/`cloudflared`/`vibe-kanban` processes (does not kill automatically)
+
+Rebuild container (host)
+- Rebuild and restart the devcontainer (handles not-running case):
+  - `bash .devcontainer/bin/owner-rebuild.sh`
+- With a clean image build cache:
+  - `bash .devcontainer/bin/owner-rebuild.sh --no-cache`
+
+Host status / diagnostics
+- Non-destructive host check for related processes/configs:
+  - `bash .devcontainer/bin/owner-status-host.sh`
 
 Daily usage (inside container)
-- Start services (one terminal per command):
-  - `just -f .devcontainer/Justfile start-vibe`
-  - `just -f .devcontainer/Justfile start-tunnel`
-  - `just -f .devcontainer/Justfile start-cf`
-- Status / stop:
-  - `just -f .devcontainer/Justfile owner-status`
-  - `just -f .devcontainer/Justfile owner-stop`
+- Start all (detached) / status / stop:
+  - `bash .devcontainer/bin/dev-start.sh --detached`
+  - `bash .devcontainer/bin/dev-status.sh`
+  - `bash .devcontainer/bin/dev-stop.sh`
+
+Detached orchestration
+- Start services inside the container:
+  - `bash .devcontainer/bin/dev-start.sh --detached`
 
 Cloudflare Worker (font injection)
 - Files under `.devcontainer/cloudflare/` (wrangler-based)
   - `worker-font-injector.js`, `wrangler.toml`
-- Deploy in container: `just -f .devcontainer/Justfile cf-worker-deploy`
-- Tail logs: `just -f .devcontainer/Justfile cf-worker-tail`
+- Deploy in container: `cd .devcontainer/cloudflare && wrangler deploy`
+- Tail logs: `cd .devcontainer/cloudflare && wrangler tail`
 
 Cloudflare tunnel (one-time prep)
-- `just -f .devcontainer/Justfile owner-cloudflare-setup` — write `config-<tunnel>.yml` and ensure the DNS route points at the tunnel (requires Cloudflare login + tunnel auth).
+- `bash .devcontainer/bin/owner-cloudflare-setup.sh` — write `config-<tunnel>.yml` and ensure the DNS route points at the tunnel (requires Cloudflare login + tunnel auth).
 
 Bind mounts (host recommended)
 - Host mirrors container HOME via `/srv/devhome`:
@@ -43,7 +77,7 @@ Cloudflared installation (deterministic)
 - `post-create.sh` installs `cloudflared` from Cloudflare’s official APT repo (Ubuntu 20.04 / focal).
 - Steps: write the key to `/usr/share/keyrings/cloudflare-main.gpg`, add `https://pkg.cloudflare.com/cloudflared focal main`, run `apt-get update`, then `apt-get install -y cloudflared`.
 - Failures are surfaced explicitly so you can fix the image or install manually. Adjust the suite (e.g. jammy) if you change the base image.
-- After installing and authenticating, run `just -f .devcontainer/Justfile owner-cloudflare-setup` once to wire the hostname to the tunnel.
+- After installing and authenticating, run `bash .devcontainer/bin/owner-cloudflare-setup.sh` once to wire the hostname to the tunnel.
 
 Cloudflare Access (one-time, host-side)
 ---------------------------------------
@@ -84,9 +118,6 @@ Rebuild / test the environment
   ```
 - Confirm `cloudflared` installs cleanly or follow the printed error.
 
-Start devcontainer on host
-`devcontainer up --workspace-folder /srv/workspaces/msc-math-viterbo`
-
 Container environment defaults
 - Defined under `containerEnv` in `devcontainer.json`:
   - `FRONTEND_PORT=3000`, `HOST=0.0.0.0` (VibeKanban UI)
@@ -98,5 +129,5 @@ Container environment defaults
 
 Notes
 - Keep `.venv` per worktree for isolation; uv handles cross-filesystem copies once.
-- Hooks never auto-start services; the Justfile gives explicit control.
+- Hooks auto-start services via `dev-start.sh` (idempotent).
 - VibeKanban ships via `npx`; font customization happens via the Cloudflare Worker.

@@ -5,10 +5,16 @@ set -euo pipefail
 # - Keep shell ergonomics sane
 # - Ensure permissions for bind-mounted dirs
 # - Fast idempotent uv sync
-# - Print actionable hints (auth status), but do not auto-start services
-# - All service control lives in .devcontainer/Justfile
+# - Print actionable hints (auth status); does not auto-start services
+# - Service control lives in .devcontainer/bin/* scripts (no Justfile)
 
 echo "[post-start] Booting environment (owner workflow)."
+
+# Safety: refuse to run on host
+if [ -z "${LOCAL_DEVCONTAINER:-}" ] && [ ! -f "/.dockerenv" ] && [ ! -d "/workspaces" ]; then
+  echo "[post-start] ERROR: must be run inside the devcontainer. Use 'devcontainer up' on the host." >&2
+  exit 1
+fi
 
 # Persist bash history to a mounted volume
 HIST_DIR="$HOME/.bash_history_dir"
@@ -99,7 +105,7 @@ if command -v cloudflared >/dev/null 2>&1; then
       if [ -f "$CF_CONFIG" ]; then
         echo "  - cloudflared: config $(basename "$CF_CONFIG") present."
       else
-        echo "  - cloudflared: config $(basename "$CF_CONFIG") missing; run 'just -f .devcontainer/Justfile owner-cloudflare-setup'."
+        echo "  - cloudflared: config $(basename "$CF_CONFIG") missing; run 'bash .devcontainer/bin/owner-cloudflare-setup.sh'."
       fi
     else
       echo "  - cloudflared: logged in; tunnel '${CF_TUNNEL}' not found. Create with: cloudflared tunnel create ${CF_TUNNEL}"
@@ -124,7 +130,7 @@ if command -v wrangler >/dev/null 2>&1; then
       if printf '%s' "$DEPLOYMENTS_JSON" | grep -q '"created_on"'; then
         echo "  - wrangler: worker '${WORKER_NAME}' deployed."
       elif printf '%s' "$DEPLOYMENTS_JSON" | grep -Eq '^\s*\[\s*\]\s*$'; then
-        echo "  - wrangler: authenticated; worker '${WORKER_NAME}' has no deployments yet. Run 'just -f .devcontainer/Justfile cf-worker-deploy' to deploy."
+        echo "  - wrangler: authenticated; worker '${WORKER_NAME}' has no deployments yet. Run 'cd .devcontainer/cloudflare && wrangler deploy'."
       else
         echo "  - wrangler: installed; deployment status unknown (check 'wrangler deployments list')."
       fi
@@ -156,7 +162,6 @@ for d in \
   [ -d "$d" ] || echo "  - mount missing (expected directory): $d"
 done
 
-echo "[post-start] Done. Use '.devcontainer/Justfile' to start services:"
-echo "  - just -f .devcontainer/Justfile start-vibe"
-echo "  - just -f .devcontainer/Justfile start-tunnel"
-echo "  - just -f .devcontainer/Justfile start-cf"
+echo "[post-start] Services are not auto-started. To start manually:"
+echo "  - bash .devcontainer/bin/dev-start.sh --detached"
+echo "  - or run on host: bash .devcontainer/bin/owner-up.sh"
