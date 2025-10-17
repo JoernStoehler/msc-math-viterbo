@@ -34,7 +34,8 @@
     "VSCODE_CLI_DATA_DIR": "/home/codespace/.vscode",
     "XDG_CONFIG_HOME": "/home/codespace/.config",
     "XDG_DATA_HOME": "/home/codespace/.local/share",
-    "XDG_CACHE_HOME": "/home/codespace/.cache"
+    "XDG_CACHE_HOME": "/home/codespace/.cache",
+    "PYTHONPATH": ".:src"
   },
   "mounts": [
     // oauth
