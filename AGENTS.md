@@ -6,7 +6,15 @@ This file is an index. Load the right skill guides for your task.
 
 1. Read your task on VibeKanban (`Msc Math Viterbo`).
 2. Run `uv run python scripts/load_skills_metadata.py` (or `--quiet` when scripted) to surface skill summaries.
-3. Open the skills that match your scenario using the map below. Treat those files as the authoritative source.
+3. Open the skills that match your scenario using the map below (or see `skills.index.md` for clusters). Treat those files as the authoritative source.
+
+## Always-On Essentials
+
+- Golden commands: `just checks`, `just test`, `just ci`, `just fix`, `just bench`; use `uv run ...` for Python entry points.
+- Navigation: prefer `rg` for searches; stream reads ≤250 lines in the shell.
+- Escalation: add `Needs-Unblock: <topic>` to tickets; Owner: Jörn Stöhler; Advisor: Kai Cieliebak.
+- Safety: do not revert files you didn’t edit; keep device/dtype choices explicit.
+- PDF to Markdown (quick): `pdftotext -layout -nopgbrk input.pdf output.md` (store summaries under `mail/private/`).
 
 ## Skill Map
 
@@ -22,22 +30,25 @@ This file is an index. Load the right skill guides for your task.
 
 ### Environment & Tooling
 
+- `skills/basic-environment.md` — golden command palette and shell practices.
 - `skills/devcontainer-ops.md` — host/container lifecycle scripts.
-- `skills/environment-tooling.md` — command palette, PDF ingestion, shell practices.
-- `skills/notebook-etiquette.md` — reproducible notebook workflows and artefact storage.
+- `skills/environment-tooling.md` — troubleshooting environment/tooling deviations.
+- `skills/experiments-notebooks-artefacts.md` — experiments, notebooks, and artefact storage.
 
 ### Daily Execution
 
 - `skills/repo-onboarding.md` — startup checklist and command quick reference.
-- `skills/daily-development.md` — planning cadence, just-command flow, PR expectations.
-- `skills/testing-workflow.md` — lint/test commands, incremental selector, troubleshooting.
+- `skills/good-code-loop.md` — coding standards, tests/CI, architecture boundaries, PR hygiene.
+- `skills/vibekanban.md` — planning cadence and escalation on the board.
 
 ### Code & Architecture
 
-- `skills/coding-standards.md` — PyTorch-first conventions, typing, docstrings, C++ guidance.
-- `skills/math-layer.md` — symplectic geometry focus, tensor semantics, invariants.
-- `skills/architecture-overview.md` — layer responsibilities and extension strategy.
-- `skills/performance-discipline.md` — benchmarking, profiling, and optimization policy.
+- `skills/good-code-loop.md` — source+tests loop and architecture guardrails.
+- `skills/data-collation.md` — ragged batching and collate helpers.
+- `skills/math-layer.md` — implementation guidance for geometry modules.
+- `skills/math-theory.md` — invariants and conventions that guide implementation.
+- `skills/architecture-overview.md` — condensed layering map (quick reference).
+- `skills/performance-discipline.md` — measure/profile, bottlenecks, and escalation to C++.
 
 ### Repository Layout
 

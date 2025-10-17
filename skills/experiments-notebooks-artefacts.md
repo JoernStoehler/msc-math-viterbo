@@ -1,10 +1,10 @@
 ---
-name: notebook-etiquette
-description: This skill should be used when editing or creating Jupytext-managed notebooks and managing their artefacts.
+name: experiments-notebooks-artefacts
+description: Use for experiments, Jupytext-managed notebooks, and reproducible non-code artefacts.
 last-updated: 2025-10-17
 ---
 
-# Notebook Etiquette
+# Experiments, Notebooks, Artefacts
 
 ## Instructions
 - Prefer Jupytext `.py` notebooks; preserve front-matter metadata on edits to maintain round-trip safety.

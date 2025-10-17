@@ -1,6 +1,6 @@
 ---
 name: performance-discipline
-description: This skill should be used when benchmarking, profiling, or addressing performance regressions.
+description: Use when measuring, profiling, and addressing bottlenecks in the main algorithm; escalate to C++ only with evidence.
 last-updated: 2025-10-17
 ---
 
@@ -14,9 +14,9 @@ last-updated: 2025-10-17
 
 ## Philosophy
 
-- Start with pure Python/Torch implementations. Introduce C++ or other accelerations only when profiling identifies sustained hotspots.
-- Keep math layer APIs pure and device-agnostic; let callers decide device placement.
+- Measure first with representative inputs; optimize second. Introduce C++ only when profiling identifies sustained hotspots.
 - Treat performance regressions beyond existing tolerances as escalation triggers.
+- Preemptive coding conventions live in `good-code-loop` and module skills (e.g., `math-layer`).
 
 ## Benchmarking Workflow
 
