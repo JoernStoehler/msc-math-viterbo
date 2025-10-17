@@ -8,7 +8,7 @@ last-updated: 2025-10-17
 
 ## Purpose
 
-Ensure new agents understand the mandatory startup sequence before making code changes, grounding every task in shared policies and fresh repository context.
+Ensure new agents understand the mandatory startup sequence before making code changes, grounding every task in shared policies and fresh repository context. Use this skill whenever you resume a paused task or start a new assignment in this repository.
 
 ## Checklist
 
@@ -19,8 +19,11 @@ Ensure new agents understand the mandatory startup sequence before making code c
    - Environment or container change → `skills/devcontainer-ops.md`
    - Library or math code change → `skills/coding-standards.md`
    - Test or CI related change → `skills/testing-workflow.md`
+   - Cross-team communication or weekly updates → `skills/collaboration-reporting.md`
+   - Performance analysis or benchmarking → `skills/performance-discipline.md`
 5. Inspect `git status -sb` to check for existing worktree changes; do not revert files you did not touch.
 6. If the task spans notebooks or artefacts, verify whether the files are under git ignore before editing.
+7. Capture outstanding questions for the maintainer early; flag blockers in the task description using `Needs-Unblock: <topic>` when required.
 
 ## Working Norms
 
@@ -28,9 +31,29 @@ Ensure new agents understand the mandatory startup sequence before making code c
 - Defer destructive commands (`git reset --hard`, removing caches) unless the maintainer explicitly approves them.
 - Prefer `rg` for searches and `uv run` for Python entry points to match the shared devcontainer environment.
 - Use `docs/creating_skills.md` when adding or modifying skills, keeping metadata accurate.
+- Reference `docs/environment.md` to mirror the project owner’s golden-path setup when environment differences arise.
+- Preserve notebook front-matter when editing `.py` notebooks maintained by Jupytext.
+
+## Command Quick Reference
+
+- `just checks` — format + lint + type + smoke tests.
+- `just fix` — apply Ruff auto-fixes before rerunning checks.
+- `just test` — run incremental smoke tests; combine with `INC_ARGS="--debug"` for selector details.
+- `just bench` — execute smoke benchmarks; see `skills/performance-discipline.md`.
+- `just ci` — full CI parity run before handoff.
+- `.devcontainer/bin/owner-up.sh` / `owner-down.sh` — host lifecycle scripts; see `skills/devcontainer-ops.md`.
+
+## Roles and Expectations Recap
+
+- Project Owner/Maintainer (Jörn Stöhler) owns scope, roadmap, DevOps, and merge decisions.
+- Academic Advisor (Kai Cieliebak) reviews research outcomes but does not gate code merges.
+- Codex agents implement incremental changes, escalate uncertainties promptly, and ensure CI is green before handoff.
+- Escalate immediately when encountering ambiguous acceptance criteria, policy conflicts, architecture changes, or potential performance regressions beyond documented thresholds.
 
 ## Exit Criteria
 
 - Plans reflect actual progress (updated after first execution).
 - Skill metadata script runs without warnings.
 - Task notes capture any open questions for the maintainer prior to implementation.
+- Relevant downstream skills are loaded and referenced within the task scratchpad or updates.
+- Any deviations from standard workflow (e.g., skipped tests) are documented alongside justification.

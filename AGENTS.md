@@ -42,6 +42,8 @@ Single authoritative policy for this repo.
   - See `docs/creating_skills.md` when adding or updating entries under `skills/`.
   - Tasks live in the VibeKanban project `Msc Math Viterbo`; treat that board as the canonical backlog. Tickets link back to supporting docs when needed.
   - `notebooks/` stores Jupytext-managed `.py` notebooks; preserve the front-matter metadata when editing or adding entries.
+  - `skills/collaboration-reporting.md` captures communication hygiene and weekly reporting norms.
+  - `skills/performance-discipline.md` outlines benchmarking and profiling policies.
 
 ## 2) Environment & Tooling
 
@@ -136,6 +138,7 @@ def support(points, direction):
 - Start with pure Python/Torch; introduce C++ for clear hotspots only.
 - Benchmarks live in `tests/performance/`; use `just bench` to run smoke benches.
 - Profile on demand with local tools; notebooks are fine for exploration.
+- Expanded workflow and escalation guardrails live in `skills/performance-discipline.md`.
 
 ## 8) Workflows (imperative)
 
@@ -182,3 +185,4 @@ PR message:
 - Email hygiene: Do not commit verbatim emails from third parties. Record paraphrased summaries under `mail/archive/` with context and links. Handle private attachments cautiously; prefer summaries/metadata unless explicitly cleared.
 - Preprints: Treat non-public preprints as private unless clearly published (e.g., on arXiv). Avoid redistribution; cite conservatively.
 - Reporting: Weekly cadence via `mail/` folder. Owner decides when to open PRs for reports; Advisor receives emails and in-person demos rather than repo browsing.
+- Operational details and checklists live in `skills/collaboration-reporting.md`.
