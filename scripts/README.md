@@ -19,3 +19,4 @@ Forward options from Just by exporting `INC_ARGS`, e.g. `INC_ARGS="--debug" just
 
 Legacy utilities (e.g., test metadata reporters) were removed from the default Justfile flow. Reintroduce them only if they provide clear value on the new stack.
 
+`load_skills_metadata.py` prints one-line summaries for each `skills/*.md` entry. Run it via `uv run python scripts/load_skills_metadata.py` as the first step after reading `AGENTS.md`.
