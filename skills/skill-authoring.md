@@ -47,7 +47,20 @@ Follow these steps when creating or updating any `skills/*.md` file so your docu
 - [ ] Lint/metadata validation passes.
 - [ ] `last-updated` bumped.
 
+## Best Practices
+- Concise is key: every paragraph must justify its token cost. Prefer a few hundred words; link out for deep dives.
+- Progressive disclosure: keep the body focused; link references instead of embedding long content. Avoid deeply nested reference chains.
+- Degrees of freedom: allow limited flexibility when multiple approaches are valid; be explicit about the preferred default path.
+- Consistent terminology: reuse canonical names and shapes; avoid synonyms that might confuse pattern matching.
+- Avoid time-sensitive info: prefer timeless guidance or date-stamp facts; update `last-updated` with meaningful changes.
+- Avoid offering too many options: present a recommended path first; list alternates only when truly needed.
+- Avoid assuming tools are installed: declare prerequisites or use `allowed-tools` (Claude Code only) when necessary.
+- Path style consistency: use POSIX-style paths in examples; avoid Windows-only path forms unless the skill is Windows-specific.
+- Structure long references with a simple table of contents; keep headings descriptive.
+- Token budgets: keep metadata tight; keep examples small and representative.
+
 ## References
 - Anthropic Skills Spec (agent_skills_spec.md): https://github.com/anthropics/skills/blob/main/agent_skills_spec.md
 - Creating custom skills (Help Center): https://support.claude.com/en/articles/12512198-creating-custom-skills
 - `skill-creator` example repo: https://github.com/anthropics/skills/tree/main/skill-creator
+ - Skill authoring best practices: https://docs.claude.com/en/docs/agents-and-tools/agent-skills/best-practices
