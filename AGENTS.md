@@ -2,6 +2,11 @@
 
 Single authoritative policy for this repo.
 
+## First Actions
+
+1. Run `uv run python scripts/load_skills_metadata.py` to print the current metadata for `skills/*.md`. This keeps the context window primed without loading full instructions.
+2. Follow any `skills/` links referenced below that are relevant to your task. Treat those files as authoritative workflow guides.
+
 ## 0) Roles & Scope
 
 - Project Owner/Maintainer (Jörn Stöhler)
@@ -23,6 +28,7 @@ Single authoritative policy for this repo.
 ## 1) Sources of Truth & Layout
 
 - AGENTS.md (this file, read first)
+- `skills/` — task-scoped guides with YAML frontmatter metadata; load as needed after running the metadata script.
 - Historical migration notes live in git history; rely on this file for onboarding.
 - Config: `pyproject.toml` (deps, Ruff), `pyrightconfig.json` (basic), `pytest.ini` (smoke defaults), `.github/workflows/ci.yml` (CI), `.devcontainer/` (environment)
 - Task runner: `Justfile` (common commands)
@@ -33,6 +39,7 @@ Single authoritative policy for this repo.
   - `_cpp/` — C++/pybind11 extensions (CPU baseline) with Python fallbacks.
 - Tests: `tests/` — smoke tests under `test_*.py`; benches under `tests/performance/`
 - Docs & Notes: `docs/` (site content, briefs, workflows), `notebooks/` (dummy examples), `artefacts/` (outputs, ignored)
+  - See `docs/creating_skills.md` when adding or updating entries under `skills/`.
   - Tasks live in the VibeKanban project `Msc Math Viterbo`; treat that board as the canonical backlog. Tickets link back to supporting docs when needed.
   - `notebooks/` stores Jupytext-managed `.py` notebooks; preserve the front-matter metadata when editing or adding entries.
 
