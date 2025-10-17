@@ -49,6 +49,7 @@ Single authoritative policy for this repo.
 - Supported environment: local devcontainer (golden path). Shared lifecycle scripts (`.devcontainer/{post-create.sh,post-start.sh}`) manage environment setup. Codespaces/Codex Cloud are not used.
 - Host orchestration: prefer `.devcontainer/bin/owner-up.sh` to bring up the container and start services (VS Code Tunnel, Cloudflared, VibeKanban) safely; `.devcontainer/bin/owner-down.sh` to stop; `.devcontainer/bin/owner-rebuild.sh` to rebuild the container. Non-destructive host status: `.devcontainer/bin/owner-status-host.sh`.
 - In-container service control lives in `.devcontainer/bin/` scripts (idempotent): `dev-start.sh`, `dev-status.sh`, `dev-stop.sh`. Host orchestration via `owner-up.sh`/`owner-down.sh`.
+- See `skills/devcontainer-ops.md` for detailed lifecycle checklists before modifying container state.
 - Codex agents land inside a pre-provisioned environment.
 - PRs: use `gh`; prefer `gh pr create --body-file docs/PR_TEMPLATE.md` (avoid `--body`).
 - Python/uv: use `uv run python …`; commit `uv.lock`.
@@ -74,6 +75,7 @@ PDF ingestion (for inbox/notes)
 - `INC_ARGS="…" just test` - forward options to `scripts/inc_select.py` (e.g., `--debug`)
 - `just bench` - smoke benchmarks (saves under `.benchmarks/`)
 - `just ci` - CI parity, non-incremental test run, pass before pushing/PR
+- For the full validation loop and triage advice load `skills/testing-workflow.md`.
 
 Environment (host/devcontainer)
 - `bash .devcontainer/bin/owner-up.sh` — start container + services (recommended)
@@ -93,6 +95,7 @@ Environment (host/devcontainer)
 - Commit: Conventional Commits.
 - Placeholders: do **not** wrap `NotImplementedError` (or other TODO sentinels) in `try/except`; allow the error to surface so missing implementations remain obvious during TDD loops.
 - Assertions: if an `assert` passes during development, do not duplicate it purely to survive `python -O`.
+- Detailed coding checklists live in `skills/coding-standards.md`.
 
 ## 4) PyTorch + C++ specifics (facts)
 
@@ -143,6 +146,8 @@ Daily development
 3. Implement cohesive changes. Run `just checks` locally (format, lint, type, smoke).
 4. Keep math pure; do I/O only in datasets/models/adapters.
 5. For parity, run `just ci` if needed; update tests/docs; open a PR with a clear description.
+
+See `skills/repo-onboarding.md` for a repeatable startup checklist aligned with these steps.
 
 PR message:
 
