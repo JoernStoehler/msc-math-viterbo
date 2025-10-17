@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import torch
 
+from tests.polytopes import STANDARD_POLYTOPES_BY_NAME
 from viterbo.math.constructions import (
     lagrangian_product,
     random_polytope_algorithm1,
@@ -24,13 +25,25 @@ def _sorted_rows(tensor: torch.Tensor) -> torch.Tensor:
 
 
 def test_lagrangian_product_block_structure() -> None:
-    vertices_p = torch.tensor([[-1.0], [1.0]])
-    vertices_q = torch.tensor([[0.0], [2.0]])
-    vertices, normals, offsets = lagrangian_product(vertices_p, vertices_q)
-    expected_vertices = torch.tensor([[-1.0, 0.0], [-1.0, 2.0], [1.0, 0.0], [1.0, 2.0]])
+    segment_p = STANDARD_POLYTOPES_BY_NAME["segment_1d_symmetric_unit"]
+    segment_q = STANDARD_POLYTOPES_BY_NAME["segment_1d_shifted_length2"]
+    vertices, normals, offsets = lagrangian_product(segment_p.vertices, segment_q.vertices)
+
+    expected_vertices = torch.cartesian_prod(
+        segment_p.vertices.squeeze(1), segment_q.vertices.squeeze(1)
+    ).to(segment_p.vertices.dtype)
     torch.testing.assert_close(vertices, expected_vertices)
-    expected_normals = torch.tensor([[1.0, 0.0], [-1.0, 0.0], [0.0, 1.0], [0.0, -1.0]])
-    expected_offsets = torch.tensor([1.0, 1.0, 2.0, 0.0])
+
+    zeros_p = torch.zeros_like(segment_p.vertices)
+    zeros_q = torch.zeros_like(segment_q.vertices)
+    expected_normals = torch.cat(
+        (
+            torch.cat((segment_p.normals, zeros_p), dim=1),
+            torch.cat((zeros_q, segment_q.normals), dim=1),
+        ),
+        dim=0,
+    )
+    expected_offsets = torch.cat((segment_p.offsets, segment_q.offsets))
     torch.testing.assert_close(
         _sorted_rows(normals), _sorted_rows(expected_normals), atol=1e-6, rtol=1e-6
     )
@@ -84,14 +97,7 @@ def test_random_polytope_algorithm2_dimension4_roundtrip() -> None:
 
 
 def test_lagrangian_product_2d_blocks_form_4d_polytope() -> None:
-    square = torch.tensor(
-        [
-            [-1.0, -1.0],
-            [-1.0, 1.0],
-            [1.0, -1.0],
-            [1.0, 1.0],
-        ]
-    )
+    square = STANDARD_POLYTOPES_BY_NAME["square_2d"].vertices
     vertices, normals, offsets = lagrangian_product(square, square)
     assert vertices.shape == (square.size(0) ** 2, 4)
     assert normals.shape[1] == 4

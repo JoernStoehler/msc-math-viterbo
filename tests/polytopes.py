@@ -49,6 +49,99 @@ class StandardPolytope:
         return int(self.normals.size(0))
 
 
+def _segment_1d_neg2_3p5() -> StandardPolytope:
+    vertices = torch.tensor([[-2.0], [3.5]], dtype=DTYPE)
+    normals, offsets = vertices_to_halfspaces(vertices)
+    length = volume_from_vertices(vertices)
+    return StandardPolytope(
+        name="segment_1d_neg2_3p5",
+        description="1D segment spanning [-2, 3.5]; used for 1D volume sanity checks.",
+        vertices=vertices,
+        normals=normals,
+        offsets=offsets,
+        volume=length,
+        volume_reference=5.5,
+        capacity_ehz_reference=None,
+        tags=("1d",),
+    )
+
+
+def _segment_1d_symmetric_unit() -> StandardPolytope:
+    vertices = torch.tensor([[-1.0], [1.0]], dtype=DTYPE)
+    normals, offsets = vertices_to_halfspaces(vertices)
+    length = volume_from_vertices(vertices)
+    return StandardPolytope(
+        name="segment_1d_symmetric_unit",
+        description="1D symmetric unit segment [-1, 1] used in product constructions.",
+        vertices=vertices,
+        normals=normals,
+        offsets=offsets,
+        volume=length,
+        volume_reference=2.0,
+        capacity_ehz_reference=None,
+        tags=("1d", "symmetric"),
+    )
+
+
+def _segment_1d_shifted_length2() -> StandardPolytope:
+    vertices = torch.tensor([[0.0], [2.0]], dtype=DTYPE)
+    normals, offsets = vertices_to_halfspaces(vertices)
+    length = volume_from_vertices(vertices)
+    return StandardPolytope(
+        name="segment_1d_shifted_length2",
+        description="1D segment [0, 2] used for Lagrangian product smoke tests.",
+        vertices=vertices,
+        normals=normals,
+        offsets=offsets,
+        volume=length,
+        volume_reference=2.0,
+        capacity_ehz_reference=None,
+        tags=("1d",),
+    )
+
+
+def _right_triangle_area_one() -> StandardPolytope:
+    vertices = torch.tensor([[0.0, 0.0], [2.0, 0.0], [0.0, 1.0]], dtype=DTYPE)
+    normals, offsets = vertices_to_halfspaces(vertices)
+    area = volume_from_vertices(vertices)
+    return StandardPolytope(
+        name="right_triangle_area_one",
+        description="Right triangle with area one for 2D volume checks.",
+        vertices=vertices,
+        normals=normals,
+        offsets=offsets,
+        volume=area,
+        volume_reference=1.0,
+        capacity_ehz_reference=None,
+        tags=("planar",),
+    )
+
+
+def _tetrahedron_box_123() -> StandardPolytope:
+    vertices = torch.tensor(
+        [
+            [0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [0.0, 2.0, 0.0],
+            [0.0, 0.0, 3.0],
+        ],
+        dtype=DTYPE,
+    )
+    normals, offsets = vertices_to_halfspaces(vertices)
+    vol = volume_from_vertices(vertices)
+    return StandardPolytope(
+        name="tetrahedron_box_123",
+        description="Axis-aligned tetrahedron with edges (1, 2, 3) yielding volume 1.",
+        vertices=vertices,
+        normals=normals,
+        offsets=offsets,
+        volume=vol,
+        volume_reference=1.0,
+        capacity_ehz_reference=None,
+        tags=("3d", "simplicial"),
+    )
+
+
 def _square_axis_aligned() -> StandardPolytope:
     vertices = torch.tensor(
         [
@@ -215,6 +308,11 @@ def _random_polytope_4d_seed2024() -> StandardPolytope:
 
 
 STANDARD_POLYTOPES: Final[tuple[StandardPolytope, ...]] = (
+    _segment_1d_neg2_3p5(),
+    _segment_1d_symmetric_unit(),
+    _segment_1d_shifted_length2(),
+    _right_triangle_area_one(),
+    _tetrahedron_box_123(),
     _square_axis_aligned(),
     _random_hexagon_seed41(),
     _orthogonal_simplex_4d(),
@@ -267,6 +365,19 @@ def _rotated_pentagon_90deg() -> PlanarPolytope:
         normals=normals.to(dtype=DTYPE),
         offsets=offsets.to(dtype=DTYPE),
         area=area.to(dtype=DTYPE),
+        tags=("planar", "symmetric"),
+    )
+
+
+def _square_planar() -> PlanarPolytope:
+    square = STANDARD_POLYTOPES_BY_NAME["square_2d"]
+    return PlanarPolytope(
+        name="square_planar",
+        description="Planar square reused for Lagrangian product smoke tests.",
+        vertices=square.vertices,
+        normals=square.normals,
+        offsets=square.offsets,
+        area=square.volume,
         tags=("planar", "symmetric"),
     )
 
@@ -368,6 +479,7 @@ def _minkowski_invariance_p() -> PlanarPolytope:
 
 
 PLANAR_POLYTOPES: Final[tuple[PlanarPolytope, ...]] = (
+    _square_planar(),
     _regular_pentagon(),
     _rotated_pentagon_90deg(),
     _minkowski_three_bounce_q(),
@@ -381,6 +493,10 @@ PLANAR_POLYTOPES_BY_NAME: Final[dict[str, PlanarPolytope]] = {
 }
 
 PLANAR_POLYTOPE_PAIRS: Final[dict[str, tuple[PlanarPolytope, PlanarPolytope]]] = {
+    "square_product": (
+        PLANAR_POLYTOPES_BY_NAME["square_planar"],
+        PLANAR_POLYTOPES_BY_NAME["square_planar"],
+    ),
     "pentagon_product": (
         PLANAR_POLYTOPES_BY_NAME["regular_pentagon"],
         PLANAR_POLYTOPES_BY_NAME["rotated_pentagon_90deg"],
