@@ -8,7 +8,7 @@ last-updated: 2025-10-17
 
 ## Purpose
 
-Ensure new agents understand the mandatory startup sequence before making code changes, grounding every task in shared policies and fresh repository context. Use this skill whenever you resume a paused task or start a new assignment in this repository.
+Ensure new agents follow the mandatory startup sequence before making code changes, grounding every task in shared policies and fresh repository context.
 
 ## Checklist
 
@@ -32,7 +32,7 @@ Ensure new agents understand the mandatory startup sequence before making code c
 - Draft a 4–7 step plan unless the task is trivial; update the plan after each major step, aligning with the planning policy spelled out in `AGENTS.md`.
 - Defer destructive commands (`git reset --hard`, removing caches) unless the maintainer explicitly approves them.
 - Prefer `rg` for searches and `uv run` for Python entry points to match the shared devcontainer environment.
-- Use `docs/creating_skills.md` when adding or modifying skills, keeping metadata accurate.
+- Use `skills/skill-authoring.md` when adding or modifying skills, keeping metadata accurate.
 - Reference `docs/environment.md` to mirror the project owner’s golden-path setup when environment differences arise.
 - Preserve notebook front-matter when editing `.py` notebooks maintained by Jupytext.
 

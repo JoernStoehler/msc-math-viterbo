@@ -18,7 +18,7 @@ This file is an index. Load the right skill guides for your task.
 
 ### Maintaining Skills & Docs
 
-- `skills/skill-authoring.md` — how to create or update skills to Anthropic spec. See also `docs/creating_skills.md` for extended notes.
+- `skills/skill-authoring.md` — how to create or update skills to Anthropic spec (authoritative).
 
 ### Environment & Tooling
 
@@ -45,5 +45,5 @@ This file is an index. Load the right skill guides for your task.
 
 ## Maintaining Skills
 
-- When adding or updating skill files, follow `docs/creating_skills.md` and ensure metadata stays current.
+- When adding or updating skill files, follow `skills/skill-authoring.md` and ensure metadata stays current.
 - `just lint` validates frontmatter via `scripts/load_skills_metadata.py --quiet`; fix warnings before handoff.

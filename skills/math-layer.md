@@ -8,7 +8,7 @@ last-updated: 2025-10-17
 
 ## Scope
 
-Use this skill when implementing or modifying utilities under `src/viterbo/math/` or other modules that provide core geometric computations. The content distills the math- and tensor-specific guidance spread across AGENTS.md sections 3–5 and 10.
+Covers implementing or modifying utilities under `src/viterbo/math/` and related modules that provide core geometric computations.
 
 ## Purity & Layering
 

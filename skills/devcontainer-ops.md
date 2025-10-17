@@ -8,7 +8,7 @@ last-updated: 2025-10-17
 
 ## Scope
 
-Use this skill whenever a task involves starting, stopping, or troubleshooting the project devcontainer or its bundled services (VS Code tunnel, Cloudflared, VibeKanban).
+Covers starting, stopping, and troubleshooting the project devcontainer and bundled services (VS Code tunnel, Cloudflared, VibeKanban).
 
 ## Host-Level Lifecycle
 
