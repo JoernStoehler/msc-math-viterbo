@@ -32,7 +32,7 @@ Use `Needs-Unblock: <topic>` in the task, or raise an issue/maintainer ping, whe
 
 - Ambiguous acceptance criteria or conflicting policies.
 - Architectural decisions spanning multiple tasks or layers.
-- Performance regressions beyond documented thresholds.
+- Performance regressions observed in benchmarks or user-facing runtime.
 - Environment/CI changes that affect other collaborators.
 
 ## Expectations

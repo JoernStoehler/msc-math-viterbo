@@ -6,6 +6,11 @@ last-updated: 2025-10-17
 
 # Testing Workflow
 
+## Instructions
+- Run `just checks` locally for the fast gate (format, lint, type, smoke tests); use `just ci` for pre-PR parity.
+- Use the incremental selector via `just test`; pass `INC_ARGS` when debugging selection.
+- Capture failing command lines and outputs in task notes; escalate CI or infrastructure issues early.
+
 ## Default Loop
 
 1. Format, lint, type-check, and run smoke tests via `just checks`.
