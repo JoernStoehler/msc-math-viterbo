@@ -89,6 +89,11 @@ def main(argv: list[str] | None = None) -> int:
         default=Path("skills"),
         help="Directory containing flat skill markdown files (default: skills/).",
     )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Suppress summary output; useful for validation-only workflows.",
+    )
     args = parser.parse_args(argv)
 
     skills_dir: Path = args.skills_dir
@@ -111,8 +116,9 @@ def main(argv: list[str] | None = None) -> int:
             continue
         summaries.append(format_metadata(metadata))
 
-    for summary in summaries:
-        sys.stdout.write(f"{summary}\n")
+    if not args.quiet:
+        for summary in summaries:
+            sys.stdout.write(f"{summary}\n")
 
     for path, exc in errors:
         sys.stderr.write(f"[warn] {path}: {exc}\n")

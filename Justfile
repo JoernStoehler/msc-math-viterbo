@@ -66,7 +66,7 @@ format:
 # Tip: Mirrors CI linting.
 lint:
     @echo "Validating skill metadata."
-    $UV run --extra dev python scripts/load_skills_metadata.py > /dev/null
+    $UV run --extra dev python scripts/load_skills_metadata.py --quiet
     @echo "Running Ruff lint."
     $UV run --extra dev ruff check .
 

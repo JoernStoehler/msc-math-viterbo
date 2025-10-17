@@ -18,9 +18,11 @@ Ensure new agents understand the mandatory startup sequence before making code c
 4. Load additional skills based on task type:
    - Environment or container change → `skills/devcontainer-ops.md`
    - Library or math code change → `skills/coding-standards.md`
+   - Math-layer geometry work → `skills/math-layer.md`
    - Test or CI related change → `skills/testing-workflow.md`
    - Cross-team communication or weekly updates → `skills/collaboration-reporting.md`
    - Performance analysis or benchmarking → `skills/performance-discipline.md`
+   - Notebook or exploratory analysis → `skills/notebook-etiquette.md`
 5. Inspect `git status -sb` to check for existing worktree changes; do not revert files you did not touch.
 6. If the task spans notebooks or artefacts, verify whether the files are under git ignore before editing.
 7. Capture outstanding questions for the maintainer early; flag blockers in the task description using `Needs-Unblock: <topic>` when required.

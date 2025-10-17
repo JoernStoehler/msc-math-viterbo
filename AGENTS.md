@@ -42,8 +42,10 @@ Single authoritative policy for this repo.
   - See `docs/creating_skills.md` when adding or updating entries under `skills/`.
   - Tasks live in the VibeKanban project `Msc Math Viterbo`; treat that board as the canonical backlog. Tickets link back to supporting docs when needed.
   - `notebooks/` stores Jupytext-managed `.py` notebooks; preserve the front-matter metadata when editing or adding entries.
+  - `skills/notebook-etiquette.md` records reproducible notebook practices and artefact hygiene.
   - `skills/collaboration-reporting.md` captures communication hygiene and weekly reporting norms.
   - `skills/performance-discipline.md` outlines benchmarking and profiling policies.
+  - `skills/math-layer.md` consolidates geometry-focused implementation patterns for the math modules.
 
 ## 2) Environment & Tooling
 
@@ -168,6 +170,7 @@ PR message:
 - Use semantic names like `normals`, `offsets` for halfspaces.
 - Avoid dataclasses in `math`; return tensors/tuples of tensors.
 - Keep `datasets` simple; no DSL; explicit functions and small classes.
+- Geometry-specific naming and tensor semantics are expanded in `skills/math-layer.md`.
 
 ## 10) Architecture Overview (everyday reference)
 

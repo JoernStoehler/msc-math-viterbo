@@ -9,7 +9,7 @@ last-updated: 2025-10-17
 ## Default Loop
 
 1. Format, lint, type-check, and run smoke tests via `just checks`.
-   - Invokes Ruff (lint + format), Pyright (basic), and Pytest smoke tier.
+   - Runs Ruff format, Ruff lint, Pyright (basic), and Pytest smoke tier in sequence.
 2. If formatting or linting fails, run `just fix`; rerun `just checks` afterwards to confirm clean state.
 3. For focused smoke tests, run `just test`. Pass incremental selector options with `INC_ARGS="..." just test`.
 4. Before opening a PR or after substantial refactors, run `just ci` for the full parity workflow.
@@ -24,7 +24,7 @@ last-updated: 2025-10-17
 
 - Pyright runs in basic mode; address type errors promptly or justify suppressions in task notes.
 - Ruff handles import ordering (`I` rules) and selected bugbear/pyupgrade checks. If automatic fixes are available, `just fix` will apply them.
-- `just lint` also runs `scripts/load_skills_metadata.py` (output suppressed) to validate skill frontmatter; fix any warnings before rerunning.
+- `just lint` also runs `scripts/load_skills_metadata.py --quiet` to validate skill frontmatter; fix any warnings before rerunning.
 - Avoid ignoring lint/type errors via `# noqa` or `type: ignore` unless policy requires and you document reasoning.
 
 ## Benchmarking

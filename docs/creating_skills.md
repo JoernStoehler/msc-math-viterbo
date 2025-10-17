@@ -31,6 +31,7 @@ Use the `skills/` directory to capture agent-facing workflows once they stabiliz
 - After reading `AGENTS.md`, run `uv run python scripts/load_skills_metadata.py` to stream metadata into the model context.
 - The script prints one summarized line per skill; no instructions are emitted, keeping the context budget small.
 - If a skill is critical for every task, link it from `AGENTS.md` so agents load it explicitly after running the script.
+- Automation workflows (e.g., `just lint`) pass `--quiet` to suppress summaries while still validating frontmatter.
 
 ## Review Checklist
 
