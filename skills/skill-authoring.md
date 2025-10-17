@@ -61,6 +61,5 @@ Follow these steps when creating or updating any `skills/*.md` file so your docu
 
 ## References
 - Anthropic Skills Spec (agent_skills_spec.md): https://github.com/anthropics/skills/blob/main/agent_skills_spec.md
-- Creating custom skills (Help Center): https://support.claude.com/en/articles/12512198-creating-custom-skills
 - `skill-creator` example repo: https://github.com/anthropics/skills/tree/main/skill-creator
  - Skill authoring best practices: https://docs.claude.com/en/docs/agents-and-tools/agent-skills/best-practices
