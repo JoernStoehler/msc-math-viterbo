@@ -10,9 +10,9 @@ last-updated: 2025-10-17
 
 1. Keep `src/viterbo/math/` pure: no I/O, no hidden state, accept caller devices, return tensors.
 2. Observe layering: `math` ← `datasets` ← `models`; lower layers never import higher ones. PyBind extensions live in `_cpp/` with Python fallbacks when appropriate.
-3. Default to Torch tensors in public APIs; document dtype and shape assumptions explicitly.
+3. Default to Torch tensors in public APIs; document dtype and shape assumptions explicitly (“PyTorch-first”).
 4. Use absolute imports; avoid wildcard imports and re-export indirection. No `__all__` indirection.
-5. Follow Conventional Commits for commit messages, even on agent branches.
+5. Honour Google-style docstrings and keep names semantic (`normals`, `offsets`, etc.) to reflect geometry intent.
 
 ## Precision & Numerics
 
@@ -33,6 +33,13 @@ last-updated: 2025-10-17
 - Do not move tensors across devices implicitly; let callers handle `to(device)` decisions.
 - When bridging to external APIs that only accept seeds, document the conversion and constraints clearly.
 
+## PyTorch & C++ specifics
+
+- Assume CPU execution unless a task explicitly requests CUDA; use device-agnostic code paths by default.
+- Keep math APIs pure even when backed by C++ extensions; they must accept tensors on the caller’s device without copying.
+- When adding C++ kernels, provide Python fallbacks when feasible and document build requirements.
+- Never introduce hidden global state (e.g., cached tensors) inside extensions; prefer explicit handles.
+
 ## Docstrings & Commenting
 
 - Use Google-style docstrings focusing on semantics, invariants, units, and shapes.
@@ -51,6 +58,13 @@ last-updated: 2025-10-17
 - Mirror the testing policies in `skills/testing-workflow.md`: run `just checks` locally before requesting review.
 - Tests should exercise representative usage paths rather than exhaustive permutations. Focus on invariants.
 - Use property-style tests for geometry routines where invariants are critical; seed randomness explicitly.
+- Prefer `torch.testing.assert_close`, `pytest.approx`, or `math.isclose` rather than equality checks; tune tolerances in docstrings.
+
+## Process Expectations
+
+- Follow Conventional Commits for all commit messages (`type(scope): summary`).
+- Leave placeholders as bare `NotImplementedError`; do not mask them with `try/except` so missing code surfaces loudly.
+- Avoid duplicating asserts solely to survive `python -O`; rely on core logic and dedicated validation tests.
 
 ## Review Checklist
 
