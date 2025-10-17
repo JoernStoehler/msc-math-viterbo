@@ -24,6 +24,7 @@ last-updated: 2025-10-17
 
 - Pyright runs in basic mode; address type errors promptly or justify suppressions in task notes.
 - Ruff handles import ordering (`I` rules) and selected bugbear/pyupgrade checks. If automatic fixes are available, `just fix` will apply them.
+- `just lint` also runs `scripts/load_skills_metadata.py` (output suppressed) to validate skill frontmatter; fix any warnings before rerunning.
 - Avoid ignoring lint/type errors via `# noqa` or `type: ignore` unless policy requires and you document reasoning.
 
 ## Benchmarking

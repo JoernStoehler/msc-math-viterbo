@@ -65,8 +65,10 @@ format:
 # Full Ruff lint and metadata validation.
 # Tip: Mirrors CI linting.
 lint:
+    @echo "Validating skill metadata."
+    $UV run --extra dev python scripts/load_skills_metadata.py > /dev/null
     @echo "Running Ruff lint."
-    $UV run ruff check .
+    $UV run --extra dev ruff check .
 
 # Summarise pytest test metadata (markers + docstrings).
 # (Removed) test-metadata: legacy JAX-era test annotations utility.

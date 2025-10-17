@@ -6,6 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
+
 def parse_frontmatter(content: str) -> dict[str, str]:
     """Return a dict of frontmatter key/value pairs."""
     lines = content.splitlines()
@@ -78,6 +79,7 @@ def iter_skill_files(skills_dir: Path) -> list[Path]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the CLI that validates and summarizes skill metadata."""
     parser = argparse.ArgumentParser(
         description="Summarize skills metadata without emitting full instructions.",
     )
@@ -91,12 +93,12 @@ def main(argv: list[str] | None = None) -> int:
 
     skills_dir: Path = args.skills_dir
     if not skills_dir.exists():
-        print(f"no skills directory at {skills_dir}", file=sys.stderr)
+        sys.stderr.write(f"no skills directory at {skills_dir}\n")
         return 1
 
     skill_files = iter_skill_files(skills_dir)
     if not skill_files:
-        print("no skill metadata found", file=sys.stderr)
+        sys.stderr.write("no skill metadata found\n")
         return 0
 
     errors: list[tuple[Path, Exception]] = []
@@ -110,10 +112,10 @@ def main(argv: list[str] | None = None) -> int:
         summaries.append(format_metadata(metadata))
 
     for summary in summaries:
-        print(summary)
+        sys.stdout.write(f"{summary}\n")
 
     for path, exc in errors:
-        print(f"[warn] {path}: {exc}", file=sys.stderr)
+        sys.stderr.write(f"[warn] {path}: {exc}\n")
 
     return 0 if not errors else 2
 
