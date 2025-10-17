@@ -6,6 +6,12 @@ last-updated: 2025-10-17
 
 # Math Layer Workflow
 
+## Instructions
+- Keep math modules pure: accept caller devices, avoid I/O/global state, and return tensors.
+- Document dtypes/shapes; prefer `float64` unless noted, and accept `torch.Generator` for reproducible randomness.
+- Write invariance/property tests and run `just checks` locally; avoid implicit device moves or silent dtype casts.
+- Escalate for asymptotic changes, naming deviations, or new C++ dependencies.
+
 ## Scope
 
 Covers implementing or modifying utilities under `src/viterbo/math/` and related modules that provide core geometric computations.
@@ -27,6 +33,7 @@ Covers implementing or modifying utilities under `src/viterbo/math/` and related
 - Default dtype to `torch.float64` unless an existing API states otherwise. Never downcast silently; surface dtype arguments if multiple precisions are required.
 - Do not move tensors across devices implicitly. Validate inputs (`assert tensor.device == reference.device`) only when it protects against known bugs.
 - Leverage vectorized operations whenever feasible; prefer `torch.einsum`, `torch.linalg`, and broadcasting over Python loops.
+- Push plotting/IO conversions to call sites (e.g., `tensor.detach().cpu().numpy()`); keep math functions returning tensors.
 
 ## Naming & Structure
 

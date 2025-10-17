@@ -6,6 +6,11 @@ last-updated: 2025-10-17
 
 # Daily Development Workflow
 
+## Instructions
+- Start from the VibeKanban task; load relevant skills and draft a short plan (4–7 steps) before coding.
+- Implement in small increments; run `just checks` regularly and document deviations.
+- Prepare a concise PR using the project template and include validation evidence.
+
 ## Task Kickoff
 
 1. Read the VibeKanban task (project `Msc Math Viterbo`) and capture scope notes.

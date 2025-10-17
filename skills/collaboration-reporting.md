@@ -6,6 +6,12 @@ last-updated: 2025-10-17
 
 # Collaboration & Reporting
 
+## Instructions
+- Post concise weekly summaries covering progress, decisions, and next steps; keep the backlog current on VibeKanban.
+- Apply email hygiene: paraphrase third-party emails into `mail/archive/`; avoid committing verbatim content or sensitive attachments.
+- Treat unpublished preprints as private; cite conservatively and confirm redistribution rights.
+- Escalate coordination issues, policy conflicts, or reporting blockers using `Needs-Unblock: communication`.
+
 ## Communication Channels
 
 - **Primary backlog:** VibeKanban project `Msc Math Viterbo`. Keep task descriptions concise and link to supporting docs when context is needed.

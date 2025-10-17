@@ -6,6 +6,11 @@ last-updated: 2025-10-17
 
 # Repo Onboarding
 
+## Instructions
+- Read `AGENTS.md` to ground on policies; then run `uv run python scripts/load_skills_metadata.py` to load skills context.
+- Follow the checklist below to validate environment, searches, and planning before code changes.
+- Raise `Needs-Unblock: onboarding` if scope, environment, or access issues prevent progress.
+
 ## Purpose
 
 Ensure new agents follow the mandatory startup sequence before making code changes, grounding every task in shared policies and fresh repository context.
@@ -59,3 +64,10 @@ Ensure new agents follow the mandatory startup sequence before making code chang
 - Task notes capture any open questions for the maintainer prior to implementation.
 - Relevant downstream skills are loaded and referenced within the task scratchpad or updates.
 - Any deviations from standard workflow (e.g., skipped tests) are documented alongside justification.
+
+## Related Skills
+
+- `roles-scope` — governance, responsibilities, and escalation triggers.
+- `environment-tooling` — environment commands and PDF ingestion.
+- `devcontainer-ops` — container lifecycle and troubleshooting.
+- `vibekanban` — backlog usage and coordination.

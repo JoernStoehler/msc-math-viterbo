@@ -6,6 +6,12 @@ last-updated: 2025-10-17
 
 # Notebook Etiquette
 
+## Instructions
+- Prefer Jupytext `.py` notebooks; preserve front-matter metadata on edits to maintain round-trip safety.
+- Keep heavy outputs under `artefacts/` and link from task notes; avoid committing large binaries.
+- Make runs deterministic when feasible (fixed seeds, stable inputs) and document environment details for reproducibility.
+- Escalate when notebooks become system-critical; consider migrating code paths into `src/viterbo/` with tests.
+
 ## Scope
 
 Applies when editing or creating files under `notebooks/`, including Jupytext-synced `.py` notebooks and any associated artefacts saved during exploration.

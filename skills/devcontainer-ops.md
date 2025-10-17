@@ -6,6 +6,12 @@ last-updated: 2025-10-17
 
 # Devcontainer Operations
 
+## Instructions
+- Start the environment with `bash .devcontainer/bin/owner-up.sh`; capture errors and outputs in task notes if anything fails.
+- Manage in-container services via `.devcontainer/bin/dev-*.sh` and shut down with `bash .devcontainer/bin/owner-down.sh`.
+- Use `bash .devcontainer/bin/owner-status-host.sh` for safe status checks; avoid partial manual restarts.
+- Escalate with `Needs-Unblock: devcontainer` for recurring lifecycle issues or script changes.
+
 ## Scope
 
 Covers starting, stopping, and troubleshooting the project devcontainer and bundled services (VS Code tunnel, Cloudflared, VibeKanban).

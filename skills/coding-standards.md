@@ -6,6 +6,12 @@ last-updated: 2025-10-17
 
 # Coding Standards
 
+## Instructions
+- Before coding, load this skill and confirm target layer responsibilities; keep `math` pure and adhere to strict layering.
+- Document tensor shapes/dtypes in public APIs; prefer Torch tensors in inputs/outputs.
+- Handle RNG via `torch.Generator`, avoid implicit device moves or silent dtype casts, and write representative tests.
+- Run `just checks` locally; escalate if a change alters layer boundaries or introduces C++ without a clear hotspot.
+
 ## Core Principles
 
 1. Keep `src/viterbo/math/` pure: no I/O, no hidden state, accept caller devices, return tensors.
@@ -39,6 +45,7 @@ last-updated: 2025-10-17
 - Keep math APIs pure even when backed by C++ extensions; they must accept tensors on the caller’s device without copying.
 - When adding C++ kernels, provide Python fallbacks when feasible and document build requirements.
 - Never introduce hidden global state (e.g., cached tensors) inside extensions; prefer explicit handles.
+- Push plotting/IO conversions to call sites (e.g., `tensor.detach().cpu().numpy()`), keeping library APIs tensor-native.
 
 ## Docstrings & Commenting
 

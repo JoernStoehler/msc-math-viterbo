@@ -6,6 +6,12 @@ last-updated: 2025-10-17
 
 # Performance Discipline
 
+## Instructions
+- Start with pure Python/Torch; measure first with smoke benches (`just bench`) and representative inputs.
+- Pin RNG with `torch.Generator` for determinism; record environment details and inputs alongside results.
+- Profile only after confirming regressions; propose C++/pybind11 kernels when a sustained hotspot is proven.
+- Escalate before adding new extensions or CUDA paths; include evidence and acceptance thresholds in the task.
+
 ## Philosophy
 
 - Start with pure Python/Torch implementations. Introduce C++ or other accelerations only when profiling identifies sustained hotspots.

@@ -6,6 +6,12 @@ last-updated: 2025-10-17
 
 # Environment & Tooling
 
+## Instructions
+- Run `just checks` for a quick health pass (format, lint, type, smoke tests); use `just ci` before PRs.
+- Use `uv run ...` for commands needing the Python environment; avoid manual pip installs.
+- Follow the PDF ingestion steps below for `mail/private/` and prefer Markdown summaries alongside originals.
+- If environment deviates from `docs/environment.md`, document differences in task notes and escalate for persistent gaps.
+
 ## Supported Stack
 
 - Python 3.12 with PyTorch 2.x (CPU baseline; optional CUDA only in models).

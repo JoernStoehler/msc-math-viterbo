@@ -6,6 +6,11 @@ last-updated: 2025-10-17
 
 # Roles & Scope
 
+## Instructions
+- Use this skill to align responsibilities before planning cross-cutting changes or policy updates.
+- Capture escalation triggers directly in tasks using `Needs-Unblock: <topic>` and notify the maintainer on blocking decisions.
+- Confirm with the maintainer before altering CI/devcontainer workflows or introducing experimental tooling.
+
 ## Ownership
 
 - **Project Owner/Maintainer — Jörn Stöhler**
@@ -27,7 +32,7 @@ Use `Needs-Unblock: <topic>` in the task, or raise an issue/maintainer ping, whe
 
 - Ambiguous acceptance criteria or conflicting policies.
 - Architectural decisions spanning multiple tasks or layers.
-- Performance regressions beyond documented thresholds.
+- Performance regressions observed in benchmarks or user-facing runtime.
 - Environment/CI changes that affect other collaborators.
 
 ## Expectations
