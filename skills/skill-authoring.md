@@ -1,12 +1,12 @@
 ---
 name: skill-authoring
-description: Create or update skills that align with Anthropic’s spec, mix facts with procedures, and stay concise.
+description: Create or update skills aligned with Anthropic’s guidance; combine facts with imperative steps; keep content concise.
 last-updated: 2025-10-17
 ---
 
 # Skill Authoring Guide
 
-Follow these steps when creating or updating any `skills/*.md` file so your document stays compatible with Anthropic’s `SKILL.md` packaging and easy for Claude/Codex agents to use.
+Write skills that Claude/Codex can discover quickly, read efficiently, and execute reliably. This guide adapts Anthropic’s official patterns to our repository conventions (flat `skills/` files, loader script, and local references).
 
 ## Instructions
 
@@ -16,23 +16,33 @@ Follow these steps when creating or updating any `skills/*.md` file so your docu
   ```markdown
   ---
   name: <slug>
-  description: Use this when …
+  description: This skill should be used when …
   last-updated: YYYY-MM-DD
   ---
   ```
-- Keep `description` to one sentence explaining what the skill covers and when Claude should load it.
-- Optional keys (`license`, `metadata`, `allowed-tools`) must match Anthropic’s spec.
-- Design for three-stage loading (per Anthropic): metadata selects; the body loads in full; references load on demand.
+- Keep `description` to one sentence that states scope and trigger in third person (“This skill should be used when…”).
+- Optional keys (`license`, `metadata`, `allowed-tools`) must match Anthropic’s spec (allowed-tools is Claude Code only).
+- Design for three‑stage loading (Anthropic):
+  - Metadata (name + description): always visible and used for selection.
+  - Body: loaded fully when the skill is chosen; avoid in‑body triage text.
+  - References/resources: loaded on demand; keep the main file concise.
 
 2) Write the body
-- Begin with instructions immediately. Do not include triage like “read this if …”—selection already happened via `description`.
+- Begin with instructions immediately; the description already handled triage.
 - Mix facts with actions: state key facts (layout, invariants, policies) next to the steps that use them.
 - Use imperative voice for procedures (“Run…”, “Escalate…”). Use declarative sentences for facts when clearer.
 - Highlight guardrails and escalation triggers in their own bullets.
 - Keep the main file concise; move big examples or templates to references and link them.
 - End with a short “Related Skills” section to aid navigation.
 
-3) Validate
+3) Optional resources (adapted from Anthropic)
+- Prefer referencing production repo files (e.g., `scripts/`, `src/`, `tests/`, `docs/`, `.devcontainer/`) over duplicating content.
+- If you truly need bundled files under skills, use:
+  - `skills/resources/` for simple reference snippets or tiny assets.
+  - Avoid deep nesting and duplication. For large references, include grep/search tips in the skill body.
+  - Do not assume tools are installed; declare prerequisites explicitly.
+
+4) Validate
 - Run `just lint` (or `uv run python scripts/load_skills_metadata.py --quiet`) to confirm valid frontmatter.
 - Check internal and external links.
 - Bump `last-updated` whenever instructions change behavior.
@@ -47,7 +57,29 @@ Follow these steps when creating or updating any `skills/*.md` file so your docu
 - [ ] Lint/metadata validation passes.
 - [ ] `last-updated` bumped.
 
-## Best Practices
+## Minimal skeleton
+```markdown
+---
+name: example-skill
+description: This skill should be used when …
+last-updated: 2025-10-17
+---
+
+# Example Skill
+
+## Instructions
+- Step 1: …
+- Step 2: …
+
+## Key facts
+- Fact A: …
+- Fact B: …
+
+## Related Skills
+- `skills/another-skill.md`
+```
+
+## Best practices
 - Concise is key: every paragraph must justify its token cost. Prefer a few hundred words; link out for deep dives.
 - Progressive disclosure: keep the body focused; link references instead of embedding long content. Avoid deeply nested reference chains.
 - Degrees of freedom: allow limited flexibility when multiple approaches are valid; be explicit about the preferred default path.
@@ -61,5 +93,5 @@ Follow these steps when creating or updating any `skills/*.md` file so your docu
 
 ## References
 - Anthropic Skills Spec (agent_skills_spec.md): https://github.com/anthropics/skills/blob/main/agent_skills_spec.md
+- Skill authoring best practices: https://docs.claude.com/en/docs/agents-and-tools/agent-skills/best-practices
 - `skill-creator` example repo: https://github.com/anthropics/skills/tree/main/skill-creator
- - Skill authoring best practices: https://docs.claude.com/en/docs/agents-and-tools/agent-skills/best-practices
