@@ -118,6 +118,29 @@ def _orthogonal_simplex_4d() -> StandardPolytope:
     )
 
 
+def _hypercube_3d_unit() -> StandardPolytope:
+    corners = torch.cartesian_prod(
+        torch.tensor([-1.0, 1.0], dtype=DTYPE),
+        torch.tensor([-1.0, 1.0], dtype=DTYPE),
+        torch.tensor([-1.0, 1.0], dtype=DTYPE),
+    )
+    vertices = corners.to(DTYPE)
+    normals, offsets = vertices_to_halfspaces(vertices)
+    volume = volume_from_vertices(vertices)
+    return StandardPolytope(
+        name="hypercube_3d_unit",
+        description="Axis-aligned 3D cube [-1, 1]^3 used in volume sanity checks.",
+        vertices=vertices,
+        normals=normals,
+        offsets=offsets,
+        volume=volume,
+        volume_reference=8.0,
+        capacity_ehz_reference=None,
+        tags=("3d", "symmetric"),
+        references={"volume": "Product of edge lengths (2^3)."},
+    )
+
+
 def _hypercube_4d_unit() -> StandardPolytope:
     corners = torch.cartesian_prod(
         torch.tensor([-1.0, 1.0], dtype=DTYPE),
@@ -195,6 +218,7 @@ STANDARD_POLYTOPES: Final[tuple[StandardPolytope, ...]] = (
     _square_axis_aligned(),
     _random_hexagon_seed41(),
     _orthogonal_simplex_4d(),
+    _hypercube_3d_unit(),
     _hypercube_4d_unit(),
     _pentagon_product_counterexample(),
     _random_polytope_4d_seed2024(),
@@ -204,3 +228,169 @@ STANDARD_POLYTOPES_BY_NAME: Final[dict[str, StandardPolytope]] = {
     polytope.name: polytope for polytope in STANDARD_POLYTOPES
 }
 
+
+@dataclasses.dataclass(frozen=True)
+class PlanarPolytope:
+    """Planar polygon with cached H-representation and area."""
+
+    name: str
+    description: str
+    vertices: torch.Tensor
+    normals: torch.Tensor
+    offsets: torch.Tensor
+    area: torch.Tensor
+    tags: tuple[str, ...] = ()
+    references: dict[str, str] = dataclasses.field(default_factory=dict)
+
+
+def _regular_pentagon() -> PlanarPolytope:
+    vertices, normals, offsets = rotated_regular_ngon2d(5, 0.0)
+    area = polygon_area(vertices)
+    return PlanarPolytope(
+        name="regular_pentagon",
+        description="Regular pentagon in the symplectic q-plane (unit radius).",
+        vertices=vertices.to(dtype=DTYPE),
+        normals=normals.to(dtype=DTYPE),
+        offsets=offsets.to(dtype=DTYPE),
+        area=area.to(dtype=DTYPE),
+        tags=("planar", "symmetric"),
+    )
+
+
+def _rotated_pentagon_90deg() -> PlanarPolytope:
+    vertices, normals, offsets = rotated_regular_ngon2d(5, -0.5 * torch.pi)
+    area = polygon_area(vertices)
+    return PlanarPolytope(
+        name="rotated_pentagon_90deg",
+        description="Regular pentagon rotated by 90 degrees for Lagrangian product benchmarks.",
+        vertices=vertices.to(dtype=DTYPE),
+        normals=normals.to(dtype=DTYPE),
+        offsets=offsets.to(dtype=DTYPE),
+        area=area.to(dtype=DTYPE),
+        tags=("planar", "symmetric"),
+    )
+
+
+def _minkowski_three_bounce_q() -> PlanarPolytope:
+    vertices = torch.tensor(
+        [
+            [-1.70172287, -1.26811867],
+            [-1.56413513, -1.89508182],
+            [1.19150140, -0.84596686],
+            [1.06428033, 0.66886455],
+            [-1.40051732, -0.49548974],
+        ],
+        dtype=DTYPE,
+    )
+    normals, offsets = vertices_to_halfspaces(vertices)
+    area = polygon_area(vertices)
+    return PlanarPolytope(
+        name="minkowski_three_bounce_q",
+        description="Five-vertex polygon driving the three-bounce orbit Minkowski billiard test (q-plane).",
+        vertices=vertices,
+        normals=normals,
+        offsets=offsets,
+        area=area,
+        tags=("planar", "randomised"),
+    )
+
+
+def _minkowski_three_bounce_p() -> PlanarPolytope:
+    vertices = torch.tensor(
+        [
+            [-1.92487754, -0.41382604],
+            [1.65055805, 0.15091143],
+            [0.53522767, 0.94426645],
+            [1.30412803, 1.78716638],
+            [-1.37802231, 1.88839061],
+        ],
+        dtype=DTYPE,
+    )
+    normals, offsets = vertices_to_halfspaces(vertices)
+    area = polygon_area(vertices)
+    return PlanarPolytope(
+        name="minkowski_three_bounce_p",
+        description="Companion polygon for the three-bounce Minkowski billiard benchmark (p-plane).",
+        vertices=vertices,
+        normals=normals,
+        offsets=offsets,
+        area=area,
+        tags=("planar", "randomised"),
+    )
+
+
+def _minkowski_invariance_q() -> PlanarPolytope:
+    vertices = torch.tensor(
+        [
+            [0.0, 0.0],
+            [2.0, 0.2],
+            [1.5, 1.5],
+            [-0.5, 1.3],
+            [-1.2, 0.2],
+        ],
+        dtype=DTYPE,
+    )
+    normals, offsets = vertices_to_halfspaces(vertices)
+    area = polygon_area(vertices)
+    return PlanarPolytope(
+        name="minkowski_invariance_q",
+        description="Planar polygon used for permutation/translation invariance checks (q-plane).",
+        vertices=vertices,
+        normals=normals,
+        offsets=offsets,
+        area=area,
+        tags=("planar", "randomised"),
+    )
+
+
+def _minkowski_invariance_p() -> PlanarPolytope:
+    vertices = torch.tensor(
+        [
+            [1.2, 0.0],
+            [0.3, 1.5],
+            [-1.1, 0.7],
+            [-0.6, -0.9],
+            [1.1, -0.4],
+        ],
+        dtype=DTYPE,
+    )
+    normals, offsets = vertices_to_halfspaces(vertices)
+    area = polygon_area(vertices)
+    return PlanarPolytope(
+        name="minkowski_invariance_p",
+        description="Companion polygon for permutation/translation invariance checks (p-plane).",
+        vertices=vertices,
+        normals=normals,
+        offsets=offsets,
+        area=area,
+        tags=("planar", "randomised"),
+    )
+
+
+PLANAR_POLYTOPES: Final[tuple[PlanarPolytope, ...]] = (
+    _regular_pentagon(),
+    _rotated_pentagon_90deg(),
+    _minkowski_three_bounce_q(),
+    _minkowski_three_bounce_p(),
+    _minkowski_invariance_q(),
+    _minkowski_invariance_p(),
+)
+
+PLANAR_POLYTOPES_BY_NAME: Final[dict[str, PlanarPolytope]] = {
+    polytope.name: polytope for polytope in PLANAR_POLYTOPES
+}
+
+PLANAR_POLYTOPE_PAIRS: Final[dict[str, tuple[PlanarPolytope, PlanarPolytope]]] = {
+    "pentagon_product": (
+        PLANAR_POLYTOPES_BY_NAME["regular_pentagon"],
+        PLANAR_POLYTOPES_BY_NAME["rotated_pentagon_90deg"],
+    ),
+    "minkowski_three_bounce": (
+        PLANAR_POLYTOPES_BY_NAME["minkowski_three_bounce_q"],
+        PLANAR_POLYTOPES_BY_NAME["minkowski_three_bounce_p"],
+    ),
+    "minkowski_invariance": (
+        PLANAR_POLYTOPES_BY_NAME["minkowski_invariance_q"],
+        PLANAR_POLYTOPES_BY_NAME["minkowski_invariance_p"],
+    ),
+}
