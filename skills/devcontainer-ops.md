@@ -1,15 +1,16 @@
 ---
 name: devcontainer-ops
 description: This skill should be used when starting, stopping, or troubleshooting the devcontainer and its services.
-last-updated: 2025-10-17
+last-updated: 2025-10-18
 ---
 
 # Devcontainer Operations
 
 ## Instructions
-- Start the environment with `bash .devcontainer/bin/owner-up.sh`; capture errors and outputs in task notes if anything fails.
-- Manage in-container services via `.devcontainer/bin/dev-*.sh` and shut down with `bash .devcontainer/bin/owner-down.sh`.
-- Use `bash .devcontainer/bin/owner-status-host.sh` for safe status checks; avoid partial manual restarts.
+- Prefer the unified admin wrapper for host orchestration: `bash .devcontainer/bin/admin up preflight start`.
+- Shortcuts remain available: `bash .devcontainer/bin/owner-up.sh` and `bash .devcontainer/bin/owner-down.sh`.
+- Manage in-container services via `.devcontainer/bin/dev-*.sh`.
+- Status (concise): `bash .devcontainer/bin/admin status` (add `--verbose` for diagnostics). Legacy: `bash .devcontainer/bin/owner-status-host.sh`.
 - Escalate with `Needs-Unblock: devcontainer` for recurring lifecycle issues or script changes.
 
 ## Scope

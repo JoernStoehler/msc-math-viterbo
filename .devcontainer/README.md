@@ -7,13 +7,16 @@ Components
 - `post-create.sh`: install uv and delegate service tooling to `bin/dev-install.sh`; quick project sync
 - `post-start.sh`: idempotent ownership fixups, fast uv sync, diagnostics (no auto-start)
 - `bin/dev-*.sh`: in-container service control (start/stop/status/install)
-- `bin/owner-*.sh`: host-side orchestration helpers
+- `bin/admin`: host-side orchestrator (chained subcommands)
+- `bin/owner-*.sh`: host-side shortcuts that delegate to `bin/admin`
 
 One-shot host startup (recommended)
 - Prereq (host): devcontainer CLI installed. If missing, run on host:
   - `bash .devcontainer/bin/host-install.sh`
 - Start everything from the host:
   - `bash .devcontainer/bin/owner-up.sh`
+  - Or use the unified admin wrapper:
+    - `bash .devcontainer/bin/admin up preflight start --interactive`
 - What it does:
   - Brings up the devcontainer for this workspace
   - Inside container: preflight checks → start VS Code tunnel, Cloudflared tunnel, VibeKanban (detached) → post-check
@@ -36,6 +39,9 @@ Rebuild container (host)
   - `bash .devcontainer/bin/owner-rebuild.sh`
 - With a clean image build cache:
   - `bash .devcontainer/bin/owner-rebuild.sh --no-cache`
+ - Equivalent admin sequence examples:
+   - `bash .devcontainer/bin/admin down rebuild --no-cache up start`
+   - `bash .devcontainer/bin/admin rebuild --no-cache start --interactive`
 
 Host status / diagnostics
 - Non-destructive host check for related processes/configs:
@@ -50,6 +56,12 @@ Daily usage (inside container)
 Detached orchestration
 - Start services inside the container:
   - `bash .devcontainer/bin/dev-start.sh --detached`
+
+Status
+- Concise host+container status:
+  - `bash .devcontainer/bin/admin status`
+- Verbose diagnostic dump (host tailscale, processes, ports; container services, tmux, cloudflared, worker deployments):
+  - `bash .devcontainer/bin/admin status --verbose`
 
 Cloudflare Worker (font injection)
 - Files under `.devcontainer/cloudflare/` (wrangler-based)
