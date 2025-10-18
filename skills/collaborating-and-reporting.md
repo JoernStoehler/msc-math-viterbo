@@ -1,10 +1,9 @@
----
-name: collaboration-reporting
-description: This skill should be used when communicating progress, handling weekly reporting, or managing email/artefacts with maintainers and advisors.
+name: collaborating-and-reporting
+description: This skill should be used when collaborating with maintainers and advisors, posting updates, and handling reports and artefacts.
 last-updated: 2025-10-18
 ---
 
-# Collaboration & Reporting
+# Collaborating and Reporting
 
 ## Instructions
 - Post concise weekly summaries covering progress, decisions, and next steps; keep the backlog current on VibeKanban.
@@ -17,7 +16,7 @@ last-updated: 2025-10-18
 - **Primary backlog:** VibeKanban project `Msc Math Viterbo`. Keep task descriptions concise and link to supporting docs when context is needed.
 - **Escalations:** Use `Needs-Unblock: <topic>` in task descriptions or open an issue when acceptance criteria are ambiguous, policies conflict, or cross-task architecture changes are required.
 - **Maintainer updates:** Summaries and PR notes go to the project owner; the Academic Advisor receives curated updates via meetings or email, not via the repo.
-- **VK text hygiene:** Follow VK‑Safe Formatting from `skills/vibekanban.md` (backticks for identifiers/paths, escape underscores in prose, prefer Unicode math; fence LaTeX if unavoidable).
+- **VK text hygiene:** Follow VK‑Safe Formatting from `skills/interacting-with-vibekanban.md` (backticks for identifiers/paths, escape underscores in prose, prefer Unicode math; fence LaTeX if unavoidable).
 
 ## Email & Artefacts Hygiene
 
@@ -39,5 +38,5 @@ last-updated: 2025-10-18
 
 ## Related Skills
 
-- `repo-onboarding` — aligns startup workflow before collaboration activities.
-- `performance-discipline` — reference when reporting benchmark results or performance regressions.
+- `always` — aligns startup workflow before collaboration activities.
+- `benchmarking-and-profiling` — reference when reporting benchmark results or performance regressions.

@@ -1,10 +1,10 @@
 ---
-name: math-layer
+name: working-in-math-layer
 description: This skill should be used when implementing or modifying math-layer geometry utilities in `src/viterbo/math`.
-last-updated: 2025-10-17
+last-updated: 2025-10-18
 ---
 
-# Math Layer Workflow
+# Working in the Math Layer
 
 ## Instructions
 - Keep math modules pure: accept caller devices, avoid I/O/global state, and return tensors.
@@ -72,6 +72,6 @@ def support(points, direction):
 
 ## Related Skills
 
-- `coding-standards` — general architectural and style rules.
-- `testing-workflow` — ensures validation accompanies geometry changes.
-- `performance-discipline` — governs profiling and optimization decisions if math routines become bottlenecks.
+- `following-coding-standards` — general architectural and style rules.
+- `testing-and-troubleshooting` — ensures validation accompanies geometry changes.
+- `benchmarking-and-profiling` — governs profiling and optimization decisions if math routines become bottlenecks.

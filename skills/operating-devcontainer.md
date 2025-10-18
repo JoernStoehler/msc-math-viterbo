@@ -1,10 +1,10 @@
 ---
-name: devcontainer-ops
-description: This skill should be used when starting, stopping, or troubleshooting the devcontainer and its services.
+name: operating-devcontainer
+description: This skill should be used when operating or troubleshooting the devcontainer and its services.
 last-updated: 2025-10-18
 ---
 
-# Devcontainer Operations
+# Operating the Devcontainer
 
 ## Instructions
 - Prefer the unified admin wrapper for host orchestration: `bash .devcontainer/bin/admin up preflight start`.
@@ -50,6 +50,6 @@ Covers starting, stopping, and troubleshooting the project devcontainer and bund
 
 ## Related Skills
 
-- `repo-onboarding` — confirms when to load this skill.
-- `testing-workflow` — run after the container is operational to validate project health.
-- `collaboration-reporting` — document lifecycle incidents that impact other collaborators.
+- `always` — confirms when to load this skill.
+- `testing-and-troubleshooting` — run after the container is operational to validate project health.
+- `collaborating-and-reporting` — document lifecycle incidents that impact other collaborators.

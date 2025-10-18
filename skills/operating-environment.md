@@ -1,10 +1,10 @@
 ---
-name: environment-tooling
-description: This skill should be used when working with the environment, CLI tooling, or PDF ingestion workflows.
-last-updated: 2025-10-17
+name: operating-environment
+description: This skill should be used when operating the development environment, CLI tools, and PDF ingestion workflows.
+last-updated: 2025-10-18
 ---
 
-# Environment & Tooling
+# Operating the Environment
 
 ## Instructions
 - Run `just checks` for a quick health pass (format, lint, type, smoke tests); use `just ci` before PRs.
@@ -16,19 +16,13 @@ last-updated: 2025-10-17
 
 - Python 3.12 with PyTorch 2.x (CPU baseline; optional CUDA only in models).
 - C++17 with pybind11 for performance-critical extensions.
-- Development happens inside the project owner’s devcontainer; see `skills/devcontainer-ops.md` for lifecycle scripts.
+- Development happens inside the project owner’s devcontainer; see `skills/operating-devcontainer.md` for lifecycle scripts.
 
 ## Core Commands
 
-- `just checks` — run lint, type checks, and smoke tests.
-- `just lint` — Ruff lint + skill metadata validation (`scripts/load_skills_metadata.py --quiet`).
-- `just type` — Pyright (basic) against `src/viterbo`.
-- `just test` — incremental pytest smoke tier.
-- `just ci` — CI parity (lint, type, tests) before handoff or PR creation.
-- `uv run ...` — execute Python scripts/tests with dependencies resolved via `uv.lock`.
-- `rg` — preferred code/search tool; stream ≤250 lines when reading in shell.
- - Editors: use Pyright for fast type feedback and Ruff for lint/format.
- - Dependency lockfile: commit `uv.lock` when dependencies change.
+- See `skills/using-core-tooling.md` for the minimal command set you’ll use on most tasks (checks, lint/fix, tests, and environment glue).
+- Editors: use Pyright for fast type feedback and Ruff for lint/format.
+- Dependency lockfile: commit `uv.lock` when dependencies change.
 
 ## PDF Ingestion Workflow
 
@@ -48,6 +42,6 @@ last-updated: 2025-10-17
 
 ## Related Skills
 
-- `devcontainer-ops` — host/container start-stop procedures.
-- `repo-onboarding` — startup checklist and command quick reference.
-- `notebook-etiquette` — reproducibility when working in notebooks.
+- `operating-devcontainer` — host/container start-stop procedures.
+- `always` — startup checklist and command quick reference.
+- `working-with-notebooks` — reproducibility when working in notebooks.

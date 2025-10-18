@@ -1,10 +1,10 @@
 ---
-name: coding-standards
-description: This skill should be used when applying project-wide coding conventions for PyTorch-first design, math purity, and strict layering.
-last-updated: 2025-10-17
+name: following-coding-standards
+description: This skill should be used when following project-wide coding conventions for PyTorch-first design, math purity, and strict layering.
+last-updated: 2025-10-18
 ---
 
-# Coding Standards
+# Following Coding Standards
 
 ## Instructions
 - Before coding, load this skill and confirm target layer responsibilities; keep `math` pure and adhere to strict layering.
@@ -62,7 +62,7 @@ last-updated: 2025-10-17
 
 ## Testing Alignment
 
-- Mirror the testing policies in `skills/testing-workflow.md`: run `just checks` locally before requesting review.
+- Mirror the testing policies in `skills/testing-and-troubleshooting.md`: run `just checks` locally before requesting review.
 - Tests should exercise representative usage paths rather than exhaustive permutations. Focus on invariants.
 - Use property-style tests for geometry routines where invariants are critical; seed randomness explicitly.
 - Prefer `torch.testing.assert_close`, `pytest.approx`, or `math.isclose` rather than equality checks; tune tolerances in docstrings.
@@ -83,6 +83,6 @@ last-updated: 2025-10-17
 
 ## Related Skills
 
-- `testing-workflow` — ensures validation accompanies code changes.
-- `repo-onboarding` — aligns planning and metadata expectations.
-- `performance-discipline` — governs optimization and profiling changes.
+- `testing-and-troubleshooting` — ensures validation accompanies code changes.
+- `always` — aligns planning and metadata expectations.
+- `benchmarking-and-profiling` — governs optimization and profiling changes.

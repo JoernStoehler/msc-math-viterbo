@@ -1,10 +1,10 @@
 ---
-name: testing-workflow
-description: This skill should be used when running linting, typing, tests, and troubleshooting CI.
-last-updated: 2025-10-17
+name: testing-and-troubleshooting
+description: This skill should be used when testing code, debugging failures, and troubleshooting CI.
+last-updated: 2025-10-18
 ---
 
-# Testing Workflow
+# Testing and Troubleshooting
 
 ## Instructions
 - Run `just checks` locally for the fast gate (format, lint, type, smoke tests); use `just ci` for pre-PR parity.
@@ -29,7 +29,7 @@ last-updated: 2025-10-17
 
 - Pyright runs in basic mode; address type errors promptly or justify suppressions in task notes.
 - Ruff handles import ordering (`I` rules) and selected bugbear/pyupgrade checks. If automatic fixes are available, `just fix` will apply them.
-- `just lint` also runs `scripts/load_skills_metadata.py --quiet` to validate skill frontmatter; fix any warnings before rerunning.
+- `just lint` also runs `scripts/load_skills_metadata.py --check` to validate skill frontmatter and verify AGENTS.md sections; fix any warnings before rerunning.
 - Avoid ignoring lint/type errors via `# noqa` or `type: ignore` unless policy requires and you document reasoning.
 
 ## Benchmarking
@@ -52,6 +52,6 @@ last-updated: 2025-10-17
 
 ## Related Skills
 
-- `coding-standards` — aligns code style and architecture before tests.
-- `repo-onboarding` — ensures prerequisite steps completed before running test suites.
-- `performance-discipline` — guides benchmarking and profiling efforts that follow testing.
+- `following-coding-standards` — aligns code style and architecture before tests.
+- `always` — ensures prerequisite steps completed before running test suites.
+- `benchmarking-and-profiling` — guides benchmarking and profiling efforts that follow testing.

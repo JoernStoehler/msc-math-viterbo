@@ -1,10 +1,10 @@
 ---
-name: skill-authoring
-description: This skill should be used when creating or updating skills aligned with Anthropic’s guidance, combining facts with imperative steps.
-last-updated: 2025-10-17
+name: authoring-skills
+description: This skill should be used when authoring or updating skills aligned with Anthropic’s guidance, combining facts with imperative steps.
+last-updated: 2025-10-18
 ---
 
-# Skill Authoring Guide
+# Authoring Skills
 
 Write skills that Claude/Codex can discover quickly, read efficiently, and execute reliably. This guide adapts Anthropic’s official patterns to our repository conventions (flat `skills/` files, loader script, and local references).
 
@@ -12,6 +12,7 @@ Write skills that Claude/Codex can discover quickly, read efficiently, and execu
 
 1) Metadata and naming
 - Create `skills/<slug>.md` using lowercase, hyphenated names that match the `name` field.
+- Use a gerund/action name that captures what the skill helps you do (e.g., `testing-and-troubleshooting`, `operating-environment`) rather than static nouns (e.g., `testing-workflow`, `environment-tooling`).
 - Add YAML frontmatter:
   ```markdown
   ---
@@ -43,10 +44,15 @@ Write skills that Claude/Codex can discover quickly, read efficiently, and execu
   - Do not assume tools are installed; declare prerequisites explicitly.
 
 4) Validate
-- Run `just lint` (or `uv run python scripts/load_skills_metadata.py --quiet`) to confirm valid frontmatter.
+- Run `just lint` (or `uv run python scripts/load_skills_metadata.py --check`) to confirm valid frontmatter and AGENTS.md sections are current.
 - Check internal and external links.
 - Bump `last-updated` whenever instructions change behavior.
 - Note major additions in task notes or PR summaries.
+
+5) Always-on skills (optional)
+- To include a skill in the auto-generated “Always-On Skills” section of `AGENTS.md`, add one of:
+  - `relevance: always` (preferred)
+  - `always: true` or `always-on: true`
 
 ## Checklist
 - [ ] Filename matches `name`, lowercase hyphenated.

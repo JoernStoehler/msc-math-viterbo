@@ -1,10 +1,10 @@
 ---
-name: notebook-etiquette
-description: This skill should be used when editing or creating Jupytext-managed notebooks and managing their artefacts.
-last-updated: 2025-10-17
+name: working-with-notebooks
+description: This skill should be used when working with Jupytext-managed notebooks and managing their artefacts.
+last-updated: 2025-10-18
 ---
 
-# Notebook Etiquette
+# Working with Notebooks
 
 ## Instructions
 - Prefer Jupytext `.py` notebooks; preserve front-matter metadata on edits to maintain round-trip safety.
@@ -41,6 +41,6 @@ Applies when editing or creating files under `notebooks/`, including Jupytext-sy
 
 ## Related Skills
 
-- `repo-onboarding` — confirms early workflow steps before editing notebooks.
-- `collaboration-reporting` — guides how to document findings drawn from notebooks.
-- `performance-discipline` — use when profiling results from notebook explorations drive code changes.
+- `always` — confirms early workflow steps before editing notebooks.
+- `collaborating-and-reporting` — guides how to document findings drawn from notebooks.
+- `benchmarking-and-profiling` — use when profiling results from notebook explorations drive code changes.

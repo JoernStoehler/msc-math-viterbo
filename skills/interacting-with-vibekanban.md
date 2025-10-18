@@ -1,26 +1,25 @@
----
-name: vibekanban
-description: This skill should be used when working with the Msc Math Viterbo Kanban board for scoping, updates, and escalation.
+name: interacting-with-vibekanban
+description: This skill should be used when tasks require explicit VibeKanban interaction; most tasks do not need the board because the task text is in context and Git ops are handled by the workflow.
 last-updated: 2025-10-18
 ---
 
-# VibeKanban Workflow
+# Interacting with VibeKanban
 
 ## Instructions
-- Track work on project `Msc Math Viterbo`, updating the ticket description/comments with concise progress and blockers.
-- Use `Needs-Unblock: <topic>` in the ticket for escalations; link artefacts from `artefacts/` or `mail/`.
-- Keep ticket text lean; let board columns encode status and link out to skills/docs for context.
+- Tasks are managed on VibeKanban (`Msc Math Viterbo`), but the active task’s text is injected into your context as a user message. You usually do not need to open the board to read or manage the task.
+- Most Git operations (commits, PRs, merges) are handled by the project workflow. Focus on making scoped changes and handing off with a concise final message; the maintainer can one‑click open a PR when needed.
+- If you explicitly need to manage the board (rare), use this skill as the guide; otherwise, keep working and escalate via notes.
 
 ## Board Basics
 
 - Canonical backlog: project `Msc Math Viterbo` on VibeKanban.
-- Keep task descriptions concise; link supporting docs or skills when additional context is required.
-- Use board columns to encode status—avoid duplicating state strings inside descriptions.
+- Board interaction is typically unnecessary for agents; status changes are driven by handoff and maintainer actions.
+- If editing, keep descriptions concise; link supporting docs when additional context is required.
 
 ## Task Updates
 
-- Summarize progress and blockers directly in the task comments or description updates.
-- Add `Needs-Unblock: <topic>` to the description when escalation is required.
+- Summarize progress and blockers in your assistant messages and final handoff.
+- Use `Needs-Unblock: <topic>` in notes when escalation is required.
 - Cross-link artefacts or benchmark summaries stored under `artefacts/` or `mail/` for reviewer reference.
 
 ## VK‑Safe Formatting
@@ -59,16 +58,15 @@ Debugging rendering behavior
 
 ## Keywords & Searchability
 
-- Optionally add a `Keywords:` line near the top (e.g., `Keywords: prio:3, math, tests`) when it improves searchability.
-- Remove keywords once they stop adding value to avoid drift.
+- Optional: add a `Keywords:` line near the top (e.g., `Keywords: prio:3, math, tests`) only when it materially improves searchability. Remove once it stops adding value.
 
 ## Coordination Tips
 
-- Sync weekly summaries with `skills/collaboration-reporting.md` to keep the maintainer and advisor aligned.
-- Reference the relevant skills in task notes so future agents understand prior context.
+- Sync weekly summaries with `skills/collaborating-and-reporting.md` to keep the maintainer and advisor aligned.
+- Reference specific skills in your assistant updates only when it helps readers; avoid ticket-level micromanagement lists.
 
 ## Related Skills
 
-- `repo-onboarding` — initial checklist before touching code.
-- `daily-development` — planning cadence and validation expectations.
-- `collaboration-reporting` — broader communication policies.
+- `always` — initial checklist before touching code.
+- `executing-daily-workflow` — planning cadence and validation expectations.
+- `collaborating-and-reporting` — broader communication policies.

@@ -1,10 +1,10 @@
 ---
-name: performance-discipline
+name: benchmarking-and-profiling
 description: This skill should be used when benchmarking, profiling, or addressing performance regressions.
-last-updated: 2025-10-17
+last-updated: 2025-10-18
 ---
 
-# Performance Discipline
+# Benchmarking and Profiling
 
 ## Instructions
 - Start with pure Python/Torch; measure first with smoke benches (`just bench`) and representative inputs.
@@ -39,6 +39,6 @@ last-updated: 2025-10-17
 
 ## Related Skills
 
-- `testing-workflow` — validates functionality before benchmarking.
-- `coding-standards` — safeguards architectural boundaries when refactoring for performance.
-- `collaboration-reporting` — use when summarizing performance findings for maintainers.
+- `testing-and-troubleshooting` — validates functionality before benchmarking.
+- `following-coding-standards` — safeguards architectural boundaries when refactoring for performance.
+- `collaborating-and-reporting` — use when summarizing performance findings for maintainers.

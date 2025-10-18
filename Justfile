@@ -45,9 +45,12 @@ sync:
     @echo "Syncing project dependencies via uv (dev extras)."
     $UV sync --extra dev
 
-# Install the package with development dependencies.
-# Tip: Backwards-compatible alias for `just sync`.
-setup: sync
+# Install the package with development dependencies, then refresh AGENTS.md sections.
+setup:
+    @echo "Syncing project dependencies via uv (dev extras)."
+    $UV sync --extra dev
+    @echo "Refreshing AGENTS.md skills sections."
+    $UV run python scripts/load_skills_metadata.py --fix --quiet
 
 # Run quiet Ruff formatter and autofixes.
 # Tip: Safe to run before commits; pairs with `just lint` or `just precommit`.
@@ -65,8 +68,8 @@ format:
 # Full Ruff lint and metadata validation.
 # Tip: Mirrors CI linting.
 lint:
-    @echo "Validating skill metadata."
-    $UV run --extra dev python scripts/load_skills_metadata.py --quiet
+    @echo "Validating skill metadata and AGENTS.md sections."
+    $UV run --extra dev python scripts/load_skills_metadata.py --quiet --check
     @echo "Running Ruff lint."
     $UV run --extra dev ruff check .
 

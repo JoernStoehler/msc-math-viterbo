@@ -1,10 +1,10 @@
 ---
-name: architecture-overview
+name: understanding-architecture
 description: This skill should be used when understanding layer responsibilities, data flow, and extension points across math, datasets, models, and C++ bindings.
-last-updated: 2025-10-17
+last-updated: 2025-10-18
 ---
 
-# Architecture Overview
+# Understanding the Architecture
 
 ## Instructions
 - Validate intended changes against layer responsibilities below; never import upward (`math` ← `datasets` ← `models`).
@@ -40,6 +40,6 @@ last-updated: 2025-10-17
 
 ## Related Skills
 
-- `math-layer` — detailed guidance for geometry modules.
-- `coding-standards` — cross-cutting style and purity rules.
-- `performance-discipline` — governs profiling and regression handling.
+- `working-in-math-layer` — detailed guidance for geometry modules.
+- `following-coding-standards` — cross-cutting style and purity rules.
+- `benchmarking-and-profiling` — governs profiling and regression handling.

@@ -1,10 +1,10 @@
 ---
-name: repo-layout
+name: navigating-the-repository
 description: This skill should be used when navigating repository structure, sources of truth, and documentation locations.
-last-updated: 2025-10-17
+last-updated: 2025-10-18
 ---
 
-# Repository Layout & Sources of Truth
+# Navigating the Repository
 
 ## Instructions
 - Read `AGENTS.md` to align on sources of truth, then use this skill to locate files and policies quickly.
@@ -43,10 +43,10 @@ last-updated: 2025-10-17
 ## Documentation & Notes
 
 - `docs/` — public-facing site content, briefs, workflows.
-- `notebooks/` — Jupytext-managed `.py` notebooks; retain metadata headers (see `skills/notebook-etiquette.md`).
-- `mail/` — archived summaries, private attachments, and weekly reports (follow `skills/collaboration-reporting.md`).
+- `notebooks/` — Jupytext-managed `.py` notebooks; retain metadata headers (see `skills/working-with-notebooks.md`).
+- `mail/` — archived summaries, private attachments, and weekly reports (follow `skills/collaborating-and-reporting.md`).
 
 ## Related Skills
 
-- `environment-tooling` — environment setup, quick commands, and PDF ingestion workflow.
-- `architecture-overview` — high-level dependency layering and design principles.
+- `operating-environment` — environment setup, quick commands, and PDF ingestion workflow.
+- `understanding-architecture` — high-level dependency layering and design principles.

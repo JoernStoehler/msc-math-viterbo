@@ -1,10 +1,10 @@
 ---
-name: roles-scope
+name: understanding-roles-and-scope
 description: This skill should be used when clarifying governance, maintainer responsibilities, and escalation triggers.
-last-updated: 2025-10-17
+last-updated: 2025-10-18
 ---
 
-# Roles & Scope
+# Understanding Roles & Scope
 
 ## Instructions
 - Use this skill to align responsibilities before planning cross-cutting changes or policy updates.
@@ -43,5 +43,5 @@ Use `Needs-Unblock: <topic>` in the task, or raise an issue/maintainer ping, whe
 
 ## Related Skills
 
-- `repo-onboarding` — first-action checklist before implementing changes.
-- `collaboration-reporting` — communication hygiene and reporting cadence.
+- `always` — first-action checklist before implementing changes.
+- `collaborating-and-reporting` — communication hygiene and reporting cadence.
