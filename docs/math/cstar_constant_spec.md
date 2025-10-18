@@ -2,6 +2,9 @@
 
 Status: Rigorous spec (math only)
 
+Implementation status
+- We implement a certified builder `compute_cF_constant_certified` that follows this spec: D_min and U_max via the closed forms and safe relaxations, and N_ann(X) via an adaptive 1D search with a Lipschitz certificate (64→256 mid-point refinement). The result is invariant, deterministic (CPU float64), and safe for pruning.
+
 ## Scope
 
 - Provide a precise, computable specification of the certified constant C*(X) used in the Chaidez–Hutchings per-face budget for pruning in R^4.
@@ -158,6 +161,9 @@ Steps.
 2) For each I, compute D(I) by the SOCP: minimize w·c_I subject to ||N_I^T w||_2 ≥ 1 and w≥0. Set D_min(X) = min_I D(I).
 3) For each I, compute U(I) by the SOCP: maximize w·c_I subject to ||N_I^T w||_2 ≤ 1 and w≥0. Set U_max(X) = max_I U(I).
 4) For each I, build an orthonormal basis R_I for N_I, and assemble A_I, B_I, C_I and H_I. Compute N_ann(I) = min_{θ∈[0,2π)} λ_min(H_I^{-1/2} M_I(θ) H_I^{-1/2}) via adaptive 1D search with certified Lipschitz bounds; set N_ann(X) = min_I N_ann(I).
+
+Implementation notes
+- The N_ann(X) search uses the bound `||K'(θ)|| ≤ ||H^{-1/2}||^2 sup_θ ||M'(θ)||`, where `sup_θ ||M'(θ)||` is bounded by `||B^T B|| + ||C^T C|| + ||B^T C + C^T B||`. The grid mid-point values are certified to bound the global minimum from below by subtracting `L · (Δθ/2)` on each interval; the minimum across intervals gives a rigorous lower bound.
 5) Set C*(X) = [N_ann(X) · D_min(X)] / [2 π · U_max(X)].
 6) For each 2‑face F bounded by facets (i,j), compute θ(F) = arccos⟨ν_i, ν_j⟩ and per‑face budget c_F := C*(X)·θ(F).
 

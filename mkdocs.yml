@@ -25,5 +25,7 @@ nav:
       - volume: math/volume.md
       - symplectic: math/symplectic.md
       - capacity_ehz: math/capacity_ehz.md
+      - oriented_edge_spectrum_4d: math/oriented_edge_spectrum_4d.md
+      - cstar_constant_spec: math/cstar_constant_spec.md
       - similarity: math/similarity.md
       - polar: math/polar.md
