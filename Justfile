@@ -331,3 +331,28 @@ publish-logreg:
     fi
     @mkdir -p artefacts/published/logreg-toy
     @tar czf artefacts/published/logreg-toy/$(basename "${RUN_DIR}").tar.gz -C "$(dirname "${RUN_DIR}")" "$(basename "${RUN_DIR}")"
+
+# Cloudflare Workers — VK helpers
+CF_DIR := ".devcontainer/cloudflare"
+
+cf-deploy-sanitizer:
+    @echo "Deploying VK API sanitizer worker (routes: /api/*)."
+    cd {{CF_DIR}} && wrangler -c wrangler-sanitizer.toml deploy
+
+cf-tail-sanitizer:
+    @echo "Tailing VK API sanitizer worker logs."
+    cd {{CF_DIR}} && wrangler -c wrangler-sanitizer.toml tail
+
+cf-deploy-font:
+    @echo "Deploying VK font/CSS injector worker (routes: /*)."
+    cd {{CF_DIR}} && wrangler -c wrangler.toml deploy
+
+cf-tail-font:
+    @echo "Tailing VK font/CSS worker logs."
+    cd {{CF_DIR}} && wrangler -c wrangler.toml tail
+
+cf: cf-deploy-sanitizer cf-deploy-font
+
+cf-tail:
+    @echo "Tailing both Workers (sanitizer + font)."
+    cd {{CF_DIR}} && (wrangler -c wrangler-sanitizer.toml tail & wrangler -c wrangler.toml tail & wait)

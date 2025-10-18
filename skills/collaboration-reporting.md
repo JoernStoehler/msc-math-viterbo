@@ -1,7 +1,7 @@
 ---
 name: collaboration-reporting
 description: This skill should be used when communicating progress, handling weekly reporting, or managing email/artefacts with maintainers and advisors.
-last-updated: 2025-10-17
+last-updated: 2025-10-18
 ---
 
 # Collaboration & Reporting
@@ -17,6 +17,7 @@ last-updated: 2025-10-17
 - **Primary backlog:** VibeKanban project `Msc Math Viterbo`. Keep task descriptions concise and link to supporting docs when context is needed.
 - **Escalations:** Use `Needs-Unblock: <topic>` in task descriptions or open an issue when acceptance criteria are ambiguous, policies conflict, or cross-task architecture changes are required.
 - **Maintainer updates:** Summaries and PR notes go to the project owner; the Academic Advisor receives curated updates via meetings or email, not via the repo.
+- **VK text hygiene:** Follow VK‑Safe Formatting from `skills/vibekanban.md` (backticks for identifiers/paths, escape underscores in prose, prefer Unicode math; fence LaTeX if unavoidable).
 
 ## Email & Artefacts Hygiene
 

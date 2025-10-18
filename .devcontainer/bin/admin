@@ -17,6 +17,12 @@ set -euo pipefail
 #   stop          Stop services in container (best-effort)
 #   status        Show host+container status (add --verbose for details)
 #   attach        Attach interactive bash in container (use --tmux for tmux)
+#   cf-deploy-sanitizer  Deploy the API sanitizer Worker (in container)
+#   cf-deploy-font       Deploy the font/CSS Worker (in container)
+#   cf-tail-sanitizer    Tail API sanitizer logs (in container)
+#   cf-tail-font         Tail font Worker logs (in container)
+#   cf                    Deploy both Workers (shorthand)
+#   cf-tail               Tail logs for both Workers (shorthand)
 #
 # Flags (position-sensitive; place immediately after the subcommand they modify):
 #   start --interactive    start detached then attach tmux (if available)
@@ -133,6 +139,12 @@ cmd_start() {
   fi
   log "Starting services inside container (idempotent)"
   run_in_container "bash .devcontainer/bin/dev-start.sh --detached"
+  # Optional: auto-deploy Cloudflare Workers after start when CF_AUTO_DEPLOY=1
+  if [ "${CF_AUTO_DEPLOY:-0}" = "1" ]; then
+    log "Auto-deploying Cloudflare Workers (CF_AUTO_DEPLOY=1)"
+    run_in_container "cd .devcontainer/cloudflare && wrangler -c wrangler-sanitizer.toml deploy && wrangler -c wrangler.toml deploy" || \
+      warn "Cloudflare auto-deploy reported issues (check wrangler auth/config)."
+  fi
   if [ "$interactive" -eq 1 ]; then
     if run_in_container "command -v tmux >/dev/null"; then
       print_tmux_tips
@@ -191,18 +203,21 @@ cmd_status() {
       fi
       run_in_container "bash -lc $'${inner}'"
 
-      # Cloudflare worker status (best-effort)
-      local worker_inner='set -e; WRANGLER_DIR=.devcontainer/cloudflare; TOML=${WRANGLER_DIR}/wrangler.toml; name="";\n'
-      worker_inner+=$'if [ -f "$TOML" ]; then name=$(grep -E "^name\\s*=\\s*\"" "$TOML" | head -n1 | sed -E "s/.*\"([^\"]+)\".*/\\1/"); fi;\n'
-      worker_inner+=$'if command -v wrangler >/dev/null 2>&1 && [ -n "$name" ] && [ -d "$WRANGLER_DIR" ]; then\n'
-      worker_inner+=$'  out=$(cd "$WRANGLER_DIR" && wrangler deployments list --name "$name" --json 2>/dev/null || true);\n'
-      worker_inner+=$'  if printf "%s" "$out" | grep -q "created_on"; then echo "cloudflare-worker(${name}): deployed";\n'
-      worker_inner+=$'  elif printf "%s" "$out" | grep -Eq "^\\s*\\[\\s*\\]\\s*$"; then echo "cloudflare-worker(${name}): no deployments";\n'
-      worker_inner+=$'  else echo "cloudflare-worker(${name}): unknown (auth/config?)"; fi;\n'
+      # Cloudflare workers status (best-effort)
+      local worker_inner='set -e; WRANGLER_DIR=.devcontainer/cloudflare;\n'
+      worker_inner+=$'check_one() { local toml="$1"; local tag="$2"; local name="";\n'
+      worker_inner+=$'  if [ -f "$toml" ]; then name=$(grep -E "^name\\s*=\\s*\"" "$toml" | head -n1 | sed -E "s/.*\"([^\"]+)\".*/\\1/"); fi;\n'
+      worker_inner+=$'  if command -v wrangler >/dev/null 2>&1 && [ -n "$name" ]; then\n'
+      worker_inner+=$'    out=$(cd "$WRANGLER_DIR" && wrangler deployments list --name "$name" --json 2>/dev/null || true);\n'
+      worker_inner+=$'    if printf "%s" "$out" | grep -q "created_on"; then echo "cloudflare-worker(${tag}:${name}): deployed";\n'
+      worker_inner+=$'    elif printf "%s" "$out" | grep -Eq "^\\s*\\[\\s*\\]\\s*$"; then echo "cloudflare-worker(${tag}:${name}): no deployments";\n'
+      worker_inner+=$'    else echo "cloudflare-worker(${tag}:${name}): unknown (auth/config?)"; fi;\n'
       if [ "$verbose" -eq 1 ]; then
-        worker_inner+=$'  echo; echo "[verbose] wrangler deployments raw:"; printf "%s\n" "$out";\n'
+        worker_inner+=$'    echo; echo "[verbose] deployments(${tag}) raw:"; printf "%s\n" "$out";\n'
       fi
-      worker_inner+=$'else echo "cloudflare-worker: wrangler or config missing"; fi\n'
+      worker_inner+=$'  else echo "cloudflare-worker(${tag}): wrangler or config missing"; fi; };\n'
+      worker_inner+=$'check_one "$WRANGLER_DIR/wrangler.toml" font;\n'
+      worker_inner+=$'check_one "$WRANGLER_DIR/wrangler-sanitizer.toml" sanitizer;\n'
       run_in_container "bash -lc $'${worker_inner}'"
     else
       echo "devcontainer: not running"
@@ -249,6 +264,10 @@ Commands (execute left→right):
   stop          Stop services inside container (best-effort)
   status        Show host+container status (add --verbose for details)
   attach        Attach interactive bash (use --tmux for tmux)
+  cf-deploy-sanitizer  Deploy API sanitizer Worker
+  cf-deploy-font       Deploy font/CSS Worker
+  cf-tail-sanitizer    Tail API sanitizer logs
+  cf-tail-font         Tail font logs
 
 Flags (place immediately after a subcommand):
   start --interactive    attach tmux after boot
@@ -305,6 +324,37 @@ while [ $# -gt 0 ]; do
       if [ "${2-}" = "--verbose" ]; then verbose=1; shift; fi
       cmd_status "$verbose"
       last_cmd="status"
+      ;;
+    cf)
+      run_in_container "cd .devcontainer/cloudflare && wrangler -c wrangler-sanitizer.toml deploy && wrangler -c wrangler.toml deploy"
+      last_cmd="cf"
+      ;;
+    cf-deploy-sanitizer)
+      run_in_container "cd .devcontainer/cloudflare && wrangler -c wrangler-sanitizer.toml deploy"
+      last_cmd="cf-deploy-sanitizer"
+      ;;
+    cf-deploy-font)
+      run_in_container "cd .devcontainer/cloudflare && wrangler -c wrangler.toml deploy"
+      last_cmd="cf-deploy-font"
+      ;;
+    cf-tail)
+      # Tail both in parallel when possible; fall back to sequential.
+      if run_in_container "command -v tmux >/dev/null"; then
+        run_in_container "\
+          tmux new-session -d -s cf-tail -n sanitizer \"cd .devcontainer/cloudflare && wrangler -c wrangler-sanitizer.toml tail\"; \
+          tmux new-window -t cf-tail -n font \"cd .devcontainer/cloudflare && wrangler -c wrangler.toml tail\"; \
+          tmux attach -t cf-tail"
+      else
+        run_in_container "bash -lc \"cd .devcontainer/cloudflare && wrangler -c wrangler-sanitizer.toml tail & wrangler -c wrangler.toml tail & wait\""
+      fi
+      ;;
+    cf-tail-sanitizer)
+      run_in_container "cd .devcontainer/cloudflare && wrangler -c wrangler-sanitizer.toml tail"
+      last_cmd="cf-tail-sanitizer"
+      ;;
+    cf-tail-font)
+      run_in_container "cd .devcontainer/cloudflare && wrangler -c wrangler.toml tail"
+      last_cmd="cf-tail-font"
       ;;
     attach)
       use_tmux=0

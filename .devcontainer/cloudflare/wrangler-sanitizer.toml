@@ -1,0 +1,8 @@
+name = "vk-sanitizer-proxy"
+main = "worker-vk-sanitizer.js"
+compatibility_date = "2024-11-01"
+
+routes = [
+  # Replace with your hostname and zone
+  { pattern = "vibekanban.joernstoehler.com/api/*", zone_name = "joernstoehler.com" },
+]

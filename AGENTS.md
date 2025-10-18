@@ -7,6 +7,7 @@ This file is an index. Load the right skill guides for your task.
 1. Read your task on VibeKanban (`Msc Math Viterbo`).
 2. Run `uv run python scripts/load_skills_metadata.py` (or `--quiet` when scripted) to surface skill summaries.
 3. Open the skills that match your scenario using the map below. Treat those files as the authoritative source.
+4. For any text you will post to VibeKanban, follow the VK‑Safe Formatting guidance in `skills/vibekanban.md`. The Cloudflare API sanitizer on `/api/*` ensures intraword underscores don’t become italics. For rationale and ops, see `.devcontainer/cloudflare/README.md`. Deploy both Workers via `just cf` (in container) or `bash .devcontainer/bin/admin cf` (host).
 
 ## Skill Map
 

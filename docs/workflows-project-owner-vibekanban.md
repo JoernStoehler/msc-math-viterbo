@@ -153,7 +153,10 @@ Security notes
 - VibeKanban data persists under the OS app data dir (Linux: `~/.local/share/ai/bloop/vibe-kanban/`). Bind‑mount this path to a host folder for durability and backups.
 
 Answers to current questions
-- Better font in VibeKanban: yes, without forking. Use a Cloudflare Worker on `vibekanban.joernstoehler.com/*` to inject Inter CSS at the edge (no changes to upstream binaries).
+- Better font in VibeKanban: yes, without forking. Use a Cloudflare Worker on `vibekanban.joernstoehler.com/*` to inject Inter CSS at the edge (no changes to upstream binaries). Deploy both Workers together via `just cf` (in container) or `bash .devcontainer/bin/admin cf` (host).
+- Outbound text sanitizer: `.devcontainer/cloudflare/worker-vk-sanitizer.js` proxies `POST/PUT/PATCH` JSON under `/api/*` and escapes only intraword underscores. It preserves inline code, fenced code, and leaves underscores inside Markdown link destinations and URLs untouched. See `.devcontainer/cloudflare/README.md` for details. Optional auto-deploy: set `CF_AUTO_DEPLOY=1` and run `bash .devcontainer/bin/admin start`.
+
+See `.devcontainer/cloudflare/README.md` for the full rationale, decisions, and operational notes (routes, preserved contexts, allowlist, troubleshooting, and update strategy).
 - “Open in VS Code” via GUI: non‑essential. CLI `code --add <worktree>` works reliably with Code Tunnel. Building a button that shells out to `code --add` in the server process is feasible but optional.
 - uv sync hardlink warning: expected with current mounts. Either accept the ~5s penalty or co‑locate `.venv` and `~/.cache/uv` to enable hardlinks. Document as OK in this workflow.
 - Documenting the workflow: this file is the canonical workflow; link it when onboarding agents and in ticket “why”.

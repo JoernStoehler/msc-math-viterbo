@@ -1,7 +1,7 @@
 ---
 name: daily-development
 description: This skill should be used when executing the daily workflow, planning tasks, and preparing PRs.
-last-updated: 2025-10-17
+last-updated: 2025-10-18
 ---
 
 # Daily Development Workflow
@@ -16,6 +16,7 @@ last-updated: 2025-10-17
 1. Read the VibeKanban task (project `Msc Math Viterbo`) and capture scope notes.
 2. Load required skills after running `uv run python scripts/load_skills_metadata.py`.
 3. Draft a 4–7 step plan unless the task is trivial. Update the plan after major steps per planning policy.
+4. When posting to VK, follow `skills/vibekanban.md` VK‑Safe Formatting: use backticks for identifiers, escape underscores in prose, prefer Unicode math.
 
 ## Execution Loop
 
