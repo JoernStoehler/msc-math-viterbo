@@ -70,3 +70,24 @@ def test_translation_and_permutation_invariance() -> None:
     )
     assert cycle_perm.size(0) == cycle_base.size(0)
     assert cycle_trans.size(0) == cycle_base.size(0)
+
+
+def test_noisy_pentagon_pair_smoke() -> None:
+    # Smoke test on the non-regular pentagon pair to ensure the solver
+    # handles symmetry-broken inputs robustly.
+    pent_q, pent_p = PLANAR_POLYTOPE_PAIRS["noisy_pentagon_product"]
+
+    capacity_general, cycle_general = minimal_action_cycle_lagrangian_product(
+        pent_q.vertices, pent_p.normals, pent_p.offsets
+    )
+    capacity_two, cycle_two = minimal_action_cycle_lagrangian_product(
+        pent_q.vertices, pent_p.normals, pent_p.offsets, max_bounces=2
+    )
+
+    assert capacity_general.ndim == 0 and capacity_general.item() > 0.0
+    assert capacity_two.ndim == 0 and capacity_two.item() > 0.0
+    assert cycle_general.ndim == 2 and cycle_general.size(1) == 4
+    assert cycle_two.ndim == 2 and cycle_two.size(1) == 4
+    # Both cycles are closed polylines in R^4.
+    torch.testing.assert_close(cycle_general[0], cycle_general[-1], atol=1e-9, rtol=0.0)
+    torch.testing.assert_close(cycle_two[0], cycle_two[-1], atol=1e-9, rtol=0.0)

@@ -280,6 +280,77 @@ def _pentagon_product_counterexample() -> StandardPolytope:
     )
 
 
+def _pentagon_product_noisy_factors() -> StandardPolytope:
+    """5-gon × rotated 5-gon with slight per-vertex radial noise.
+
+    Both planar factors are non-regular to break symmetries while keeping
+    the product Lagrangian block structure intact.
+    """
+    # Build slightly noised 5-gons deterministically.
+    gen_q = torch.Generator(device="cpu").manual_seed(314159)
+    gen_p = torch.Generator(device="cpu").manual_seed(271828)
+    base_q, _, _ = rotated_regular_ngon2d(5, 0.0)
+    base_p, _, _ = rotated_regular_ngon2d(5, -0.5 * torch.pi)
+    amp = 0.03
+    scale_q = 1.0 + amp * (torch.rand(5, generator=gen_q) - 0.5)
+    scale_p = 1.0 + amp * (torch.rand(5, generator=gen_p) - 0.5)
+    vertices_q = (base_q * scale_q.unsqueeze(1)).to(DTYPE)
+    vertices_p = (base_p * scale_p.unsqueeze(1)).to(DTYPE)
+
+    vertices, normals, offsets = lagrangian_product(vertices_q, vertices_p)
+    volume = volume_from_vertices(vertices)
+    return StandardPolytope(
+        name="pentagon_product_noisy_factors",
+        description=(
+            "5-gon × rotated 5-gon with slight per-vertex radial noise (still a Lagrangian product)."
+        ),
+        vertices=vertices,
+        normals=normals,
+        offsets=offsets,
+        volume=volume,
+        volume_reference=float(volume.item()),
+        capacity_ehz_reference=None,
+        tags=("4d", "lagrangian_product", "randomised"),
+        references={},
+    )
+
+
+def _pentagon_product_noisy_mixed() -> StandardPolytope:
+    """Slight linear mixing of a noisy pentagon product to break product structure.
+
+    The resulting 4D polytope is no longer a Lagrangian product: facet normals
+    are no longer confined to q- or p-blocks.
+    """
+    base = _pentagon_product_noisy_factors()
+    # Small, fixed near-identity mixing with cross-block terms
+    mix = torch.tensor(
+        [
+            [1.0, 0.02, 0.01, 0.0],
+            [0.0, 0.99, -0.03, 0.02],
+            [0.01, 0.0, 1.0, 0.04],
+            [0.0, -0.02, 0.0, 1.02],
+        ],
+        dtype=DTYPE,
+    )
+    vertices = base.vertices @ mix.T
+    normals, offsets = vertices_to_halfspaces(vertices)
+    volume = volume_from_vertices(vertices)
+    return StandardPolytope(
+        name="pentagon_product_noisy_mixed",
+        description=(
+            "Slightly mixed 4D polytope from noisy 5-gon product; breaks block (Lagrangian product) normals."
+        ),
+        vertices=vertices,
+        normals=normals,
+        offsets=offsets,
+        volume=volume,
+        volume_reference=float(volume.item()),
+        capacity_ehz_reference=None,
+        tags=("4d", "randomised", "non_product"),
+        references={},
+    )
+
+
 def _random_polytope_4d_seed2024() -> StandardPolytope:
     generator = torch.Generator(device="cpu")
     generator.manual_seed(20241017)
@@ -317,6 +388,8 @@ STANDARD_POLYTOPES: Final[tuple[StandardPolytope, ...]] = (
     _hypercube_3d_unit(),
     _hypercube_4d_unit(),
     _pentagon_product_counterexample(),
+    _pentagon_product_noisy_factors(),
+    _pentagon_product_noisy_mixed(),
     _random_polytope_4d_seed2024(),
 )
 
@@ -364,6 +437,44 @@ def _rotated_pentagon_90deg() -> PlanarPolytope:
         offsets=offsets.to(dtype=DTYPE),
         area=area.to(dtype=DTYPE),
         tags=("planar", "symmetric"),
+    )
+
+
+def _noisy_pentagon_q() -> PlanarPolytope:
+    gen = torch.Generator(device="cpu").manual_seed(424242)
+    base, _, _ = rotated_regular_ngon2d(5, 0.0)
+    amp = 0.03
+    scale = 1.0 + amp * (torch.rand(5, generator=gen) - 0.5)
+    vertices = (base * scale.unsqueeze(1)).to(DTYPE)
+    normals, offsets = vertices_to_halfspaces(vertices)
+    area = polygon_area(vertices)
+    return PlanarPolytope(
+        name="noisy_pentagon_q",
+        description="Non-regular 5-gon (q-plane) with slight radial noise (deterministic).",
+        vertices=vertices,
+        normals=normals,
+        offsets=offsets,
+        area=area,
+        tags=("planar", "randomised"),
+    )
+
+
+def _noisy_pentagon_p_rot90() -> PlanarPolytope:
+    gen = torch.Generator(device="cpu").manual_seed(434343)
+    base, _, _ = rotated_regular_ngon2d(5, -0.5 * torch.pi)
+    amp = 0.03
+    scale = 1.0 + amp * (torch.rand(5, generator=gen) - 0.5)
+    vertices = (base * scale.unsqueeze(1)).to(DTYPE)
+    normals, offsets = vertices_to_halfspaces(vertices)
+    area = polygon_area(vertices)
+    return PlanarPolytope(
+        name="noisy_pentagon_p_rot90",
+        description="Non-regular 5-gon (p-plane, 90°) with slight radial noise (deterministic).",
+        vertices=vertices,
+        normals=normals,
+        offsets=offsets,
+        area=area,
+        tags=("planar", "randomised"),
     )
 
 
@@ -480,6 +591,8 @@ PLANAR_POLYTOPES: Final[tuple[PlanarPolytope, ...]] = (
     _square_planar(),
     _regular_pentagon(),
     _rotated_pentagon_90deg(),
+    _noisy_pentagon_q(),
+    _noisy_pentagon_p_rot90(),
     _minkowski_three_bounce_q(),
     _minkowski_three_bounce_p(),
     _minkowski_invariance_q(),
@@ -498,6 +611,10 @@ PLANAR_POLYTOPE_PAIRS: Final[dict[str, tuple[PlanarPolytope, PlanarPolytope]]] =
     "pentagon_product": (
         PLANAR_POLYTOPES_BY_NAME["regular_pentagon"],
         PLANAR_POLYTOPES_BY_NAME["rotated_pentagon_90deg"],
+    ),
+    "noisy_pentagon_product": (
+        PLANAR_POLYTOPES_BY_NAME["noisy_pentagon_q"],
+        PLANAR_POLYTOPES_BY_NAME["noisy_pentagon_p_rot90"],
     ),
     "minkowski_three_bounce": (
         PLANAR_POLYTOPES_BY_NAME["minkowski_three_bounce_q"],
