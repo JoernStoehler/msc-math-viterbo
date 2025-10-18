@@ -376,7 +376,10 @@ def oriented_edge_spectrum_4d(
     enable_rotation = (
         rotation_cap is not None and math.isfinite(rotation_cap) and rotation_cap > 0.0
     )
-    rotation_angle_cap = float(rotation_cap) if enable_rotation else float("inf")
+    if rotation_cap is not None and enable_rotation:
+        rotation_angle_cap = float(rotation_cap)
+    else:
+        rotation_angle_cap = float("inf")
     rotation_number_cap = (
         rotation_angle_cap / (2.0 * math.pi) if math.isfinite(rotation_angle_cap) else float("inf")
     )
@@ -439,7 +442,10 @@ def oriented_edge_spectrum_4d(
                 continue
             # State memoisation keyed by (next face, quantised transfer).
             if enable_memo:
-                key = (edge.to_face, _quantise_matrix(transfer_next, float(memo_grid)))
+                # Narrow type for pyright
+                assert memo_grid is not None
+                grid = float(memo_grid)
+                key = (edge.to_face, _quantise_matrix(transfer_next, grid))
                 # Coarse budget: normalise by rotation cap Rn to maintain scale behaviour.
                 denom = rotation_number_cap
                 used_rel = 0.0 if not math.isfinite(denom) or denom <= 0.0 else used / denom
@@ -478,7 +484,9 @@ def oriented_edge_spectrum_4d(
             memo.clear()
             used0 = cF[edge.from_face] if use_cF_budgets else 0.0
             if enable_memo:
-                key0 = (edge.to_face, _quantise_matrix(edge.matrix, float(memo_grid)))
+                assert memo_grid is not None
+                grid0 = float(memo_grid)
+                key0 = (edge.to_face, _quantise_matrix(edge.matrix, grid0))
                 denom0 = rotation_number_cap
                 used_rel0 = 0.0 if not math.isfinite(denom0) or denom0 <= 0.0 else used0 / denom0
                 bucket0 = int(min(1e9, math.floor(used_rel0 * memo_buckets)))
@@ -1000,7 +1008,7 @@ def compute_cF_constant_certified(
     try:
         vertices = halfspaces_to_vertices(normals64, offsets64)
         vertex_facets = _vertex_facet_incidence(vertices, normals64, offsets64, tol)
-    except Exception:
+    except (RuntimeError, ValueError):
         vertex_facets = []
     for facets in vertex_facets:
         # Quadruple
@@ -1023,7 +1031,7 @@ def compute_cF_constant_certified(
     def _spectral_norm(m: torch.Tensor) -> float:
         try:
             return float(torch.linalg.norm(m, ord=2).item())
-        except Exception:
+        except (RuntimeError, torch.linalg.LinAlgError):
             # Fallback via SVD
             u, s, v = torch.linalg.svd(m)
             return float((s.max() if s.numel() else torch.tensor(0.0)).item())
@@ -1097,25 +1105,25 @@ def compute_cF_constant_certified(
             lb = best_val - L_lip * (h * 0.5)
             return lb, best_theta
 
-        lb, theta_star = min_lower_bound(64)
+        lb, _ = min_lower_bound(64)
         # refine near minima a couple of rounds if helpful
         for samples in (128, 256):
             lb_ref, th = min_lower_bound(samples)
             if lb_ref > lb + 1e-10:
                 lb = lb_ref
-                theta_star = th
+                _ = th
         return max(lb, 1e-12)
 
     N_ann_candidates: list[float] = []
-    for I in sorted(active_sets, key=lambda t: (len(t), t)):
+    for indices in sorted(active_sets, key=lambda t: (len(t), t)):
         # Only 1-/0-face strata (k=3,4) contribute a strictly positive annest bound.
-        if len(I) < 3:
+        if len(indices) < 3:
             continue
         try:
-            val = _N_ann_for_I(I)
+            val = _N_ann_for_I(indices)
             if math.isfinite(val) and val > 0.0:
                 N_ann_candidates.append(val)
-        except Exception:
+        except (RuntimeError, ValueError, torch.linalg.LinAlgError):
             continue
     N_ann_lower = min(N_ann_candidates) if N_ann_candidates else 1e-6
 

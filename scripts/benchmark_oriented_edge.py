@@ -84,7 +84,7 @@ def _measure(name: str, include_constants: bool) -> dict[str, Any]:
     )
 
     # Helper to time a run
-    def run(label: str, **kwargs: Any) -> None:
+    def run(label: str, **kwargs: object) -> None:
         try:
             s = time.perf_counter()
             val = oriented_edge_spectrum_4d(V, N, C, **kwargs)
@@ -106,7 +106,7 @@ def _measure(name: str, include_constants: bool) -> dict[str, Any]:
                     "time_ms": float("inf"),
                 }
             )
-        except Exception as e:  # pragma: no cover - diagnostic
+        except Exception as e:  # noqa: BLE001 - diagnostic capture for CLI
             rows.append(
                 {
                     "poly": name,
@@ -134,12 +134,12 @@ def _measure(name: str, include_constants: bool) -> dict[str, Any]:
 
 def _print_rows(rows: list[dict[str, Any]], fmt: str) -> None:
     if fmt == "json":
-        print(json.dumps(rows, indent=2))
+        sys.stdout.write(json.dumps(rows, indent=2) + "\n")
         return
     if fmt == "csv":
-        print("poly,mode,result,time_ms")
+        sys.stdout.write("poly,mode,result,time_ms\n")
         for r in rows:
-            print(f"{r['poly']},{r['mode']},{r['result']},{r['time_ms']}")
+            sys.stdout.write(f"{r['poly']},{r['mode']},{r['result']},{r['time_ms']}\n")
         return
     # Pretty table
     # Group by poly and print rows
@@ -147,12 +147,13 @@ def _print_rows(rows: list[dict[str, Any]], fmt: str) -> None:
     for r in rows:
         by_poly.setdefault(r["poly"], []).append(r)
     for poly, items in by_poly.items():
-        print(f"\n== {poly} ==")
+        sys.stdout.write(f"\n== {poly} ==\n")
         for r in items:
-            print(f"- {r['mode']}: result={r['result']} time_ms={r['time_ms']}")
+            sys.stdout.write(f"- {r['mode']}: result={r['result']} time_ms={r['time_ms']}\n")
 
 
 def main() -> None:
+    """Run oriented-edge spectrum benchmarks and print results."""
     args = _parse_args()
     # Ensure timeout is picked up by the decorated function at import time
     os.environ["VITERBO_SOLVER_TIMEOUT"] = str(args.timeout)
