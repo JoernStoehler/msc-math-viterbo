@@ -1,3 +1,4 @@
+---
 name: executing-daily-workflow
 description: This skill should be used when executing the daily workflow, planning work, and handing off changes.
 last-updated: 2025-10-18

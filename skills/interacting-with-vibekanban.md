@@ -1,3 +1,4 @@
+---
 name: interacting-with-vibekanban
 description: This skill should be used when tasks require explicit VibeKanban interaction; most tasks do not need the board because the task text is in context and Git ops are handled by the workflow.
 last-updated: 2025-10-18

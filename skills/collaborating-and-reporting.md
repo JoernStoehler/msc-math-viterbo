@@ -1,3 +1,4 @@
+---
 name: collaborating-and-reporting
 description: This skill should be used when collaborating with maintainers and advisors, posting updates, and handling reports and artefacts.
 last-updated: 2025-10-18
