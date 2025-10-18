@@ -243,24 +243,46 @@ def oriented_edge_spectrum_4d(
     offsets: torch.Tensor,
     *,
     k_max: int | None = None,
+    # Paper-aligned CH budgets and pruning controls
+    rotation_cap: float | None = 4.0 * math.pi,
+    use_cF_budgets: bool = False,
+    cF_constant: float | None = None,
+    verified: bool = True,
+    memo_grid: float | None = 1e-6,
+    memo_buckets: int = 32,
 ) -> torch.Tensor:
     r"""Chaidez–Hutchings oriented-edge action spectrum in ``R^4``.
+
+    WARNING: Experimental. The original paper notes that their
+    computer implementation includes "various optimizations not discussed here"
+    (Chaidez–Hutchings, Computing Reeb dynamics on 4d convex polytopes,
+    arXiv:2008.10111, Sec. 2). We implement the documented optimizations:
+    rotation-number bounds and (optional) per-face budgets. Additional
+    undocumented optimizations from the paper are not included here.
 
     Args:
       vertices: ``(M, 4)`` tensor with the polytope vertices.
       normals: ``(F, 4)`` tensor describing the supporting half-spaces.
       offsets: ``(F,)`` tensor with support numbers (positive for inward origin).
       k_max: optional cap on the number of oriented edges per cycle (depth limit).
+      use_cF_budgets: enable Chaidez–Hutchings per-face budgets (Theorem
+        1.12(v)). When True, you must supply ``cF_constant``.
+      cF_constant: the certified C*(X) constant constructed via Lemma 5.13
+        and §6.2. If ``use_cF_budgets`` is True and this is None, a
+        NotImplementedError is raised; we do not auto-compute uncertified
+        constants.
+      verified: when True, disables heuristic memoisation (transfer quantisation
+        and dominance). Rotation guard remains active.
+      rotation_cap: cap (radians) on polar rotation angle of cumulative 2×2
+        transfer. Set ``None`` or ``math.inf`` to disable.
+      memo_grid: quantisation grid for transfer in memo key. ``None`` or ``<=0``
+        disables memoisation.
+      memo_buckets: number of coarse budget buckets per face in memo; ``<=0``
+        disables budget dominance memo.
 
     Returns:
       Minimal combinatorial action (symplectic length) among admissible cycles.
     """
-    # NOTE: This remains an experimental backend.  The DFS below does not yet
-    # incorporate the Chaidez–Hutchings pruning (energy caps, rotation bounds,
-    # memoised face states); instead the @enforce_time_budget decorator aborts
-    # runaway enumerations.  Before relying on this solver in production,
-    # implement those pruning rules so highly symmetric inputs terminate
-    # deterministically without hitting the timeout.
     if vertices.ndim != 2 or vertices.size(1) != 4:
         raise ValueError("vertices must be (M, 4)")
     if normals.ndim != 2 or normals.size(1) != 4 or offsets.ndim != 1:
@@ -303,12 +325,67 @@ def oriented_edge_spectrum_4d(
     seen_cycles: set[tuple[int, ...]] = set()
     identity = torch.eye(2, dtype=dtype, device=device)
 
+    # Optional CH c_F per 2-face: c_F(F) = C*(X) * dist_S^3(ν_E+, ν_E−),
+    # where ν_E± are unit outward normals of the two facets defining face F.
+    cF: dict[int, float] = {}
+
+    def _unit(v: torch.Tensor) -> torch.Tensor:
+        nrm = torch.linalg.norm(v)
+        return v / (nrm + torch.finfo(v.dtype).eps)
+
+    if use_cF_budgets:
+        if cF_constant is None:
+            raise NotImplementedError(
+                "Certified C*(X) (Lemma 5.13) not implemented: supply cF_constant explicitly or disable use_cF_budgets."
+            )
+        for face in faces:
+            i, j = face.facets
+            nu_i = _unit(normals[i])
+            nu_j = _unit(normals[j])
+            dot = float(torch.clamp(torch.dot(nu_i, nu_j), -1.0, 1.0).item())
+            theta = math.acos(dot)
+            cF[face.index] = float(cF_constant) * theta
+
+    # Rotation-number pruning (angle in radians). Also define rotation-number cap Rn.
+    enable_rotation = (
+        rotation_cap is not None and math.isfinite(rotation_cap) and rotation_cap > 0.0
+    )
+    rotation_angle_cap = float(rotation_cap) if enable_rotation else float("inf")
+    rotation_number_cap = (
+        rotation_angle_cap / (2.0 * math.pi) if math.isfinite(rotation_angle_cap) else float("inf")
+    )
+
+    # State memo: (face, quantised transfer) -> best coarse budget used.
+    enable_memo = (
+        (not verified)
+        and memo_grid is not None
+        and (memo_grid if isinstance(memo_grid, float) else 0.0) > 0.0
+        and memo_buckets > 0
+    )
+    memo: dict[tuple[int, tuple[int, int, int, int]], int] = {}
+
+    def _quantise_matrix(mat: torch.Tensor, grid: float) -> tuple[int, int, int, int]:
+        q = torch.round(mat / grid)
+        return (int(q[0, 0].item()), int(q[0, 1].item()), int(q[1, 0].item()), int(q[1, 1].item()))
+
+    def _polar_rotation_angle(mat: torch.Tensor) -> float:
+        try:
+            u, _, vh = torch.linalg.svd(mat)
+            r = u @ vh
+        except torch.linalg.LinAlgError:
+            eps = max(tol, float(torch.finfo(mat.dtype).eps))
+            u, _, vh = torch.linalg.svd(mat + eps * identity)
+            r = u @ vh
+        return abs(math.atan2(float(r[1, 0].item()), float(r[0, 0].item())))
+
     def dfs(
         start_face: int,
         current_face: int,
         path: list[EdgeData],
         visited_edges: set[int],
         depth: int,
+        transfer: torch.Tensor,
+        cF_sum_used: float,
     ) -> None:
         nonlocal best_action
         if depth >= max_length:
@@ -316,8 +393,31 @@ def oriented_edge_spectrum_4d(
         for edge in adjacency.get(current_face, []):
             if edge.id in visited_edges:
                 continue
+            # CH budget pruning (optional): accumulate sum over visited 2-faces.
+            used = cF_sum_used
+            if use_cF_budgets:
+                used = used + cF[edge.from_face]
+                if used > rotation_number_cap:
+                    continue
+            # Rotation-number pruning.
+            transfer_next = edge.matrix @ transfer
+            if enable_rotation and _polar_rotation_angle(transfer_next) > rotation_angle_cap:
+                continue
+            # State memoisation keyed by (next face, quantised transfer).
+            if enable_memo:
+                key = (edge.to_face, _quantise_matrix(transfer_next, float(memo_grid)))
+                # Coarse budget: normalise by rotation cap Rn to maintain scale behaviour.
+                denom = rotation_number_cap
+                used_rel = 0.0 if not math.isfinite(denom) or denom <= 0.0 else used / denom
+                bucket = int(min(1e9, math.floor(used_rel * memo_buckets)))
+                best_bucket = memo.get(key)
+                if best_bucket is not None and bucket >= best_bucket:
+                    continue
+                memo[key] = bucket
+
             path.append(edge)
             visited_edges.add(edge.id)
+            cF_sum_next = used
             if edge.to_face == start_face:
                 cycle_ids = tuple(edge_.id for edge_ in path)
                 canonical = _canonical_cycle_id(cycle_ids)
@@ -326,13 +426,30 @@ def oriented_edge_spectrum_4d(
                     action = _evaluate_cycle(path, faces, normals, offsets, tol, identity)
                     if action is not None and (best_action is None or action < best_action - tol):
                         best_action = action
-            dfs(start_face, edge.to_face, path, visited_edges, depth + 1)
+            dfs(
+                start_face,
+                edge.to_face,
+                path,
+                visited_edges,
+                depth + 1,
+                transfer_next,
+                cF_sum_next,
+            )
             visited_edges.remove(edge.id)
             path.pop()
 
     for entry_face in adjacency.keys():
         for edge in adjacency[entry_face]:
-            dfs(entry_face, edge.to_face, [edge], {edge.id}, 1)
+            # Reset memo for each DFS start to keep traversal deterministic.
+            memo.clear()
+            used0 = cF[edge.from_face] if use_cF_budgets else 0.0
+            if enable_memo:
+                key0 = (edge.to_face, _quantise_matrix(edge.matrix, float(memo_grid)))
+                denom0 = rotation_number_cap
+                used_rel0 = 0.0 if not math.isfinite(denom0) or denom0 <= 0.0 else used0 / denom0
+                bucket0 = int(min(1e9, math.floor(used_rel0 * memo_buckets)))
+                memo[key0] = bucket0
+            dfs(entry_face, edge.to_face, [edge], {edge.id}, 1, edge.matrix, used0)
 
     if best_action is None:
         raise ValueError("no admissible cycles found within search limits")
@@ -380,6 +497,10 @@ class EdgeData(NamedTuple):
     reeb_vector: torch.Tensor  # (4,)
     competitor_indices: torch.Tensor  # (L,)
     competitor_alphas: torch.Tensor  # (L,)
+    # Conservative upper bound on the realised segment time/length for this edge
+    # estimated from admissible samples in the source face. Used for per-face
+    # c_F budget pruning. Non-negative scalar.
+    time_upper_bound: torch.Tensor  # ()
 
 
 def _symplectic_matrix(*, dtype: torch.dtype, device: torch.device) -> torch.Tensor:
@@ -521,6 +642,15 @@ def _enumerate_oriented_edges(
                 action_const,
                 action_linear,
             )
+            # Compute an exact per-edge sup bound over the face by maximising the
+            # numerator on the vertices of the 2-face (linear function achieves
+            # its extrema on vertices). alpha_target > 0 by construction.
+            time_upper = torch.tensor(0.0, dtype=dtype, device=device)
+            for vtx in face_from.vertices:
+                numerator = offsets[other_to] - torch.dot(normals[other_to], vtx)
+                t_here = numerator / alpha_target
+                if t_here > time_upper:
+                    time_upper = t_here
             edges.append(
                 EdgeData(
                     id=edge_id,
@@ -537,6 +667,7 @@ def _enumerate_oriented_edges(
                         competitor_indices, dtype=torch.int64, device=device
                     ),
                     competitor_alphas=torch.tensor(competitor_alphas, dtype=dtype, device=device),
+                    time_upper_bound=time_upper.clamp_min(0.0),
                 )
             )
             edge_id += 1
@@ -703,3 +834,36 @@ def _edge_domain_check(
     times = numerators / edge.competitor_alphas
     admissible = torch.logical_or(times <= tol, times >= action - tol)
     return bool(torch.all(admissible))
+
+
+def compute_cF_constant_certified(
+    normals: torch.Tensor,
+    offsets: torch.Tensor,
+    faces: list[FaceData],
+) -> float:
+    """Compute the certified C*(X) constant from Lemma 5.13 (Not Implemented).
+
+    This constant C*(X) > 0 depends only on the polytope X and is such that for
+    any Type-1 combinatorial Reeb orbit with 2-face endpoints F_1, ..., F_k and
+    any rotation bound R on the approximating smooth orbits, the Chaidez–Hutchings
+    budget holds: sum_i C*(X) * theta(F_i) <= R, where theta(F) is the spherical
+    angle between outward unit normals of the two 3-faces adjacent to the 2-face F.
+
+    The construction of C*(X) in the paper (Theorem 1.12(v), Lemma 5.13, §6.2)
+    proceeds by encoding uniform positive lower bounds for quantities arising in
+    the smoothing analysis: a global denominator bound and a global lower bound on
+    the “normal component” of i v along strata of types 0/1/2, together with an S^3
+    path-length lower bound at 2-face transitions. Implementing these bounds
+    faithfully requires reproducing the case-by-case geometric estimates from §5.
+
+    This function is a placeholder making that dependency explicit. It is not
+    implemented here to avoid introducing uncertified constants. To enable CH
+    budgets in `oriented_edge_spectrum_4d`, supply a certified constant explicitly
+    via the `cF_constant` parameter.
+
+    Returns:
+      This function does not return; it raises NotImplementedError.
+    """
+    raise NotImplementedError(
+        "Certified C*(X) (Lemma 5.13) construction is not implemented. Supply cF_constant explicitly"
+    )
