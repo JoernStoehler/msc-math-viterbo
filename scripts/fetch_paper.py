@@ -17,12 +17,14 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import json
-import os
+from json import JSONDecodeError
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import textwrap
+import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -68,6 +70,12 @@ def _write_paper_md(outdir: Path, title: str, source: str, text: str) -> Path:
 
 
 def fetch_arxiv(arxiv_id: str, status: str | None = None) -> None:
+    """Fetch an arXiv paper by ID, convert to Markdown, and print an index snippet.
+
+    Args:
+      arxiv_id: Identifier like "1712.03494" or "2008.10111v2".
+      status: Optional status label to embed in the index snippet.
+    """
     # Metadata
     api = f"http://export.arxiv.org/api/query?id_list={urllib.parse.quote(arxiv_id)}"
     req = urllib.request.Request(api, headers={"User-Agent": "fetch-paper/1.0"})
@@ -111,8 +119,8 @@ def fetch_arxiv(arxiv_id: str, status: str | None = None) -> None:
         """
     ).strip()
 
-    print(f"Saved: {path}")
-    print("\nIndex snippet:\n" + idx_block)
+    sys.stdout.write(f"Saved: {path}\n")
+    sys.stdout.write("\nIndex snippet:\n" + idx_block + "\n")
 
 
 def _crossref_meta(doi: str) -> tuple[str, str, list[str]]:
@@ -136,6 +144,12 @@ def _crossref_meta(doi: str) -> tuple[str, str, list[str]]:
 
 
 def fetch_doi(doi: str, status: str | None = None) -> None:
+    """Fetch a paper by DOI via OpenAlex (or Crossref fallback), emit Markdown + index.
+
+    Args:
+      doi: DOI string.
+      status: Optional status label for the index snippet.
+    """
     # Prefer OpenAlex for OA location and metadata
     data = None
     try:
@@ -143,7 +157,7 @@ def fetch_doi(doi: str, status: str | None = None) -> None:
         req = urllib.request.Request(oa_url, headers={"User-Agent": "fetch-paper/1.0"})
         with urllib.request.urlopen(req) as r:
             data = json.load(r)
-    except Exception:
+    except (urllib.error.URLError, JSONDecodeError):
         data = None
 
     title: str | None = None
@@ -166,7 +180,7 @@ def fetch_doi(doi: str, status: str | None = None) -> None:
     if not title:
         try:
             title, year, authors = _crossref_meta(doi)
-        except Exception:
+        except (urllib.error.URLError, JSONDecodeError, KeyError, ValueError):
             title = doi
             year = _dt.datetime.utcnow().strftime("%Y")
             authors = []
@@ -184,8 +198,8 @@ def fetch_doi(doi: str, status: str | None = None) -> None:
                 - …
             """
         ).strip()
-        print("No OA PDF found; not saved.")
-        print("\nIndex snippet:\n" + idx_block)
+        sys.stdout.write("No OA PDF found; not saved.\n")
+        sys.stdout.write("\nIndex snippet:\n" + idx_block + "\n")
         return
 
     # Fetch and convert
@@ -216,11 +230,15 @@ def fetch_doi(doi: str, status: str | None = None) -> None:
         """
     ).strip()
 
-    print(f"Saved: {path}")
-    print("\nIndex snippet:\n" + idx_block)
+    sys.stdout.write(f"Saved: {path}\n")
+    sys.stdout.write("\nIndex snippet:\n" + idx_block + "\n")
 
 
 def main(argv: list[str] | None = None) -> int:
+    """CLI entry point for fetching arXiv/DOI papers into docs/papers.
+
+    Returns 0 on success; exits with a message if `pdftotext` is unavailable.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     g = parser.add_mutually_exclusive_group(required=True)
     g.add_argument("--arxiv", help="arXiv identifier, e.g., 1712.03494 or 2008.10111v2")
