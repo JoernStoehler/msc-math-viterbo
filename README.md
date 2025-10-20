@@ -54,6 +54,7 @@ just docs-build  # Build MkDocs site (strict)
 
 - Everyday overview lives in `AGENTS.md` (“Architecture Overview”).
 - Deeper rationale and decisions: `docs/architecture/overview.md`.
+- Project Charter (goals, milestones, success metrics): `docs/charter.md`.
 
 ## Task Management
 

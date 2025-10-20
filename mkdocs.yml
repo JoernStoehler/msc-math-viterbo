@@ -16,7 +16,9 @@ markdown_extensions:
       permalink: true
 
 nav:
+  - Charter: charter.md
   - Home: README.md
+  - Reviews: reviews/README.md
   - Architecture: architecture/overview.md
   - Math API:
       - Overview: math/index.md
