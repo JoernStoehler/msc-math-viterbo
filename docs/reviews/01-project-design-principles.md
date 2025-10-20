@@ -1,5 +1,21 @@
 # Review 01 — Project Design Principles (Onboarding Focus)
 
+Provenance
+- Topic: 1 — Project Design Principles
+- Author: Agent (Codex CLI)
+- Date: 2025-10-20
+- Commit: <fill on merge>
+- Timebox: ~60–90 minutes
+- Scope: Design principles with onboarding emphasis
+- Version: v0.1
+
+Context
+- Assess whether repository-level principles enable the 6‑month MSc thesis goals, with emphasis on onboarding speed, readability, test posture, and math correctness.
+
+Inputs & Method
+- Skimmed README, skills, Justfile, CI/test setup, and math docs; spot-checked test coverage areas.
+
+Findings (unsorted)
 Unfiltered, unsorted list of observations related to project-level design principles that enable a successful 6‑month MSc thesis project (onboarding speed, code readability, test posture, math correctness, and overall repo efficacy for agent and human contributors). Findings include concrete strengths, gaps, risks, and actionable ideas.
 
 - The repo is largely self‑documenting about architecture and day‑to‑day practice, but not yet self‑documenting about top‑level success metrics for a 6‑month MSc thesis (no single “Project Charter” stating time‑boxed goals, milestones, and hard acceptance criteria). Adding an explicit charter would reduce ambiguity for new agents.
@@ -80,3 +96,24 @@ Unfiltered, unsorted list of observations related to project-level design princi
 - Suggestion: Add a simple smoke test that exercises docs code fences or a subset of examples to prevent drift between docs and code samples (some projects run doctests selectively).
 - Overall: The repository is in strong shape for rapid onboarding and iterative, correctness‑minded development. The main gap against “Project Design Principles” for a 6‑month MSc is the absence of explicit, measurable top‑level success criteria and a thesis milestone plan. Adding those would make the repo fully self‑documenting with respect to “what we aim to achieve” and “how we will know we’ve succeeded.”
 
+
+Actions (first pass)
+- Deferred; to be extracted during consolidation at the end of the review batch.
+
+Cross-References
+- README.md
+- AGENTS.md
+- Justfile
+- skills/good-code-loop.md
+- skills/testing-and-ci.md
+- docs/charter.md
+
+Validation
+- Built docs strictly: `uv run mkdocs build --strict` — OK
+
+Limitations
+- Did not run full `just ci`; this pass focuses on principles and onboarding.
+- Not a deep content review of math/algorithms; see Topics 6 and 7.
+
+Status
+- Finalized

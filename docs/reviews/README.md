@@ -8,10 +8,20 @@ Purpose
 - Central index for all repository reviews. Each review focuses on a single topic to produce a long, unfiltered, unsorted list of findings. Results feed into consolidation and planning.
 
 How to add a review
+- Use the template: `docs/reviews/TEMPLATE.md` (copy and fill the placeholders).
 - Create: `docs/reviews/XX-<stub>.md` where `XX` is a zero‑padded topic number.
 - Content: be thorough; unsorted is fine; redundancy OK. Use clear, specific language. No length limit.
 - Deliverable path: keep the file under `docs/reviews/` so it publishes and is easy to reference.
 - Cross‑link: add a single bullet link here after saving the file.
+
+Pre‑Submit Checklist (per review)
+- Linked from this index under Published reviews
+- `uv run mkdocs build --strict` green
+- `just checks` green (or N/A for docs‑only changes)
+- Actions extracted (even minimal is fine)
+- Cross‑refs noted (topics/files)
+- Provenance filled (Topic, Author, Date, Commit, Timebox, Scope, Version)
+- Title follows `Review XX — <Topic Title>`
 
 Numbering (topics)
 1. Project Design Principles
@@ -31,7 +41,6 @@ Numbering (topics)
 
 Published reviews
 - 01 — Project Design Principles: 01-project-design-principles.md
+- 08 — Review process and reviews in general: 08-review-process.md
 
 Upcoming
-- 08 — Review process and reviews in general: to be created at `docs/reviews/08-review-process.md` by the assigned task.
-
