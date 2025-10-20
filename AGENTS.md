@@ -14,6 +14,7 @@ This file is an index. Load the right skill guides for your task.
 - Navigation: prefer `rg` for searches; stream reads ≤250 lines in the shell.
 - Escalation: add `Needs-Unblock: <topic>` to tickets; Owner: Jörn Stöhler; Advisor: Kai Cieliebak.
 - Safety: do not revert files you didn’t edit; keep device/dtype choices explicit.
+- CPU time cap: Python processes default to a 180s CPU cap (sitecustomize.py). Override with `VITERBO_CPU_LIMIT=0` (disable) or raise as needed for long runs.
 - PDF to Markdown (quick): `pdftotext -layout -nopgbrk input.pdf output.md` (store summaries under `mail/private/`).
 
 ## Skill Map

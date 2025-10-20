@@ -1,6 +1,6 @@
 # Oriented-Edge CH Algorithm (R^4)
 
-Status: Implemented (deterministic, CPU-only)
+Status: Implemented (deterministic; certified budget runs on CPU)
 
 Audience and prerequisites
 - Assumes familiarity with: convex polytopes (H- and V-representations), basic symplectic linear algebra in R^4 with complex structure J, and Chaidez–Hutchings (CH) 4D polytope Reeb dynamics (arXiv:2008.10111).
@@ -11,7 +11,8 @@ Goal
 
 Inputs
 - Vertices `V ∈ R^{M×4}` (row-major); H-rep as facet normals and offsets `(n_i, λ_i)` with `X = {x : ⟨n_i, x⟩ ≤ λ_i}` and all λ_i > 0 (origin strictly inside).
-- Numerical dtype: float64; device: CPU for deterministic behavior.
+- Numerical dtype: float64 recommended. Solver is Torch‑first (preserves input device);
+  the certified budget builder C*(X) runs on CPU float64 for determinism.
 
 High-level outline
 - Enumerate 2-faces F ⊂ ∂X from vertex–facet incidence.

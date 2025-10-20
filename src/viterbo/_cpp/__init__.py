@@ -22,16 +22,22 @@ def _sources(*relative: str) -> list[str]:
 
 
 def _load_extension(name: str, sources: Sequence[str]):
-    # Torch<=2.4 expects Ninja by default; fall back to the legacy build when absent.
+    """Try to build/load an extension, honoring Ninja if available.
+
+    - Defaults to USE_NINJA=1 (honor Ninja) but allows override via env.
+    - Build logs can be enabled with VITERBO_CPP_VERBOSE=1.
+    - Falls back silently on known build/import failures.
+    """
     import os
 
-    os.environ.setdefault("USE_NINJA", "0")
+    os.environ.setdefault("USE_NINJA", "1")
+    verbose = os.getenv("VITERBO_CPP_VERBOSE", "0") in {"1", "true", "yes", "on"}
     try:
         return load(
             name=name,
             sources=list(sources),
             extra_cflags=["-O3"],
-            verbose=False,
+            verbose=verbose,
         )
     except _SAFE_EXCEPTIONS:
         return None

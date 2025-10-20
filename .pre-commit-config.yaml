@@ -21,7 +21,12 @@ repos:
   - repo: local
     hooks:
       - id: pytest-quick
-        name: pytest quick (FAST=1)
-        entry: bash -lc 'FAST=1 JAX_DISABLE_JIT=true JAX_PLATFORM_NAME=cpu XLA_PYTHON_CLIENT_PREALLOCATE=false uv run pytest --testmon -q -ra -n auto --maxfail=1'
+        name: pytest quick (incremental smoke)
+        entry: bash -lc 'just test'
         language: system
         stages: [pre-push]
+      - id: block-wandb-api-key
+        name: Block committing WANDB_API_KEY
+        entry: bash -lc 'if git diff --cached -U0 | rg -n "^\\+.*WANDB_API_KEY" -S >/dev/null; then echo "Blocked: WANDB_API_KEY detected in staged changes" >&2; exit 1; fi'
+        language: system
+        stages: [pre-commit, pre-push]

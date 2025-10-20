@@ -11,7 +11,7 @@ ARGS := env_var_or_default("ARGS", "")
 RUN_DIR := env_var_or_default("RUN_DIR", "")
 INC_ARGS := env_var_or_default("INC_ARGS", "")
 
-PYTEST_SMOKE_FLAGS := "-m smoke"
+PYTEST_SMOKE_FLAGS := "-m smoke --durations=10"
 PYTEST_DEEP_FLAGS := "-m \"smoke or deep\""
 PYTEST_LONGHAUL_FLAGS := "-m longhaul"
 
@@ -106,13 +106,13 @@ test-full:
 # Tip: Ideal before review; combine with `just bench-deep` for performance-sensitive work.
 test-deep:
     @echo "Running smoke + deep pytest tiers (serial)."
-    $UV run pytest -q {{PYTEST_DEEP_FLAGS}} {{PYTEST_ARGS}}
+    $UV run pytest -q {{PYTEST_DEEP_FLAGS}} --durations=10 {{PYTEST_ARGS}}
 
 # Longhaul pytest tier (manual, full serial).
 # Tip: Scheduled weekly; coordinate with maintainer before running locally.
 test-longhaul:
     @echo "Running longhaul pytest tier (serial; expect multi-hour runtime)."
-    $UV run pytest -q {{PYTEST_LONGHAUL_FLAGS}} {{PYTEST_ARGS}}
+    $UV run pytest -q {{PYTEST_LONGHAUL_FLAGS}} --durations=10 {{PYTEST_ARGS}}
 
 # Run smoke, deep, and longhaul sequentially.
 # Removed `test-all` in favor of explicit invocations.
@@ -236,11 +236,11 @@ _pytest-incremental FLAGS DESCRIPTION:
     @echo "Running {{DESCRIPTION}} (incremental selector)."
     @sel_status=0; $UV run --script scripts/inc_select.py {{INC_ARGS}} > .cache/impacted_nodeids.txt || sel_status=$?; \
     if [ -s .cache/impacted_nodeids.txt ] && [ "$sel_status" = "0" ]; then \
-        $UV run pytest -q {{FLAGS}} --junitxml {{PYTEST_JUNIT}} @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
+        $UV run pytest -q {{FLAGS}} --durations=10 --junitxml {{PYTEST_JUNIT}} @.cache/impacted_nodeids.txt {{PYTEST_ARGS}}; \
     elif [ "$sel_status" = "2" ]; then \
         echo "Selector: no changes and no prior failures — skipping pytest run."; \
     else \
-        $UV run pytest -q {{FLAGS}} --junitxml {{PYTEST_JUNIT}} {{PYTEST_ARGS}}; \
+        $UV run pytest -q {{FLAGS}} --durations=10 --junitxml {{PYTEST_JUNIT}} {{PYTEST_ARGS}}; \
     fi
 
 # CI flow with CPU-only torch wheel using uv pip (bypasses lock for torch).
@@ -260,10 +260,10 @@ ci-cpu:
         $UV pip install --system -e ".[dev]"
     @echo "Validating torch build is CPU-only."
     python scripts/verify_cpu_torch.py
-    @echo "Running lint/type/smoke tests and docs build (system Python)."
+    @echo "Running lint/type/smoke tests with coverage and docs build (system Python)."
     ruff check .
     pyright -p pyrightconfig.json
-    python -m pytest {{PYTEST_SMOKE_FLAGS}} -q {{PYTEST_ARGS}}
+    python -m pytest -q {{PYTEST_SMOKE_FLAGS}} --cov=src/viterbo --cov-report=term-missing --cov-report=xml --cov-fail-under=85 {{PYTEST_ARGS}}
     mkdocs build --strict
 
 # System-Python variants for CI (avoid uv-run creating new envs)
@@ -273,7 +273,7 @@ test-sys:
 
 test-deep-sys:
     @echo "Running smoke+deep pytest tiers (system Python)."
-    python -m pytest -q {{PYTEST_DEEP_FLAGS}} {{PYTEST_ARGS}}
+    python -m pytest -q {{PYTEST_DEEP_FLAGS}} --durations=10 {{PYTEST_ARGS}}
 
 bench-sys:
     @echo "Running smoke-tier benchmarks (system Python)."
@@ -306,6 +306,10 @@ clean-artefacts:
 # Clean virtual environment and caches (CAUTION: removes .venv).
 distclean:
     rm -rf .venv .pytest_cache .ruff_cache .pyright .pyright_cache "{{BENCHMARK_STORAGE}}" "{{PROFILES_DIR}}" htmlcov .coverage* .artefacts
+
+# Clean Torch extension build cache (user-level)
+ext-clean:
+    rm -rf ~/.cache/torch_extensions || true
 
 # Train the toy logistic regression experiment.
 train-logreg:
