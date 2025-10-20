@@ -54,7 +54,7 @@ for d in \
   "$HOME/.config/codex" \
   "$HOME/.cloudflared" \
   "$HOME/.cache/uv" \
-  "$HOME/.local/share/ai/bloop/vibe-kanban" \
+  "$HOME/.local/share/vibe-kanban" \
   "/var/tmp/vibe-kanban/worktrees" \
 ; do
   [ -d "$d" ] || continue

@@ -222,7 +222,7 @@ cmd_host_setup() {
     /srv/devhome/.config/codex
     /srv/devhome/.cloudflared
     /srv/devhome/.cache/uv
-    /srv/devhome/.local/share/ai/bloop/vibe-kanban
+    /srv/devhome/.local/share/vibe-kanban
     /srv/devworktrees/vibe-kanban/worktrees
   )
   log "Ensuring host bind-mount roots exist (sudo may prompt)..."
