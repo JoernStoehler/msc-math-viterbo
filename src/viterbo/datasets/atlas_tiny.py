@@ -337,21 +337,32 @@ def atlas_tiny_build() -> list[AtlasTinyRow]:
     return [atlas_tiny_complete_row(row) for row in rows]
 
 
-def atlas_tiny_collate_pad(rows: Sequence[AtlasTinyRow]) -> dict[str, torch.Tensor | list[str]]:
-    """Pad a batch of AtlasTiny rows to the maximum vertex/facet counts.
+def atlas_tiny_collate_pad(
+    rows: Sequence[AtlasTinyRow], *, target_dim: int | None = None
+) -> dict[str, torch.Tensor | list[str]]:
+    """Pad a batch of AtlasTiny rows to the maximum sizes, zero-extending features.
+
+    This collation supports batches mixing 2D and 4D rows by zero-extending
+    feature dimensions (columns) up to a common dimension. By default the
+    common dimension is the maximum present in the batch. Callers may override
+    via ``target_dim`` to force a specific feature dimension (must be at least
+    the maximum present in the batch).
 
     Args:
       rows: sequence of completed AtlasTiny rows.
+      target_dim: optional feature dimension to pad to; if provided, must be
+        an integer >= max(row["vertices"].size(1)). When ``None`` (default),
+        the maximum dimension in ``rows`` is used.
 
     Returns:
       Dictionary with padded tensors:
         - ``polytope_id``: list[str]
         - ``generator``: list[str]
         - scalar quantities ``volume``, ``capacity_ehz``, ``systolic_ratio`` of shape (B,)
-        - ``vertices``: (B, V_max, D)
-        - ``normals``: (B, F_max, D)
+        - ``vertices``: (B, V_max, D_pad)
+        - ``normals``: (B, F_max, D_pad)
         - ``offsets``: (B, F_max)
-        - ``minimal_action_cycle``: (B, C_max, D)
+        - ``minimal_action_cycle``: (B, C_max, D_pad)
         - ``vertex_mask``: (B, V_max) bool
         - ``facet_mask``: (B, F_max) bool
         - ``cycle_mask``: (B, C_max) bool
@@ -363,7 +374,19 @@ def atlas_tiny_collate_pad(rows: Sequence[AtlasTinyRow]) -> dict[str, torch.Tens
 
     dtype = rows[0]["vertices"].dtype
     device = rows[0]["vertices"].device
-    dim = rows[0]["vertices"].size(1)
+
+    # Determine feature dimension to pad to (default: max in batch).
+    max_dim = max(int(row["vertices"].size(1)) for row in rows)
+    if target_dim is None:
+        dim = max_dim
+    else:
+        if not isinstance(target_dim, int) or target_dim <= 0:
+            raise ValueError("target_dim must be a positive integer when provided")
+        if target_dim < max_dim:
+            raise ValueError(
+                f"target_dim ({target_dim}) is smaller than max row dimension ({max_dim})"
+            )
+        dim = int(target_dim)
 
     max_vertices = max(row["vertices"].size(0) for row in rows)
     max_facets = max(row["normals"].size(0) for row in rows)
@@ -396,15 +419,16 @@ def atlas_tiny_collate_pad(rows: Sequence[AtlasTinyRow]) -> dict[str, torch.Tens
         v = row["vertices"]
         n = row["normals"]
         o = row["offsets"]
-        vertices[i, : v.size(0)] = v
-        normals[i, : n.size(0)] = n
+        # Zero-extend along feature dimension; copy only present columns.
+        vertices[i, : v.size(0), : v.size(1)] = v
+        normals[i, : n.size(0), : n.size(1)] = n
         offsets[i, : o.size(0)] = o
         vertex_mask[i, : v.size(0)] = True
         facet_mask[i, : n.size(0)] = True
 
         if row["minimal_action_cycle"] is not None and row["minimal_action_cycle"].size(0) > 0:
             c = row["minimal_action_cycle"]
-            cycle[i, : c.size(0)] = c
+            cycle[i, : c.size(0), : c.size(1)] = c
             cycle_mask[i, : c.size(0)] = True
 
         volume[i] = row["volume"]

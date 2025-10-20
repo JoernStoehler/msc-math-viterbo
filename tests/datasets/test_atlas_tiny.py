@@ -128,14 +128,24 @@ def test_atlas_tiny_collate_pad_shapes() -> None:
         assert not torch.any(batch["vertex_mask"][idx, num_vertices:])
         assert torch.all(batch["facet_mask"][idx, :num_facets])
         assert not torch.any(batch["facet_mask"][idx, num_facets:])
-        assert torch.all(batch["vertices"][idx, :num_vertices] == row["vertices"])
-        assert torch.all(batch["normals"][idx, :num_facets] == row["normals"])
+        d_v = row["vertices"].size(1)
+        d_n = row["normals"].size(1)
+        # Values match within the row's feature dimension; extra padded dims are zero.
+        assert torch.all(batch["vertices"][idx, :num_vertices, :d_v] == row["vertices"])
+        assert torch.all(batch["normals"][idx, :num_facets, :d_n] == row["normals"])
+        if batch["vertices"].size(2) > d_v:
+            assert torch.all(batch["vertices"][idx, :num_vertices, d_v:] == 0)
+        if batch["normals"].size(2) > d_n:
+            assert torch.all(batch["normals"][idx, :num_facets, d_n:] == 0)
         assert torch.all(batch["offsets"][idx, :num_facets] == row["offsets"])
 
         assert torch.all(batch["cycle_mask"][idx, :cycle_len])
         assert not torch.any(batch["cycle_mask"][idx, cycle_len:])
         if cycle_len > 0 and cycle is not None:
-            assert torch.all(batch["minimal_action_cycle"][idx, :cycle_len] == cycle)
+            d_c = cycle.size(1)
+            assert torch.all(batch["minimal_action_cycle"][idx, :cycle_len, :d_c] == cycle)
+            if batch["minimal_action_cycle"].size(2) > d_c:
+                assert torch.all(batch["minimal_action_cycle"][idx, :cycle_len, d_c:] == 0)
 
     # Scalar quantities present (capacity/systolic NaN where absent)
     assert batch["volume"].shape == (len(rows),)
