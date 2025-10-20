@@ -36,7 +36,7 @@ Findings (unsorted)
 - Notebooks: `notebooks/dummy_generate.py` + `dummy_plot.py` demonstrate artefact I/O in a simple, reproducible way. This is good for a quick smoke demo (plots saved under `artefacts/`).
 - Notebook `notebooks/atlas_tiny_profile.py` profiles the dataset builder; it’s dev‑facing (profiling) and not something an advisor would run without guidance.
 - Dataset demo: `src/viterbo/datasets/atlas_tiny.py` returns deterministic small polytopes and attaches invariants (volume, optional 2D capacity, systolic ratio) and cycles. Tests validate determinism and shapes. This is the best candidate for an advisor‑sized “demo pipeline”.
-- There is no dedicated `docs/datasets/atlas_tiny.md` page yet; the Charter acceptance criteria mention such a short page. This gap is visible for advisor onboarding to the “tomorrow demo”.
+- A dedicated `docs/datasets/atlas_tiny.md` page now exists and is linked from the site nav under “Datasets”. This closes the Charter acceptance criterion for an Atlas Tiny schema/backends/timings page and improves advisor onboarding.
 - Math API docs are unusually strong: per‑module pages with semantics, invariants, shapes/dtypes, and concise theory context. This helps advisors cross‑check terminology and algorithmic intent.
 - The EHZ section (`docs/math/capacity_ehz.md`) includes both plan (algorithms list) and theory (definitions, facet‑multiplier program, 4D enumeration arguments), plus references. This is advisor‑appropriate depth with the right caveats.
 - The oriented‑edge CH page (`docs/math/oriented_edge_spectrum_4d.md`) claims “Status: Implemented (deterministic, CPU‑only)” and provides API, tuning knobs, complexity, pruning guarantees, and a roadmap; code backs this up in `src/viterbo/math/capacity_ehz/stubs.py`.

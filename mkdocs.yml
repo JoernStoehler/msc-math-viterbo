@@ -20,6 +20,8 @@ nav:
   - Home: README.md
   - Reviews: reviews/README.md
   - Architecture: architecture/overview.md
+  - Datasets:
+      - AtlasTiny v1: datasets/atlas_tiny.md
   - Math API:
       - Overview: math/index.md
       - polytope: math/polytope.md
