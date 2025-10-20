@@ -48,5 +48,6 @@ Published reviews
  - 06 — Math used: 06-math-used.md
  - 07 — Algorithms used: 07-algorithms-used.md
  - 08 — Review process and reviews in general: 08-review-process.md
+ - 13 — Repo readiness for AI vs humans: 13-repo-readiness-ai-vs-humans.md
 
 Upcoming
