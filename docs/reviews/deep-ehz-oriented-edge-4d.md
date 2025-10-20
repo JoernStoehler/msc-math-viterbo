@@ -1,0 +1,58 @@
+Title: EHZ 4D Oriented‑Edge Solver Readiness Deep‑Dive
+
+Provenance
+- Topic: EHZ 4D oriented‑edge spectrum solver readiness
+- Author: Codex CLI Agent
+- Date: 2025-10-20T11:54:40Z
+- Commit: 87fdebc21a0c91998e746078008fa7067760b1d3
+- Timebox: 60–90 minutes
+- Scope: Spec vs implementation, certified budget parameters, approximations, failure modes, tests
+- Version: v0.1 (initial unsorted findings)
+
+Commands (ran locally; outcomes recorded)
+- `uv run python scripts/load_skills_metadata.py` → printed skills summaries (OK)
+- `rg -n "oriented[- ]edge|oriented_edge|spectrum_4d|Chaidez|Hutchings" -S src docs` → located spec and implementation (OK)
+- `uv run pytest -q tests/math/test_oriented_edge*.py -q` → all oriented‑edge tests passed (OK)
+- `uv run mkdocs build --strict` → site built successfully; warnings about un‑nav’ed pages as expected (OK)
+
+Unfiltered, unsorted findings
+- Spec status claims deterministic, CPU‑only; implementation largely device‑agnostic. Spec: `docs/math/oriented_edge_spectrum_4d.md:3` says “Implemented (deterministic, CPU‑only)”. Code keeps most ops on the input tensor device; only the certified C*(X) builder forces CPU float64. See `src/viterbo/math/capacity_ehz/stubs.py:361` (C* on CPU) vs function signature at `src/viterbo/math/capacity_ehz/stubs.py:241`. This is a minor spec/impl mismatch if tensors live on GPU; determinism then depends on backend.
+- Public entrypoint exists and is integrated. `oriented_edge_spectrum_4d` is implemented at `src/viterbo/math/capacity_ehz/stubs.py:241` and is used by `capacity_ehz_algorithm2` fallback for generic 4D inputs; see `src/viterbo/math/capacity_ehz/algorithms.py:36-47`.
+- Budget mechanics implemented per spec and optional by default. Per‑face budgets `c_F = C*(X)·θ(F)` are computed when `use_cF_budgets=True`, with `C*(X)` either provided via `cF_constant` or built by `compute_cF_constant_certified(...)`; see `src/viterbo/math/capacity_ehz/stubs.py:361-374` and spec `docs/math/oriented_edge_spectrum_4d.md:37-53`, `docs/math/cstar_constant_spec.md:1`.
+- Certified C*(X) builder is present, deterministic, and conservative. Implementation uses CPU float64, QR/SVD, Lipschitz‑certified lower bounds for `N_ann(X)`, and closed‑form pairwise bounds for D_min/U_max; see `src/viterbo/math/capacity_ehz/stubs.py:881-1100`. Spec at `docs/math/cstar_constant_spec.md` explicitly matches this. Test `tests/math/test_oriented_edge_budgets.py:1` asserts strict positivity and bitwise stability (c1 == c2) of the builder.
+- Rotation‑number guard implemented with default cap 4π (radians). Polar rotation angle from the 2×2 transfer is computed via SVD‑based polar decomposition; pruning triggers when angle exceeds cap. See `src/viterbo/math/capacity_ehz/stubs.py:375-385` and helper `_polar_rotation_angle` at `src/viterbo/math/capacity_ehz/stubs.py:408-416`. Default cap aligns with spec `docs/math/oriented_edge_spectrum_4d.md:24,80`.
+- Memoisation is optional and explicitly flagged as heuristic. `use_memo` requires budgets (enforced) and uses transfer quantisation (`memo_grid`, default 1e−6) and dominance buckets. Heuristic nature is warned in code docstring; enabling may compromise completeness. See `src/viterbo/math/capacity_ehz/stubs.py:303-311,392-403` and `docs/math/oriented_edge_spectrum_4d.md:69-78`.
+- DFS search over oriented‑edge graph with cycle canonicalisation and fixed‑point evaluation is implemented. Adjacency built from enumerated edges; DFS prunes by rotation, budgets, and memo. Cycles are evaluated via least‑squares solve on `(I − A)u = b` with regularization and domain checks; see `src/viterbo/math/capacity_ehz/stubs.py:342-351,418-457,468-514`.
+- Domain admissibility uses finite sampling on each 2‑face. `_edge_has_domain` checks the “first‑hit facet” property using the face centroid and 0.75/0.25 blends toward vertices; this is conservative but not exhaustive. Potential false negatives near degenerate configurations; see `src/viterbo/math/capacity_ehz/stubs.py:728-760`.
+- 2‑face enumeration requires ≥3 shared vertices and rank‑2 QR basis. This is correct for polygonal faces; inputs with degenerate faces will be rejected early with clear errors. See `src/viterbo/math/capacity_ehz/stubs.py:650-688`.
+- Vertex simplicity is currently assumed at incidence construction. `_vertex_facet_incidence` raises NotImplementedError for non‑simple vertices (`len(facets) < 4` per 4D simple polytope expectation). This is a readiness limitation for general non‑simple polytopes. See `src/viterbo/math/capacity_ehz/stubs.py:611-626`.
+- Per‑edge time upper bounds are computed but unused in pruning. `EdgeData.time_upper_bound` is populated from vertex maxima (safe over‑approx) but not yet integrated into DFS constraints; an opportunity for stronger pruning. See `src/viterbo/math/capacity_ehz/stubs.py:704-742` and `EdgeData` at `src/viterbo/math/capacity_ehz/stubs.py:540-559`.
+- API parameters cover key controls and deprecations are guarded. Parameters: `k_max` (depth), `rotation_cap`, `use_cF_budgets`, `cF_constant`, `use_memo`, `memo_grid`, `memo_buckets`, and deprecated `verified` (mapped to `use_memo` with warning). Conflicting toggles raise `ValueError`. See `src/viterbo/math/capacity_ehz/stubs.py:246-286,290-302`.
+- Failure modes are explicit and surfaced as exceptions. Examples: invalid shapes/dimensions; non‑positive offsets; no two‑faces; no admissible oriented edges; no admissible cycles within limits; face basis degeneracy; rotation/memo usage without budgets; time budget exceeded via `VITERBO_SOLVER_TIMEOUT`. See `src/viterbo/math/capacity_ehz/stubs.py:311-340,334-336,456-467`, `src/viterbo/runtime.py:33-93`.
+- Integration pathways are consistent across algorithms. `capacity_ehz_algorithm2` falls back to oriented‑edge for generic 4D, while keeping the fast Lagrangian‑product path when detected. Consistency checks exist in `capacity_ehz_primal_dual` (2D/4D). See `src/viterbo/math/capacity_ehz/algorithms.py:13-21,31-53,59-87`.
+- Test coverage directly exercises oriented‑edge behavior. Tests include: equality with Lagrangian‑product solver on square×square (`tests/math/test_capacity_oriented_edge.py:10-23`); fallback wiring (`tests/math/test_capacity_oriented_edge.py:25-53`); translation/scale invariance for 4D inputs (`tests/math/test_capacity_oriented_edge.py:55-84`); budgets stability and certified C*(X) determinism (`tests/math/test_oriented_edge_budgets.py:1-33`); HK guard (oriented‑edge must not call HK) (`tests/math/test_oriented_edge_guard_no_hk.py:1-22`). Local run: all oriented‑edge tests passed.
+- Documentation/spec alignment is strong and cites CH. `docs/math/oriented_edge_spectrum_4d.md` details enumeration, affine transfers, rotation guard, budgets, memo, invariants, and roadmap. Differences vs CH are stated (only documented optimizations implemented; others omitted). Cross‑refs to `docs/math/cstar_constant_spec.md` are consistent.
+- Readiness for certified runs: use budgets on, memo off, rotation guard on. For certified search (completeness up to k_max and rotation cap), set `use_cF_budgets=True`, `use_memo=None/False`, and retain `rotation_cap` per experiment; this aligns with warnings in the docstring and spec about heuristics.
+- Performance discipline hooks exist but no profiling baselines are included for this solver. The code supports memo heuristics and per‑face budgets; `tests/performance/test_benchmark_math.py` provides a general benchmarking scaffold, but there is no oriented‑edge‑specific perf benchmark yet.
+- Systolic ratio plumbing exists and composes with oriented‑edge outputs. `tests/math/test_minimal_action_invariants.py` covers invariants on the product solver path; `viterbo.math.capacity_ehz.ratios.systolic_ratio` enforces scalar shapes and positivity (`src/viterbo/math/capacity_ehz/ratios.py:9-21`).
+- Error messaging and tolerance strategy are consistent and conservative. Tolerances use `tol = max(√ε, 1e−9)` and regularization in least‑squares; domain and closure checks use `100*tol` thresholds. This is safe but may reject near‑degenerate valid cycles—documented implicitly via explicit ValueErrors.
+- HK exact backend is present, separate, and not entangled with oriented‑edge. `capacity_ehz_haim_kislev` implements the extreme‑support program (4D exact) with triangular sum via DP; used for cross‑validation, but oriented‑edge tests assert it is not called during oriented‑edge runs. See `src/viterbo/math/capacity_ehz/stubs.py:174-237` and `tests/math/test_oriented_edge_guard_no_hk.py`.
+- Invariance properties are tested and implemented. Translation and scaling invariance hold in tests; rotation invariance is implicit via use of unit normals and basis construction (QR). See `docs/math/oriented_edge_spectrum_4d.md:96-103` and `tests/math/test_capacity_oriented_edge.py:55-84`.
+- Time‑budget enforcement is in place and configurable. `@enforce_time_budget()` decorates the solver with `VITERBO_SOLVER_TIMEOUT` defaulting to 30s. Non‑POSIX platforms fall back to post‑execution checks. See `src/viterbo/runtime.py:13-93` and the decorator on `oriented_edge_spectrum_4d` in `src/viterbo/math/capacity_ehz/stubs.py:240`.
+- Edge evaluation solves via normal equations with Tikhonov regularization. Uses `lhs = (I−A)^T(I−A) + reg·I` and `rhs = (I−A)^T b`; switches to `lstsq` on failures. This is numerically robust but may blur exact fixed points; acceptable given domain checks. See `src/viterbo/math/capacity_ehz/stubs.py:488-513`.
+- Cycle canonicalization prevents duplicates across rotations. Uses lexicographic min of cyclic rotations on the edge‑id tuple; ensures determinism in `seen_cycles`. See `src/viterbo/math/capacity_ehz/stubs.py:732-738`.
+- Face‑pair mapping is deterministic; adjacency edges are sorted. Sorting by `(to_face, target_facet)` ensures predictable DFS order; see `src/viterbo/math/capacity_ehz/stubs.py:346-348`.
+- Parameter interaction guard: memo requires budgets. Enforced with a clear error to avoid unsafe pruning use of memo; see `src/viterbo/math/capacity_ehz/stubs.py:392-394`.
+- Depth cap `k_max` is supported but not wired into tests/docs defaults. Implementation enforces `k_max >= 2` when provided; without it, DFS depth bound is number of edges (very loose). See `src/viterbo/math/capacity_ehz/stubs.py:338-341`.
+- Potential improvement: expose return of witness cycle, not just minimal action. Currently returns only the scalar action; downstream diagnostics may benefit from the cycle edge list and fixed point. Implementation would capture minimal path and u0.
+- Potential improvement: stronger domain checks. Sampling‑based first‑hit checks could be strengthened by analytic criteria (e.g., halfspace dominance cones) to reduce false negatives/positives under tight tolerances.
+- Potential improvement: deterministic CPU enforcement. For strict spec compliance (CPU‑only), consider moving compute to CPU or documenting current device‑inheritance behavior for oriented‑edge proper; budgets already use CPU float64.
+- Potential improvement: integrate `time_upper_bound` and face‑frequency guards. Paper‑aligned per‑edge bounds and frequency limits can further prune the DFS while preserving completeness under the set budgets/caps.
+
+References and specs consulted
+- Oriented‑edge spec: `docs/math/oriented_edge_spectrum_4d.md`
+- Certified budget spec: `docs/math/cstar_constant_spec.md`
+- Algorithm entrypoints: `src/viterbo/math/capacity_ehz/algorithms.py`
+- Oriented‑edge implementation: `src/viterbo/math/capacity_ehz/stubs.py`
+- Tests: `tests/math/test_capacity_oriented_edge.py`, `tests/math/test_oriented_edge_budgets.py`, `tests/math/test_oriented_edge_guard_no_hk.py`
+
