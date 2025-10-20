@@ -4,7 +4,6 @@ import torch
 
 from viterbo.math.symplectic import random_symplectic_matrix, symplectic_form
 
-
 torch.set_default_dtype(torch.float64)
 
 
@@ -14,4 +13,3 @@ def test_random_symplectic_preserves_J() -> None:
         M = random_symplectic_matrix(d, seed=0)
         left = M.T @ J @ M
         torch.testing.assert_close(left, J, atol=1e-10, rtol=0.0)
-
