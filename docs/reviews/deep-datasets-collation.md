@@ -2,9 +2,9 @@
 
 Provenance
 - Topic: Datasets & Collation Deep-Dive
-- Author: Assistant (Codex CLI)
+- Author: Codex CLI Agent
 - Date: 2025-10-20
-- Commit: 87fdebc21a0c91998e746078008fa7067760b1d3
+- Commit: 87fdebc
 - Timebox: 60 minutes
 - Scope: dataset schema/invariants, ragged batching & collate helpers, deterministic seeds & reproducibility, Atlas Tiny performance, roadmap for main dataset
 - Version: v1.0

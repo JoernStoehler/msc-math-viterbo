@@ -1,7 +1,3 @@
----
-title: Review — Performance Discipline Deep-Dive
----
-
 # Review — Performance Discipline Deep-Dive
 
 Provenance
@@ -72,4 +68,3 @@ Validation
 
 Status
 - Finalized
-

@@ -1,10 +1,10 @@
 # Review 02 — Onboarding for New Agents
 
 Provenance
-- Topic: 2 — Onboarding for new agents
-- Author: Agent (Codex CLI)
+- Topic: 02 — Onboarding for new agents
+- Author: Codex CLI Agent
 - Date: 2025-10-20
-- Commit: 96e7f5acdfb35cd1e3e5030d9f27aafa3f712db3
+- Commit: 96e7f5a
 - Timebox: ~90 minutes
 - Scope: docs, skills, golden commands, devcontainer flows; focus on time-to-first-green checks, skill discoverability, minimal read path
 - Version: v0.1
@@ -116,4 +116,3 @@ Limitations
 
 Status
 - Finalized
-

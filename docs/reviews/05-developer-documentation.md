@@ -2,9 +2,9 @@
 
 Provenance
 - Topic: 05 — Developer documentation
-- Author: Codex CLI (agent)
+- Author: Codex CLI Agent
 - Date: 2025-10-20
-- Commit: 96e7f5acdfb3
+- Commit: 96e7f5a
 - Timebox: ~90 minutes
 - Scope: Documentation breadth, freshness, cross-linking, discoverability across `docs/`, `AGENTS.md`, `skills/`, `mkdocs.yml`; no code changes beyond linking this review from the index
 - Version: v0.1
@@ -133,4 +133,3 @@ Pre-Submit Checklist
 - Cross-refs noted (topics/files) — DONE
 - Provenance filled — DONE
 - Title matches pattern `Review XX — <Topic Title>` — DONE
-

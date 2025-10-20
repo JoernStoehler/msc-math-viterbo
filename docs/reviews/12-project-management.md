@@ -2,7 +2,7 @@
 
 Provenance
 - Topic: 12 — Project management (agents and owner)
-- Author: Agent (Codex CLI)
+- Author: Codex CLI Agent
 - Date: 2025-10-20
 - Commit: 5065563
 - Timebox: ~60–90 minutes
@@ -104,4 +104,3 @@ Limitations
 
 Status
 - Finalized
-

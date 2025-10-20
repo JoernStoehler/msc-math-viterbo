@@ -4,7 +4,7 @@ Provenance
 - Topic: Testing & CI Deep-Dive
 - Author: Codex CLI Agent
 - Date: 2025-10-20
-- Commit: 87fdebc21a0c
+- Commit: 87fdebc
 - Timebox: ~60 minutes
 - Scope: test tiers (smoke/deep/longhaul), selection/incremental (scripts/inc_select.py), coverage targets/enforcement, Pyright basic/strict posture, Ruff rules, CI parity and timing SLOs
 - Version: v0.1

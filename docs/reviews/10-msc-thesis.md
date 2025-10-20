@@ -4,7 +4,7 @@ Provenance
 - Topic: 10 — MSc Thesis (thesis-readiness)
 - Author: Codex CLI Agent
 - Date: 2025-10-20
-- Commit: 5065563c868e
+- Commit: 5065563
 - Timebox: 75 minutes
 - Scope: Structure, section coverage, references, reproducibility, and alignment with charter timeline/success metrics; no content rewrites.
 - Version: v0.1

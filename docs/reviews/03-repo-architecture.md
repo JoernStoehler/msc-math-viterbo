@@ -1,8 +1,8 @@
 # Review 03 — Repo and Code Architecture
 
 Provenance
-- Topic: 3 — Repo and code architecture
-- Author: Agent (Codex CLI)
+- Topic: 03 — Repo and code architecture
+- Author: Codex CLI Agent
 - Date: 2025-10-20
 - Commit: 585a547
 - Timebox: ~90–120 minutes

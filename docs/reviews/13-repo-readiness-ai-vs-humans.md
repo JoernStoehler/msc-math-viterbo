@@ -2,7 +2,7 @@
 
 Provenance
 - Topic: 13 — Repo readiness for AI vs humans
-- Author: Agent (Codex CLI)
+- Author: Codex CLI Agent
 - Date: 2025-10-20
 - Commit: 5065563
 - Timebox: ~90 minutes (read → draft → validate)

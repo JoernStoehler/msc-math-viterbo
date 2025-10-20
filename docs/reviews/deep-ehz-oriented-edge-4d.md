@@ -1,10 +1,10 @@
-Title: EHZ 4D Oriented‑Edge Solver Readiness Deep‑Dive
+# Review — EHZ 4D Oriented‑Edge Solver Readiness Deep‑Dive
 
 Provenance
 - Topic: EHZ 4D oriented‑edge spectrum solver readiness
 - Author: Codex CLI Agent
-- Date: 2025-10-20T11:54:40Z
-- Commit: 87fdebc21a0c91998e746078008fa7067760b1d3
+- Date: 2025-10-20
+- Commit: 87fdebc
 - Timebox: 60–90 minutes
 - Scope: Spec vs implementation, certified budget parameters, approximations, failure modes, tests
 - Version: v0.1 (initial unsorted findings)
@@ -55,4 +55,3 @@ References and specs consulted
 - Algorithm entrypoints: `src/viterbo/math/capacity_ehz/algorithms.py`
 - Oriented‑edge implementation: `src/viterbo/math/capacity_ehz/stubs.py`
 - Tests: `tests/math/test_capacity_oriented_edge.py`, `tests/math/test_oriented_edge_budgets.py`, `tests/math/test_oriented_edge_guard_no_hk.py`
-

@@ -1,7 +1,3 @@
----
-title: Review 14 — Misc
----
-
 # Review 14 — Misc
 
 Provenance
@@ -85,4 +81,3 @@ Pre-Submit Checklist
 - Cross-refs noted.
 - Provenance filled.
 - Title matches pattern `Review 14 — Misc`.
-

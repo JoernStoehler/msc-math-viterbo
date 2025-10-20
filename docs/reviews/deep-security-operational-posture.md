@@ -4,7 +4,7 @@ Provenance
 - Topic: Security & Operational Posture Deep‑Dive
 - Author: Codex CLI Agent
 - Date: 2025-10-20
-- Commit: 87fdebc21a0c91998e746078008fa7067760b1d3
+- Commit: 87fdebc
 - Timebox: ~60 minutes
 - Scope: secrets handling (.env, tokens), cloudflared/tunnel workflows, VK sanitizer, supply chain (uv/torch wheels), CI permissions, documented safety/formatting practices
 - Version: v0.1
@@ -98,4 +98,3 @@ Pre‑Submit Checklist
 - Cross‑refs noted — Yes
 - Provenance filled — Yes
 - Title matches pattern — Yes
-

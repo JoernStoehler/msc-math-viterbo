@@ -2,7 +2,7 @@
 
 Provenance
 - Topic: 11 — Project Owner Workflows (VK cadence, escalation, env lifecycle, backups, release/archival, toil)
-- Author: Agent (Codex CLI)
+- Author: Codex CLI Agent
 - Date: 2025-10-20
 - Commit: 5065563
 - Timebox: ~60–90 minutes
@@ -119,4 +119,3 @@ Pre-Submit Checklist
 - Cross-refs noted (topics/files)
 - Provenance filled
 - Title follows `Review XX — <Topic Title>`
-

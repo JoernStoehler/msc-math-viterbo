@@ -1,8 +1,8 @@
 # Review 06 — Math Used (Foundations, Invariants, Cutoffs, Warnings)
 
 Provenance
-- Topic: 6 — Math used
-- Author: Agent (Codex CLI)
+- Topic: 06 — Math used
+- Author: Codex CLI Agent
 - Date: 2025-10-20
 - Commit: 4dab5e0
 - Timebox: ~90–120 minutes

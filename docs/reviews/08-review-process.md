@@ -1,8 +1,8 @@
 # Review 08 — Review Process and Reviews in General (Second Pass)
 
 Provenance
-- Topic: 8 — Review process and reviews in general
-- Author: Agent (Codex CLI)
+- Topic: 08 — Review process and reviews in general
+- Author: Codex CLI Agent
 - Date: 2025-10-20
 - Commit: 96e7f5a
 - Timebox: ~60–90 minutes

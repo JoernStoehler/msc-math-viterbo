@@ -1,7 +1,3 @@
----
-title: Review 04 — Code
----
-
 # Review 04 — Code
 
 Provenance
@@ -214,4 +210,3 @@ Pre-Submit Checklist
 - Cross-refs noted — Yes
 - Provenance filled — Yes
 - Title matches — Yes
-

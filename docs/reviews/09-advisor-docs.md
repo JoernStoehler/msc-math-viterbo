@@ -2,9 +2,9 @@
 
 Provenance
 - Topic: 09 — Advisor-Facing Documentation/Presentation
-- Author: Codex CLI (agent)
+- Author: Codex CLI Agent
 - Date: 2025-10-20
-- Commit: 5065563c868e786bfaeb3cabebf21265347d8932
+- Commit: 5065563
 - Timebox: ~90 minutes
 - Scope: Advisor-facing narrative clarity, minimal run instructions, reproducibility notes, doc drift risks. No edits outside adding this review file.
 - Version: v0.1
@@ -139,4 +139,3 @@ Pre-Submit Checklist
 - Cross-refs noted (topics/files) — DONE
 - Provenance filled — DONE
 - Title matches pattern `Review XX — <Topic Title>` — DONE
-

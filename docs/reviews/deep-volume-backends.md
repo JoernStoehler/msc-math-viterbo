@@ -1,7 +1,3 @@
----
-title: Review — Volume Backends Readiness Deep‑Dive
----
-
 # Review — Volume Backends Readiness Deep‑Dive
 
 Provenance
@@ -104,4 +100,3 @@ Next Steps (non‑binding)
 - Prototype Lawrence float path, then add rational certificate mode; wire up cube certification test.
 - Add Monte Carlo estimator with Sobol sampling and error bars; enforce convergence test with seeded generator.
 - Extract `tolerance(dtype)` utility; document numerics policy once centralised.
-

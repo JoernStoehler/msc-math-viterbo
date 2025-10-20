@@ -2,9 +2,9 @@
 
 Provenance
 - Topic: 07 — Algorithms used
-- Author: AI agent (Codex CLI)
+- Author: Codex CLI Agent
 - Date: 2025-10-20
-- Commit: 96e7f5acdfb35cd1e3e5030d9f27aafa3f712db3
+- Commit: 96e7f5a
 - Timebox: ~90–120 minutes
 - Scope: Survey of algorithm choices, specs, correctness notes, complexity/performance, and fallback/approximation policies across implemented math/geometry, EHZ capacity modules, constructions, runtime and C++ backends. Excludes exhaustive proof checking and bench profiling beyond repo docs; stubs noted but not expanded beyond their contracts.
 - Version: v0.1
@@ -130,4 +130,3 @@ Pre-Submit Checklist
 - Cross-refs noted — yes
 - Provenance filled — yes
 - Title matches pattern — yes
-

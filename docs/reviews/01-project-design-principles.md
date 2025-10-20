@@ -1,8 +1,8 @@
 # Review 01 — Project Design Principles (Onboarding Focus)
 
 Provenance
-- Topic: 1 — Project Design Principles
-- Author: Agent (Codex CLI)
+- Topic: 01 — Project Design Principles
+- Author: Codex CLI Agent
 - Date: 2025-10-20
 - Commit: 96e7f5a
 - Timebox: ~60–90 minutes
