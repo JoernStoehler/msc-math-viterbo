@@ -20,7 +20,7 @@ Host (one-time)
 
 One-shot host startup (recommended)
 - Start everything from the host:
-  - `bash .devcontainer/bin/owner-up.sh`
+  - `bash .devcontainer/bin/host-admin up preflight start --interactive`
 - What it does: brings up the devcontainer, runs preflight, starts VS Code tunnel + Cloudflared + VibeKanban (detached), then verifies.
 
 Devcontainer (low-level alternative)
@@ -33,27 +33,27 @@ Notes
   - `cd .devcontainer/cloudflare && wrangler deploy`
   - Requires `wrangler login` (browser flow) in the container once.
 - Keep .venv per worktree; keep uv cache central (~/.cache/uv). A small hardlink→copy fallback cost on first sync is expected and acceptable.
-- post-create.sh installs uv and delegates service tooling to dev-install.sh.
+- post-create.sh installs uv and delegates service tooling to container-admin install.
 - post-start.sh fixes permissions idempotently and prints diagnostics (no auto-start).
 
 Daily start (inside the container)
-- Start all (detached): `bash .devcontainer/bin/dev-start.sh --detached`
-- Status: `bash .devcontainer/bin/dev-status.sh`
-- Stop: `bash .devcontainer/bin/dev-stop.sh`
+- Start all (detached): `bash .devcontainer/bin/container-admin start --detached`
+- Status: `bash .devcontainer/bin/container-admin status`
+- Stop: `bash .devcontainer/bin/container-admin stop`
 - Cloudflare Access: the public URL (`https://vibekanban.joernstoehler.com`) is gated by a Zero Trust Access application. Maintain the allowlist under Zero Trust → Access → Applications, and sign in with the configured IdP/OTP before using the board. Issue a service token only if non-browser automation needs to reach the board.
 - Status/Stop (alternative): see the commands above.
 
 One-shot host shutdown
-- From host: `bash .devcontainer/bin/owner-down.sh` (best-effort stop in container, then `devcontainer down`, plus a non-destructive host scan)
+- From host: `bash .devcontainer/bin/host-admin down` (best-effort stop in container, then `devcontainer down`, plus a non-destructive host scan)
 
 Rebuild (host)
 - Rebuild and restart the devcontainer (safe if not running):
-  - `bash .devcontainer/bin/owner-rebuild.sh`
+  - `bash .devcontainer/bin/host-admin rebuild`
 - Force a clean image build:
-  - `bash .devcontainer/bin/owner-rebuild.sh --no-cache`
+  - `bash .devcontainer/bin/host-admin rebuild --no-cache`
 
 Host diagnostics
-- Non-destructive host status: `bash .devcontainer/bin/owner-status-host.sh`
+- Host+container status: `bash .devcontainer/bin/host-admin status` (add `--verbose` for details)
 
 Client (Android Chrome)
 - Open VS Code Tunnel URL and https://vibekanban.joernstoehler.com

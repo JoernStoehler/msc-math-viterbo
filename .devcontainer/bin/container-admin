@@ -1,0 +1,505 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# container-admin — In-container lifecycle and Cloudflare helpers.
+#
+# Commands (execute left→right):
+#   install                 Install required CLIs (code, cloudflared, wrangler)
+#   preflight               Check required tooling and tunnel config
+#   start [--interactive]   Start VibeKanban, Code Tunnel, Cloudflared (idempotent)
+#   stop                    Stop services (best-effort)
+#   status [--verbose]      Show in-container service status
+#   attach [--tmux]         Attach to tmux session or open a shell
+#   cf                      Deploy both Cloudflare Workers
+#   cf-deploy-sanitizer     Deploy the sanitizer Worker
+#   cf-deploy-font          Deploy the font/CSS Worker
+#   cf-tail                 Tail logs for both Workers (tmux when available)
+#   cf-tail-sanitizer       Tail sanitizer logs
+#   cf-tail-font            Tail font Worker logs
+#   cf-setup                One-time cloudflared config+DNS helper for named tunnel
+#
+# Flags:
+#   start --interactive     After start, attach tmux if available
+#   start --foreground      Run services in foreground of this shell
+#   start --detached        Start services detached (default)
+#   attach --tmux           Prefer tmux attach if available
+
+log()  { printf '[container-admin] %s\n' "$*"; }
+warn() { printf '[container-admin] WARNING: %s\n' "$*" >&2; }
+fail() { printf '[container-admin] ERROR: %s\n' "$*" >&2; exit 1; }
+
+# Guard: must run inside the devcontainer
+if [ -z "${LOCAL_DEVCONTAINER:-}" ] && [ ! -f "/.dockerenv" ] && [ ! -d "/workspaces" ]; then
+  fail "Run this INSIDE the devcontainer."
+fi
+
+# Resolve repo root for commands that expect to run there
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+root_dir="$(cd "${script_dir}/.." && pwd)"
+
+FRONTEND_PORT=${FRONTEND_PORT:-3000}
+HOST_BIND=${HOST:-0.0.0.0}
+TUNNEL_NAME=${TUNNEL_NAME:-viterbo-dev}
+CF_TUNNEL=${CF_TUNNEL:-vibekanban}
+
+print_tmux_tips() {
+  local info
+  if ! command -v tmux >/dev/null 2>&1; then
+    return 0
+  fi
+  if ! info=$(tmux list-windows -t viterbo-owner -F '#I:#W' 2>/dev/null); then
+    return 0
+  fi
+  echo
+  echo "Tips: tmux controls"
+  echo "  - Attach: tmux attach -t viterbo-owner"
+  echo "  - Switch: hold Ctrl+b then press window number"
+  echo "  - Windows:"
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    echo "      $(printf '%s' "$line" | cut -d: -f1): $(printf '%s' "$line" | cut -d: -f2)"
+  done <<<"$info"
+  echo
+}
+
+cmd_install() {
+  # Install or ensure required tooling inside the container
+  MODE=install
+
+  ensure_just() {
+    if command -v just >/dev/null 2>&1; then return 0; fi
+    log "Installing just"
+    mkdir -p "$HOME/.local/bin"
+    curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh \
+      | bash -s -- --to "$HOME/.local/bin" >/dev/null 2>&1 || fail "failed to install just"
+  }
+
+  ensure_vscode_cli() {
+    if command -v code >/dev/null 2>&1 && code --help 2>/dev/null | grep -q "tunnel"; then
+      return 0
+    fi
+    log "Installing VS Code CLI"
+    mkdir -p "$HOME/.local/bin"
+    local arch os url tmpdir
+    arch="$(uname -m)"; os="cli-linux-x64"
+    if [[ "$arch" == "aarch64" || "$arch" == "arm64" ]]; then os="cli-linux-arm64"; fi
+    url="https://update.code.visualstudio.com/latest/${os}/stable"
+    tmpdir="$(mktemp -d)"
+    if curl -fsSLo "${tmpdir}/cli.tar.gz" "$url" \
+      && tar -xzf "${tmpdir}/cli.tar.gz" -C "$tmpdir" code; then
+      install -m 0755 "${tmpdir}/code" "$HOME/.local/bin/code"
+    else
+      rm -rf "$tmpdir"; fail "failed to install VS Code CLI"
+    fi
+    rm -rf "$tmpdir"
+  }
+
+  ensure_cloudflared() {
+    if command -v cloudflared >/dev/null 2>&1; then
+      return 0
+    fi
+    if ! command -v apt-get >/dev/null 2>&1; then
+      fail "apt-get unavailable; cannot install cloudflared automatically."
+    fi
+    log "Installing cloudflared via Cloudflare APT repo"
+    local key=/usr/share/keyrings/cloudflare-main.gpg
+    local list=/etc/apt/sources.list.d/cloudflared.list
+    sudo mkdir -p --mode=0755 "$(dirname "$key")"
+    if [ ! -f "$key" ]; then
+      curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee "$key" >/dev/null || fail "unable to fetch Cloudflare APT key"
+    fi
+    if ! sudo test -f "$list" || ! sudo grep -q "pkg.cloudflare.com/cloudflared" "$list"; then
+      echo "deb [signed-by=${key}] https://pkg.cloudflare.com/cloudflared focal main" | sudo tee "$list" >/dev/null
+    fi
+    sudo apt-get update -y >/dev/null 2>&1 || fail "apt-get update failed"
+    sudo apt-get install -y cloudflared >/dev/null 2>&1 || fail "apt-get install cloudflared failed"
+  }
+
+  ensure_wrangler() {
+    if command -v wrangler >/dev/null 2>&1; then return 0; fi
+    if ! command -v npm >/dev/null 2>&1; then
+      warn "npm not available; skip wrangler install."
+      return 0
+    fi
+    log "Installing Cloudflare wrangler CLI"
+    npm i -g wrangler >/dev/null 2>&1 || warn "failed to install wrangler; install manually if needed"
+  }
+
+  ensure_just
+  ensure_vscode_cli
+  ensure_cloudflared
+  ensure_wrangler
+  log "Done (install)."
+}
+
+cmd_preflight() {
+  local err=0
+  log "Preflight checks:"
+  if ! command -v npx >/dev/null 2>&1; then log "  - npx: MISSING (install Node.js)"; err=1; else log "  - npx: ok"; fi
+  if command -v code >/dev/null 2>&1 && code --help 2>/dev/null | grep -q tunnel; then log "  - code: ok (tunnel supported)"; else log "  - code: missing or no tunnel"; err=1; fi
+  if command -v cloudflared >/dev/null 2>&1; then log "  - cloudflared: ok"; else log "  - cloudflared: MISSING"; err=1; fi
+  local CF_TUNNEL_L=${CF_TUNNEL:-vibekanban}
+  local CF_CONF="${CLOUDFLARED_CONFIG:-$HOME/.cloudflared/config-${CF_TUNNEL_L}.yml}"
+  if [ -f "$CF_CONF" ]; then log "  - cloudflared config: $CF_CONF"; else log "  - cloudflared config missing at $CF_CONF"; err=1; fi
+  if cloudflared tunnel info "$CF_TUNNEL_L" >/dev/null 2>&1; then log "  - cloudflared tunnel '$CF_TUNNEL_L': found"; else log "  - cloudflared tunnel '$CF_TUNNEL_L': NOT FOUND (run cf-setup)"; err=1; fi
+  if [ $err -ne 0 ]; then fail "Preflight failed. Fix the reported issues and re-run."; fi
+  log "Done (preflight)."
+}
+
+cmd_start() {
+  local DETACHED=1
+  local INTERACTIVE=0
+  for arg in "$@"; do
+    case "$arg" in
+      --foreground) DETACHED=0 ;;
+      --detached)   DETACHED=1 ;;
+      --interactive) DETACHED=1; INTERACTIVE=1 ;;
+    esac
+  done
+
+  log "Preparing to start services (detached=${DETACHED})."
+  mkdir -p "$HOME/.logs"
+
+  # Preflight (soft): print actionable hints but don't abort unless essential
+  if ! command -v npx >/dev/null 2>&1; then warn "npx not found; VibeKanban cannot start. Install Node.js."; fi
+  if command -v code >/dev/null 2>&1; then
+    if ! code --help 2>/dev/null | grep -q "tunnel"; then warn "VS Code CLI present but 'tunnel' subcommand missing; skipping tunnel."; fi
+  else
+    warn "VS Code CLI not found; skipping tunnel."
+  fi
+  if ! command -v cloudflared >/dev/null 2>&1; then warn "cloudflared not found; skipping Cloudflare tunnel."; fi
+
+  # Ensure tmux session if available
+  local SESSION="viterbo-owner"
+  local USE_TMUX=0
+  if command -v tmux >/dev/null 2>&1 && [ "$DETACHED" -eq 1 ]; then
+    USE_TMUX=1
+    tmux has-session -t "$SESSION" 2>/dev/null || tmux new-session -d -s "$SESSION" -n admin 'bash -lc :'
+  fi
+
+  start_cmd_detached() {
+    local name="$1"; shift
+    local cmd="$*"
+    if [ "$USE_TMUX" -eq 1 ]; then
+      tmux new-window -t "$SESSION" -n "$name" "bash -lc '$cmd'" >/dev/null
+      log "  - $name: started (tmux window '$name')"
+    else
+      nohup bash -lc "$cmd" >"$HOME/.logs/${name}.log" 2>&1 < /dev/null & disown || true
+      log "  - $name: started (nohup, logs in ~/.logs/${name}.log)"
+    fi
+  }
+
+  # VibeKanban UI
+  if pgrep -fa 'npx .*vibe-kanban' >/dev/null 2>&1 || pgrep -fa '(^|/)vibe-kanban( |$)' >/dev/null 2>&1; then
+    log "  - vibe-kanban: already running"
+  elif command -v npx >/dev/null 2>&1; then
+    local CMD="HOST='${HOST_BIND}' PORT='${FRONTEND_PORT}' FRONTEND_PORT='${FRONTEND_PORT}' npx --yes vibe-kanban"
+    if [ "$DETACHED" -eq 1 ]; then
+      start_cmd_detached "vibe" "$CMD"
+    else
+      log "  - vibe-kanban: starting in foreground"
+      eval "$CMD"
+    fi
+  else
+    warn "  - vibe-kanban: skipped (npx missing)"
+  fi
+
+  # VS Code Tunnel
+  if pgrep -fa 'code .*tunnel' >/dev/null 2>&1; then
+    log "  - code tunnel: already running"
+  elif command -v code >/dev/null 2>&1 && code --help 2>/dev/null | grep -q "tunnel"; then
+    local CMD2="cd '${root_dir}' && code tunnel --accept-server-license-terms --name '${TUNNEL_NAME}'"
+    if [ "$DETACHED" -eq 1 ]; then
+      start_cmd_detached "tunnel" "$CMD2"
+    else
+      log "  - code tunnel: starting in foreground"
+      eval "$CMD2"
+    fi
+  else
+    warn "  - code tunnel: skipped (CLI missing or no 'tunnel' subcommand)"
+  fi
+
+  # Cloudflared named tunnel
+  local CF_CONFIG_DEFAULT="$HOME/.cloudflared/config-${CF_TUNNEL}.yml"
+  local CF_CONFIG_PATH="${CLOUDFLARED_CONFIG:-$CF_CONFIG_DEFAULT}"
+  if pgrep -fa 'cloudflared .*tunnel' >/dev/null 2>&1 || pgrep -fa '(^|/)cloudflared( |$)' >/dev/null 2>&1; then
+    log "  - cloudflared: already running"
+  elif command -v cloudflared >/dev/null 2>&1; then
+    if [ ! -f "$CF_CONFIG_PATH" ]; then
+      warn "  - cloudflared: config missing at $CF_CONFIG_PATH; skipping"
+    else
+      local CMD3="cloudflared tunnel --config '$CF_CONFIG_PATH' run '${CF_TUNNEL}'"
+      if [ "$DETACHED" -eq 1 ]; then
+        start_cmd_detached "cloudflared" "$CMD3"
+      else
+        log "  - cloudflared: starting in foreground"
+        eval "$CMD3"
+      fi
+    fi
+  else
+    warn "  - cloudflared: skipped (binary missing)"
+  fi
+
+  log "Start sequence complete."
+
+  # Optional: auto-deploy Cloudflare Workers after start when CF_AUTO_DEPLOY=1
+  if [ "${CF_AUTO_DEPLOY:-0}" = "1" ]; then
+    log "Auto-deploying Cloudflare Workers (CF_AUTO_DEPLOY=1)"
+    ( cd .devcontainer/cloudflare && \
+      wrangler -c wrangler-sanitizer.toml deploy && \
+      wrangler -c wrangler.toml deploy ) || \
+      warn "Cloudflare auto-deploy reported issues (check wrangler auth/config)."
+  fi
+
+  if [ "$INTERACTIVE" -eq 1 ]; then
+    if command -v tmux >/dev/null 2>&1 && tmux has-session -t viterbo-owner 2>/dev/null; then
+      print_tmux_tips
+      exec tmux attach -t viterbo-owner
+    else
+      warn "tmux not installed or session missing; falling back to interactive shell."
+      exec bash -l
+    fi
+  fi
+}
+
+cmd_stop() {
+  log "Stopping VibeKanban / Tunnel / Cloudflared (best-effort)."
+
+  # VibeKanban
+  if pgrep -fa 'npx .*vibe-kanban' >/dev/null 2>&1 || pgrep -fa '(^|/)vibe-kanban( |$)' >/dev/null 2>&1; then
+    log "  - vibe-kanban: running; stopping"
+    pgrep -fa 'npx .*vibe-kanban' || true
+    pgrep -fa '(^|/)vibe-kanban( |$)' || true
+    pkill -f 'npx .*vibe-kanban' || true
+    pkill -f '(^|/)vibe-kanban( |$)' || true
+    sleep 0.2
+    if pgrep -fa 'npx .*vibe-kanban' >/dev/null 2>&1 || pgrep -fa '(^|/)vibe-kanban( |$)' >/dev/null 2>&1; then
+      warn "  - vibe-kanban: still running (manual kill may be needed)"
+    else
+      log  "  - vibe-kanban: stopped"
+    fi
+  else
+    log "  - vibe-kanban: not running"
+  fi
+
+  # VS Code Tunnel
+  if pgrep -fa 'code .*tunnel' >/dev/null 2>&1; then
+    log "  - code tunnel: running; stopping"
+    pgrep -fa 'code .*tunnel' || true
+    pkill -f 'code .*tunnel' || true
+    sleep 0.2
+    if pgrep -fa 'code .*tunnel' >/dev/null 2>&1; then
+      warn "  - code tunnel: still running (manual kill may be needed)"
+    else
+      log  "  - code tunnel: stopped"
+    fi
+  else
+    log "  - code tunnel: not running"
+  fi
+
+  # Cloudflared
+  if pgrep -fa 'cloudflared .*tunnel' >/dev/null 2>&1 || pgrep -fa '(^|/)cloudflared( |$)' >/dev/null 2>&1; then
+    log "  - cloudflared: running; stopping"
+    pgrep -fa 'cloudflared .*tunnel' || true
+    pgrep -fa '(^|/)cloudflared( |$)' || true
+    pkill -f 'cloudflared .*tunnel' || true
+    pkill -f '(^|/)cloudflared( |$)' || true
+    sleep 0.2
+    if pgrep -fa 'cloudflared .*tunnel' >/dev/null 2>&1 || pgrep -fa '(^|/)cloudflared( |$)' >/dev/null 2>&1; then
+      warn "  - cloudflared: still running (manual kill may be needed)"
+    else
+      log  "  - cloudflared: stopped"
+    fi
+  else
+    log "  - cloudflared: not running"
+  fi
+
+  log "Stop sequence completed."
+}
+
+cmd_status() {
+  local verbose=${1:-0}
+  local inner=""
+  inner+=$'FRONTEND_PORT=${FRONTEND_PORT:-3000};\n'
+  inner+=$'CF_TUNNEL=${CF_TUNNEL:-vibekanban};\n'
+  inner+=$'is_run() { pgrep -fa "$1" >/dev/null 2>&1; };\n'
+  inner+=$'vibe_run=0; if is_run "npx .*vibe-kanban" || pgrep -fa "(^|/)vibe-kanban( |$)" >/dev/null 2>&1; then vibe_run=1; fi;\n'
+  inner+=$'vibe_work=0; if command -v curl >/dev/null 2>&1 && curl -fsS -m 1 -o /dev/null "http://127.0.0.1:${FRONTEND_PORT}/"; then vibe_work=1; fi;\n'
+  inner+=$'code_run=0; if pgrep -fa "code .*tunnel" >/dev/null 2>&1; then code_run=1; fi;\n'
+  inner+=$'cf_run=0; if pgrep -fa "cloudflared .*tunnel" >/dev/null 2>&1 || pgrep -fa "(^|/)cloudflared( |$)" >/dev/null 2>&1; then cf_run=1; fi;\n'
+  inner+=$'cf_work=0; if command -v cloudflared >/dev/null 2>&1 && cloudflared tunnel info "${CF_TUNNEL}" >/dev/null 2>&1; then cf_work=1; fi;\n'
+  inner+=$'printf "vibe-kanban: running=%s working=%s port=%s\n" "$vibe_run" "$vibe_work" "$FRONTEND_PORT";\n'
+  inner+=$'printf "code-tunnel: running=%s\n" "$code_run";\n'
+  inner+=$'printf "cloudflared: running=%s tunnel=%s working=%s\n" "$cf_run" "$CF_TUNNEL" "$cf_work";\n'
+  if [ "$verbose" -eq 1 ]; then
+    inner+=$'echo; echo "[verbose] tmux windows:"; { tmux list-windows -t viterbo-owner -F "#I:#W" 2>/dev/null || true; };\n'
+    inner+=$'echo; echo "[verbose] ports:"; { ss -lntp 2>/dev/null | grep -E ":(${FRONTEND_PORT}|2222|3000)\\b" || true; };\n'
+    inner+=$'echo; echo "[verbose] cloudflared info:"; { cloudflared tunnel info "${CF_TUNNEL}" 2>/dev/null || true; };\n'
+  fi
+  bash -lc "$inner"
+
+  # Cloudflare workers status (best-effort)
+  local worker_inner='set -e; WRANGLER_DIR=.devcontainer/cloudflare;\n'
+  worker_inner+=$'check_one() { local toml="$1"; local tag="$2"; local name="";\n'
+  worker_inner+=$'  if [ -f "$toml" ]; then name=$(grep -E "^name\\s*=\\s*\"" "$toml" | head -n1 | sed -E "s/.*\"([^\"]+)\".*/\\1/"); fi;\n'
+  worker_inner+=$'  if command -v wrangler >/dev/null 2>&1 && [ -n "$name" ]; then\n'
+  worker_inner+=$'    out=$(cd "$WRANGLER_DIR" && wrangler deployments list --name "$name" --json 2>/dev/null || true);\n'
+  worker_inner+=$'    if printf "%s" "$out" | grep -q "created_on"; then echo "cloudflare-worker(${tag}:${name}): deployed";\n'
+  worker_inner+=$'    elif printf "%s" "$out" | grep -Eq "^\\s*\\[\\s*\\]\\s*$"; then echo "cloudflare-worker(${tag}:${name}): no deployments";\n'
+  worker_inner+=$'    else echo "cloudflare-worker(${tag}:${name}): unknown (auth/config?)"; fi;\n'
+  if [ "$verbose" -eq 1 ]; then
+    worker_inner+=$'    echo; echo "[verbose] deployments(${tag}) raw:"; printf "%s\n" "$out";\n'
+  fi
+  worker_inner+=$'  else echo "cloudflare-worker(${tag}): wrangler or config missing"; fi; };\n'
+  worker_inner+=$'check_one "$WRANGLER_DIR/wrangler.toml" font;\n'
+  worker_inner+=$'check_one "$WRANGLER_DIR/wrangler-sanitizer.toml" sanitizer;\n'
+  bash -lc "$worker_inner"
+}
+
+cmd_attach() {
+  local use_tmux=${1:-0}
+  if [ "$use_tmux" -eq 1 ] && command -v tmux >/dev/null 2>&1 && tmux has-session -t viterbo-owner 2>/dev/null; then
+    print_tmux_tips
+    exec tmux attach -t viterbo-owner
+  else
+    exec bash -l
+  fi
+}
+
+cmd_cf() {
+  ( cd .devcontainer/cloudflare && \
+    wrangler -c wrangler-sanitizer.toml deploy && \
+    wrangler -c wrangler.toml deploy )
+}
+
+cmd_cf_deploy_sanitizer() { ( cd .devcontainer/cloudflare && wrangler -c wrangler-sanitizer.toml deploy ); }
+cmd_cf_deploy_font()      { ( cd .devcontainer/cloudflare && wrangler -c wrangler.toml deploy ); }
+
+cmd_cf_tail() {
+  if command -v tmux >/dev/null 2>&1; then
+    tmux new-session -d -s cf-tail -n sanitizer "bash -lc 'cd .devcontainer/cloudflare && wrangler -c wrangler-sanitizer.toml tail'"
+    tmux new-window -t cf-tail -n font "bash -lc 'cd .devcontainer/cloudflare && wrangler -c wrangler.toml tail'"
+    exec tmux attach -t cf-tail
+  else
+    bash -lc "cd .devcontainer/cloudflare && wrangler -c wrangler-sanitizer.toml tail & wrangler -c wrangler.toml tail & wait"
+  fi
+}
+
+cmd_cf_tail_sanitizer() { ( cd .devcontainer/cloudflare && wrangler -c wrangler-sanitizer.toml tail ); }
+cmd_cf_tail_font()      { ( cd .devcontainer/cloudflare && wrangler -c wrangler.toml tail ); }
+
+cmd_cf_setup() {
+  local CF_TUNNEL_L=${CF_TUNNEL:-vibekanban}
+  local CF_HOSTNAME_L=${CF_HOSTNAME:-vibekanban.joernstoehler.com}
+  local FRONTEND_PORT_L=${FRONTEND_PORT:-3000}
+  local CF_CONFIG_DEFAULT="$HOME/.cloudflared/config-${CF_TUNNEL_L}.yml"
+  local CF_CONFIG_PATH_L=${CLOUDFLARED_CONFIG:-$CF_CONFIG_DEFAULT}
+
+  command -v cloudflared >/dev/null 2>&1 || fail "cloudflared not installed."
+  if [ ! -s "$HOME/.cloudflared/cert.pem" ]; then
+    fail "cloudflared not logged in. Run 'cloudflared tunnel login' first."
+  fi
+  if ! cloudflared tunnel info "$CF_TUNNEL_L" >/dev/null 2>&1; then
+    fail "tunnel '${CF_TUNNEL_L}' not found. Create it before running this command."
+  fi
+
+  local CF_CREDENTIALS=""
+  if [ -s "$HOME/.cloudflared/${CF_TUNNEL_L}.json" ]; then
+    CF_CREDENTIALS="$HOME/.cloudflared/${CF_TUNNEL_L}.json"
+  else
+    for candidate in "$HOME"/.cloudflared/*.json; do
+      [ -f "$candidate" ] || continue
+      CF_CREDENTIALS="$candidate"; break
+    done
+  fi
+  [ -n "$CF_CREDENTIALS" ] || fail "no tunnel credential (*.json) found in $HOME/.cloudflared."
+
+  if [ ! -f "$CF_CONFIG_PATH_L" ]; then
+    cat >"$CF_CONFIG_PATH_L" <<EOF
+tunnel: ${CF_TUNNEL_L}
+credentials-file: ${CF_CREDENTIALS}
+ingress:
+  - hostname: ${CF_HOSTNAME_L}
+    service: http://127.0.0.1:${FRONTEND_PORT_L}
+  - service: http_status:404
+EOF
+    log "wrote config to $CF_CONFIG_PATH_L"
+  else
+    log "config already present at $CF_CONFIG_PATH_L"
+  fi
+
+  if [ -n "$CF_HOSTNAME_L" ]; then
+    if cloudflared tunnel route dns "$CF_TUNNEL_L" "$CF_HOSTNAME_L" >/dev/null 2>&1; then
+      log "DNS route ensured for ${CF_HOSTNAME_L}"
+    else
+      warn "unable to ensure DNS route for ${CF_HOSTNAME_L}; run manually."
+    fi
+  else
+    warn "CF_HOSTNAME not set; skipping DNS route."
+  fi
+}
+
+print_usage() {
+  cat <<'EOF'
+container-admin — in-container lifecycle
+
+Commands:
+  install                 Install code/Cloudflared/wrangler
+  preflight               Check tooling and tunnel config
+  start [--interactive]   Start VibeKanban, Code Tunnel, Cloudflared
+  stop                    Stop services
+  status [--verbose]      In-container service status
+  attach [--tmux]         Attach tmux or start a shell
+  cf                      Deploy both Workers
+  cf-deploy-sanitizer     Deploy sanitizer Worker
+  cf-deploy-font          Deploy font Worker
+  cf-tail                 Tail logs for both Workers
+  cf-tail-sanitizer       Tail sanitizer logs
+  cf-tail-font            Tail font logs
+  cf-setup                One-time cloudflared config+DNS helper
+
+Examples:
+  bash .devcontainer/bin/container-admin start --interactive
+  bash .devcontainer/bin/container-admin preflight start status
+EOF
+}
+
+# Parse argv as a pipeline of commands
+if [ $# -eq 0 ]; then
+  print_usage; exit 0
+fi
+
+last_cmd=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    install) cmd_install; last_cmd=install ;;
+    preflight) cmd_preflight; last_cmd=preflight ;;
+    start)
+      interactive=0; mode_flags=()
+      if [ "${2-}" = "--interactive" ]; then interactive=1; mode_flags+=("--interactive"); shift; fi
+      if [ "${2-}" = "--foreground" ]; then mode_flags+=("--foreground"); shift; fi
+      if [ "${2-}" = "--detached" ]; then mode_flags+=("--detached"); shift; fi
+      cmd_start "${mode_flags[@]:-}"; last_cmd=start ;;
+    stop) cmd_stop; last_cmd=stop ;;
+    status)
+      verbose=0; if [ "${2-}" = "--verbose" ]; then verbose=1; shift; fi
+      cmd_status "$verbose"; last_cmd=status ;;
+    attach)
+      use_tmux=0; if [ "${2-}" = "--tmux" ] || [ "${2-}" = "--interactive" ]; then use_tmux=1; shift; fi
+      cmd_attach "$use_tmux" ;;
+    cf) cmd_cf; last_cmd=cf ;;
+    cf-deploy-sanitizer) cmd_cf_deploy_sanitizer; last_cmd=cf-deploy-sanitizer ;;
+    cf-deploy-font)      cmd_cf_deploy_font;      last_cmd=cf-deploy-font ;;
+    cf-tail)             cmd_cf_tail;             last_cmd=cf-tail ;;
+    cf-tail-sanitizer)   cmd_cf_tail_sanitizer;   last_cmd=cf-tail-sanitizer ;;
+    cf-tail-font)        cmd_cf_tail_font;        last_cmd=cf-tail-font ;;
+    cf-setup)            cmd_cf_setup;            last_cmd=cf-setup ;;
+    -h|--help) print_usage; exit 0 ;;
+    --*) warn "Unknown flag for current command: $1" ;;
+    *) fail "Unknown token: $1" ;;
+  esac
+  shift || true
+done
+
+exit 0
+

@@ -7,10 +7,9 @@ last-updated: 2025-10-18
 # Devcontainer Operations
 
 ## Instructions
-- Prefer the admin wrapper for host orchestration when available: `bash .devcontainer/bin/admin up preflight start`.
-- Start the environment with `bash .devcontainer/bin/owner-up.sh`; capture errors and outputs in task notes if anything fails.
-- Manage in-container services via `.devcontainer/bin/dev-*.sh` and shut down with `bash .devcontainer/bin/owner-down.sh`.
-- Use `bash .devcontainer/bin/owner-status-host.sh` for safe status checks; avoid partial manual restarts.
+- Host orchestration: `bash .devcontainer/bin/host-admin up preflight start` (add `--interactive` to attach tmux with tips).
+- In-container controls: `bash .devcontainer/bin/container-admin start|status|stop`.
+- Status (concise): `bash .devcontainer/bin/host-admin status` (add `--verbose` for diagnostics).
 - Escalate with `Needs-Unblock: devcontainer` for recurring lifecycle issues or script changes.
 
 ## Scope
@@ -19,18 +18,16 @@ Covers starting, stopping, and troubleshooting the project devcontainer and bund
 
 ## Host-Level Lifecycle
 
-1. To start services: run `bash .devcontainer/bin/owner-up.sh` (or the admin wrapper `bash .devcontainer/bin/admin up preflight start` when you need the preflight checks).
-   - Confirms prerequisites, starts the container, launches tunnels, and surfaces status output.
-2. To stop services cleanly: run `bash .devcontainer/bin/owner-down.sh`.
-   - Wait for completion before restarting to avoid orphaned tunnels.
-3. To rebuild the container after dependency or base image updates: run `bash .devcontainer/bin/owner-rebuild.sh`.
-4. For a non-destructive status check: run `bash .devcontainer/bin/owner-status-host.sh`.
+1. Start: `bash .devcontainer/bin/host-admin up preflight start --interactive`.
+2. Stop: `bash .devcontainer/bin/host-admin down`.
+3. Rebuild: `bash .devcontainer/bin/host-admin rebuild [--no-cache]`.
+4. Status: `bash .devcontainer/bin/host-admin status [--verbose]`.
 
 ## In-Container Controls
 
-- Start development processes inside the container with `.devcontainer/bin/dev-start.sh`.
-- Check running services via `.devcontainer/bin/dev-status.sh`.
-- Shut down services gracefully using `.devcontainer/bin/dev-stop.sh`.
+- Start: `.devcontainer/bin/container-admin start --detached`.
+- Status: `.devcontainer/bin/container-admin status [--verbose]`.
+- Stop: `.devcontainer/bin/container-admin stop`.
 
 ## Safety Guidelines
 
@@ -46,7 +43,7 @@ Covers starting, stopping, and troubleshooting the project devcontainer and bund
 1. Capture the full command output and exit code.
 2. Confirm whether another agent already has services running to avoid double-start conflicts.
 3. Verify network constraints if tunnels fail—document firewall or VPN interactions in task notes.
-4. After resolving an issue, rerun `owner-status-host.sh` to confirm steady state before handing off.
+4. After resolving an issue, rerun `host-admin status --verbose` to confirm steady state before handing off.
 
 ## Related Skills
 

@@ -51,7 +51,7 @@ ensure_codex() {
 }
 
 ensure_uv || exit 1
-bash .devcontainer/bin/dev-install.sh --install || exit 1
+bash .devcontainer/bin/container-admin install || exit 1
 ensure_misc_packages
 ensure_codex
 
@@ -65,5 +65,8 @@ if [ -f "pyproject.toml" ]; then
   uv sync --extra dev >/dev/null || true
 fi
 
-echo "[post-create] Environment ready. Use host 'owner-up.sh' or in-container 'dev-start.sh' to start services."
-echo "[post-create] For Cloudflare DNS/config helpers see 'bash .devcontainer/bin/owner-cloudflare-setup.sh'."
+echo "[post-create] Environment ready."
+echo "[post-create] Start services:"
+echo "  - Host: bash .devcontainer/bin/host-admin up preflight start --interactive"
+echo "  - In container: bash .devcontainer/bin/container-admin start --detached"
+echo "[post-create] Cloudflared DNS/config helper: bash .devcontainer/bin/container-admin cf-setup"

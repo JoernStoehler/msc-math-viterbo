@@ -163,5 +163,5 @@ for d in \
 done
 
 echo "[post-start] Services are not auto-started. To start manually:"
-echo "  - bash .devcontainer/bin/dev-start.sh --detached"
-echo "  - or run on host: bash .devcontainer/bin/owner-up.sh"
+echo "  - In container: bash .devcontainer/bin/container-admin start --detached"
+echo "  - Or on host:   bash .devcontainer/bin/host-admin up preflight start --interactive"

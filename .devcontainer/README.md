@@ -4,64 +4,55 @@ This directory contains the environment scaffolding for the “Project Owner” 
 
 Components
 - `devcontainer.json`: base image + post-create/post-start hooks
-- `post-create.sh`: install uv and delegate service tooling to `bin/dev-install.sh`; quick project sync
+- `post-create.sh`: install uv and delegate service tooling to `bin/container-admin install`; quick project sync
 - `post-start.sh`: idempotent ownership fixups, fast uv sync, diagnostics (no auto-start)
-- `bin/dev-*.sh`: in-container service control (start/stop/status/install)
-- `bin/admin`: host-side orchestrator (chained subcommands)
-- `bin/owner-*.sh`: host-side shortcuts that delegate to `bin/admin`
+- `bin/container-admin`: in-container lifecycle (start/stop/status/install + Cloudflare helpers)
+- `bin/host-admin`: host orchestrator (devcontainer up/down/rebuild + delegates to container-admin)
 
 One-shot host startup (recommended)
-- Prereq (host): devcontainer CLI installed. If missing, run on host:
-  - `bash .devcontainer/bin/host-install.sh`
+- Prepare host (once):
+  - `bash .devcontainer/bin/host-admin host-setup`
 - Start everything from the host:
-  - `bash .devcontainer/bin/owner-up.sh`
-  - Or use the unified admin wrapper:
-    - `bash .devcontainer/bin/admin up preflight start --interactive`
+  - `bash .devcontainer/bin/host-admin up preflight start --interactive`
 - What it does:
   - Brings up the devcontainer for this workspace
   - Inside container: preflight checks → start VS Code tunnel, Cloudflared tunnel, VibeKanban (detached) → post-check
 - Logs/interactive:
   - Attach inside container if needed (e.g., first-time tunnel auth):
-    - `devcontainer exec --workspace-folder /srv/workspaces/msc-math-viterbo bash -lc 'tmux attach -t viterbo-owner'`
-- Stop services (inside container):
-  - `bash .devcontainer/bin/dev-stop.sh`
+    - `bash .devcontainer/bin/host-admin attach --tmux`
 
 One-shot host shutdown
 - Stop services and the container from the host:
-  - `bash .devcontainer/bin/owner-down.sh`
-- What it does:
-  - Best-effort `dev-stop` inside the container
-  - `devcontainer down` for this workspace
-  - Prints a brief scan for any stray host `code tunnel`/`cloudflared`/`vibe-kanban` processes (does not kill automatically)
+  - `bash .devcontainer/bin/host-admin down`
+  - Best-effort stop inside the container, then `devcontainer down` for this workspace
 
 Rebuild container (host)
 - Rebuild and restart the devcontainer (handles not-running case):
-  - `bash .devcontainer/bin/owner-rebuild.sh`
+  - `bash .devcontainer/bin/host-admin rebuild`
 - With a clean image build cache:
-  - `bash .devcontainer/bin/owner-rebuild.sh --no-cache`
- - Equivalent admin sequence examples:
-   - `bash .devcontainer/bin/admin down rebuild --no-cache up start`
-   - `bash .devcontainer/bin/admin rebuild --no-cache start --interactive`
+  - `bash .devcontainer/bin/host-admin rebuild --no-cache`
 
 Host status / diagnostics
-- Non-destructive host check for related processes/configs:
-  - `bash .devcontainer/bin/owner-status-host.sh`
+- Concise status:
+  - `bash .devcontainer/bin/host-admin status`
+- Verbose diagnostic dump (host processes/ports + in-container details):
+  - `bash .devcontainer/bin/host-admin status --verbose`
 
 Daily usage (inside container)
-- Start all (detached) / status / stop:
-  - `bash .devcontainer/bin/dev-start.sh --detached`
-  - `bash .devcontainer/bin/dev-status.sh`
-  - `bash .devcontainer/bin/dev-stop.sh`
+- Start / status / stop:
+  - `bash .devcontainer/bin/container-admin start --detached`
+  - `bash .devcontainer/bin/container-admin status`
+  - `bash .devcontainer/bin/container-admin stop`
 
 Detached orchestration
 - Start services inside the container:
-  - `bash .devcontainer/bin/dev-start.sh --detached`
+  - `bash .devcontainer/bin/container-admin start --detached`
 
 Status
 - Concise host+container status:
-  - `bash .devcontainer/bin/admin status`
+  - `bash .devcontainer/bin/host-admin status`
 - Verbose diagnostic dump (host tailscale, processes, ports; container services, tmux, cloudflared, worker deployments):
-  - `bash .devcontainer/bin/admin status --verbose`
+  - `bash .devcontainer/bin/host-admin status --verbose`
 
 Cloudflare Worker (font injection)
 - Files under `.devcontainer/cloudflare/` (wrangler-based)
@@ -70,7 +61,7 @@ Cloudflare Worker (font injection)
 - Tail logs: `cd .devcontainer/cloudflare && wrangler tail`
 
 Cloudflare tunnel (one-time prep)
-- `bash .devcontainer/bin/owner-cloudflare-setup.sh` — write `config-<tunnel>.yml` and ensure the DNS route points at the tunnel (requires Cloudflare login + tunnel auth).
+- `bash .devcontainer/bin/container-admin cf-setup` — write `config-<tunnel>.yml` and ensure the DNS route points at the tunnel (requires Cloudflare login + tunnel auth).
 
 Bind mounts (host recommended)
 - Host mirrors container HOME via `/srv/devhome`:
@@ -141,5 +132,5 @@ Container environment defaults
 
 Notes
 - Keep `.venv` per worktree for isolation; uv handles cross-filesystem copies once.
-- Hooks auto-start services via `dev-start.sh` (idempotent).
+- Lifecycle is handled by `host-admin`/`container-admin`.
 - VibeKanban ships via `npx`; font customization happens via the Cloudflare Worker.
