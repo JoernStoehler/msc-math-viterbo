@@ -4,6 +4,11 @@ set export := true
 default: checks
 
 UV := env_var_or_default("UV", "uv")
+UV_PROJECT_ENVIRONMENT := env_var_or_default(
+    "UV_PROJECT_ENVIRONMENT",
+    "$HOME/.cache/uv/project-envs/msc-math-viterbo",
+)
+UV_LINK_MODE := env_var_or_default("UV_LINK_MODE", "hardlink")
 
 SMOKE_TEST_TIMEOUT := env_var_or_default("SMOKE_TEST_TIMEOUT", "10")
 PYTEST_ARGS := env_var_or_default("PYTEST_ARGS", "")
