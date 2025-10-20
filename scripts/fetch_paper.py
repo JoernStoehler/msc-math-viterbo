@@ -17,11 +17,13 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import json
+import logging
 import re
 import shutil
 import subprocess
 import tempfile
 import textwrap
+import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -47,12 +49,13 @@ def _authors_short(authors: list[str]) -> str:
 
 
 def _pdftotext(pdf_path: Path) -> str:
+    """Run pdftotext on a local PDF and return UTF-8 text or exit on failure."""
     try:
         out = subprocess.check_output(
             ["pdftotext", "-layout", "-nopgbrk", str(pdf_path), "-"],
             stderr=subprocess.DEVNULL,
         )
-    except Exception as exc:  # noqa: BLE001
+    except (subprocess.CalledProcessError, FileNotFoundError) as exc:
         raise SystemExit(f"pdftotext failed: {exc}")
     return out.decode("utf-8", errors="replace")
 
@@ -66,6 +69,7 @@ def _write_paper_md(outdir: Path, title: str, source: str, text: str) -> Path:
 
 
 def fetch_arxiv(arxiv_id: str, status: str | None = None) -> None:
+    """Fetch an arXiv PDF, convert to Markdown, write to docs, and log index."""
     # Metadata
     api = f"http://export.arxiv.org/api/query?id_list={urllib.parse.quote(arxiv_id)}"
     req = urllib.request.Request(api, headers={"User-Agent": "fetch-paper/1.0"})
@@ -109,8 +113,8 @@ def fetch_arxiv(arxiv_id: str, status: str | None = None) -> None:
         """
     ).strip()
 
-    print(f"Saved: {path}")
-    print("\nIndex snippet:\n" + idx_block)
+    logging.info("Saved: %s", path)
+    logging.info("\nIndex snippet:\n%s", idx_block)
 
 
 def _crossref_meta(doi: str) -> tuple[str, str, list[str]]:
@@ -134,6 +138,7 @@ def _crossref_meta(doi: str) -> tuple[str, str, list[str]]:
 
 
 def fetch_doi(doi: str, status: str | None = None) -> None:
+    """Fetch by DOI using OpenAlex metadata and OA links; log index snippet."""
     # Prefer OpenAlex for OA location and metadata
     data = None
     try:
@@ -141,7 +146,7 @@ def fetch_doi(doi: str, status: str | None = None) -> None:
         req = urllib.request.Request(oa_url, headers={"User-Agent": "fetch-paper/1.0"})
         with urllib.request.urlopen(req) as r:
             data = json.load(r)
-    except Exception:
+    except (urllib.error.URLError, json.JSONDecodeError):
         data = None
 
     title: str | None = None
@@ -164,7 +169,7 @@ def fetch_doi(doi: str, status: str | None = None) -> None:
     if not title:
         try:
             title, year, authors = _crossref_meta(doi)
-        except Exception:
+        except (urllib.error.URLError, json.JSONDecodeError):
             title = doi
             year = _dt.datetime.utcnow().strftime("%Y")
             authors = []
@@ -182,8 +187,8 @@ def fetch_doi(doi: str, status: str | None = None) -> None:
                 - …
             """
         ).strip()
-        print("No OA PDF found; not saved.")
-        print("\nIndex snippet:\n" + idx_block)
+        logging.info("No OA PDF found; not saved.")
+        logging.info("\nIndex snippet:\n%s", idx_block)
         return
 
     # Fetch and convert
@@ -214,11 +219,12 @@ def fetch_doi(doi: str, status: str | None = None) -> None:
         """
     ).strip()
 
-    print(f"Saved: {path}")
-    print("\nIndex snippet:\n" + idx_block)
+    logging.info("Saved: %s", path)
+    logging.info("\nIndex snippet:\n%s", idx_block)
 
 
 def main(argv: list[str] | None = None) -> int:
+    """CLI entry point for fetching papers by arXiv or DOI."""
     parser = argparse.ArgumentParser(description=__doc__)
     g = parser.add_mutually_exclusive_group(required=True)
     g.add_argument("--arxiv", help="arXiv identifier, e.g., 1712.03494 or 2008.10111v2")
@@ -230,6 +236,7 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("pdftotext not found; please install poppler-utils")
 
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     if args.arxiv:
         arxiv_id = args.arxiv.strip()
         arxiv_id = arxiv_id.replace("arXiv:", "").replace("https://arxiv.org/abs/", "")

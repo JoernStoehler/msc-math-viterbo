@@ -214,7 +214,7 @@ def atlas_tiny_complete_row(row: AtlasTinyRaggedRow) -> AtlasTinyRow:
     elif gen == "lagrangian_product":
         variant = cfg.get("variant", "pentagon_product_counterexample")
         if variant == "pentagon_product_counterexample":
-            (vertices, normals, offsets), t_gen = _time_call(C.pentagon_product_counterexample)
+            (vertices, normals, offsets), t_gen = _time_call(C.counterexample_pentagon_product)
         elif variant == "noisy_pentagon_product":
             seed_q = int(cfg.get("seed_q", 314159))
             seed_p = int(cfg.get("seed_p", 271828))
