@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from viterbo.datasets.atlas_tiny import (
@@ -151,3 +152,17 @@ def test_atlas_tiny_collate_pad_shapes() -> None:
     assert batch["volume"].shape == (len(rows),)
     assert batch["capacity_ehz"].shape == (len(rows),)
     assert batch["systolic_ratio"].shape == (len(rows),)
+
+
+def test_atlas_tiny_collate_pad_target_dim_validation() -> None:
+    rows = atlas_tiny_build()
+    max_dim = max(int(row["dimension"]) for row in rows)
+
+    # target_dim smaller than present dimension should fail
+    with pytest.raises(ValueError):
+        atlas_tiny_collate_pad(rows, target_dim=max_dim - 1)
+
+    # target_dim larger than present dimension zero-extends columns
+    padded = atlas_tiny_collate_pad(rows, target_dim=max_dim + 1)
+    assert padded["vertices"].size(2) == max_dim + 1
+    assert padded["normals"].size(2) == max_dim + 1
