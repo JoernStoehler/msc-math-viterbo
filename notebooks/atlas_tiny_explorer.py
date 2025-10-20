@@ -44,7 +44,7 @@ SRC_PATH = PROJECT_ROOT / "src"
 if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))
 
-from viterbo.datasets.atlas_tiny import atlas_tiny_collate_pad  # noqa: E402
+from viterbo.datasets.atlas_tiny import atlas_tiny_collate_pad
 
 
 # %% [markdown]
@@ -58,12 +58,13 @@ PARQUET_PATH = PROJECT_ROOT / "artefacts" / "datasets" / "atlas-tiny" / "v1" / "
 PUBLISH_DIR = PROJECT_ROOT / "artefacts" / "published" / "atlas_tiny_explorer"
 PUBLISH_DIR.mkdir(parents=True, exist_ok=True)
 
+SHOW_INLINE = False
 try:
-    # Detect if running inside IPython/Jupyter to decide whether to show inline.
-    get_ipython  # type: ignore[name-defined]
-    SHOW_INLINE = True
-except Exception:
-    SHOW_INLINE = False
+    from IPython import get_ipython
+except ImportError:
+    get_ipython = None  # type: ignore[assignment]
+else:
+    SHOW_INLINE = get_ipython() is not None
 
 
 # %% [markdown]
@@ -198,7 +199,7 @@ print(f"Selected rows for batching: {', '.join(demo_ids)}")
 
 batch = atlas_tiny_collate_pad(demo_rows)
 
-def tensor_shape(x: Any) -> str:
+def tensor_shape(x: object) -> str:
     return tuple(x.shape).__repr__() if isinstance(x, torch.Tensor) else "-"
 
 
