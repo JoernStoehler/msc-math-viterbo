@@ -1,9 +1,9 @@
 import os
 from typing import cast
 
-import pytest
 import pyarrow as pa
 import pyarrow.parquet as pq
+import pytest
 import torch
 
 from viterbo.datasets.atlas_tiny import AtlasTinyRow, atlas_tiny_build
@@ -13,7 +13,9 @@ from viterbo.datasets.atlas_tiny_io import (
     atlas_tiny_save_parquet,
     atlas_tiny_to_hf,
 )
+
 pytestmark = pytest.mark.smoke
+
 
 def _rows_equal(a: AtlasTinyRow, b: AtlasTinyRow) -> None:
     assert a["polytope_id"] == b["polytope_id"]

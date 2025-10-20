@@ -19,7 +19,7 @@ def test_atlas_tiny_build_benchmark(benchmark, request) -> None:
     # Run only under explicit benchmark invocation to avoid slowing smoke tests.
     try:
         bench_only = bool(request.config.getoption("--benchmark-only"))
-    except Exception:
+    except (AttributeError, ValueError):
         bench_only = False
     if not bench_only:
         pytest.skip("run via just bench (passes --benchmark-only)")
