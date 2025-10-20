@@ -19,7 +19,7 @@ def test_minimal_action_cycle_odd_dimension_error() -> None:
     vertices = torch.tensor([[0.0], [1.0], [2.0]])
     normals = torch.tensor([[1.0], [-1.0]])
     offsets = torch.tensor([2.0, 0.0])
-    with pytest.raises(ValueError, match="even \\(" ):
+    with pytest.raises(ValueError, match="even \\("):
         minimal_action_cycle(vertices, normals, offsets)
 
 
@@ -48,7 +48,9 @@ def test_planar_validators_and_ccw_ordering() -> None:
     with pytest.raises(ValueError, match="share the first dimension"):
         validate_halfspaces_planar(torch.randn(3, 2), torch.ones(2), "normals", "offsets")
     with pytest.raises(ValueError, match="strictly positive"):
-        validate_halfspaces_planar(torch.randn(3, 2), torch.tensor([1.0, 0.0, -1.0]), "normals", "offsets")
+        validate_halfspaces_planar(
+            torch.randn(3, 2), torch.tensor([1.0, 0.0, -1.0]), "normals", "offsets"
+        )
 
     # order_vertices_ccw preserves dtype/device and orients CCW
     v = torch.tensor([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)
@@ -66,6 +68,8 @@ def test_volume_backend_paths_basic() -> None:
 
     # 3D: facets path returns positive scalar for a cube
     coords = [-1.0, 1.0]
-    cube = torch.tensor([[x, y, z] for x in coords for y in coords for z in coords], dtype=torch.float64)
+    cube = torch.tensor(
+        [[x, y, z] for x in coords for y in coords for z in coords], dtype=torch.float64
+    )
     vol = volume(cube)
     assert vol.ndim == 0 and float(vol) > 0.0

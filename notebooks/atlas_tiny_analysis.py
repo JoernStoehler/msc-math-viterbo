@@ -93,6 +93,7 @@ if rows is None:
 # %% [markdown]
 # ## Utilities: formatting and simple table printer
 
+
 # %%
 def fmtf(x: float | int | None, *, digits: int = 6) -> str:
     if x is None:
@@ -107,8 +108,10 @@ def print_table(headers: list[str], rows_: list[list[str]]) -> None:
     for r in rows_:
         for j, cell in enumerate(r):
             widths[j] = max(widths[j], len(cell))
+
     def line(vals: list[str]) -> str:
         return " | ".join(val.ljust(widths[i]) for i, val in enumerate(vals))
+
     sep = "-+-".join("-" * w for w in widths)
     print(line(headers))
     print(sep)
@@ -143,10 +146,14 @@ polytope_ids = [r["polytope_id"] for r in rows]
 dims = [int(r["dimension"]) for r in rows]
 print(f"Row count: {len(rows)}")
 print("polytope_id and dimension:")
-print_table([
-    "polytope_id",
-    "dim",
-], [[pid, str(d)] for pid, d in zip(polytope_ids, dims)])
+print_table(
+    [
+        "polytope_id",
+        "dim",
+    ],
+    [[pid, str(d)] for pid, d in zip(polytope_ids, dims)],
+)
+
 
 def print_label_counts(key: str) -> None:
     counts: dict[str, int] = {}
@@ -165,6 +172,7 @@ for label_key in ("volume_backend", "capacity_ehz_backend", "systolic_ratio_back
 
 # %% [markdown]
 # ## Per‑row values and timings
+
 
 # %%
 def pick_time(r: dict[str, Any], keys: list[str]) -> float | None:
@@ -196,9 +204,27 @@ for r in rows:
             str(int(r["dimension"])),
             str(r.get("volume_backend")),
             str(r.get("capacity_ehz_backend")),
-            fmtf(float(r["volume"])) if isinstance(r["volume"], torch.Tensor) else fmtf(r["volume"]),
-            fmtf(None if r.get("capacity_ehz") is None else (float(r["capacity_ehz"]) if not isinstance(r["capacity_ehz"], torch.Tensor) else float(r["capacity_ehz"].item()))),
-            fmtf(None if r.get("systolic_ratio") is None else (float(r["systolic_ratio"]) if not isinstance(r["systolic_ratio"], torch.Tensor) else float(r["systolic_ratio"].item()))),
+            fmtf(float(r["volume"]))
+            if isinstance(r["volume"], torch.Tensor)
+            else fmtf(r["volume"]),
+            fmtf(
+                None
+                if r.get("capacity_ehz") is None
+                else (
+                    float(r["capacity_ehz"])
+                    if not isinstance(r["capacity_ehz"], torch.Tensor)
+                    else float(r["capacity_ehz"].item())
+                )
+            ),
+            fmtf(
+                None
+                if r.get("systolic_ratio") is None
+                else (
+                    float(r["systolic_ratio"])
+                    if not isinstance(r["systolic_ratio"], torch.Tensor)
+                    else float(r["systolic_ratio"].item())
+                )
+            ),
             fmtf(t_vol),
             fmtf(t_cap),
             fmtf(None if r.get("time_systolic_ratio") is None else float(r["time_systolic_ratio"])),
@@ -215,10 +241,18 @@ print_table(per_row_headers, per_row_data)
 # %%
 time_keys = sorted(k for k in rows[0].keys() if k.startswith("time_"))
 
+
 def aggregate_timings(rows: list[dict[str, Any]], key: str) -> dict[str, float]:
     vals = [float(r[key]) for r in rows if r.get(key) is not None]
     if not vals:
-        return {"count": 0.0, "min": float("nan"), "median": float("nan"), "mean": float("nan"), "p90": float("nan"), "max": float("nan")}
+        return {
+            "count": 0.0,
+            "min": float("nan"),
+            "median": float("nan"),
+            "mean": float("nan"),
+            "p90": float("nan"),
+            "max": float("nan"),
+        }
     return {
         "count": float(len(vals)),
         "min": min(vals),
@@ -259,9 +293,17 @@ if two_d:
     tol = 1e-9
     errs: list[tuple[str, float, float, float]] = []  # (id, vol, cap, abs_err)
     for r in two_d:
-        vol = float(r["volume"]) if not isinstance(r["volume"], torch.Tensor) else float(r["volume"].item())
+        vol = (
+            float(r["volume"])
+            if not isinstance(r["volume"], torch.Tensor)
+            else float(r["volume"].item())
+        )
         cap = r.get("capacity_ehz")
-        cap_val = None if cap is None else (float(cap) if not isinstance(cap, torch.Tensor) else float(cap.item()))
+        cap_val = (
+            None
+            if cap is None
+            else (float(cap) if not isinstance(cap, torch.Tensor) else float(cap.item()))
+        )
         if cap_val is None:
             errs.append((r["polytope_id"], vol, float("nan"), float("nan")))
             continue
@@ -284,12 +326,20 @@ if with_cap:
     for r in with_cap:
         dim = int(r["dimension"])
         n = dim // 2
-        vol = float(r["volume"]) if not isinstance(r["volume"], torch.Tensor) else float(r["volume"].item())
+        vol = (
+            float(r["volume"])
+            if not isinstance(r["volume"], torch.Tensor)
+            else float(r["volume"].item())
+        )
         cap = r["capacity_ehz"]
         cap_val = float(cap) if not isinstance(cap, torch.Tensor) else float(cap.item())
         sr = r.get("systolic_ratio")
-        sr_val = None if sr is None else (float(sr) if not isinstance(sr, torch.Tensor) else float(sr.item()))
-        expected = vol / (cap_val ** n)
+        sr_val = (
+            None
+            if sr is None
+            else (float(sr) if not isinstance(sr, torch.Tensor) else float(sr.item()))
+        )
+        expected = vol / (cap_val**n)
         err = float("nan") if sr_val is None else abs(expected - sr_val)
         if not math.isnan(err):
             max_sr_err = max(max_sr_err, err)
@@ -303,4 +353,3 @@ if with_cap:
 # ## Notes
 # - All tables use fixed-width columns and labeled headers for advisor-friendly review.
 # - For further comparisons, consider exporting CSV summaries from these tables if needed.
-

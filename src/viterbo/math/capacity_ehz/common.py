@@ -69,9 +69,7 @@ def validate_planar_vertices(vertices: torch.Tensor, name: str) -> None:
     if vertices.ndim != 2:
         raise ValueError(f"{name} must be (N, 2) with N>=3; got ndim={vertices.ndim}")
     if vertices.size(1) != 2:
-        raise ValueError(
-            f"{name} must be planar with shape (N, 2); got (N, {vertices.size(1)})"
-        )
+        raise ValueError(f"{name} must be planar with shape (N, 2); got (N, {vertices.size(1)})")
     if vertices.size(0) < 3:
         raise ValueError(f"{name} must contain at least three vertices; got N={vertices.size(0)}")
 
@@ -122,7 +120,9 @@ def order_vertices_ccw(vertices: torch.Tensor) -> torch.Tensor:
     rolled = ordered.roll(shifts=-1, dims=0)
     cross = ordered[:, 0] * rolled[:, 1] - ordered[:, 1] * rolled[:, 0]
     signed_area = 0.5 * torch.sum(cross)
-    if torch.isclose(signed_area.abs(), torch.zeros((), dtype=vertices.dtype, device=vertices.device)):
+    if torch.isclose(
+        signed_area.abs(), torch.zeros((), dtype=vertices.dtype, device=vertices.device)
+    ):
         raise ValueError("degenerate polygon: zero area (collinear points)")
     return ordered
 

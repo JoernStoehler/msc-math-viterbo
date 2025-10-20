@@ -48,6 +48,7 @@ from viterbo.datasets.atlas_tiny_io import (  # noqa: E402
 # %% [markdown]
 # ## Build rows and save Parquet
 
+
 # %%
 def main(out_dir: Path | None = None) -> None:
     if out_dir is None:
@@ -63,4 +64,3 @@ def main(out_dir: Path | None = None) -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -30,6 +30,31 @@ help:
     @echo "Common development commands (tips follow their primary description):"
     @just --list
 
+# Verify VK worktree hygiene before running heavier flows.
+# Fails fast on:
+# - detached HEAD
+# - wrong branch for this worktree (expects vk/<worktree-name>)
+# - rebase state present in this worktree's .git dir
+preflight:
+    @git_dir=`git rev-parse --git-dir 2>/dev/null || echo ""`; \
+    if [ -z "$$git_dir" ]; then echo "[vk-preflight] Not a git repo; skipping."; exit 0; fi; \
+    branch=`git rev-parse --abbrev-ref HEAD`; \
+    expected=""; \
+    if echo "$git_dir" | grep -q "/worktrees/"; then name=`echo "$git_dir" | awk -F'/worktrees/' '{print $2}'`; expected="vk/$name"; fi; \
+    rebase_active=0; \
+    if [ -d "$$git_dir/rebase-merge" ] || [ -d "$$git_dir/rebase-apply" ]; then rebase_active=1; fi; \
+    echo "[vk-preflight] branch=$branch"; \
+    if [ -n "$expected" ]; then echo "[vk-preflight] expected=$expected"; fi; \
+    if [ "$branch" = "HEAD" ]; then echo "[vk-preflight] detached=1"; else echo "[vk-preflight] detached=0"; fi; \
+    echo "[vk-preflight] rebase_active=$rebase_active"; \
+    if git show-ref --quiet refs/heads/main; then \
+      ab=`git rev-list --left-right --count HEAD...main 2>/dev/null || echo ""`; \
+      if [ -n "$ab" ]; then echo "[vk-preflight] ahead_behind_vs_main=$ab"; fi; \
+    fi; \
+    if [ "$branch" = "HEAD" ]; then echo "[vk-preflight] ERROR: detached HEAD; attach to assigned VK branch."; exit 2; fi; \
+    if [ -n "$expected" ] && [ "$branch" != "$expected" ]; then echo "[vk-preflight] ERROR: wrong branch for this worktree; expected $expected"; exit 2; fi; \
+    if [ "$rebase_active" = "1" ]; then echo "[vk-preflight] ERROR: rebase state detected; abort with: git rebase --abort"; exit 2; fi
+
 # Run an arbitrary command inside the project environment (uv run).
 run *ARGS:
     $UV run {{ARGS}}
@@ -107,6 +132,7 @@ type-strict:
 # Smoke-tier pytest with enforced timeouts.
 # Default: impacted (serial). Falls back to full serial.
 test:
+    just preflight
     just _pytest-incremental "{{PYTEST_SMOKE_FLAGS}}" "smoke-tier pytest"
 
 # Full smoke-tier run (serial, no impacted selection).
@@ -141,6 +167,7 @@ test-integration:
 # Smoke-tier benchmarks.
 # Tip: Use `PYTEST_ARGS="-k case"` to focus on a specific benchmark.
 bench:
+    just preflight
     @echo "Running smoke-tier benchmarks; results saved under {{BENCHMARK_STORAGE}}."
     $UV run pytest tests/performance -m "smoke" {{BENCH_FLAGS}} {{PYTEST_ARGS}}
 
@@ -224,6 +251,7 @@ precommit: precommit-slow
 # Run the CI command set locally.
 # Tip: Mirrors GitHub Actions; expect coverage artefacts and longer runtime.
 ci:
+    just preflight
     @echo "Running CI: sync deps (dev + data), lint, type (basic), smoke-tier tests, docs build."
     $UV sync --extra dev --extra data
     $UV run ruff check .
@@ -233,6 +261,7 @@ ci:
 
 # Fast local gate: lint → type → incremental smoke tests
 checks:
+    just preflight
     @echo "Running checks: format → lint → type → test (incremental)."
     just format
     just lint
@@ -298,6 +327,7 @@ ci-weekly: ci test-longhaul bench bench-longhaul
 
 # Build MkDocs site with strict checks.
 docs-build:
+    just preflight
     $UV run mkdocs build --strict
 
 # Serve MkDocs locally on :8000.

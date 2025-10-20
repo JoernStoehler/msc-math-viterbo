@@ -39,9 +39,7 @@ def minimal_action_cycle(
     if normals.ndim != 2 or offsets.ndim != 1:
         raise ValueError("normals must be (F, d) and offsets must be (F,)")
     if vertices.size(1) != normals.size(1):
-        raise ValueError(
-            "vertices and normals must share the same ambient dimension"
-        )
+        raise ValueError("vertices and normals must share the same ambient dimension")
     d = vertices.size(1)
     if d % 2 != 0:
         raise ValueError("ambient dimension must be even (2n) for symplectic problems")
