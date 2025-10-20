@@ -49,7 +49,7 @@
     "source=/srv/devhome/.cache/uv,target=/home/codespace/.cache/uv,type=bind,consistency=cached",
     "source=/srv/devhome/.bash_history_dir,target=/home/codespace/.bash_history_dir,type=bind,consistency=cached",
     // data
-    "source=/srv/devhome/.local/share/ai/bloop/vibe-kanban,target=/home/codespace/.local/share/ai/bloop/vibe-kanban,type=bind,consistency=cached",
+    "source=/srv/devhome/.local/share/vibe-kanban,target=/home/codespace/.local/share/vibe-kanban,type=bind,consistency=cached",
     "source=/srv/devworktrees/vibe-kanban/worktrees,target=/var/tmp/vibe-kanban/worktrees,type=bind,consistency=cached"
   ],
   "features": {}

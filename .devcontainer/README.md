@@ -71,7 +71,7 @@ Bind mounts (host recommended)
   - `/srv/devhome/.config/.wrangler` → `/home/codespace/.config/.wrangler` (persists Cloudflare Wrangler OAuth tokens)
   - `/srv/devhome/.cloudflared` → `/home/codespace/.cloudflared` (tunnel certs + config)
   - `/srv/devhome/.cache/uv` → `/home/codespace/.cache/uv`
-  - `/srv/devhome/.local/share/ai/bloop/vibe-kanban` → `/home/codespace/.local/share/ai/bloop/vibe-kanban`
+  - `/srv/devhome/.local/share/vibe-kanban` → `/home/codespace/.local/share/vibe-kanban`
 - Worktrees:
   - `/srv/devworktrees/vibe-kanban/worktrees` → `/var/tmp/vibe-kanban/worktrees`
 
