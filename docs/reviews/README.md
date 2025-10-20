@@ -42,8 +42,9 @@ Numbering (topics)
 Published reviews
 - 01 — Project Design Principles: 01-project-design-principles.md
 - 02 — Onboarding for New Agents: 02-onboarding.md
-- 08 — Review process and reviews in general: 08-review-process.md
 - 03 — Repo and code architecture: 03-repo-architecture.md
 - 04 — Code: 04-code.md
+- 07 — Algorithms used: 07-algorithms-used.md
+- 08 — Review process and reviews in general: 08-review-process.md
 
 Upcoming
