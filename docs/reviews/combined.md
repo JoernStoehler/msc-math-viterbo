@@ -56,9 +56,9 @@ Decisions Required (Owner Approval/Input)
   - Source: `sitecustomize.py:33`, `AGENTS.md:1`.
 
 - Advisor-facing overview and “Atlas Tiny” short doc priority
-  - Status: Deferred (add only if it gates an advisor demo)
-  - Ask: Prioritize creating a one-page advisor overview and a short `docs/datasets/atlas_tiny.md` before the next demo.
-  - Why: Improves advisor onboarding and aligns with Charter acceptance criteria.
+  - Status: Partially Done
+  - Ask: A short `docs/datasets/atlas_tiny.md` now exists and is linked in nav; consider adding an optional one-page “Advisor Overview” later if needed.
+  - Why: Improves advisor onboarding and aligns with Charter acceptance criteria; the Atlas Tiny page satisfies the immediate demo needs.
   - Source: `docs/charter.md:1`, `README.md:1`, `docs/README.md:1`.
 
 - Oriented‑edge 4D spec/impl wording and defaults

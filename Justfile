@@ -54,13 +54,13 @@ fetch-doi DOI STATUS="background":
 # Sync project dependencies (dev extras included).
 # Tip: Run after pulling dependency changes; idempotent under uv.
 sync:
-    @echo "Syncing project dependencies via uv (dev extras)."
-    $UV sync --extra dev
+    @echo "Syncing project dependencies via uv (dev + data extras)."
+    $UV sync --extra dev --extra data
 
 # Install the package with development dependencies, then refresh AGENTS.md sections.
 setup:
-    @echo "Syncing project dependencies via uv (dev extras)."
-    $UV sync --extra dev
+    @echo "Syncing project dependencies via uv (dev + data extras)."
+    $UV sync --extra dev --extra data
     @echo "Refreshing AGENTS.md skills sections."
     $UV run python scripts/load_skills_metadata.py --fix --quiet
 
@@ -224,8 +224,8 @@ precommit: precommit-slow
 # Run the CI command set locally.
 # Tip: Mirrors GitHub Actions; expect coverage artefacts and longer runtime.
 ci:
-    @echo "Running CI: sync deps, lint, type (basic), smoke-tier tests, docs build."
-    $UV sync --extra dev
+    @echo "Running CI: sync deps (dev + data), lint, type (basic), smoke-tier tests, docs build."
+    $UV sync --extra dev --extra data
     $UV run ruff check .
     $UV run pyright -p pyrightconfig.json
     $UV run pytest {{PYTEST_SMOKE_FLAGS}} -q {{PYTEST_ARGS}}
@@ -269,7 +269,7 @@ ci-cpu:
     UV_DEFAULT_INDEX="${UV_DEFAULT_INDEX:-https://download.pytorch.org/whl/cpu}" \
     UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL:-https://pypi.org/simple}" \
     UV_TORCH_BACKEND="${UV_TORCH_BACKEND:-cpu}" \
-        $UV pip install --system -e ".[dev]"
+        $UV pip install --system -e ".[dev,data]"
     @echo "Validating torch build is CPU-only."
     python scripts/verify_cpu_torch.py
     @echo "Running lint/type/smoke tests with coverage and docs build (system Python)."

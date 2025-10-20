@@ -88,6 +88,11 @@ Links: math details live under Math API pages (`math/volume.md`, `math/symplecti
   - `atlas_tiny_load_parquet(path)` — Parquet (file or dir) → HF `Dataset`.
   - `atlas_tiny_rows_from_hf(ds)` — HF rows → in‑memory rows (float64 tensors).
 
+Build notebook
+- Use `notebooks/atlas_tiny_build.py` to build rows and save Parquet in one step:
+  - `uv run python notebooks/atlas_tiny_build.py`
+  - Outputs to `artefacts/datasets/atlas-tiny/v1/` by default.
+
 ## Code Snippets
 
 Build rows in memory
