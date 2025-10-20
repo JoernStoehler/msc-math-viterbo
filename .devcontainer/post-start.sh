@@ -156,7 +156,7 @@ for d in \
   "$HOME/.codex" \
   "$HOME/.cloudflared" \
   "$HOME/.cache/uv" \
-  "$HOME/.local/share/vibe-kanban" \
+  "$HOME/.local/share/ai/bloop/vibe-kanban" \
   "/var/tmp/vibe-kanban/worktrees" \
 ; do
   [ -d "$d" ] || echo "  - mount missing (expected directory): $d"
