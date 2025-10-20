@@ -38,8 +38,8 @@ SRC_PATH = PROJECT_ROOT / "src"
 if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))
 
-from viterbo.datasets.atlas_tiny import atlas_tiny_build
-from viterbo.datasets.atlas_tiny_io import (
+from viterbo.datasets.atlas_tiny import atlas_tiny_build  # noqa: E402
+from viterbo.datasets.atlas_tiny_io import (  # noqa: E402
     atlas_tiny_save_parquet,
     atlas_tiny_to_hf,
 )
