@@ -10,6 +10,7 @@ set -euo pipefail
 #   install                 Run in-container tooling install
 #   preflight               Run in-container checks
 #   start [--interactive]   Start services inside container (idempotent)
+#   restart                 Restart only VibeKanban inside container
 #   stop                    Stop services inside container (best-effort)
 #   status [--verbose]      Show host+container status
 #   attach [--tmux]         Attach interactive shell/tmux in container
@@ -123,6 +124,15 @@ cmd_start() {
   fi
 }
 
+cmd_restart() {
+  ensure_devcontainer_cli
+  if ! is_container_running; then
+    fail $'Devcontainer is not running. Run: host-admin up'
+  fi
+  log "Restarting VibeKanban inside container (hot fix)"
+  run_in_container "bash .devcontainer/bin/container-admin restart" || warn "restart reported issues."
+}
+
 cmd_stop() {
   ensure_devcontainer_cli
   if ! is_container_running; then
@@ -233,6 +243,7 @@ Commands (execute left→right):
   install                 In-container tooling install
   preflight               In-container checks
   start [--interactive]   Start services inside container
+  restart                 Restart only VibeKanban inside container
   stop                    Stop services inside container
   status [--verbose]      Show host+container status
   attach [--tmux]         Attach to container (tmux or shell)
@@ -274,6 +285,7 @@ while [ $# -gt 0 ]; do
       interactive=0
       if [ "${2-}" = "--interactive" ]; then interactive=1; shift; fi
       cmd_start "$interactive"; last_cmd=start ;;
+    restart)   cmd_restart; last_cmd=restart ;;
     stop)       cmd_stop; last_cmd=stop ;;
     status)
       verbose=0
@@ -309,4 +321,3 @@ while [ $# -gt 0 ]; do
 done
 
 exit 0
-

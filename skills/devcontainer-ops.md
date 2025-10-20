@@ -8,7 +8,7 @@ last-updated: 2025-10-18
 
 ## Instructions
 - Host orchestration: `bash .devcontainer/bin/host-admin up preflight start` (add `--interactive` to attach tmux with tips).
-- In-container controls: `bash .devcontainer/bin/container-admin start|status|stop`.
+- In-container controls: `bash .devcontainer/bin/container-admin start|status|stop|restart`.
 - Status (concise): `bash .devcontainer/bin/host-admin status` (add `--verbose` for diagnostics).
 - Escalate with `Needs-Unblock: devcontainer` for recurring lifecycle issues or script changes.
 
@@ -22,16 +22,18 @@ Covers starting, stopping, and troubleshooting the project devcontainer and bund
 2. Stop: `bash .devcontainer/bin/host-admin down`.
 3. Rebuild: `bash .devcontainer/bin/host-admin rebuild [--no-cache]`.
 4. Status: `bash .devcontainer/bin/host-admin status [--verbose]`.
+5. Restart VibeKanban (hot fix): `bash .devcontainer/bin/host-admin restart`.
 
 ## In-Container Controls
 
 - Start: `.devcontainer/bin/container-admin start --detached`.
 - Status: `.devcontainer/bin/container-admin status [--verbose]`.
 - Stop: `.devcontainer/bin/container-admin stop`.
+- Restart VibeKanban only (hot fix): `.devcontainer/bin/container-admin restart`.
 
 ## Safety Guidelines
 
-- Avoid partial manual restarts; always use the paired start/stop scripts to keep tunnels consistent.
+- Avoid partial manual restarts; always use the paired start/stop scripts to keep tunnels consistent. Exception: use `restart` for VibeKanban-only hot fix.
 - Log script output (copy critical lines into task notes) when lifecycle changes occur.
 - If scripts fail, inspect recent changes to `.devcontainer/bin/` before retrying; escalate if errors persist.
 - Never edit `.devcontainer/bin/` scripts directly unless the maintainer assigns a task covering those files.

@@ -22,6 +22,7 @@ One-shot host startup (recommended)
 - Start everything from the host:
   - `bash .devcontainer/bin/host-admin up preflight start --interactive`
 - What it does: brings up the devcontainer, runs preflight, starts VS Code tunnel + Cloudflared + VibeKanban (detached), then verifies.
+ - Hot fix: if VibeKanban UI glitches, run `bash .devcontainer/bin/host-admin restart` to restart only the UI without touching tunnels.
 
 Devcontainer (low-level alternative)
 - `devcontainer up --workspace-folder /srv/workspaces/msc-math-viterbo`
@@ -40,6 +41,7 @@ Daily start (inside the container)
 - Start all (detached): `bash .devcontainer/bin/container-admin start --detached`
 - Status: `bash .devcontainer/bin/container-admin status`
 - Stop: `bash .devcontainer/bin/container-admin stop`
+ - Hot fix: restart only the VibeKanban UI: `bash .devcontainer/bin/container-admin restart`
 - Cloudflare Access: the public URL (`https://vibekanban.joernstoehler.com`) is gated by a Zero Trust Access application. Maintain the allowlist under Zero Trust → Access → Applications, and sign in with the configured IdP/OTP before using the board. Issue a service token only if non-browser automation needs to reach the board.
 - Status/Stop (alternative): see the commands above.
 

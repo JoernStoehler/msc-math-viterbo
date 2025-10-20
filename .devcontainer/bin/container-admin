@@ -7,6 +7,7 @@ set -euo pipefail
 #   install                 Install required CLIs (code, cloudflared, wrangler)
 #   preflight               Check required tooling and tunnel config
 #   start [--interactive]   Start VibeKanban, Code Tunnel, Cloudflared (idempotent)
+#   restart                 Restart only VibeKanban (hot fix)
 #   stop                    Stop services (best-effort)
 #   status [--verbose]      Show in-container service status
 #   attach [--tmux]         Attach to tmux session or open a shell
@@ -262,6 +263,24 @@ cmd_start() {
   fi
 }
 
+start_vibe_detached() {
+  mkdir -p "$HOME/.logs"
+  if ! command -v npx >/dev/null 2>&1; then
+    warn "  - vibe-kanban: skipped (npx missing)"
+    return 1
+  fi
+  local CMD="HOST='${HOST_BIND}' PORT='${FRONTEND_PORT}' FRONTEND_PORT='${FRONTEND_PORT}' npx --yes vibe-kanban"
+  if command -v tmux >/dev/null 2>&1; then
+    local SESSION="viterbo-owner"
+    tmux has-session -t "$SESSION" 2>/dev/null || tmux new-session -d -s "$SESSION" -n admin 'bash -lc :'
+    tmux new-window -t "$SESSION" -n "vibe" "bash -lc '$CMD'" >/dev/null
+    log "  - vibe-kanban: started (tmux window 'vibe')"
+  else
+    nohup bash -lc "$CMD" >"$HOME/.logs/vibe.log" 2>&1 < /dev/null & disown || true
+    log "  - vibe-kanban: started (nohup, logs in ~/.logs/vibe.log)"
+  fi
+}
+
 cmd_stop() {
   log "Stopping VibeKanban / Tunnel / Cloudflared (best-effort)."
 
@@ -315,6 +334,26 @@ cmd_stop() {
   fi
 
   log "Stop sequence completed."
+}
+
+cmd_restart() {
+  log "Restarting VibeKanban UI (best-effort)."
+
+  # Stop only VibeKanban
+  if pgrep -fa 'npx .*vibe-kanban' >/dev/null 2>&1 || pgrep -fa '(^|/)vibe-kanban( |$)' >/dev/null 2>&1; then
+    log "  - vibe-kanban: running; stopping"
+    pgrep -fa 'npx .*vibe-kanban' || true
+    pgrep -fa '(^|/)vibe-kanban( |$)' || true
+    pkill -f 'npx .*vibe-kanban' || true
+    pkill -f '(^|/)vibe-kanban( |$)' || true
+    sleep 0.3
+  else
+    log "  - vibe-kanban: not running"
+  fi
+
+  # Start only VibeKanban (detached)
+  start_vibe_detached || true
+  log "Restart complete."
 }
 
 cmd_status() {
@@ -447,6 +486,7 @@ Commands:
   install                 Install code/Cloudflared/wrangler
   preflight               Check tooling and tunnel config
   start [--interactive]   Start VibeKanban, Code Tunnel, Cloudflared
+  restart                 Restart only VibeKanban (hot fix)
   stop                    Stop services
   status [--verbose]      In-container service status
   attach [--tmux]         Attach tmux or start a shell
@@ -480,6 +520,7 @@ while [ $# -gt 0 ]; do
       if [ "${2-}" = "--foreground" ]; then mode_flags+=("--foreground"); shift; fi
       if [ "${2-}" = "--detached" ]; then mode_flags+=("--detached"); shift; fi
       cmd_start "${mode_flags[@]:-}"; last_cmd=start ;;
+    restart) cmd_restart; last_cmd=restart ;;
     stop) cmd_stop; last_cmd=stop ;;
     status)
       verbose=0; if [ "${2-}" = "--verbose" ]; then verbose=1; shift; fi
@@ -502,4 +543,3 @@ while [ $# -gt 0 ]; do
 done
 
 exit 0
-

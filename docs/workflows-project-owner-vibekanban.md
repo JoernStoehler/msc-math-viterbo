@@ -34,6 +34,7 @@ Start the environment
 - Recommended (one-shot from host):
   - `bash .devcontainer/bin/host-admin up preflight start --interactive`
   - Brings up the devcontainer, runs preflight, starts VS Code Tunnel + Cloudflared + VibeKanban (detached), then verifies.
+  - Hot fix: if the UI state looks corrupted, run `bash .devcontainer/bin/host-admin restart` to restart only VibeKanban without touching tunnels.
 - Low-level alternative:
   - On host: `devcontainer up --workspace-folder /srv/workspaces/msc-math-viterbo`
   - Enter shell: `devcontainer exec --workspace-folder /srv/workspaces/msc-math-viterbo bash -l`
@@ -167,6 +168,7 @@ See `.devcontainer/cloudflare/README.md` for the full rationale, decisions, and 
  Suggested improvements
 - Compose bring‑up/tear‑down via the simplified `.devcontainer/bin` scripts:
   - Start all (detached): `bash .devcontainer/bin/container-admin start --detached`
+  - Restart only VibeKanban (hot fix): `bash .devcontainer/bin/container-admin restart` (or from host: `bash .devcontainer/bin/host-admin restart`)
   - Stop all: `bash .devcontainer/bin/container-admin stop`
   - Status: `bash .devcontainer/bin/container-admin status`
  - Persist VibeKanban Data:
