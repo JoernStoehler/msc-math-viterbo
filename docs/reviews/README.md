@@ -43,11 +43,16 @@ Published reviews
 - 01 — Project Design Principles: 01-project-design-principles.md
 - 02 — Onboarding for New Agents: 02-onboarding.md
 - 03 — Repo and code architecture: 03-repo-architecture.md
- - 04 — Code: 04-code.md
- - 05 — Developer documentation: 05-developer-documentation.md
- - 06 — Math used: 06-math-used.md
- - 07 — Algorithms used: 07-algorithms-used.md
- - 08 — Review process and reviews in general: 08-review-process.md
- - 13 — Repo readiness for AI vs humans: 13-repo-readiness-ai-vs-humans.md
+- 04 — Code: 04-code.md
+- 05 — Developer documentation: 05-developer-documentation.md
+- 06 — Math used: 06-math-used.md
+- 07 — Algorithms used: 07-algorithms-used.md
+- 08 — Review process and reviews in general: 08-review-process.md
+- 09 — Advisor‑facing documentation/presentation: 09-advisor-docs.md
+- 10 — MSc thesis: 10-msc-thesis.md
+- 11 — Project owner workflows: 11-owner-workflows.md
+- 12 — Project management (agents and owner): 12-project-management.md
+- 13 — Repo readiness for AI vs humans: 13-repo-readiness-ai-vs-humans.md
+- 14 — Misc: 14-misc.md
 
 Upcoming

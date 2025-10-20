@@ -4,7 +4,7 @@ Provenance
 - Topic: 1 — Project Design Principles
 - Author: Agent (Codex CLI)
 - Date: 2025-10-20
-- Commit: <fill on merge>
+- Commit: 96e7f5a
 - Timebox: ~60–90 minutes
 - Scope: Design principles with onboarding emphasis
 - Version: v0.1

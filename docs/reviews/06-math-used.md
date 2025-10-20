@@ -4,7 +4,7 @@ Provenance
 - Topic: 6 — Math used
 - Author: Agent (Codex CLI)
 - Date: 2025-10-20
-- Commit: <fill on merge>
+- Commit: 4dab5e0
 - Timebox: ~90–120 minutes
 - Scope: Mathematical foundations referenced/implemented; invariants; algorithmic cutoffs and their citations; correctness warnings; tests that lock behavior; only documentation changes
 - Version: v0.1
@@ -132,4 +132,3 @@ Limitations
 
 Status
 - Finalized
-

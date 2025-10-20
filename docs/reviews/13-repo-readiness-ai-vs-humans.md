@@ -4,7 +4,7 @@ Provenance
 - Topic: 13 — Repo readiness for AI vs humans
 - Author: Agent (Codex CLI)
 - Date: 2025-10-20
-- Commit: <fill on merge>
+- Commit: 5065563
 - Timebox: ~90 minutes (read → draft → validate)
 - Scope: Skills coverage, VibeKanban ergonomics, command flows, documentation shape, formatting/safety edge cases
 - Version: v0.1
@@ -113,4 +113,3 @@ Limitations
 
 Status
 - Finalized
-

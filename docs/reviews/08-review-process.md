@@ -4,7 +4,7 @@ Provenance
 - Topic: 8 — Review process and reviews in general
 - Author: Agent (Codex CLI)
 - Date: 2025-10-20
-- Commit: <fill on merge>
+- Commit: 96e7f5a
 - Timebox: ~60–90 minutes
 - Scope: Repository review process; minor cross-links
 - Version: v0.1

@@ -4,7 +4,7 @@ Provenance
 - Topic: 3 — Repo and code architecture
 - Author: Agent (Codex CLI)
 - Date: 2025-10-20
-- Commit: <fill on merge>
+- Commit: 585a547
 - Timebox: ~90–120 minutes
 - Scope: Full repository with emphasis on layering/boundaries (math → datasets → models), numerics and purity policies, and enforcement via tests/types/docs
 - Version: v0.1
@@ -102,4 +102,3 @@ Pre-Submit Checklist
 - Cross‑refs noted — yes
 - Provenance filled — yes
 - Title matches pattern — yes
-
