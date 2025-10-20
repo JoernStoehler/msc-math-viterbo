@@ -29,6 +29,11 @@ dev = [
     "mkdocs>=1.6.0",
     "mkdocs-material>=9.5.40",
 ]
+data = [
+    "pyarrow>=14",
+    "datasets>=2.19.0",
+    "orjson>=3.10.0",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
