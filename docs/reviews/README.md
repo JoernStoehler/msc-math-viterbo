@@ -56,3 +56,21 @@ Published reviews
 - 14 — Misc: 14-misc.md
 
 Upcoming
+
+Deep Dives
+- Testing & CI Deep-Dive: deep-testing-and-ci.md
+- Datasets & Collation Deep-Dive: deep-datasets-collation.md
+- Performance Discipline Deep-Dive: deep-performance-discipline.md
+- C++ Extensions & Build Toolchain Deep-Dive: deep-cpp-extensions-build.md
+- EHZ 4D Oriented-Edge Solver Readiness Deep-Dive: deep-ehz-oriented-edge-4d.md
+- Volume Backends Readiness Deep-Dive: deep-volume-backends.md
+- Security & Operational Posture Deep-Dive: deep-security-operational-posture.md
+
+Deep Dives
+- Testing & CI Deep-Dive: deep-testing-and-ci.md
+- Datasets & Collation Deep-Dive: deep-datasets-collation.md
+- Performance Discipline Deep-Dive: deep-performance-discipline.md
+- C++ Extensions & Build Toolchain Deep-Dive: deep-cpp-extensions-build.md
+- EHZ 4D Oriented-Edge Solver Readiness Deep-Dive: deep-ehz-oriented-edge-4d.md
+- Volume Backends Readiness Deep-Dive: deep-volume-backends.md
+- Security & Operational Posture Deep-Dive: deep-security-operational-posture.md
