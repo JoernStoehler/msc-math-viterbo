@@ -1,10 +1,10 @@
 ---
-name: benchmarking-and-profiling
-description: This skill should be used when benchmarking, profiling, or addressing performance regressions.
+name: performance-discipline
+description: Use when measuring, profiling, and addressing bottlenecks in the main algorithm; escalate to C++ only with evidence.
 last-updated: 2025-10-18
 ---
 
-# Benchmarking and Profiling
+# Performance Discipline
 
 ## Instructions
 - Start with pure Python/Torch; measure first with smoke benches (`just bench`) and representative inputs.
@@ -14,9 +14,9 @@ last-updated: 2025-10-18
 
 ## Philosophy
 
-- Start with pure Python/Torch implementations. Introduce C++ or other accelerations only when profiling identifies sustained hotspots.
-- Keep math layer APIs pure and device-agnostic; let callers decide device placement.
+- Measure first with representative inputs; optimize second. Introduce C++ only when profiling identifies sustained hotspots.
 - Treat performance regressions beyond existing tolerances as escalation triggers.
+- Preemptive coding conventions live in `good-code-loop` and module skills (e.g., `math-layer`).
 
 ## Benchmarking Workflow
 
@@ -39,6 +39,6 @@ last-updated: 2025-10-18
 
 ## Related Skills
 
-- `testing-and-troubleshooting` — validates functionality before benchmarking.
-- `following-coding-standards` — safeguards architectural boundaries when refactoring for performance.
-- `collaborating-and-reporting` — use when summarizing performance findings for maintainers.
+- `testing-and-ci` — validates functionality before benchmarking.
+- `good-code-loop` — safeguards architectural boundaries when refactoring for performance.
+- `collaboration-reporting` — use when summarizing performance findings for maintainers.

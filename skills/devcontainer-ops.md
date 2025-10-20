@@ -1,16 +1,16 @@
 ---
-name: operating-devcontainer
-description: This skill should be used when operating or troubleshooting the devcontainer and its services.
+name: devcontainer-ops
+description: This skill should be used when starting, stopping, or troubleshooting the devcontainer and its services.
 last-updated: 2025-10-18
 ---
 
-# Operating the Devcontainer
+# Devcontainer Operations
 
 ## Instructions
-- Prefer the unified admin wrapper for host orchestration: `bash .devcontainer/bin/admin up preflight start`.
-- Shortcuts remain available: `bash .devcontainer/bin/owner-up.sh` and `bash .devcontainer/bin/owner-down.sh`.
-- Manage in-container services via `.devcontainer/bin/dev-*.sh`.
-- Status (concise): `bash .devcontainer/bin/admin status` (add `--verbose` for diagnostics). Legacy: `bash .devcontainer/bin/owner-status-host.sh`.
+- Prefer the admin wrapper for host orchestration when available: `bash .devcontainer/bin/admin up preflight start`.
+- Start the environment with `bash .devcontainer/bin/owner-up.sh`; capture errors and outputs in task notes if anything fails.
+- Manage in-container services via `.devcontainer/bin/dev-*.sh` and shut down with `bash .devcontainer/bin/owner-down.sh`.
+- Use `bash .devcontainer/bin/owner-status-host.sh` for safe status checks; avoid partial manual restarts.
 - Escalate with `Needs-Unblock: devcontainer` for recurring lifecycle issues or script changes.
 
 ## Scope
@@ -19,7 +19,7 @@ Covers starting, stopping, and troubleshooting the project devcontainer and bund
 
 ## Host-Level Lifecycle
 
-1. To start services: run `bash .devcontainer/bin/owner-up.sh`.
+1. To start services: run `bash .devcontainer/bin/owner-up.sh` (or the admin wrapper `bash .devcontainer/bin/admin up preflight start` when you need the preflight checks).
    - Confirms prerequisites, starts the container, launches tunnels, and surfaces status output.
 2. To stop services cleanly: run `bash .devcontainer/bin/owner-down.sh`.
    - Wait for completion before restarting to avoid orphaned tunnels.
@@ -50,6 +50,6 @@ Covers starting, stopping, and troubleshooting the project devcontainer and bund
 
 ## Related Skills
 
-- `always` — confirms when to load this skill.
-- `testing-and-troubleshooting` — run after the container is operational to validate project health.
-- `collaborating-and-reporting` — document lifecycle incidents that impact other collaborators.
+- `repo-onboarding` — confirms when to load this skill.
+- `testing-and-ci` — run after the container is operational to validate project health.
+- `collaboration-reporting` — document lifecycle incidents that impact other collaborators.
