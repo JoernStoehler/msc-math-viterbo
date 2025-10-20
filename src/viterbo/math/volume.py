@@ -1,4 +1,12 @@
-"""Polytope volume helpers with Torch-first, dimension-agnostic implementations."""
+"""Polytope volume helpers with Torch-first, dimension-agnostic implementations.
+
+Backends implicitly used by ``volume``
+- 2D (``D == 2``): shoelace polygon area on the convex hull (backend: "area2d").
+- Higher dimensions (``D >= 3``): facet measure accumulation using supporting
+  halfspaces and heights to a reference point (backend: "facets").
+
+These implementations are pure Torch and preserve dtype/device of inputs.
+"""
 
 from __future__ import annotations
 
@@ -54,12 +62,14 @@ def _facet_measure(vertices: torch.Tensor, tol: float) -> torch.Tensor:
 
 
 def volume(vertices: torch.Tensor) -> torch.Tensor:
-    """Volume of a convex polytope in ``R^D`` for ``D >= 1``."""
-    if vertices.ndim != 2:
-        raise ValueError("vertices must be (M, D)")
+    """Volume of a convex polytope in ``R^D`` for ``D >= 1``.
+
+    Validates input shape and dispatches to the appropriate backend
+    ("area2d" or "facets").
+    """
+    if vertices.ndim != 2 or vertices.size(1) < 1:
+        raise ValueError("vertices must be (M, D) with D>=1")
     dim = vertices.size(1)
-    if dim == 0:
-        raise ValueError("dimension must be positive")
     dtype = vertices.dtype
     device = vertices.device
     tol = max(float(torch.finfo(dtype).eps) ** 0.5, 1e-9)

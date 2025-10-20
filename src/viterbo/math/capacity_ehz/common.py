@@ -1,4 +1,9 @@
-"""Common helpers for EHZ capacity solvers (planar + 4D utilities)."""
+"""Common helpers for EHZ capacity solvers (planar + 4D utilities).
+
+This module contains small, pure validation and geometry helpers shared by the
+EHZ capacity front-ends. Functions here do not perform any I/O and preserve the
+dtype/device of tensor inputs where applicable.
+"""
 
 from __future__ import annotations
 
@@ -57,43 +62,77 @@ def split_lagrangian_product_vertices(
 
 
 def validate_planar_vertices(vertices: torch.Tensor, name: str) -> None:
-    """Validate that ``vertices`` is a polygon ``(N, 2)`` with ``N ≥ 3``."""
-    if vertices.ndim != 2 or vertices.size(1) != 2:
-        raise ValueError(f"{name} must be a (N, 2) tensor")
+    """Validate that ``vertices`` is a polygon ``(N, 2)`` with ``N ≥ 3``.
+
+    Error messages include the provided ``name`` to aid debugging.
+    """
+    if vertices.ndim != 2:
+        raise ValueError(f"{name} must be (N, 2) with N>=3; got ndim={vertices.ndim}")
+    if vertices.size(1) != 2:
+        raise ValueError(
+            f"{name} must be planar with shape (N, 2); got (N, {vertices.size(1)})"
+        )
     if vertices.size(0) < 3:
-        raise ValueError(f"{name} must contain at least three vertices")
+        raise ValueError(f"{name} must contain at least three vertices; got N={vertices.size(0)}")
 
 
 def validate_halfspaces_planar(
     normals: torch.Tensor, offsets: torch.Tensor, normals_name: str, offsets_name: str
 ) -> None:
-    """Validate that halfspaces define a planar convex set with positive offsets."""
-    if normals.ndim != 2 or offsets.ndim != 1:
-        raise ValueError(f"{normals_name} must be (F, 2) and {offsets_name} must be (F,)")
+    """Validate that halfspaces define a planar convex set with positive offsets.
+
+    Requirements: ``normals`` is ``(F, 2)``, ``offsets`` is ``(F,)``, ``F >= 3``,
+    matching first dimension, and strictly positive offsets.
+    """
+    if normals.ndim != 2:
+        raise ValueError(f"{normals_name} must be (F, 2); got ndim={normals.ndim}")
+    if offsets.ndim != 1:
+        raise ValueError(f"{offsets_name} must be (F,); got ndim={offsets.ndim}")
+    if normals.size(1) != 2:
+        raise ValueError(f"{normals_name} must have D=2; got D={normals.size(1)}")
     if normals.size(0) != offsets.size(0):
         raise ValueError(f"{normals_name} and {offsets_name} must share the first dimension")
-    if normals.size(1) != 2:
-        raise ValueError(f"{normals_name} must describe planar halfspaces")
+    if normals.size(0) < 3:
+        raise ValueError(f"{normals_name} must contain at least three rows (F>=3)")
     if torch.any(offsets <= 0):
         raise ValueError(f"{offsets_name} must be strictly positive for a valid convex body")
 
 
 def order_vertices_ccw(vertices: torch.Tensor) -> torch.Tensor:
-    """Return the input polygon vertices ordered counter-clockwise."""
+    """Return input polygon vertices ordered counter-clockwise.
+
+    - Expects ``vertices`` to be ``(M, 2)`` with ``M>=3`` and non-degenerate
+      (area > 0). Duplicate rows are permitted but at least three unique points
+      are required.
+    - The returned tensor preserves the input ``dtype``/``device``.
+    """
     if vertices.ndim != 2 or vertices.size(1) != 2:
         raise ValueError("vertices must be (M, 2) tensor")
     if vertices.size(0) < 3:
         raise ValueError("need at least three vertices for a 2D polygon")
+    unique = torch.unique(vertices, dim=0)
+    if unique.size(0) < 3:
+        raise ValueError("degenerate polygon: fewer than three unique vertices")
     centroid = vertices.mean(dim=0)
     shifted = vertices - centroid
     angles = torch.atan2(shifted[:, 1], shifted[:, 0])
     order = torch.argsort(angles)
     ordered = vertices[order]
+    # Detect collinearity/zero area and provide a clearer error.
+    rolled = ordered.roll(shifts=-1, dims=0)
+    cross = ordered[:, 0] * rolled[:, 1] - ordered[:, 1] * rolled[:, 0]
+    signed_area = 0.5 * torch.sum(cross)
+    if torch.isclose(signed_area.abs(), torch.zeros((), dtype=vertices.dtype, device=vertices.device)):
+        raise ValueError("degenerate polygon: zero area (collinear points)")
     return ordered
 
 
 def polygon_area(vertices: torch.Tensor) -> torch.Tensor:
-    """Return the positive oriented area of a planar polygon."""
+    """Return the positive area of a planar polygon.
+
+    Uses the shoelace formula on the CCW-ordered boundary. The returned scalar
+    preserves the input tensor's ``dtype`` and ``device``.
+    """
     ordered = order_vertices_ccw(vertices)
     rolled = ordered.roll(shifts=-1, dims=0)
     cross = ordered[:, 0] * rolled[:, 1] - ordered[:, 1] * rolled[:, 0]
