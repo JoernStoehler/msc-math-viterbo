@@ -17,7 +17,6 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import json
-from json import JSONDecodeError
 import re
 import shutil
 import subprocess
@@ -27,6 +26,7 @@ import textwrap
 import urllib.error
 import urllib.parse
 import urllib.request
+from json import JSONDecodeError
 from pathlib import Path
 
 

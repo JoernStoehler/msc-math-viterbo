@@ -88,6 +88,9 @@ future-annotations = true
 "src/viterbo/**/__init__.py" = ["F401", "F841", "ANN401"]
 "typings/**/*" = ["TID252", "ANN401", "UP035", "UP037", "UP047", "I001"]
 "notebooks/**" = ["T20", "I001", "D", "F401", "UP035"]
+"scripts/fetch_paper.py" = ["I001"]
+"tests/math/test_capacity_frontends.py" = ["I001"]
+"tests/math/test_oriented_edge_memo_smoke.py" = ["I001"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
