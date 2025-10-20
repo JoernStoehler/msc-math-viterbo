@@ -45,6 +45,7 @@ Published reviews
 - 03 — Repo and code architecture: 03-repo-architecture.md
  - 04 — Code: 04-code.md
  - 05 — Developer documentation: 05-developer-documentation.md
+ - 06 — Math used: 06-math-used.md
  - 07 — Algorithms used: 07-algorithms-used.md
  - 08 — Review process and reviews in general: 08-review-process.md
 
