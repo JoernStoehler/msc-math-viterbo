@@ -76,6 +76,7 @@ This file is an index. Load the right skill guides for your task.
 - `skills/good-code-loop.md` — good-code-loop — Use for shipping correct code with tests while preserving architecture boundaries and PR hygiene. (last-updated: 2025-10-18)
 - `skills/math-layer.md` — math-layer — This skill should be used when implementing or modifying math-layer geometry utilities in `src/viterbo/math`. (last-updated: 2025-10-18)
 - `skills/math-theory.md` — math-theory — Use for invariants, conventions, and references that guide math implementation and review. (last-updated: 2025-10-17)
+- `skills/papers-workflow.md` — papers-workflow — This skill should be used when searching, fetching, and curating papers; prefer open preprints and store text under docs/papers with index updates. (last-updated: 2025-10-20)
 - `skills/performance-discipline.md` — performance-discipline — Use when measuring, profiling, and addressing bottlenecks in the main algorithm; escalate to C++ only with evidence. (last-updated: 2025-10-18)
 - `skills/repo-layout.md` — repo-layout — This skill should be used when navigating repository structure, sources of truth, and documentation locations. (last-updated: 2025-10-17)
 - `skills/repo-onboarding.md` — repo-onboarding — This skill should be used when starting a new task or resuming work to follow the repository’s startup sequence. (last-updated: 2025-10-17)

@@ -39,6 +39,18 @@ run *ARGS:
 shell:
     bash -l
 
+# Fetch a paper by arXiv ID and store text under docs/papers.
+# Usage: just fetch-arxiv ID=1712.03494 STATUS=useful
+fetch-arxiv ID STATUS="useful":
+    @echo "Fetching arXiv:{{ID}} (status={{STATUS}})"
+    $UV run python scripts/fetch_paper.py --arxiv {{ID}} --status {{STATUS}}
+
+# Fetch a paper by DOI and store text if an OA PDF is found.
+# Usage: just fetch-doi DOI=10.1007/s00039-019-00486-4 STATUS=background
+fetch-doi DOI STATUS="background":
+    @echo "Fetching DOI:{{DOI}} (status={{STATUS}})"
+    $UV run python scripts/fetch_paper.py --doi {{DOI}} --status {{STATUS}}
+
 # Sync project dependencies (dev extras included).
 # Tip: Run after pulling dependency changes; idempotent under uv.
 sync:
