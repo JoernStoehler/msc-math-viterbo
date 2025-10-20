@@ -61,11 +61,7 @@ def _pdftotext(pdf_path: Path) -> str:
 
 def _write_paper_md(outdir: Path, title: str, source: str, text: str) -> Path:
     outdir.mkdir(parents=True, exist_ok=True)
-    md = (
-        f"---\nsource: {source}\n"
-        f"fetched: {_dt.datetime.utcnow().date()}\n---\n"
-        f"# {title}\n\n{text}"
-    )
+    md = f"---\nsource: {source}\nfetched: {_dt.datetime.utcnow().date()}\n---\n# {title}\n\n{text}"
     path = outdir / "paper.md"
     path.write_text(md, encoding="utf-8")
     return path
@@ -107,9 +103,9 @@ def fetch_arxiv(arxiv_id: str, status: str | None = None) -> None:
 
     idx_block = textwrap.dedent(
         f"""
-        - {', '.join(authors) if authors else 'Unknown'} ({year}) — “{title}” — arXiv:{arxiv_id}
+        - {", ".join(authors) if authors else "Unknown"} ({year}) — “{title}” — arXiv:{arxiv_id}
           - Local: `{outdir.as_posix()}/paper.md`
-          - Status: {status or 'useful'} — add as appropriate.
+          - Status: {status or "useful"} — add as appropriate.
           - Takeaways:
             - …
         """
@@ -126,7 +122,9 @@ def _crossref_meta(doi: str) -> tuple[str, str, list[str]]:
         msg = json.load(r).get("message", {})
     title = (msg.get("title") or [doi])[0]
     year = ""
-    issued = msg.get("issued", {}).get("'date-parts", []) or msg.get("issued", {}).get("date-parts", [])
+    issued = msg.get("issued", {}).get("'date-parts", []) or msg.get("issued", {}).get(
+        "date-parts", []
+    )
     if issued and issued[0]:
         year = str(issued[0][0])
     authors: list[str] = []
@@ -134,7 +132,7 @@ def _crossref_meta(doi: str) -> tuple[str, str, list[str]]:
         name = " ".join([a.get("given", ""), a.get("family", "")]).strip() or a.get("name", "")
         if name:
             authors.append(name)
-    return title, (year or _dt.datetime.utcnow().strftime('%Y')), authors
+    return title, (year or _dt.datetime.utcnow().strftime("%Y")), authors
 
 
 def fetch_doi(doi: str, status: str | None = None) -> None:
@@ -179,9 +177,9 @@ def fetch_doi(doi: str, status: str | None = None) -> None:
         outdir = DOCS_DIR / slug
         idx_block = textwrap.dedent(
             f"""
-            - {', '.join(authors) if authors else 'Unknown'} ({year}) — “{title}” — doi:{doi}
+            - {", ".join(authors) if authors else "Unknown"} ({year}) — “{title}” — doi:{doi}
               - Local: none (no OA link found via OpenAlex)
-              - Status: {status or 'background'} — add as appropriate.
+              - Status: {status or "background"} — add as appropriate.
               - Takeaways:
                 - …
             """
@@ -210,9 +208,9 @@ def fetch_doi(doi: str, status: str | None = None) -> None:
 
     idx_block = textwrap.dedent(
         f"""
-        - {', '.join(authors) if authors else 'Unknown'} ({year}) — “{title or doi}” — doi:{doi}
+        - {", ".join(authors) if authors else "Unknown"} ({year}) — “{title or doi}” — doi:{doi}
           - Local: `{outdir.as_posix()}/paper.md`
-          - Status: {status or 'background'} — add as appropriate.
+          - Status: {status or "background"} — add as appropriate.
           - Takeaways:
             - …
         """

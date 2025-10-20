@@ -10,6 +10,7 @@ import math
 import torch
 
 from viterbo.math.polytope import halfspaces_to_vertices, vertices_to_halfspaces
+from viterbo.math.volume import volume as polytope_volume
 
 
 def _make_generator(seed: int | torch.Generator) -> torch.Generator:
@@ -66,6 +67,168 @@ def rotated_regular_ngon2d(k: int, angle: float) -> tuple[torch.Tensor, torch.Te
     normals_tensor = torch.stack(normals)
     offsets_tensor = torch.stack(offsets)
     return vertices, normals_tensor, offsets_tensor
+
+
+# -----------------------------------------------------------------------------
+# Canonical, deterministic constructors (Torch-first, no I/O)
+
+
+def unit_square() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Axis-aligned square [-1, 1]^2 in R^2.
+
+    Returns (vertices, normals, offsets) with float64 CPU tensors.
+    - Vertices are ordered counter-clockwise.
+    - Deterministic with no randomness.
+    - Normals are unit-length; offsets positive.
+    - Area (via viterbo.math.volume.volume) equals 4.0.
+    """
+    dtype = torch.float64
+    device = torch.device("cpu")
+    vertices = torch.tensor(
+        [[-1.0, -1.0], [1.0, -1.0], [1.0, 1.0], [-1.0, 1.0]], dtype=dtype, device=device
+    )
+    normals, offsets = vertices_to_halfspaces(vertices)
+    # Area sanity (not used, but documents determinism in implementation).
+    _ = polytope_volume(vertices)
+    return vertices, normals, offsets
+
+
+def triangle_area_one() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Right triangle with unit area in R^2.
+
+    Uses vertices [[0,0], [2,0], [0,1]] in CCW order. Returns float64 CPU tensors.
+    Deterministic; normals are unit-length and offsets positive.
+    """
+    dtype = torch.float64
+    device = torch.device("cpu")
+    vertices = torch.tensor([[0.0, 0.0], [2.0, 0.0], [0.0, 1.0]], dtype=dtype, device=device)
+    normals, offsets = vertices_to_halfspaces(vertices)
+    return vertices, normals, offsets
+
+
+def regular_simplex(d: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Orthogonal simplex in R^d: origin + standard basis vectors.
+
+    Args:
+      d: dimension (d >= 1).
+
+    Returns:
+      (vertices, normals, offsets) as float64 CPU tensors.
+
+    Notes:
+      For d = 4, the volume equals 1/4!.
+    """
+    if d < 1:
+        raise ValueError("dimension d must be >= 1")
+    dtype = torch.float64
+    device = torch.device("cpu")
+    origin = torch.zeros((1, d), dtype=dtype, device=device)
+    basis = torch.eye(d, dtype=dtype, device=device)
+    vertices = torch.cat((origin, basis), dim=0)
+    normals, offsets = vertices_to_halfspaces(vertices)
+    return vertices, normals, offsets
+
+
+def counterexample_pentagon_product() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Regular 5-gon × 90°-rotated 5-gon in R^4.
+
+    Uses rotated_regular_ngon2d(5, 0.0) and rotated_regular_ngon2d(5, -0.5*pi),
+    then combines factors via lagrangian_product(). Returns float64 CPU tensors.
+    """
+    v_q, _, _ = rotated_regular_ngon2d(5, 0.0)
+    v_p, _, _ = rotated_regular_ngon2d(5, -0.5 * torch.pi)
+    vertices, normals, offsets = lagrangian_product(v_q.to(torch.float64), v_p.to(torch.float64))
+    return vertices, normals, offsets
+
+
+def noisy_pentagon_product(
+    seed_q: int = 314159, seed_p: int = 271828, amp: float = 0.03
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Noisy 5-gon × rotated 5-gon product in R^4 (deterministic).
+
+    Applies slight per-vertex radial noise to each factor before forming the
+    Lagrangian product. Deterministic given seeds; returns float64 CPU tensors.
+
+    Args:
+      seed_q: RNG seed for q-plane 5-gon.
+      seed_p: RNG seed for p-plane 5-gon.
+      amp: amplitude of per-vertex radial noise (scale = 1 + amp*(U-0.5)).
+    """
+    if amp < 0:
+        raise ValueError("amp must be non-negative")
+    gen_q = torch.Generator(device="cpu")
+    gen_q.manual_seed(int(seed_q))
+    gen_p = torch.Generator(device="cpu")
+    gen_p.manual_seed(int(seed_p))
+    base_q, _, _ = rotated_regular_ngon2d(5, 0.0)
+    base_p, _, _ = rotated_regular_ngon2d(5, -0.5 * torch.pi)
+    scale_q = 1.0 + amp * (torch.rand(5, generator=gen_q) - 0.5)
+    scale_p = 1.0 + amp * (torch.rand(5, generator=gen_p) - 0.5)
+    vertices_q = (base_q * scale_q.unsqueeze(1)).to(torch.float64)
+    vertices_p = (base_p * scale_p.unsqueeze(1)).to(torch.float64)
+    vertices, normals, offsets = lagrangian_product(vertices_q, vertices_p)
+    return vertices, normals, offsets
+
+
+def mixed_nonproduct_from_product(
+    mix: torch.Tensor | None = None,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Apply a fixed near-identity mixing to a noisy pentagon product in R^4.
+
+    Starts from noisy_pentagon_product() and applies a linear mixing matrix to
+    break block-diagonal (product) structure, then recomputes H-representation.
+
+    Args:
+      mix: optional (4,4) matrix. If provided, dtype/device are preserved.
+           Defaults to the matrix used in tests/polytopes.py.
+    """
+    base_vertices, _, _ = noisy_pentagon_product()
+    if mix is None:
+        mix = torch.tensor(
+            [
+                [1.0, 0.02, 0.01, 0.0],
+                [0.0, 0.99, -0.03, 0.02],
+                [0.01, 0.0, 1.0, 0.04],
+                [0.0, -0.02, 0.0, 1.02],
+            ],
+            dtype=torch.float64,
+            device=base_vertices.device,
+        )
+    if mix.ndim != 2 or mix.size(0) != 4 or mix.size(1) != 4:
+        raise ValueError("mix must be a (4, 4) matrix")
+    vertices = base_vertices.to(dtype=mix.dtype, device=mix.device) @ mix.T
+    normals, offsets = vertices_to_halfspaces(vertices)
+    return vertices, normals, offsets
+
+
+def random_polygon(seed: int, k: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Deterministic planar polygon via angle-sorted radii in [0.8, 1.2].
+
+    Args:
+      seed: RNG seed (CPU generator).
+      k: number of vertices (k >= 3).
+
+    Returns:
+      (vertices, normals, offsets) with float64 CPU tensors. Vertices are in
+      CCW order (increasing angle).
+    """
+    if k < 3:
+        raise ValueError("k must be at least 3")
+    gen = torch.Generator(device="cpu")
+    gen.manual_seed(int(seed))
+    raw = torch.rand(k, generator=gen) * (2.0 * torch.pi)
+    # Map to [-pi, pi) then sort so atan2 order is non-decreasing (CCW).
+    mapped = raw.clone()
+    mapped = torch.where(mapped > torch.pi, mapped - 2.0 * torch.pi, mapped)
+    order = torch.argsort(mapped)
+    angles = mapped[order]
+    radii = 0.8 + 0.4 * torch.rand(k, generator=gen)
+    radii = radii[order]
+    x = radii * torch.cos(angles)
+    y = radii * torch.sin(angles)
+    vertices = torch.stack((x, y), dim=1).to(dtype=torch.float64, device=torch.device("cpu"))
+    normals, offsets = vertices_to_halfspaces(vertices)
+    return vertices, normals, offsets
 
 
 def matmul_vertices(matrix: torch.Tensor, vertices: torch.Tensor) -> torch.Tensor:

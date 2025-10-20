@@ -4,9 +4,16 @@ import torch
 from tests.polytopes import STANDARD_POLYTOPES_BY_NAME
 
 from viterbo.math.constructions import (
+    counterexample_pentagon_product,
     lagrangian_product,
+    mixed_nonproduct_from_product,
+    noisy_pentagon_product,
+    random_polygon,
     random_polytope_algorithm1,
     random_polytope_algorithm2,
+    regular_simplex,
+    triangle_area_one,
+    unit_square,
 )
 from viterbo.math.volume import volume
 
@@ -104,3 +111,79 @@ def test_lagrangian_product_2d_blocks_form_4d_polytope() -> None:
     assert offsets.shape[0] == normals.shape[0]
     assert _feasible(normals, offsets, vertices)
     assert volume(vertices).item() > 0
+
+
+# ---- Canonical constructors -------------------------------------------------
+
+
+def _unit_row_norms(normals: torch.Tensor, atol: float = 1e-8) -> None:
+    norms = torch.linalg.norm(normals, dim=1)
+    torch.testing.assert_close(norms, torch.ones_like(norms), atol=atol, rtol=0.0)
+
+
+def test_unit_square_shapes_and_area() -> None:
+    v, n, c = unit_square()
+    assert v.shape == (4, 2)
+    assert n.shape[1] == 2 and c.shape[0] == n.shape[0]
+    assert v.dtype == torch.float64 and n.dtype == torch.float64 and c.dtype == torch.float64
+    _unit_row_norms(n)
+    area = volume(v)
+    torch.testing.assert_close(area, torch.tensor(4.0, dtype=torch.float64))
+
+
+def test_triangle_area_one() -> None:
+    v, n, c = triangle_area_one()
+    assert v.shape == (3, 2)
+    assert n.shape[1] == 2 and c.shape[0] == n.shape[0]
+    _unit_row_norms(n)
+    area = volume(v)
+    torch.testing.assert_close(area, torch.tensor(1.0, dtype=torch.float64))
+
+
+def test_regular_simplex_4d_volume() -> None:
+    v, n, c = regular_simplex(4)
+    assert v.shape == (5, 4)
+    assert n.shape[1] == 4 and c.shape[0] == n.shape[0]
+    _unit_row_norms(n, atol=1e-7)
+    vol = volume(v)
+    torch.testing.assert_close(
+        vol, torch.tensor(1.0 / 24.0, dtype=torch.float64), atol=1e-10, rtol=0.0
+    )
+
+
+def test_counterexample_pentagon_product_shapes() -> None:
+    v, n, c = counterexample_pentagon_product()
+    assert v.shape == (25, 4)
+    assert n.shape[1] == 4 and c.shape[0] == n.shape[0]
+    _unit_row_norms(n, atol=1e-7)
+    assert torch.all(c > 0)
+
+
+def test_noisy_pentagon_product_deterministic() -> None:
+    v1, n1, c1 = noisy_pentagon_product()
+    v2, n2, c2 = noisy_pentagon_product()
+    torch.testing.assert_close(v1, v2)
+    torch.testing.assert_close(n1, n2)
+    torch.testing.assert_close(c1, c2)
+    assert v1.shape == (25, 4)
+
+
+def test_mixed_nonproduct_breaks_block_structure() -> None:
+    v, n, c = mixed_nonproduct_from_product()
+    assert v.shape[1] == 4 and n.shape[1] == 4 and c.shape[0] == n.shape[0]
+    # Check that some normal has non-trivial components in both q and p blocks
+    q_norm = torch.linalg.norm(n[:, :2], dim=1)
+    p_norm = torch.linalg.norm(n[:, 2:], dim=1)
+    assert bool(torch.any((q_norm > 1e-6) & (p_norm > 1e-6)))
+
+
+def test_random_polygon_seed41_k6_determinism_and_ccw() -> None:
+    v1, n1, c1 = random_polygon(seed=41, k=6)
+    v2, n2, c2 = random_polygon(seed=41, k=6)
+    torch.testing.assert_close(v1, v2)
+    torch.testing.assert_close(n1, n2)
+    torch.testing.assert_close(c1, c2)
+    # Area positive and vertices ordered by increasing angle (CCW)
+    assert volume(v1).item() > 0
+    angles = torch.atan2(v1[:, 1], v1[:, 0])
+    assert torch.all(angles[1:] >= angles[:-1])
