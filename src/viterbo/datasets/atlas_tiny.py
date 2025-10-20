@@ -4,10 +4,39 @@ This module assembles a deterministic roster of low-dimensional polytopes and
 uses :mod:`viterbo.math` utilities to populate symplectic invariants. The
 helpers return Python lists of typed dictionaries so callers can decide how to
 batch (pad, collate, etc.) for their pipeline.
+
+Schema (in-memory; float64 CPU tensors)
+- Identity/meta:
+  - ``polytope_id``: str
+  - ``generator``: str (canonical label)
+  - ``generator_config``: str (JSON string with params/seed)
+  - ``dimension``: int
+  - ``num_vertices``: int
+  - ``num_facets``: int
+- Geometry:
+  - ``vertices``: (M, D) float64
+  - ``normals``: (F, D) float64
+  - ``offsets``: (F,) float64
+  - ``minimal_action_cycle``: (C, D) float64 or None
+- Quantities (nullable):
+  - ``volume``: torch.Tensor (scalar) — always present
+  - ``capacity_ehz``: torch.Tensor | None (present in 2D and 4D products only)
+  - ``systolic_ratio``: torch.Tensor | None (present iff capacity present)
+- Backend labels (nullable):
+  - ``volume_backend``: str ("area2d" for D=2 else "facets")
+  - ``capacity_ehz_backend``: str | None ("area2d" in 2D; "minkowski_lp3" in 4D
+    product; None otherwise)
+  - ``systolic_ratio_backend``: str | None ("formula" when computed)
+- Walltimes (seconds; nullable where not run):
+  - ``time_generator``, ``time_volume_area2d``, ``time_volume_facets``,
+    ``time_capacity_area2d``, ``time_capacity_minkowski_lp3``,
+    ``time_systolic_ratio`` (all float; None if not executed)
 """
 
 from __future__ import annotations
 
+import json
+import time
 from collections.abc import Sequence
 from typing import TypedDict
 
@@ -18,69 +47,206 @@ from viterbo.math.polytope import vertices_to_halfspaces
 
 
 class AtlasTinyRaggedRow(TypedDict):
-    """AtlasTiny row before derived quantities are attached."""
+    """AtlasTiny row spec before geometry and derived quantities are attached."""
 
     polytope_id: str
     generator: str
-    vertices: torch.Tensor
-    normals: torch.Tensor
-    offsets: torch.Tensor
+    generator_config: str
 
 
 class AtlasTinyRow(TypedDict):
-    """Completed AtlasTiny row with derived quantities attached."""
+    """Completed AtlasTiny row with geometry, quantities, labels, and timings."""
 
+    # Identity/meta
     polytope_id: str
     generator: str
+    generator_config: str
+    dimension: int
+    num_vertices: int
+    num_facets: int
+
+    # Geometry
     vertices: torch.Tensor
     normals: torch.Tensor
     offsets: torch.Tensor
+    minimal_action_cycle: torch.Tensor | None
+
+    # Quantities (nullable)
     volume: torch.Tensor
     capacity_ehz: torch.Tensor | None
     systolic_ratio: torch.Tensor | None
-    minimal_action_cycle: torch.Tensor | None
-    num_vertices: int
-    num_facets: int
-    dimension: int
+
+    # Backend labels (nullable)
+    volume_backend: str
+    capacity_ehz_backend: str | None
+    systolic_ratio_backend: str | None
+
+    # Walltimes (seconds; nullable)
+    time_generator: float
+    time_volume_area2d: float | None
+    time_volume_facets: float | None
+    time_capacity_area2d: float | None
+    time_capacity_minkowski_lp3: float | None
+    time_systolic_ratio: float | None
 
 
 def atlas_tiny_generate() -> list[AtlasTinyRaggedRow]:
-    """Generate deterministic polytopes suitable for symplectic evaluation."""
+    """Return deterministic roster specs for AtlasTiny v1."""
 
-    dtype = torch.float64
-    base_specs: Sequence[tuple[str, str, int, float, float]] = (
-        ("sq_unit", "regular_ngon", 4, 0.0, 1.0),
-        ("pentagon_rot", "regular_ngon", 5, 0.35, 1.0),
-        ("hexagon_scaled", "regular_ngon_scaled", 6, -0.2, 1.5),
-    )
+    def cfg(d: dict) -> str:
+        return json.dumps(d, sort_keys=True, separators=(",", ":"))
 
-    rows: list[AtlasTinyRaggedRow] = []
-    for polytope_id, generator_name, sides, angle, scale in base_specs:
-        vertices, normals, offsets = rotated_regular_ngon2d(sides, angle)
-        vertices = vertices * scale
-        normals, offsets = vertices_to_halfspaces(vertices)
-        rows.append(
-            {
-                "polytope_id": polytope_id,
-                "generator": generator_name,
-                "vertices": vertices.to(dtype=dtype),
-                "normals": normals.to(dtype=dtype),
-                "offsets": offsets.to(dtype=dtype),
-            }
-        )
-    return rows
+    roster: list[AtlasTinyRaggedRow] = [
+        # 2D
+        {
+            "polytope_id": "unit_square",
+            "generator": "unit_square",
+            "generator_config": cfg({}),
+        },
+        {
+            "polytope_id": "triangle_area_one",
+            "generator": "triangle_area_one",
+            "generator_config": cfg({}),
+        },
+        {
+            "polytope_id": "regular_pentagon",
+            "generator": "regular_ngon",
+            "generator_config": cfg({"k": 5, "angle": 0.0}),
+        },
+        {
+            "polytope_id": "random_hexagon_seed41",
+            "generator": "random_polygon",
+            "generator_config": cfg({"seed": 41, "k": 6}),
+        },
+        # 4D
+        {
+            "polytope_id": "orthogonal_simplex_4d",
+            "generator": "regular_simplex",
+            "generator_config": cfg({"d": 4}),
+        },
+        {
+            "polytope_id": "pentagon_product_counterexample",
+            "generator": "lagrangian_product",
+            "generator_config": cfg(
+                {
+                    "variant": "pentagon_product_counterexample",
+                    "factors": [
+                        {"type": "regular_ngon", "k": 5, "angle": 0.0},
+                        {"type": "regular_ngon", "k": 5, "angle": -0.5 * float(torch.pi)},
+                    ],
+                }
+            ),
+        },
+        {
+            "polytope_id": "noisy_pentagon_product",
+            "generator": "lagrangian_product",
+            "generator_config": cfg(
+                {
+                    "variant": "noisy_pentagon_product",
+                    "seed_q": 314159,
+                    "seed_p": 271828,
+                    "amp": 0.03,
+                }
+            ),
+        },
+        {
+            "polytope_id": "mixed_nonproduct_from_product",
+            "generator": "mixed_nonproduct_from_product",
+            "generator_config": cfg(
+                {
+                    "base": "noisy_pentagon_product",
+                    "seed_q": 314159,
+                    "seed_p": 271828,
+                    "amp": 0.03,
+                    "mix": "default",
+                }
+            ),
+        },
+        {
+            "polytope_id": "random_vrep_4d_seed20241017",
+            "generator": "random_polytope_algorithm2",
+            "generator_config": cfg({"seed": 20241017, "num_vertices": 10, "dimension": 4}),
+        },
+        {
+            "polytope_id": "random_hrep_4d_seed20241017",
+            "generator": "random_polytope_algorithm1",
+            "generator_config": cfg({"seed": 20241017, "num_facets": 10, "dimension": 4}),
+        },
+    ]
+    return roster
 
 
 def atlas_tiny_complete_row(row: AtlasTinyRaggedRow) -> AtlasTinyRow:
-    """Populate derived quantities for a ragged row using math utilities."""
+    """Populate geometry, quantities, labels, and timings for a roster spec."""
 
     from viterbo.math.capacity_ehz.cycle import minimal_action_cycle
     from viterbo.math.capacity_ehz.ratios import systolic_ratio
     from viterbo.math.volume import volume as volume_from_vertices
+    from viterbo.math import constructions as C
 
-    vertices = row["vertices"]
-    normals = row["normals"]
-    offsets = row["offsets"]
+    def _time_call(fn, *args, **kwargs):
+        t0 = time.perf_counter()
+        out = fn(*args, **kwargs)
+        t1 = time.perf_counter()
+        return out, float(t1 - t0)
+
+    cfg = json.loads(row["generator_config"]) if row["generator_config"] else {}
+    gen = row["generator"]
+
+    # Generate geometry (float64 CPU) and record walltime.
+    if gen == "unit_square":
+        (vertices, normals, offsets), t_gen = _time_call(C.unit_square)
+    elif gen == "triangle_area_one":
+        (vertices, normals, offsets), t_gen = _time_call(C.triangle_area_one)
+    elif gen == "regular_ngon":
+        k = int(cfg.get("k", 3))
+        angle = float(cfg.get("angle", 0.0))
+        (v, _, _), t_gen = _time_call(rotated_regular_ngon2d, k, angle)
+        vertices = v.to(dtype=torch.float64, device=torch.device("cpu"))
+        normals, offsets = vertices_to_halfspaces(vertices)
+    elif gen == "random_polygon":
+        seed = int(cfg["seed"])  # required
+        k = int(cfg["k"])  # required
+        (vertices, normals, offsets), t_gen = _time_call(C.random_polygon, seed, k)
+    elif gen == "regular_simplex":
+        d = int(cfg["d"])  # required
+        (vertices, normals, offsets), t_gen = _time_call(C.regular_simplex, d)
+    elif gen == "lagrangian_product":
+        variant = cfg.get("variant", "pentagon_product_counterexample")
+        if variant == "pentagon_product_counterexample":
+            (vertices, normals, offsets), t_gen = _time_call(C.pentagon_product_counterexample)
+        elif variant == "noisy_pentagon_product":
+            seed_q = int(cfg.get("seed_q", 314159))
+            seed_p = int(cfg.get("seed_p", 271828))
+            amp = float(cfg.get("amp", 0.03))
+            (vertices, normals, offsets), t_gen = _time_call(
+                C.noisy_pentagon_product, seed_q, seed_p, amp
+            )
+        else:
+            raise ValueError(f"Unknown lagrangian_product variant: {variant}")
+    elif gen == "mixed_nonproduct_from_product":
+        (vertices, normals, offsets), t_gen = _time_call(C.mixed_nonproduct_from_product)
+    elif gen == "random_polytope_algorithm1":
+        seed = int(cfg["seed"])  # required
+        num_facets = int(cfg.get("num_facets", 10))
+        dimension = int(cfg.get("dimension", 4))
+        (vertices, normals, offsets), t_gen = _time_call(
+            C.random_polytope_algorithm1, seed, num_facets, dimension
+        )
+    elif gen == "random_polytope_algorithm2":
+        seed = int(cfg["seed"])  # required
+        num_vertices = int(cfg.get("num_vertices", 10))
+        dimension = int(cfg.get("dimension", 4))
+        (vertices, normals, offsets), t_gen = _time_call(
+            C.random_polytope_algorithm2, seed, num_vertices, dimension
+        )
+    else:
+        raise ValueError(f"Unknown generator label: {gen}")
+
+    # Enforce float64 CPU discipline for dataset tensors.
+    vertices = vertices.to(dtype=torch.float64, device=torch.device("cpu"))
+    normals = normals.to(dtype=torch.float64, device=torch.device("cpu"))
+    offsets = offsets.to(dtype=torch.float64, device=torch.device("cpu"))
 
     if vertices.ndim != 2:
         raise ValueError("vertices must be (M, D) tensor")
@@ -92,29 +258,75 @@ def atlas_tiny_complete_row(row: AtlasTinyRaggedRow) -> AtlasTinyRow:
         raise ValueError("vertices, normals, and offsets must share the same dtype")
 
     dim = int(vertices.size(1))
-    volume = volume_from_vertices(vertices)
+
+    # Volume + backend/time label
+    if dim == 2:
+        (volume, t_vol), volume_backend = _time_call(volume_from_vertices, vertices), "area2d"
+        time_volume_area2d: float | None = t_vol
+        time_volume_facets: float | None = None
+    else:
+        (volume, t_vol), volume_backend = _time_call(volume_from_vertices, vertices), "facets"
+        time_volume_area2d = None
+        time_volume_facets = t_vol
+
+    # Capacity + cycle + backend/time label (nullable)
     capacity: torch.Tensor | None = None
     cycle: torch.Tensor | None = None
-    if dim == 2:
-        capacity, cycle = minimal_action_cycle(vertices, normals, offsets)
+    capacity_backend: str | None = None
+    time_capacity_area2d: float | None = None
+    time_capacity_minkowski_lp3: float | None = None
 
+    if dim == 2:
+        (cap_and_cycle, t_cap) = _time_call(minimal_action_cycle, vertices, normals, offsets)
+        capacity, cycle = cap_and_cycle
+        capacity_backend = "area2d"
+        time_capacity_area2d = t_cap
+    elif dim == 4:
+        try:
+            (cap_and_cycle, t_cap) = _time_call(minimal_action_cycle, vertices, normals, offsets)
+            capacity, cycle = cap_and_cycle
+            capacity_backend = "minkowski_lp3"
+            time_capacity_minkowski_lp3 = t_cap
+        except NotImplementedError:
+            capacity, cycle, capacity_backend = None, None, None
+
+    # Systolic ratio (nullable)
     systolic: torch.Tensor | None = None
+    systolic_backend: str | None = None
+    time_systolic_ratio: float | None = None
     if capacity is not None:
-        systolic = systolic_ratio(volume, capacity, dim)
+        (systolic, t_sys) = _time_call(systolic_ratio, volume, capacity, dim)
+        systolic_backend = "formula"
+        time_systolic_ratio = t_sys
 
     return AtlasTinyRow(
+        # Identity/meta
         polytope_id=row["polytope_id"],
         generator=row["generator"],
+        generator_config=row["generator_config"],
+        dimension=dim,
+        num_vertices=int(vertices.size(0)),
+        num_facets=int(normals.size(0)),
+        # Geometry
         vertices=vertices,
         normals=normals,
         offsets=offsets,
+        minimal_action_cycle=cycle,
+        # Quantities
         volume=volume,
         capacity_ehz=capacity,
         systolic_ratio=systolic,
-        minimal_action_cycle=cycle,
-        num_vertices=int(vertices.size(0)),
-        num_facets=int(normals.size(0)),
-        dimension=dim,
+        # Backend labels
+        volume_backend=volume_backend,
+        capacity_ehz_backend=capacity_backend,
+        systolic_ratio_backend=systolic_backend,
+        # Walltimes
+        time_generator=t_gen,
+        time_volume_area2d=time_volume_area2d,
+        time_volume_facets=time_volume_facets,
+        time_capacity_area2d=time_capacity_area2d,
+        time_capacity_minkowski_lp3=time_capacity_minkowski_lp3,
+        time_systolic_ratio=time_systolic_ratio,
     )
 
 
@@ -135,6 +347,7 @@ def atlas_tiny_collate_pad(rows: Sequence[AtlasTinyRow]) -> dict[str, torch.Tens
       Dictionary with padded tensors:
         - ``polytope_id``: list[str]
         - ``generator``: list[str]
+        - scalar quantities ``volume``, ``capacity_ehz``, ``systolic_ratio`` of shape (B,)
         - ``vertices``: (B, V_max, D)
         - ``normals``: (B, F_max, D)
         - ``offsets``: (B, F_max)
@@ -142,7 +355,7 @@ def atlas_tiny_collate_pad(rows: Sequence[AtlasTinyRow]) -> dict[str, torch.Tens
         - ``vertex_mask``: (B, V_max) bool
         - ``facet_mask``: (B, F_max) bool
         - ``cycle_mask``: (B, C_max) bool
-        - scalars ``volume``, ``capacity_ehz``, ``systolic_ratio`` of shape (B,)
+      Other string/label/timing metadata remain per-row lists, not padded.
     """
 
     if not rows:
