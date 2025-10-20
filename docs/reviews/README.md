@@ -44,5 +44,6 @@ Published reviews
 - 02 — Onboarding for New Agents: 02-onboarding.md
 - 08 — Review process and reviews in general: 08-review-process.md
 - 03 — Repo and code architecture: 03-repo-architecture.md
+- 04 — Code: 04-code.md
 
 Upcoming
