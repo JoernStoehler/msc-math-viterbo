@@ -17,7 +17,6 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import json
-import os
 import re
 import shutil
 import subprocess
@@ -26,7 +25,6 @@ import textwrap
 import urllib.parse
 import urllib.request
 from pathlib import Path
-
 
 DOCS_DIR = Path("docs/papers")
 

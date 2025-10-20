@@ -179,10 +179,10 @@ def atlas_tiny_generate() -> list[AtlasTinyRaggedRow]:
 def atlas_tiny_complete_row(row: AtlasTinyRaggedRow) -> AtlasTinyRow:
     """Populate geometry, quantities, labels, and timings for a roster spec."""
 
+    from viterbo.math import constructions as C
     from viterbo.math.capacity_ehz.cycle import minimal_action_cycle
     from viterbo.math.capacity_ehz.ratios import systolic_ratio
     from viterbo.math.volume import volume as volume_from_vertices
-    from viterbo.math import constructions as C
 
     def _time_call(fn, *args, **kwargs):
         t0 = time.perf_counter()

@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import torch
-
 import pytest
+import torch
 
 from viterbo.math.capacity_ehz.common import (
     order_vertices_ccw,

@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import pytest
 import torch
-
 from tests.polytopes import PLANAR_POLYTOPE_PAIRS
+
 from viterbo.math.capacity_ehz.stubs import oriented_edge_spectrum_4d
 from viterbo.math.constructions import lagrangian_product, matmul_vertices
-
 
 torch.set_default_dtype(torch.float64)
 
