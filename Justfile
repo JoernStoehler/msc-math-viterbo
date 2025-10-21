@@ -4,9 +4,15 @@ set export := true
 default: checks
 
 UV := env_var_or_default("UV", "uv")
+HOME_DIR := env_var_or_default("HOME", "")
+UV_PROJECT_ENVIRONMENT_DEFAULT := if HOME_DIR == "" {
+    ".cache/uv/project-envs/msc-math-viterbo"
+} else {
+    HOME_DIR + "/.cache/uv/project-envs/msc-math-viterbo"
+}
 UV_PROJECT_ENVIRONMENT := env_var_or_default(
     "UV_PROJECT_ENVIRONMENT",
-    "$HOME/.cache/uv/project-envs/msc-math-viterbo",
+    UV_PROJECT_ENVIRONMENT_DEFAULT,
 )
 UV_LINK_MODE := env_var_or_default("UV_LINK_MODE", "hardlink")
 

@@ -35,7 +35,8 @@
     "XDG_CONFIG_HOME": "/home/codespace/.config",
     "XDG_DATA_HOME": "/home/codespace/.local/share",
     "XDG_CACHE_HOME": "/home/codespace/.cache",
-    "PYTHONPATH": ".:src"
+    "PYTHONPATH": ".:src",
+    "UV_PROJECT_ENVIRONMENT": "/home/codespace/.cache/uv/project-envs/msc-math-viterbo"
   },
   "mounts": [
     // oauth
