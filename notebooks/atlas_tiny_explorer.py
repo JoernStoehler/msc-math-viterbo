@@ -70,6 +70,7 @@ else:
 # %% [markdown]
 # ## Load dataset from Parquet via HF Datasets
 
+
 # %%
 def load_rows_from_parquet(path: Path) -> list[dict[str, Any]] | None:
     """Return reconstructed rows from Parquet, or None if artefact is missing.
@@ -124,6 +125,7 @@ if rows is None:
 # %% [markdown]
 # ## Inspect: IDs, backends, and timing summary
 
+
 # %%
 def fmt_seconds(x: float) -> str:
     return f"{x:.6f}s"
@@ -168,6 +170,7 @@ summarize_timings(rows, time_keys)
 # %% [markdown]
 # ## Batch: collate and pad a small subset
 
+
 # %%
 def pick_rows_for_demo(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     # Preferred IDs; map a possible alias for the pentagon.
@@ -199,6 +202,7 @@ print(f"Selected rows for batching: {', '.join(demo_ids)}")
 
 batch = atlas_tiny_collate_pad(demo_rows)
 
+
 def tensor_shape(x: object) -> str:
     return tuple(x.shape).__repr__() if isinstance(x, torch.Tensor) else "-"
 
@@ -219,9 +223,17 @@ for key in (
     print(f"- {key}: {tensor_shape(batch[key])}")
 
 # Quick per-row mask stats
-vm = batch["vertex_mask"].sum(dim=1).tolist() if isinstance(batch["vertex_mask"], torch.Tensor) else []
-fm = batch["facet_mask"].sum(dim=1).tolist() if isinstance(batch["facet_mask"], torch.Tensor) else []
-cm = batch["cycle_mask"].sum(dim=1).tolist() if isinstance(batch["cycle_mask"], torch.Tensor) else []
+vm = (
+    batch["vertex_mask"].sum(dim=1).tolist()
+    if isinstance(batch["vertex_mask"], torch.Tensor)
+    else []
+)
+fm = (
+    batch["facet_mask"].sum(dim=1).tolist() if isinstance(batch["facet_mask"], torch.Tensor) else []
+)
+cm = (
+    batch["cycle_mask"].sum(dim=1).tolist() if isinstance(batch["cycle_mask"], torch.Tensor) else []
+)
 if vm and fm:
     print("Per-row counts — vertices/facets/cycle:")
     for i, pid in enumerate(batch["polytope_id"]):
@@ -232,8 +244,11 @@ if vm and fm:
 # %% [markdown]
 # ## Visualize: 2D polygons with minimal_action_cycle overlay
 
+
 # %%
-def plot_polygon_2d(vertices: torch.Tensor, *, line_style: str = "-", label: str | None = None) -> None:
+def plot_polygon_2d(
+    vertices: torch.Tensor, *, line_style: str = "-", label: str | None = None
+) -> None:
     assert vertices.ndim == 2 and vertices.size(1) == 2
     xs = vertices[:, 0].detach().cpu().numpy()
     ys = vertices[:, 1].detach().cpu().numpy()
@@ -274,10 +289,13 @@ for r in demo_rows:
 # %% [markdown]
 # ## Visualize: 4D minimal_action_cycle — Q vs P projections
 
+
 # %%
 def plot_cycle_qp_4d(r: dict[str, Any]) -> bool:
     cyc = r.get("minimal_action_cycle")
-    if not (isinstance(cyc, torch.Tensor) and cyc.ndim == 2 and cyc.size(1) == 4 and cyc.size(0) > 0):
+    if not (
+        isinstance(cyc, torch.Tensor) and cyc.ndim == 2 and cyc.size(1) == 4 and cyc.size(0) > 0
+    ):
         return False
     pid = r["polytope_id"]
     q = cyc[:, :2]

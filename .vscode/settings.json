@@ -14,7 +14,7 @@
     ".uv": true,
     "**/*.egg-info": true,
     ".DS_Store": true,
-    "artefacts": true,
+    "artefacts": false,
     "htmlcov": true,
     "node_modules": true,
     "prof": true,
