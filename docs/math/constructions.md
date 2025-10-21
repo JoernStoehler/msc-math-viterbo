@@ -2,6 +2,8 @@
 title: constructions — polygon/polytope builders
 ---
 
+Status: Implemented (scope: canonical polytope builders and transforms; caveats: random generators stay CPU deterministic-only)
+
 # `viterbo.math.constructions`
 
 Constructs new polytopes from scratch or by transforming existing ones.

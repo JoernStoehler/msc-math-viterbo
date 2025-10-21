@@ -1,3 +1,5 @@
+Status: Implemented (scope: performance discipline deep-dive; caveats: reflects repository state on 2025-10-20)
+
 # Review — Performance Discipline Deep-Dive
 
 Provenance

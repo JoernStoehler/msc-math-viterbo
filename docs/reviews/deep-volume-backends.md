@@ -1,3 +1,5 @@
+Status: Implemented (scope: volume backends deep-dive; caveats: highlights missing backends as of 2025-10-20)
+
 # Review — Volume Backends Readiness Deep‑Dive
 
 Provenance

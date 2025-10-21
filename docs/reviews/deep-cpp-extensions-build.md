@@ -1,3 +1,5 @@
+Status: Implemented (scope: C++ extensions readiness deep-dive; caveats: reflects repository state on 2025-10-20)
+
 # Review — C++ Extensions & Build Toolchain Deep-Dive
 
 Provenance

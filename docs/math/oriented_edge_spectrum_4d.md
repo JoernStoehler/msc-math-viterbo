@@ -1,6 +1,6 @@
-# Oriented-Edge CH Algorithm (R^4)
+Status: Implemented (scope: 4D oriented-edge solver; caveats: certified C*(X) budgets remain CPU float64-only)
 
-Status: Implemented (deterministic; certified budget runs on CPU)
+# Oriented-Edge CH Algorithm (R^4)
 
 Audience and prerequisites
 - Assumes familiarity with: convex polytopes (H- and V-representations), basic symplectic linear algebra in R^4 with complex structure J, and Chaidez–Hutchings (CH) 4D polytope Reeb dynamics (arXiv:2008.10111).

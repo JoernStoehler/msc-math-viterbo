@@ -2,6 +2,8 @@
 title: Reviews Index
 ---
 
+Status: Implemented (scope: reviews index and conventions; caveats: requires manual updates when topics evolve)
+
 # Reviews — Index and Conventions
 
 Purpose

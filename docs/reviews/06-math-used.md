@@ -1,3 +1,5 @@
+Status: Implemented (scope: math usage review snapshot; caveats: reflects repository state on 2025-10-20)
+
 # Review 06 — Math Used (Foundations, Invariants, Cutoffs, Warnings)
 
 Provenance

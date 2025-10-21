@@ -1,3 +1,5 @@
+Status: Implemented (scope: advisor documentation review snapshot; caveats: reflects repository state on 2025-10-20)
+
 # Review 09 — Advisor-Facing Documentation/Presentation
 
 Provenance

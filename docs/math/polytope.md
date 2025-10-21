@@ -2,6 +2,8 @@
 title: polytope — per-body geometry
 ---
 
+Status: Implemented (scope: support queries and H/V conversions; caveats: facet_vertex_incidence stub still pending)
+
 # `viterbo.math.polytope`
 
 Per-body geometry for fixed convex polytopes. Functions operate on vertex and

@@ -1,3 +1,5 @@
+Status: Implemented (scope: onboarding review snapshot; caveats: reflects repository state on 2025-10-20)
+
 # Review 02 — Onboarding for New Agents
 
 Provenance

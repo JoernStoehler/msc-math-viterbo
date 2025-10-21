@@ -1,3 +1,5 @@
+Status: Implemented (scope: project design principles review snapshot; caveats: reflects repository state on 2025-10-20)
+
 # Review 01 — Project Design Principles (Onboarding Focus)
 
 Provenance

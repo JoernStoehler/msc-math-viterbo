@@ -1,3 +1,5 @@
+Status: Implemented (scope: EHZ oriented-edge deep-dive; caveats: reflects repository state on 2025-10-20)
+
 # Review — EHZ 4D Oriented‑Edge Solver Readiness Deep‑Dive
 
 Provenance

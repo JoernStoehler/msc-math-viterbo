@@ -1,3 +1,5 @@
+Status: Implemented (scope: testing & CI deep-dive; caveats: reflects repository state on 2025-10-20)
+
 # Review — Testing & CI Deep-Dive
 
 Provenance

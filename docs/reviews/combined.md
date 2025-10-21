@@ -1,3 +1,5 @@
+Status: Implemented (scope: consolidated review findings; caveats: reflects priorities as of 2025-10-20)
+
 # Combined Review — Problem Areas and Decisions Needed
 
 Provenance

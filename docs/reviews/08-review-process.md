@@ -1,3 +1,5 @@
+Status: Implemented (scope: review process audit snapshot; caveats: reflects repository state on 2025-10-20)
+
 # Review 08 — Review Process and Reviews in General (Second Pass)
 
 Provenance

@@ -2,6 +2,8 @@
 title: volume — polytope volumes and backends
 ---
 
+Status: Implemented (scope: volume(vertices) baseline helper; caveats: triangulation/Lawrence/Monte Carlo entry points remain stubbed)
+
 # `viterbo.math.volume`
 
 Torch-first utilities to evaluate volumes of convex polytopes. The primary

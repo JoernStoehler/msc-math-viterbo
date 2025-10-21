@@ -1,3 +1,5 @@
+Status: Implemented (scope: developer documentation review snapshot; caveats: reflects repository state on 2025-10-20)
+
 # Review 05 — Developer Documentation
 
 Provenance

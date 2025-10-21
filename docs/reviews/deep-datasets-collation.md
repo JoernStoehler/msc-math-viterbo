@@ -1,3 +1,5 @@
+Status: Implemented (scope: datasets & collation deep-dive; caveats: reflects repository state on 2025-10-20)
+
 # Review — Datasets & Collation Deep-Dive
 
 Provenance

@@ -1,3 +1,5 @@
+Status: Implemented (scope: security & operational posture deep-dive; caveats: reflects repository state on 2025-10-20)
+
 # Review — Security & Operational Posture Deep‑Dive
 
 Provenance

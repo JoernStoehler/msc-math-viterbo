@@ -2,6 +2,8 @@
 title: capacity_ehz — EHZ capacities and cycles
 ---
 
+Status: Implemented (scope: 2D/4D EHZ solver suite; caveats: advanced backends remain planned under stubs)
+
 # `viterbo.math.capacity_ehz.*`
 
 Capacity solvers and minimal-action diagnostics focused on planar inputs and

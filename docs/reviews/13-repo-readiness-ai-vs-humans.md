@@ -1,3 +1,5 @@
+Status: Implemented (scope: AI-vs-human readiness review snapshot; caveats: reflects repository state on 2025-10-20)
+
 # Review 13 — Repo Readiness for AI vs Humans
 
 Provenance
