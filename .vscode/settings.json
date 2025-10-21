@@ -30,7 +30,7 @@
     "**/.mypy_cache": true,
     "**/.pyright": true,
     "**/.benchmarks": true,
-    "artefacts": true,
+    "artefacts": false,
     "htmlcov": true,
     "node_modules": true,
     "prof": true,
