@@ -5,8 +5,9 @@ This file is an index. Load the right skill guides for your task.
 ## Boot Sequence
 
 1. Read your task on VibeKanban (`Msc Math Viterbo`).
-2. Run `uv run python scripts/load_skills_metadata.py` (or `--quiet` when scripted) to surface skill summaries.
-3. Open the skills that match your scenario using the map below (or see `skills.index.md` for clusters). Treat those files as the authoritative source.
+2. Skim `docs/milestones/current.md` for the active scope and guardrails.
+3. Run `uv run python scripts/load_skills_metadata.py` (or `--quiet` when scripted) to surface skill summaries.
+4. Open the skills that match your scenario using the map below (or see `skills.index.md` for clusters). Treat those files as the authoritative source.
 
 ## Always-On Essentials
 

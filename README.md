@@ -8,7 +8,7 @@ Minimal, fast-to-iterate stack for numerical experiments around the Viterbo conj
 - C++ extension scaffold for non-SIMD hotspots (CPU), with Python fallback
 - Lean tests (smoke + benchmarks), incremental by default
 
-See AGENTS.md for the authoritative policy and workflows.
+Start here: [`docs/milestones/current.md`](docs/milestones/current.md) for the current scope, then `AGENTS.md` for policies and workflows.
 
 ## Quickstart
 
