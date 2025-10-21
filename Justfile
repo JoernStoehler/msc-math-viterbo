@@ -21,6 +21,7 @@ PYTEST_ARGS := env_var_or_default("PYTEST_ARGS", "")
 ARGS := env_var_or_default("ARGS", "")
 RUN_DIR := env_var_or_default("RUN_DIR", "")
 INC_ARGS := env_var_or_default("INC_ARGS", "")
+JUST_USE_SELECTOR := env_var_or_default("JUST_USE_SELECTOR", "")
 
 PYTEST_SMOKE_FLAGS := "-m smoke --durations=10"
 PYTEST_DEEP_FLAGS := "-m \"smoke or deep\""
@@ -141,10 +142,21 @@ type-strict:
     $UV run pyright -p pyrightconfig.strict.json
 
 # Smoke-tier pytest with enforced timeouts.
-# Default: impacted (serial). Falls back to full serial.
+# Default: full run; set JUST_USE_SELECTOR=1 to opt into the incremental selector.
 test:
     just preflight
-    just _pytest-incremental "{{PYTEST_SMOKE_FLAGS}}" "smoke-tier pytest"
+    @if [ "{{JUST_USE_SELECTOR}}" = "1" ]; then \
+        echo "Selector opt-in detected (JUST_USE_SELECTOR=1); running incremental smoke-tier pytest."; \
+        just _pytest-incremental "{{PYTEST_SMOKE_FLAGS}}" "smoke-tier pytest"; \
+    else \
+        echo "Selector disabled; running full smoke-tier pytest."; \
+        echo "Tip: run 'just test-fast' or set JUST_USE_SELECTOR=1 to enable the selector."; \
+        $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} {{PYTEST_ARGS}}; \
+    fi
+
+# Incremental smoke-tier run (selector opt-in). Alias: `JUST_USE_SELECTOR=1 just test`.
+test-fast:
+    JUST_USE_SELECTOR=1 just test
 
 # Full smoke-tier run (serial, no impacted selection).
 test-full:
@@ -166,7 +178,7 @@ test-longhaul:
 # Run smoke, deep, and longhaul sequentially.
 # Removed `test-all` in favor of explicit invocations.
 
-## (Removed) test-incremental: prefer `just test` or `just test-fast`.
+## Legacy alias: `test-incremental` delegates to `just test-fast`.
 
 # Unit vs integration convenience selectors.
 test-unit:
@@ -270,18 +282,18 @@ ci:
     $UV run pytest {{PYTEST_SMOKE_FLAGS}} -q {{PYTEST_ARGS}}
     $UV run mkdocs build --strict
 
-# Fast local gate: lint → type → incremental smoke tests
+# Local gate: format → lint → type → smoke tests (full by default; set JUST_USE_SELECTOR=1 for incremental)
 checks:
     just preflight
-    @echo "Running checks: format → lint → type → test (incremental)."
+    @echo "Running checks: format → lint → type → test (full smoke; set JUST_USE_SELECTOR=1 for incremental)."
     just format
     just lint
     just type
     just test
 
-# Incremental smoke tests only (no lint/type)
+# Legacy alias for incremental smoke tests (opt-in).
 test-incremental:
-    just _pytest-incremental "{{PYTEST_SMOKE_FLAGS}}" "smoke-tier pytest"
+    just test-fast
 
 _pytest-incremental FLAGS DESCRIPTION:
     @mkdir -p .cache

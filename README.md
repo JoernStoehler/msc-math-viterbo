@@ -6,7 +6,7 @@
 Minimal, fast-to-iterate stack for numerical experiments around the Viterbo conjecture:
 - PyTorch-first math (ragged-friendly), CPU baseline; GPU optional in models
 - C++ extension scaffold for non-SIMD hotspots (CPU), with Python fallback
-- Lean tests (smoke + benchmarks), incremental by default
+- Lean tests (smoke + benchmarks), full smoke by default with optional selector
 
 Start here: [`docs/milestones/current.md`](docs/milestones/current.md) for the current scope, then `AGENTS.md` for policies and workflows.
 
@@ -14,7 +14,7 @@ Start here: [`docs/milestones/current.md`](docs/milestones/current.md) for the c
 
 0) Ensure [`uv`](https://docs.astral.sh/uv/getting-started/installation/) is available (pipx install uv, standalone binary, or your package manager).
 1) Sync deps: `just sync`
-2) Fast loop: `just checks` (format → lint → type → test incremental)
+2) Fast loop: `just checks` (format → lint → type → smoke tests; set `JUST_USE_SELECTOR=1` for incremental)
 3) Full local CI: `just ci` (lint → type → smoke tests → docs build)
 4) Notebooks: `uv run python notebooks/dummy_generate.py`, then `uv run python notebooks/dummy_plot.py`
 
@@ -30,14 +30,17 @@ choose a configuration; there is no default on purpose.
 ## Commands (common)
 
 ```
-just checks      # format → lint → type → test (incremental)
-just test        # smoke tests (incremental selection)
-just test-full   # smoke tests (full)
+just checks      # format → lint → type → smoke tests (full by default; set JUST_USE_SELECTOR=1 for incremental)
+just test        # smoke tests (full; opt-in to selector via JUST_USE_SELECTOR=1)
+just test-fast   # smoke tests (incremental selector)
+just test-full   # smoke tests (full, explicit)
 just test-deep   # smoke + deep tiers
 just bench       # benchmarks (smoke)
 just ci          # CI parity: lint → type → tests → docs
 just docs-build  # Build MkDocs site (strict)
 ```
+
+Set `JUST_USE_SELECTOR=1 just test` (or run `just test-fast`) to reuse the incremental selector when you need the shorter loop.
 
 ## Layout
 

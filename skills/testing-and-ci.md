@@ -1,7 +1,7 @@
 ---
 name: testing-and-ci
 description: Use for detailed testing, static analysis, incremental selection, and CI parity/troubleshooting.
-last-updated: 2025-10-17
+last-updated: 2025-10-21
 ---
 
 # Testing & CI
@@ -12,15 +12,17 @@ last-updated: 2025-10-17
 
 ## Commands & Gates
 
-- `just checks` — format (Ruff), lint (Ruff), type (Pyright), smoke tests (Pytest).
+- `just checks` — format (Ruff), lint (Ruff), type (Pyright), smoke tests (Pytest). Runs the full smoke tier unless `JUST_USE_SELECTOR=1`.
 - `just fix` — apply Ruff auto-fixes; rerun `just checks` to confirm.
-- `just test` — incremental smoke tests. Inspect selection with `INC_ARGS="--debug" just test`.
+- `just test` — full smoke-tier run. Set `JUST_USE_SELECTOR=1 just test` to reuse the selector.
+- `just test-fast` — incremental smoke tests via the selector. Inspect selection with `INC_ARGS="--debug" just test-fast`.
 - `just ci` — CI parity run before handoff or PR when changes are substantial or cross-cutting.
 
 ## Incremental Selector
 
-- Selection is computed by `scripts/inc_select.py` and invoked by `just test`.
-- Debug decisions with `INC_ARGS="--debug"` to view impacted graph and chosen tests.
+- Selection is computed by `scripts/inc_select.py` and runs when you opt in via `JUST_USE_SELECTOR=1 just test` or `just test-fast`.
+- Debug decisions with `INC_ARGS="--debug" just test-fast` (or `INC_ARGS="--debug" JUST_USE_SELECTOR=1 just test`) to view impacted graph and chosen tests.
+- Export `JUST_USE_SELECTOR=1` in your shell if you prefer the selector by default; otherwise the recipes fall back to the full smoke tier and print a reminder.
 - Do not manually reset `.cache/inc_graph.json` mid-task; regressions are harder to diagnose.
 
 ## Static Analysis
@@ -46,4 +48,3 @@ last-updated: 2025-10-17
 - `good-code-loop` — quickstart and review checklist.
 - `environment-tooling` — environment troubleshooting when commands fail.
 - `performance-discipline` — benchmarking after correctness is established.
-
