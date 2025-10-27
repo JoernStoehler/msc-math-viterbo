@@ -38,6 +38,7 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from IPython.display import Markdown, display
 
 try:
     PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -115,80 +116,118 @@ def counterexample_geometry() -> dict[str, torch.Tensor]:
 GEOMETRY = counterexample_geometry()
 
 # %% [markdown]
-# ## Results Summary (dimension 4)
+# ## Result and Validation (dimension 4)
 
 
 # %%
-def _fmt(x: torch.Tensor, digits: int = 12) -> str:
-    return f"{x.item():.{digits}f}"
+# Numeric values (computed)
+c_val = GEOMETRY["capacity"].item()
+vol_val = GEOMETRY["volume_4d"].item()
+area_q_val = GEOMETRY["area_q"].item()
+area_p_val = GEOMETRY["area_p"].item()
+sys_val = GEOMETRY["systolic_ratio"].item()
 
+# Analytic reference (regular pentagons, unit radius)
+area_analytic = (5.0 / 2.0) * math.sin(2.0 * math.pi / 5.0)
+capacity_analytic = 2.0 * math.cos(math.pi / 10.0) * (1.0 + math.cos(math.pi / 5.0))
+sys_analytic = (math.sqrt(5.0) + 3.0) / 5.0
 
-def print_cycle(path: torch.Tensor) -> None:
-    for idx, vertex in enumerate(path):
-        label = f"v{idx:02d}"
-        coords = ", ".join(f"{value.item():+.3f}" for value in vertex)
-        print(f"{label}: [{coords}]")
-
-def print_summary(data: dict[str, torch.Tensor]) -> None:
-    n = 2  # 4D = 2n with n=2
-    print("Definition: Sys = c^n / (n! · Vol_{2n}), here n=2 → Sys = c^2/(2·Vol).\n")
-    print("Results (K × T ⊂ R^4):")
-    print(f"  c_EHZ(K×T)     = {_fmt(data['capacity'])}")
-    print(f"  Vol_4D(K×T)    = {_fmt(data['volume_4d'])}")
-    print(f"  Area(K)        = {_fmt(data['area_q'])}")
-    print(f"  Area(T)        = {_fmt(data['area_p'])}")
-    print(f"  Sys(K×T)       = {_fmt(data['systolic_ratio'])}")
-
-
-print_summary(GEOMETRY)
-
-print("\nClosed characteristic (cycle vertices in R^4):")
-print_cycle(GEOMETRY["cycle"])
-
-print("\nFacet normals and offsets (H-representation of K×T):")
-for normal, offset in zip(GEOMETRY["normals_4d"], GEOMETRY["offsets_4d"]):
-    normal_str = ", ".join(f"{value.item():+.2f}" for value in normal)
-    print(f"  n = [{normal_str}], offset = {offset.item():+.2f}")
-
-# %% [markdown]
-# ## Sanity checks — cycle structure and constants
-
-# %%
-# The minimal-action cycle for K×T (regular pentagons) is a 2-bounce orbit.
-# Verify unique vertices in each projection and re-derive capacity/area constants.
+# Two-bounce structure
 cycle = GEOMETRY["cycle"]
 q_cycle = cycle[:, :2]
 p_cycle = cycle[:, 2:]
 
 def _unique_rows(x: torch.Tensor) -> torch.Tensor:
-    # Stable unique rows helper (float64 coordinates)
-    if x.ndim != 2:
-        raise ValueError("expected a 2D tensor")
-    # Round to dampen printer artifacts and enable equality on expected vertices
     xr = torch.round(x * 1_000_000.0) / 1_000_000.0
     unique, _ = torch.unique(xr, dim=0, sorted=True, return_inverse=True)
     return unique
 
 uq_q = _unique_rows(q_cycle)
 uq_p = _unique_rows(p_cycle)
-print(f"Unique q-vertices visited: {uq_q.size(0)} (expected 2)")
-print(f"Unique p-vertices visited: {uq_p.size(0)} (expected 2)")
-
-# Re-derive c_EHZ from the 2-bounce formula: h_T(v) + h_T(-v) with v = q_j - q_i
 v = uq_q[1] - uq_q[0]
-h_fwd = support_value(uq_p, v)
-h_bwd = support_value(uq_p, -v)
+h_fwd = support_value(uq_p, v).item()
+h_bwd = support_value(uq_p, -v).item()
 action_two_bounce = h_fwd + h_bwd
-print(f"Action from supports (2-bounce): {action_two_bounce.item():.12f}")
-print(f"Capacity from solver:          {GEOMETRY['capacity'].item():.12f}")
 
-# Analytic constants for regular pentagon (unit radius)
-area_pentagon = (5.0 / 2.0) * math.sin(2.0 * math.pi / 5.0)
-capacity_formula = 2.0 * math.cos(math.pi / 10.0) * (1.0 + math.cos(math.pi / 5.0))
-sys_formula = (math.sqrt(5.0) + 3.0) / 5.0
-print(f"Area(K)=Area(T) analytic:      {area_pentagon:.12f}")
-print(f"Capacity analytic (HK–O 2024):  {capacity_formula:.12f}")
-print(f"Sys analytic:                   {sys_formula:.12f}")
+# Relative errors
+def rel(a: float, b: float) -> float:
+    return 0.0 if b == 0 else abs(a - b) / abs(b)
+
+cap_ana = f"{capacity_analytic:.12f}"
+area_ana = f"{area_analytic:.12f}"
+vol_ana = f"{(area_analytic**2):.12f}"
+sys_ana = f"{sys_analytic:.12f}"
+cap_meas = f"{c_val:.12f}"
+vol_meas = f"{vol_val:.12f}"
+sys_meas = f"{sys_val:.12f}"
+two_bounce = f"{action_two_bounce:.12f}"
+err_cap = f"{rel(c_val, capacity_analytic):.2e}"
+err_vol = f"{rel(vol_val, area_analytic**2):.2e}"
+err_sys = f"{rel(sys_val, sys_analytic):.2e}"
+uq_q_n = int(uq_q.size(0))
+uq_p_n = int(uq_p.size(0))
+
+md = """
+### Statement
+
+- Conjecture (Viterbo, 2000; 4D normalisation): for a convex domain $X \subset \mathbb R^{4}$,
+  $$\operatorname{Sys}(X) = \frac{c_{\rm EHZ}(X)^{2}}{2\,\operatorname{Vol}_{4}(X)} \le 1.$$
+- Construction (Haim–Kislev–Ostrover, 2024): $K \times T$ with $K$ a regular pentagon and $T = R_{\pi/2}K$.
+
+### Result (this instance)
+
+- $c_{\rm EHZ}(K\times T) = 2\cos(\tfrac{\pi}{10})\,\bigl(1+\cos(\tfrac{\pi}{5})\bigr)$ $\approx$ %(cap_ana)s
+- $\operatorname{Area}(K) = \operatorname{Area}(T) = \tfrac{5}{2}\sin(\tfrac{2\pi}{5})$ $\approx$ %(area_ana)s
+- $\operatorname{Vol}_{4}(K\times T) = \operatorname{Area}(K)\,\operatorname{Area}(T)$ $\approx$ %(vol_ana)s
+- $\operatorname{Sys}(K\times T) = \dfrac{c^{2}}{2\,\operatorname{Vol}_{4}} = \dfrac{\sqrt{5}+3}{5}$ $\approx$ %(sys_ana)s (> 1)
+
+### Computation (this page)
+
+- Measured: $c_{\rm EHZ}$ = %(cap_meas)s, $\operatorname{Vol}_{4}$ = %(vol_meas)s, $\operatorname{Sys}$ = %(sys_meas)s
+- Two-bounce orbit: $|\{q\text{-vertices}\}| = %(uq_q_n)d$, $|\{p\text{-vertices}\}| = %(uq_p_n)d$ (expected 2 and 2)
+- Support check: $h_T(v)+h_T(-v)$ = %(two_bounce)s (equals measured capacity up to solver precision)
+
+### Consistency (relative error)
+
+- $|c - c_\text{analytic}|/c_\text{analytic}$ = %(err_cap)s
+- $|\operatorname{Vol} - (\operatorname{Area}K)^{2}| / (\operatorname{Area}K)^{2}$ = %(err_vol)s
+- $|\operatorname{Sys} - (\sqrt{5}+3)/5| / ((\sqrt{5}+3)/5)$ = %(err_sys)s
+
+The figure below shows the closed characteristic projected to the $q$- and $p$-planes.
+""" % {
+    "cap_ana": cap_ana,
+    "area_ana": area_ana,
+    "vol_ana": vol_ana,
+    "sys_ana": sys_ana,
+    "cap_meas": cap_meas,
+    "vol_meas": vol_meas,
+    "sys_meas": sys_meas,
+    "uq_q_n": uq_q_n,
+    "uq_p_n": uq_p_n,
+    "two_bounce": two_bounce,
+    "err_cap": err_cap,
+    "err_vol": err_vol,
+    "err_sys": err_sys,
+}
+
+display(Markdown(md))
+
+# %% [markdown]
+# ### Interpretation (for context)
+#
+# - The reported value $\operatorname{Sys}(K\times T) = (\sqrt{5}+3)/5 > 1$ contradicts
+#   Viterbo’s 4D volume–capacity conjecture in this instance.
+# - The capacity used here is the Ekeland–Hofer–Zehnder (EHZ) capacity, which
+#   agrees with several other capacities on convex domains in $\mathbb R^{2n}$ and
+#   can be computed as the minimal action of a closed characteristic.
+# - For the product $K\times T$ of planar convex bodies, the orbit is a 2‑bounce
+#   Minkowski billiard. In the regular case the action can be expressed in
+#   closed form, giving the analytic constants shown above.
+# - Our computation reproduces these constants numerically and visualises the
+#   orbit in the $q$- and $p$-projections.
+
+# %% [markdown]
+# (Internal computations above feed the displayed summary; code is hidden on the site.)
 
 # %% [markdown]
 # ## Figure — Projections of the orbit to p- and q-planes
@@ -206,17 +245,26 @@ def plot_counterexample(
     q_vertices: torch.Tensor | None = None,
     p_vertices: torch.Tensor | None = None,
     pentagon_scale: float = 0.9,
-    line_alpha: float = 0.85,
-    label_offset: float = 0.04,
+    line_alpha: float = 0.95,
+    label_offset: float = 0.06,
 ) -> plt.Figure:
     path_np = path.detach().cpu().numpy()
     # Ordering in cycles is (q, p); respect that in projections
     q_coords = path_np[:, :2]
     p_coords = path_np[:, 2:]
-    colors = cm.rainbow(np.linspace(0.0, 1.0, max(1, len(path_np) - 1)))
+    # Single, readable colour for orbit segments
+    orbit_color = "black"
 
     fig, (ax_p, ax_q) = plt.subplots(1, 2, figsize=(12, 6))
     fig.suptitle("Closed characteristic on K×T — projections to q and p")
+
+    def _unique_rows_np(a: np.ndarray) -> np.ndarray:
+        # Round to 1e-6 to stabilise uniqueness under float output
+        ar = np.round(a * 1_000_000.0) / 1_000_000.0
+        # Structured view for uniqueness
+        b = np.ascontiguousarray(ar).view([('', ar.dtype)] * ar.shape[1])
+        _, idx = np.unique(b, return_index=True)
+        return ar[np.sort(idx)]
 
     def draw_panel(ax: plt.Axes, coords: np.ndarray, name: str) -> None:
         # name is either 'q' or 'p'
@@ -227,40 +275,37 @@ def plot_counterexample(
         ax.set_aspect("equal", adjustable="box")
         ax.axhline(0.0, color="lightgray", linewidth=0.8)
         ax.axvline(0.0, color="lightgray", linewidth=0.8)
-        for idx, point in enumerate(coords[:-1]):
-            ax.scatter(point[0], point[1], color="black", zorder=3)
+        # Label only distinct vertices to avoid clutter: q1,q2 or p1,p2
+        uniq = _unique_rows_np(coords)
+        labels = [f"{name}1", f"{name}2"] if len(uniq) == 2 else [f"{name}{i+1}" for i in range(len(uniq))]
+        for lbl, pt in zip(labels, uniq, strict=False):
+            ax.scatter(pt[0], pt[1], color="black", s=25, zorder=4)
             ax.text(
-                point[0] + label_offset,
-                point[1] + label_offset,
-                str(idx + 1),
-                fontsize=9,
+                pt[0] + label_offset,
+                pt[1] + label_offset,
+                lbl,
+                fontsize=10,
                 ha="left",
                 va="bottom",
+                bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.8),
+                zorder=5,
             )
-        ax.scatter(coords[-1, 0], coords[-1, 1], color="black", zorder=3)
-        ax.text(
-            coords[-1, 0] + label_offset,
-            coords[-1, 1] + label_offset,
-            str(len(coords)),
-            fontsize=9,
-            ha="left",
-            va="bottom",
-        )
 
     for idx in range(len(path_np) - 1):
+        # Draw segments in a single, consistent style
         ax_p.plot(
             p_coords[idx : idx + 2, 0],
             p_coords[idx : idx + 2, 1],
-            color=colors[idx],
+            color=orbit_color,
             alpha=line_alpha,
-            linewidth=2.0,
+            linewidth=2.2,
         )
         ax_q.plot(
             q_coords[idx : idx + 2, 0],
             q_coords[idx : idx + 2, 1],
-            color=colors[idx],
+            color=orbit_color,
             alpha=line_alpha,
-            linewidth=2.0,
+            linewidth=2.2,
         )
         # Arrow to indicate direction (place near 70% along segment)
         for _ax, seg in ((ax_q, q_coords), (ax_p, p_coords)):
@@ -271,7 +316,7 @@ def plot_counterexample(
                 "",
                 xy=(x0 + 0.7 * dx, y0 + 0.7 * dy),
                 xytext=(x0 + 0.55 * dx, y0 + 0.55 * dy),
-                arrowprops=dict(arrowstyle="-|>", color=colors[idx], lw=1.5, alpha=line_alpha),
+                arrowprops=dict(arrowstyle="-|>", color=orbit_color, lw=1.4, alpha=line_alpha),
             )
 
     draw_panel(ax_q, q_coords, "q")
@@ -290,6 +335,7 @@ def plot_counterexample(
         p_vertices_np = p_vertices.detach().cpu().numpy()
         rotated_pentagon = np.vstack([p_vertices_np, p_vertices_np[0]])
 
+    # Boundaries drawn as dashed outlines
     ax_q.plot(
         pentagon[:, 0],
         pentagon[:, 1],
@@ -331,3 +377,10 @@ plt.show()
 # - Normalisation: Sys(B^4) = 1 for the Euclidean ball in R^4.
 # - This instance (regular pentagons) violates Viterbo’s conjectured bound.
 # - All computations are Torch-based and deterministic (CPU, float64).
+
+# %% [markdown]
+# ### Figure caption
+# Dashed polygons indicate the boundaries of $K$ (left: $p$-plane shows $T=R_{\pi/2}K$; right: $q$-plane shows $K$).
+# The solid black polyline is the projection of the closed characteristic onto each factor.
+# Arrowheads show the traversal direction. Labels $q1, q2$ and $p1, p2$ mark the
+# two distinct contact/support vertices visited by the 2‑bounce orbit in the $q$- and $p$-planes, respectively.
