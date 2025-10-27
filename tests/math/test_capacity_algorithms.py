@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import torch
 import pytest
+import torch
 
 import viterbo.math.capacity_ehz.algorithms as algo
 from viterbo.math.capacity_ehz.algorithms import (

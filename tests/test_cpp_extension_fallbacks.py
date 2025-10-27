@@ -1,5 +1,5 @@
-import importlib
 from types import SimpleNamespace
+import importlib
 
 import pytest
 import torch

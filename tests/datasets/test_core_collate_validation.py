@@ -2,11 +2,11 @@ import pytest
 import torch
 
 from viterbo.datasets.core import (
+    RaggedPointsDataset,
     Sample,
     _validate_ragged_batch,
     collate_list,
     collate_pad,
-    RaggedPointsDataset,
 )
 
 

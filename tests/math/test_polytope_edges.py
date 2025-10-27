@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 import torch
+
 import viterbo.math.polytope as P
 
 from viterbo.math.polytope import (

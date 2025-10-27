@@ -38,11 +38,18 @@ from typing import Any, Iterable
 import matplotlib.pyplot as plt
 import torch
 
-# Ensure project `src/` is on the path for `viterbo.*` imports when run as a script.
+# Ensure project `src/` is on the path for `viterbo.*` imports when run as a script/notebook.
+def _find_project_root(start: Path) -> Path:
+    cur = start
+    for p in [cur] + list(cur.parents):
+        if (p / "pyproject.toml").exists():
+            return p
+    return start
+
 try:
     PROJECT_ROOT = Path(__file__).resolve().parents[1]
 except NameError:
-    PROJECT_ROOT = Path.cwd().resolve().parents[1]
+    PROJECT_ROOT = _find_project_root(Path.cwd().resolve())
 SRC_PATH = PROJECT_ROOT / "src"
 if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))

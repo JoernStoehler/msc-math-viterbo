@@ -19,6 +19,12 @@ jobs:
   build:
     name: Build & Link Check
     runs-on: ubuntu-latest
+    env:
+      PIP_INDEX_URL: https://download.pytorch.org/whl/cpu
+      PIP_EXTRA_INDEX_URL: https://pypi.org/simple
+      UV_DEFAULT_INDEX: https://download.pytorch.org/whl/cpu
+      UV_EXTRA_INDEX_URL: https://pypi.org/simple
+      UV_TORCH_BACKEND: cpu
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

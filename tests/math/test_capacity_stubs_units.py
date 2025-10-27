@@ -28,8 +28,8 @@ def test_symplectic_form_matrix_structure_and_properties(d: int) -> None:
     # Skew-symmetry: J^T = -J
     assert torch.allclose(J.T, -J, atol=1e-12, rtol=0.0)
     # Canonical block structure: J^2 = -I
-    I = torch.eye(d, dtype=J.dtype, device=J.device)
-    assert torch.allclose(J @ J, -I, atol=1e-12, rtol=0.0)
+    eye_mat = torch.eye(d, dtype=J.dtype, device=J.device)
+    assert torch.allclose(J @ J, -eye_mat, atol=1e-12, rtol=0.0)
 
 
 def test_nullspace_vectors_empty_and_identity_cases() -> None:
@@ -148,4 +148,3 @@ def test_maximum_triangular_sum_small_k() -> None:
     )
     val3 = _maximum_triangular_sum(beta3, omega3)
     assert math.isclose(val3, 2.0 + 3.0 + 5.0, rel_tol=0.0, abs_tol=1e-12)
-

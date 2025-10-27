@@ -38,13 +38,20 @@ from typing import Any, Iterable
 
 import torch
 
-# Ensure project `src/` is on the path when run as a script.
+# Ensure project `src/` is on the path when run as a script or notebook.
+def _find_project_root(start: Path) -> Path:
+    """Ascend from start to locate the repo root by pyproject.toml."""
+    cur = start
+    for p in [cur] + list(cur.parents):
+        if (p / "pyproject.toml").exists():
+            return p
+    return start
+
 try:
     PROJECT_ROOT = Path(__file__).resolve().parents[1]
 except NameError:
-    # When executed as a notebook (__file__ undefined), use the execution CWD
-    # which render_notebooks.py sets to this file's parent.
-    PROJECT_ROOT = Path.cwd().resolve().parents[1]
+    # When executed via nbclient (__file__ undefined), start from CWD and ascend
+    PROJECT_ROOT = _find_project_root(Path.cwd().resolve())
 SRC_PATH = PROJECT_ROOT / "src"
 if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))
@@ -80,7 +87,7 @@ def load_rows_from_parquet(path: Path) -> list[dict[str, Any]] | None:
     except ModuleNotFoundError as e:
         print(
             "Hugging Face Datasets dependency not available (module 'datasets' missing).\n"
-            "Install data extras and retry: uv sync --extra data\n"
+            "Install dev extras and retry: uv sync --extra dev\n"
             f"Details: {e}"
         )
         return None
