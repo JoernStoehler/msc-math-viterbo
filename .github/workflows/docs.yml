@@ -68,7 +68,6 @@ jobs:
         run: |
           python scripts/render_notebooks.py \
             --to md --out docs/notebooks --pattern "*.py" --index docs/notebooks/index.md --hide-input || true
-            --to md --out docs/notebooks --pattern "*.py" --index docs/notebooks/index.md --hide-input || true
 
       - name: Build MkDocs (strict + link check)
         run: mkdocs build --strict

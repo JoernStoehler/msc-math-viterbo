@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Local guardrail: run the same gates as GitHub Actions (CI + Docs),
-# with CPU-only torch and identical tooling. Skip with SKIP_PREPUSH=1.
+# Local guardrail: run the same gates as GitHub Actions (CI + Docs).
+# Enforce CPU-only torch on hosts without CUDA; respect CUDA wheels when present.
+# Skip entirely with SKIP_PREPUSH=1 if you understand the risks.
 
 if [[ "${SKIP_PREPUSH:-}" == "1" ]]; then
   echo "[pre-push] SKIP_PREPUSH=1 — skipping local checks."
@@ -11,12 +12,41 @@ fi
 
 status_before=$(git status --porcelain --untracked-files=no)
 
-# Enforce CPU-only index (match Actions) so we don't pull CUDA wheels locally.
-export PIP_INDEX_URL="${PIP_INDEX_URL:-https://download.pytorch.org/whl/cpu}"
-export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL:-https://pypi.org/simple}"
-export UV_DEFAULT_INDEX="${UV_DEFAULT_INDEX:-https://download.pytorch.org/whl/cpu}"
-export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL:-https://pypi.org/simple}"
-export UV_TORCH_BACKEND="${UV_TORCH_BACKEND:-cpu}"
+GPU_HOST=0
+if command -v nvidia-smi >/dev/null 2>&1; then
+  GPU_HOST=1
+elif command -v uv >/dev/null 2>&1; then
+  if uv run python - >/dev/null 2>&1 <<'PY'
+import torch
+import sys
+cuda_version = getattr(torch.version, "cuda", None)
+sys.exit(0 if cuda_version else 1)
+PY
+  then
+    GPU_HOST=1
+  fi
+elif command -v python >/dev/null 2>&1; then
+  if python - >/dev/null 2>&1 <<'PY'
+import torch
+import sys
+cuda_version = getattr(torch.version, "cuda", None)
+sys.exit(0 if cuda_version else 1)
+PY
+  then
+    GPU_HOST=1
+  fi
+fi
+
+if [[ "${GPU_HOST}" -eq 1 ]]; then
+  echo "[pre-push] GPU runtime detected; using default torch indexes."
+else
+  echo "[pre-push] No GPU detected; forcing CPU torch indexes."
+  export PIP_INDEX_URL="${PIP_INDEX_URL:-https://download.pytorch.org/whl/cpu}"
+  export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL:-https://pypi.org/simple}"
+  export UV_DEFAULT_INDEX="${UV_DEFAULT_INDEX:-https://download.pytorch.org/whl/cpu}"
+  export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL:-https://pypi.org/simple}"
+  export UV_TORCH_BACKEND="${UV_TORCH_BACKEND:-cpu}"
+fi
 
 have() { command -v "$1" >/dev/null 2>&1; }
 run() { echo "[pre-push] $*"; eval "$@"; }
@@ -35,10 +65,18 @@ fi
 
 # 2) C++ preflight: compile a tiny extension via torch's cpp_extension
 if have uv; then
-  run uv run python scripts/verify_cpu_torch.py
+  if [[ "${GPU_HOST}" -eq 0 ]]; then
+    run uv run python scripts/verify_cpu_torch.py
+  else
+    echo "[pre-push] Skipping CPU torch verification on GPU host."
+  fi
   run uv run python scripts/cpp_preflight.py
 else
-  run python scripts/verify_cpu_torch.py
+  if [[ "${GPU_HOST}" -eq 0 ]]; then
+    run python scripts/verify_cpu_torch.py
+  else
+    echo "[pre-push] Skipping CPU torch verification on GPU host."
+  fi
   run python scripts/cpp_preflight.py
 fi
 

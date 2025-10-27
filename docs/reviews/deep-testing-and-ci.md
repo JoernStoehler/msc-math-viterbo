@@ -57,7 +57,7 @@ Findings (unsorted)
   - Format settings standardized (double quotes, LF, width 100); `just fix` and `just format` wire Ruff format and autofix.
 - CI parity commands are available and mostly mirrored:
   - `just ci` runs: `uv sync --extra dev`, `ruff check .`, `pyright -p pyrightconfig.json`, `pytest -q -m smoke`, and `mkdocs build --strict` — mirrors `.github/workflows/ci.yml` ‘ci-cpu’ job except CI installs CPU-only torch via pip to system first.
-  - CI leverages `ci-cpu` to install `torch==2.5.1` CPU wheels against the CPU index for reliability; local `just ci` leaves torch resolution to uv lock/default indices.
+  - CI leverages `ci-cpu` to install `torch==2.5.1` CPU wheels against the CPU index for reliability; locally the pre-push hook forces the same CPU-only indexes only when no CUDA runtime is present, otherwise it preserves developer GPU wheels.
   - UV cache (`~/.cache/uv`) is cached in CI; no explicit pip/pytest caches beyond that.
 - Timing and SLOs:
   - Charter sets CI SLO p95 ≤ 7 minutes: `docs/charter.md:1`.

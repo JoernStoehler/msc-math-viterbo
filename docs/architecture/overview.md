@@ -34,8 +34,8 @@ It is intended for maintainers or agents working on architecture/conventions.
 
 - Testing & CI philosophy
   - Smoke-first: quick validators and selective benchmarks in PRs; deeper tiers are opt-in.
-  - Incremental selection for fast feedback loops; CI uses CPU-only Torch wheels for speed.
-  - CI exports `PIP_INDEX_URL`/`UV_TORCH_BACKEND=cpu` so installers resolve against the CPU-only PyTorch index; developers override locally when they need CUDA wheels.
+- Incremental selection for fast feedback loops; CI uses CPU-only Torch wheels for speed.
+- CI exports `PIP_INDEX_URL`/`UV_TORCH_BACKEND=cpu` so installers resolve against the CPU-only PyTorch index; the local pre-push hook mirrors this only when no CUDA toolkit is detected, and otherwise leaves developer GPU installs intact.
   - Docs are built in CI so documentation drift is surfaced alongside code changes.
 
 - Imports & public surface

@@ -26,15 +26,23 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
-# Ensure project `src/` on path when run as a script
-import sys
+
+def _find_project_root(start: Path) -> Path:
+    """Ascend from start to locate the repo root by pyproject.toml."""
+    cur = start
+    for candidate in (cur, *cur.parents):
+        if (candidate / "pyproject.toml").exists():
+            return candidate
+    return cur
+
 
 try:
-    PROJECT_ROOT = Path(__file__).resolve().parents[1]
+    PROJECT_ROOT = _find_project_root(Path(__file__).resolve())
 except NameError:
-    PROJECT_ROOT = Path.cwd().resolve().parents[1]
+    PROJECT_ROOT = _find_project_root(Path.cwd().resolve())
 SRC_PATH = PROJECT_ROOT / "src"
 if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))
