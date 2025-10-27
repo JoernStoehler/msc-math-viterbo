@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import pytest
 import torch
 
 from viterbo.math.symplectic import random_symplectic_matrix, symplectic_form
+
+pytestmark = pytest.mark.smoke
 
 torch.set_default_dtype(torch.float64)
 
