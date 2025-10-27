@@ -50,6 +50,7 @@ if str(SRC_PATH) not in __import__("sys").path:
 from viterbo.math.constructions import lagrangian_product, rotated_regular_ngon2d
 from viterbo.math.capacity_ehz.ratios import systolic_ratio
 from viterbo.math.capacity_ehz.lagrangian_product import minimal_action_cycle_lagrangian_product
+from viterbo.math.polytope import support as support_value
 
 # %% [markdown]
 # ## Construction and Normalisation
@@ -150,6 +151,46 @@ for normal, offset in zip(GEOMETRY["normals_4d"], GEOMETRY["offsets_4d"]):
     print(f"  n = [{normal_str}], offset = {offset.item():+.2f}")
 
 # %% [markdown]
+# ## Sanity checks — cycle structure and constants
+
+# %%
+# The minimal-action cycle for K×T (regular pentagons) is a 2-bounce orbit.
+# Verify unique vertices in each projection and re-derive capacity/area constants.
+cycle = GEOMETRY["cycle"]
+q_cycle = cycle[:, :2]
+p_cycle = cycle[:, 2:]
+
+def _unique_rows(x: torch.Tensor) -> torch.Tensor:
+    # Stable unique rows helper (float64 coordinates)
+    if x.ndim != 2:
+        raise ValueError("expected a 2D tensor")
+    # Round to dampen printer artifacts and enable equality on expected vertices
+    xr = torch.round(x * 1_000_000.0) / 1_000_000.0
+    unique, _ = torch.unique(xr, dim=0, sorted=True, return_inverse=True)
+    return unique
+
+uq_q = _unique_rows(q_cycle)
+uq_p = _unique_rows(p_cycle)
+print(f"Unique q-vertices visited: {uq_q.size(0)} (expected 2)")
+print(f"Unique p-vertices visited: {uq_p.size(0)} (expected 2)")
+
+# Re-derive c_EHZ from the 2-bounce formula: h_T(v) + h_T(-v) with v = q_j - q_i
+v = uq_q[1] - uq_q[0]
+h_fwd = support_value(uq_p, v)
+h_bwd = support_value(uq_p, -v)
+action_two_bounce = h_fwd + h_bwd
+print(f"Action from supports (2-bounce): {action_two_bounce.item():.12f}")
+print(f"Capacity from solver:          {GEOMETRY['capacity'].item():.12f}")
+
+# Analytic constants for regular pentagon (unit radius)
+area_pentagon = (5.0 / 2.0) * math.sin(2.0 * math.pi / 5.0)
+capacity_formula = 2.0 * math.cos(math.pi / 10.0) * (1.0 + math.cos(math.pi / 5.0))
+sys_formula = (math.sqrt(5.0) + 3.0) / 5.0
+print(f"Area(K)=Area(T) analytic:      {area_pentagon:.12f}")
+print(f"Capacity analytic (HK–O 2024):  {capacity_formula:.12f}")
+print(f"Sys analytic:                   {sys_formula:.12f}")
+
+# %% [markdown]
 # ## Figure — Projections of the orbit to p- and q-planes
 
 
@@ -167,17 +208,22 @@ def plot_counterexample(
     pentagon_scale: float = 0.9,
     line_alpha: float = 0.85,
     label_offset: float = 0.04,
-) -> None:
+) -> plt.Figure:
     path_np = path.detach().cpu().numpy()
-    p_coords = path_np[:, :2]
-    q_coords = path_np[:, 2:]
-    colors = cm.rainbow(np.linspace(0.0, 1.0, len(path_np) - 1))
+    # Ordering in cycles is (q, p); respect that in projections
+    q_coords = path_np[:, :2]
+    p_coords = path_np[:, 2:]
+    colors = cm.rainbow(np.linspace(0.0, 1.0, max(1, len(path_np) - 1)))
 
     fig, (ax_p, ax_q) = plt.subplots(1, 2, figsize=(12, 6))
-    fig.suptitle("Closed characteristic on K×T — projections to p and q")
+    fig.suptitle("Closed characteristic on K×T — projections to q and p")
 
     def draw_panel(ax: plt.Axes, coords: np.ndarray, name: str) -> None:
-        ax.set_title(f"{name}-projection")
+        # name is either 'q' or 'p'
+        if name == "q":
+            ax.set_title("q-plane: K")
+        else:
+            ax.set_title(r"p-plane: T = R$_{\pi/2}$K")
         ax.set_aspect("equal", adjustable="box")
         ax.axhline(0.0, color="lightgray", linewidth=0.8)
         ax.axvline(0.0, color="lightgray", linewidth=0.8)
@@ -216,9 +262,20 @@ def plot_counterexample(
             alpha=line_alpha,
             linewidth=2.0,
         )
+        # Arrow to indicate direction (place near 70% along segment)
+        for _ax, seg in ((ax_q, q_coords), (ax_p, p_coords)):
+            x0, y0 = seg[idx]
+            x1, y1 = seg[idx + 1]
+            dx, dy = (x1 - x0, y1 - y0)
+            _ax.annotate(
+                "",
+                xy=(x0 + 0.7 * dx, y0 + 0.7 * dy),
+                xytext=(x0 + 0.55 * dx, y0 + 0.55 * dy),
+                arrowprops=dict(arrowstyle="-|>", color=colors[idx], lw=1.5, alpha=line_alpha),
+            )
 
-    draw_panel(ax_p, p_coords, "p")
     draw_panel(ax_q, q_coords, "q")
+    draw_panel(ax_p, p_coords, "p")
 
     if q_vertices is None:
         base = regular_pentagon(scale=pentagon_scale)
@@ -233,36 +290,41 @@ def plot_counterexample(
         p_vertices_np = p_vertices.detach().cpu().numpy()
         rotated_pentagon = np.vstack([p_vertices_np, p_vertices_np[0]])
 
-    ax_p.plot(
+    ax_q.plot(
         pentagon[:, 0],
         pentagon[:, 1],
         color="dimgray",
         linewidth=1.5,
         linestyle="--",
-        label="Lagrangian factor",
+        label=r"K (q-plane)",
     )
-    ax_q.plot(
+    ax_p.plot(
         rotated_pentagon[:, 0],
         rotated_pentagon[:, 1],
         color="dimgray",
         linewidth=1.5,
         linestyle="--",
-        label="Rotated factor",
+        label=r"T = R$_{\pi/2}$K (p-plane)",
     )
 
-    for ax in (ax_p, ax_q):
-        ax.legend(loc="upper right")
-        ax.set_xlabel("x")
-        ax.set_ylabel("y")
+    # Axis labels reflect canonical coordinates on each factor
+    ax_q.legend(loc="upper right")
+    ax_q.set_xlabel("q1")
+    ax_q.set_ylabel("q2")
+    ax_p.legend(loc="upper right")
+    ax_p.set_xlabel("p1")
+    ax_p.set_ylabel("p2")
 
     plt.tight_layout()
+    return fig
 
 
-plot_counterexample(
+fig = plot_counterexample(
     GEOMETRY["cycle"],
     q_vertices=GEOMETRY["vertices_q"],
     p_vertices=GEOMETRY["vertices_p"],
 )
+plt.show()
 
 # %% [markdown]
 # ## Notes
