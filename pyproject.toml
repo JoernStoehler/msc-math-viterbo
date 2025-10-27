@@ -86,7 +86,7 @@ ignore = [
 future-annotations = true
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*" = ["D"]
+"tests/**/*" = ["D", "I001"]
 "src/viterbo/__init__.py" = ["F401"]
 "src/viterbo/**/__init__.py" = ["F401", "F841", "ANN401"]
 "typings/**/*" = ["TID252", "ANN401", "UP035", "UP037", "UP047", "I001"]

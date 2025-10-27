@@ -132,7 +132,12 @@ area_analytic = (5.0 / 2.0) * math.sin(2.0 * math.pi / 5.0)
 capacity_analytic = 2.0 * math.cos(math.pi / 10.0) * (1.0 + math.cos(math.pi / 5.0))
 sys_analytic = (math.sqrt(5.0) + 3.0) / 5.0
 
-# Two-bounce structure
+# %% [markdown]
+# ## Sanity checks — cycle structure and constants
+
+# %%
+# The minimal-action cycle for K×T (regular pentagons) is a 2-bounce orbit.
+# Verify unique vertices in each projection and re-derive capacity/area constants.
 cycle = GEOMETRY["cycle"]
 q_cycle = cycle[:, :2]
 p_cycle = cycle[:, 2:]
