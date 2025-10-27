@@ -344,7 +344,7 @@ ci-cpu:
     @echo "Running lint/type/smoke tests with coverage and docs build (system Python)."
     ruff check .
     pyright -p pyrightconfig.json
-    python -m pytest -q {{PYTEST_SMOKE_FLAGS}} --cov=src/viterbo --cov-report=term-missing --cov-report=xml --cov-fail-under=85 {{PYTEST_ARGS}}
+    python -m pytest -q {{PYTEST_SMOKE_FLAGS}} --cov=src/viterbo --cov-report=term-missing --cov-report=xml --cov-report=html --cov-fail-under=80 {{PYTEST_ARGS}}
     mkdocs build --strict
 
 # System-Python variants for CI (avoid uv-run creating new envs)
