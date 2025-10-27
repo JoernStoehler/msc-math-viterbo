@@ -34,6 +34,12 @@ jobs:
       - name: Sync dependencies (uv)
         run: uv sync --extra dev
 
+      - name: Build AtlasTiny v1 artefact
+        env:
+          VITERBO_CPU_LIMIT: "0"
+        run: |
+          uv run python notebooks/atlas_tiny_build.py
+
       - name: Render notebooks to Markdown
         env:
           VITERBO_CPU_LIMIT: "0"

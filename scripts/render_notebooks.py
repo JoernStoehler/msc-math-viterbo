@@ -34,9 +34,9 @@ def _log(message: str) -> None:
 
 
 def discover_notebooks(root: Path, pattern: str) -> list[Path]:
-    """Return notebook files under ``root`` matching the glob ``pattern``."""
+    """Return notebook files under ``root`` (recursively) matching ``pattern``."""
     pattern = pattern or "*.py"
-    return sorted(p for p in root.glob(pattern) if p.is_file())
+    return sorted(p for p in root.rglob(pattern) if p.is_file())
 
 
 def load_notebook(path: Path) -> NotebookNode:

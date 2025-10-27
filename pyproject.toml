@@ -32,8 +32,7 @@ dev = [
     "nbconvert>=7.16.4",
     "nbclient>=0.10.0",
     "ipykernel>=6.29.5",
-]
-data = [
+    # Moved from former 'data' extra — required for notebooks/docs
     "pyarrow>=14",
     "datasets>=2.19.0",
     "orjson>=3.10.0",
