@@ -1,7 +1,7 @@
 ---
 name: basic-environment
 description: Always-on quick reference for repo layout, golden commands, and shell practices.
-last-updated: 2025-10-17
+last-updated: 2025-10-27
 ---
 
 # Basic Environment & Repo Use
@@ -19,6 +19,8 @@ last-updated: 2025-10-17
 - `just ci` — CI parity (lint, type, tests) before PR/handoff.
 - `just bench` — smoke-tier benchmarks when performance matters.
 - `uv run ...` — execute Python with locked deps.
+- `just notebooks-md 'pattern'` — execute and render Jupytext notebooks to Markdown under `docs/notebooks/`.
+- `just notebooks-html 'pattern'` — render single-file HTML under `docs/notebooks/html/` (use when a one-file handout is needed).
 
 ## Shell Practices
 
@@ -31,4 +33,3 @@ last-updated: 2025-10-17
 - `repo-layout` — canonical structure and sources of truth.
 - `environment-tooling` — troubleshooting and deviations from the golden path.
 - `devcontainer-ops` — start/stop/rebuild and status checks.
-

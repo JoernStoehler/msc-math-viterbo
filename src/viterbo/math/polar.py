@@ -3,6 +3,10 @@ r"""Polar duals and Mahler link stubs.
 This module will house polar body computations and helpers connecting symplectic
 inequalities to Mahler-type products via polarity (e.g., K × K^\circ links).
 All functions are pure and torch-first.
+
+See Also:
+- ``viterbo.math.volume.volume`` for Mahler-type products once implemented
+- ``viterbo.math.constructions`` for canonical shapes to test polarity
 """
 
 from __future__ import annotations

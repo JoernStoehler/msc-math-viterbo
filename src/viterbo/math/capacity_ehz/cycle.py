@@ -10,6 +10,11 @@ Supported inputs
 
 Other ambient dimensions are not implemented. The front-end is pure and does
 not perform I/O; it preserves input dtype/device for outputs.
+
+See Also:
+- ``viterbo.math.capacity_ehz.algorithms`` for capacity-only entry points
+- ``viterbo.math.capacity_ehz.lagrangian_product.minimal_action_cycle_lagrangian_product``
+- ``viterbo.math.polytope.vertices_to_halfspaces``
 """
 
 from __future__ import annotations

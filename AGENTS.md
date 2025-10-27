@@ -11,11 +11,12 @@ This file is an index. Load the right skill guides for your task.
 
 ## Always-On Essentials
 
-- Golden commands: `just checks`, `just test`, `just ci`, `just fix`, `just bench`; use `uv run ...` for Python entry points.
+- Golden commands: `just checks`, `just test`, `just ci`, `just fix`, `just bench`, `just notebooks-md`, `just notebooks-html`; use `uv run ...` for Python entry points.
 - Navigation: prefer `rg` for searches; stream reads ≤250 lines in the shell.
 - Escalation: add `Needs-Unblock: <topic>` to tickets; Owner: Jörn Stöhler; Advisor: Kai Cieliebak.
 - Safety: do not revert files you didn’t edit; keep device/dtype choices explicit.
 - CPU time cap: Python processes default to a 180s CPU cap (sitecustomize.py). Override with `VITERBO_CPU_LIMIT=0` (disable) or raise as needed for long runs.
+- Notebook rendering (golden path): keep notebooks as Jupytext `.py` under `notebooks/`; render to docs via `just notebooks-md '*.py'` (Markdown for Pages/GitHub). CI renders notebooks before building the MkDocs site; do not commit rendered outputs.
 - PDF to Markdown (quick): `pdftotext -layout -nopgbrk input.pdf output.md` (store summaries under `mail/private/`).
 
 ## Skill Map
@@ -68,22 +69,22 @@ This file is an index. Load the right skill guides for your task.
 <!-- BEGIN: skills-overview (auto-generated) -->
 <!-- This section is maintained by scripts/load_skills_metadata.py. Do not edit between markers. -->
 - `skills/architecture-overview.md` — architecture-overview — Layering and boundaries are maintained under Good Code Loop; keep this for quick reference. (last-updated: 2025-10-18)
-- `skills/basic-environment.md` — basic-environment — Always-on quick reference for repo layout, golden commands, and shell practices. (last-updated: 2025-10-17)
+- `skills/basic-environment.md` — basic-environment — Always-on quick reference for repo layout, golden commands, and shell practices. (last-updated: 2025-10-27)
 - `skills/collaboration-reporting.md` — collaboration-reporting — This skill should be used when communicating progress, handling weekly reporting, or managing email/artefacts with maintainers and advisors. (last-updated: 2025-10-18)
 - `skills/data-collation.md` — data-collation — Use for batching ragged data, designing collate functions, and keeping math pure. (last-updated: 2025-10-17)
 - `skills/devcontainer-ops.md` — devcontainer-ops — This skill should be used when starting, stopping, or troubleshooting the devcontainer and its services. (last-updated: 2025-10-18)
 - `skills/environment-tooling.md` — environment-tooling — Troubleshooting environment/tooling deviations from the golden path and keeping flows healthy. (last-updated: 2025-10-18)
-- `skills/experiments-notebooks-artefacts.md` — experiments-notebooks-artefacts — Use for experiments, Jupytext-managed notebooks, and reproducible non-code artefacts. (last-updated: 2025-10-17)
+- `skills/experiments-notebooks-artefacts.md` — experiments-notebooks-artefacts — Use for experiments, Jupytext-managed notebooks, and reproducible non-code artefacts. (last-updated: 2025-10-27)
 - `skills/good-code-loop.md` — good-code-loop — Use for shipping correct code with tests while preserving architecture boundaries and PR hygiene. (last-updated: 2025-10-18)
 - `skills/math-layer.md` — math-layer — This skill should be used when implementing or modifying math-layer geometry utilities in `src/viterbo/math`. (last-updated: 2025-10-18)
 - `skills/math-theory.md` — math-theory — Use for invariants, conventions, and references that guide math implementation and review. (last-updated: 2025-10-17)
 - `skills/papers-workflow.md` — papers-workflow — This skill should be used when searching, fetching, and curating papers; prefer open preprints and store text under docs/papers with index updates. (last-updated: 2025-10-20)
 - `skills/performance-discipline.md` — performance-discipline — Use when measuring, profiling, and addressing bottlenecks in the main algorithm; escalate to C++ only with evidence. (last-updated: 2025-10-18)
-- `skills/repo-layout.md` — repo-layout — This skill should be used when navigating repository structure, sources of truth, and documentation locations. (last-updated: 2025-10-17)
+- `skills/repo-layout.md` — repo-layout — This skill should be used when navigating repository structure, sources of truth, and documentation locations. (last-updated: 2025-10-27)
 - `skills/repo-onboarding.md` — repo-onboarding — This skill should be used when starting a new task or resuming work to follow the repository’s startup sequence. (last-updated: 2025-10-17)
 - `skills/roles-scope.md` — roles-scope — This skill should be used when clarifying governance, maintainer responsibilities, and escalation triggers. (last-updated: 2025-10-17)
 - `skills/skill-authoring.md` — skill-authoring — This skill should be used when creating or updating skills aligned with Anthropic’s guidance, combining facts with imperative steps. (last-updated: 2025-10-17)
-- `skills/testing-and-ci.md` — testing-and-ci — Use for detailed testing, static analysis, incremental selection, and CI parity/troubleshooting. (last-updated: 2025-10-17)
+- `skills/testing-and-ci.md` — testing-and-ci — Use for detailed testing, static analysis, incremental selection, and CI parity/troubleshooting. (last-updated: 2025-10-27)
 - `skills/vibekanban.md` — vibekanban — This skill should be used when working with the Msc Math Viterbo Kanban board for scoping, updates, and escalation. (last-updated: 2025-10-18)
 - `skills/writing.md` — writing — Use for concise mails, weekly summaries, and thesis/document writing norms and artefact hygiene. (last-updated: 2025-10-17)
 <!-- END: skills-overview -->

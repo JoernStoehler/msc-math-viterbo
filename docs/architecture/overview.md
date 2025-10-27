@@ -14,22 +14,23 @@ It is intended for maintainers or agents working on architecture/conventions.
 
 - Layering (no cycles)
   - `viterbo.math`: pure, stateless Torch tensor functions; no I/O; no dataclasses.
+    - Reference implementations for symplectic algorithms live here for clarity/tests but are not runtime fallbacks for C++.
   - `viterbo.datasets`: thin adapters, schemas, and ragged collators; may cache or precompute.
   - `viterbo.models`: experiments and training loops; no core math logic.
-  - `_cpp`: C++ extensions via `torch.utils.cpp_extension` (CPU baseline), with Python fallbacks.
+  - `_cpp`: C++ extensions via `torch.utils.cpp_extension` (CPU baseline). Core entrypoints require these bindings; there are no Python fallbacks.
 
 - Ragged data patterns
   - Use Python lists of tensors or padded tensors + masks depending on the consumer.
   - Collate functions live in `viterbo.datasets` (e.g., `collate_list`, `collate_pad`).
 
 - C++ extensions
-  - Baseline is CPU-only C++ compiled via `torch.utils.cpp_extension.load` with pybind11 bindings.
-  - Keep a safe Python fallback for each extension to preserve portability (CI, devcontainers).
+  - Baseline is CPU-only C++ compiled via `torch.utils.cpp_extension.load` with pybind11 bindings. The bindings must succeed for runtime to function.
+  - `USE_NINJA=1` is the default; keep it exported so builds use Ninja. `VITERBO_CPP_VERBOSE=1` stays on to surface compile commands.
   - Add CUDA only when a clear hotspot is demonstrated by profiling and justified by complexity.
   - Example harness lives in `src/viterbo/_cpp/`: single-file (`add_one.cpp`) and multi-file (`affine_ops.{h,cpp}` + `affine_bindings.cpp`) builds are both wired through lazy loaders.
   - Local build trigger (devcontainer validated): `uv run python -c "import torch; import viterbo._cpp as cpp; cpp.add_one(torch.ones(1)); cpp.affine_scale_shift(torch.ones(1), 1.5, 0.5)"`. This compiles the extensions once per Python process, caching objects under `.cache/torch_extensions/`.
   - Default flags include `-O3`; pass more via `TORCH_CUDA_ARCH_LIST`, `CC`, `CXX`, or `CFLAGS` environment variables before import when platform tuning is required.
-  - Common failures: missing compilers (`c++: not found` → install `build-essential`), stale build artefacts (`rm -rf ~/.cache/torch_extensions/*`), or Ninja absence (`uv sync` pulls the bundled `ninja` dependency, otherwise `uv add ninja`); fallbacks keep runtime functional meanwhile.
+  - Common fixes: install `build-essential` (or equivalent) when compilers are missing, install `ninja` when `USE_NINJA=1` fails to find it, clear stale artefacts with `rm -rf ~/.cache/torch_extensions/*`, and cap parallelism with `MAX_JOBS=<n>` when machines thrash.
 
 - Testing & CI philosophy
   - Smoke-first: quick validators and selective benchmarks in PRs; deeper tiers are opt-in.

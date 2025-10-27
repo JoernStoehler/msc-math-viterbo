@@ -49,6 +49,10 @@ coverage.xml
 
 # Documentation build artefacts
 site/
+docs/notebooks/*.md
+!docs/notebooks/index.md
+docs/notebooks/*_files/
+docs/notebooks/html/
 
 # Mail: private content and raw emails/attachments (kept local)
 mail/private/**

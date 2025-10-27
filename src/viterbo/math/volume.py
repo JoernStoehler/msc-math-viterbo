@@ -1,11 +1,23 @@
 """Polytope volume helpers with Torch-first, dimension-agnostic implementations.
 
-Backends implicitly used by ``volume``
-- 2D (``D == 2``): shoelace polygon area on the convex hull (backend: "area2d").
-- Higher dimensions (``D >= 3``): facet measure accumulation using supporting
-  halfspaces and heights to a reference point (backend: "facets").
+Implemented helper
+- ``volume(vertices)``: for ``D=1`` length, ``D=2`` shoelace area on the hull,
+  and ``D>=3`` facet‑measure accumulation using supporting halfspaces and
+  heights from a reference point.
 
-These implementations are pure Torch and preserve dtype/device of inputs.
+Planned backends (stubs)
+- ``volume_via_triangulation(vertices)``.
+- ``volume_via_lawrence(normals, offsets, *, basis=None)``.
+- ``volume_via_monte_carlo(vertices, normals, offsets, *, samples, generator)``.
+
+Notes:
+- Helpers are pure Torch and preserve dtype/device.
+- The recursive facet accumulation inherits stability limits from
+  ``vertices_to_halfspaces``; supply well‑scaled vertices in higher dimensions.
+
+See Also:
+- ``viterbo.math.polytope.vertices_to_halfspaces`` and ``halfspaces_to_vertices``
+- ``viterbo.math.capacity_ehz.ratios.systolic_ratio`` for derived scalars
 """
 
 from __future__ import annotations

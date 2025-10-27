@@ -34,6 +34,13 @@ jobs:
       - name: Sync dependencies (uv)
         run: uv sync --extra dev
 
+      - name: Render notebooks to Markdown
+        env:
+          VITERBO_CPU_LIMIT: "0"
+        run: |
+          uv run --extra dev python scripts/render_notebooks.py \
+            --to md --out docs/notebooks --pattern "*.py" --index docs/notebooks/index.md || true
+
       - name: Build MkDocs (strict + link check)
         run: uv run mkdocs build --strict
 

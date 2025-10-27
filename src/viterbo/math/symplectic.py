@@ -3,6 +3,12 @@
 This module exposes the standard symplectic form and a random symplectic
 matrix generator. Constructions live in ``viterbo.math.constructions`` and
 capacity/cycle solvers live in ``viterbo.math.capacity_ehz.*``.
+
+See Also:
+- ``viterbo.math.capacity_ehz.algorithms`` for capacity solvers using symplectic
+  structure in even dimensions.
+- ``viterbo.math.constructions.lagrangian_product`` for product geometry in
+  ``R^{2n}``.
 """
 
 from __future__ import annotations

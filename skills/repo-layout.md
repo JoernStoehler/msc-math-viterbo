@@ -1,7 +1,7 @@
 ---
 name: repo-layout
 description: This skill should be used when navigating repository structure, sources of truth, and documentation locations.
-last-updated: 2025-10-17
+last-updated: 2025-10-27
 ---
 
 # Repository Layout & Sources of Truth
@@ -44,6 +44,7 @@ last-updated: 2025-10-17
 
 - `docs/` — public-facing site content, briefs, workflows.
 - `notebooks/` — Jupytext-managed `.py` notebooks; retain metadata headers (see `skills/experiments-notebooks-artefacts.md`).
+- `docs/notebooks/` — generated renders for the docs site; only `index.md` is committed. Use `just notebooks-md` to regenerate; CI renders on every push.
 - `mail/` — archived summaries, private attachments, and weekly reports (follow `skills/collaboration-reporting.md`).
 
 ## Related Skills

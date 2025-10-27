@@ -1,6 +1,27 @@
 """Geometric constructions of simple polytopes and configurations.
 
 Torch-first helpers that return vertex and/or halfspace representations.
+
+Contents (selected)
+- ``rotated_regular_ngon2d(k, angle)`` → planar regular n‑gon rotated by ``angle``.
+- ``unit_square()``, ``triangle_area_one()``, ``simplex_d(d)`` → canonical shapes.
+- ``lagrangian_product(vertices_P, vertices_Q)`` → vertex set for ``P × Q`` in ``R^{2n}``.
+- Linear transforms: ``matmul_vertices``, ``translate_vertices``, ``matmul_halfspace``,
+  ``translate_halfspace``.
+- Procedural shapes: ``random_polygon``, ``noisy_pentagon_product``, etc. All are
+  deterministic given explicit RNG seeds and return both V and H representations
+  when applicable.
+
+Notes:
+- Random generators operate in the unit ball, enforce reproducibility via an
+  explicit CPU generator, and may return both V and H representations.
+- Transform helpers exist for both vertex and half-space representations to keep
+  pipelines symmetric.
+
+See Also:
+- ``viterbo.math.polytope.vertices_to_halfspaces``, ``viterbo.math.polytope.halfspaces_to_vertices``
+- ``viterbo.math.volume.volume`` for measuring constructed shapes
+- ``viterbo.math.capacity_ehz.lagrangian_product.minimal_action_cycle_lagrangian_product``
 """
 
 from __future__ import annotations

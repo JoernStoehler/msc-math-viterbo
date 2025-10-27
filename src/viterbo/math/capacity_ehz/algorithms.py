@@ -1,4 +1,23 @@
-"""EHZ capacity solvers (entry points and simple variants)."""
+"""EHZ capacity solvers (entry points and simple variants).
+
+Overview
+- 2D: placeholder solvers reduce to polygon area from vertices/halfspaces.
+- 4D: supports certain Lagrangian product polytopes either via splitting into
+  planar factors and a vertex-billiard search, or falling back to the
+  Chaidez–Hutchings oriented-edge spectrum when splitting is not available.
+
+APIs
+- ``capacity_ehz_algorithm1(normals, offsets)`` — half-space entry.
+- ``capacity_ehz_algorithm2(vertices)`` — vertex entry.
+- ``capacity_ehz_primal_dual(vertices, normals, offsets)`` — consistency check
+  between entries where supported.
+
+See Also:
+- ``viterbo.math.capacity_ehz.lagrangian_product.minimal_action_cycle_lagrangian_product``
+- ``viterbo.math.capacity_ehz.stubs.oriented_edge_spectrum_4d``
+- ``viterbo.math.capacity_ehz.cycle.minimal_action_cycle``
+- ``viterbo.math.capacity_ehz.ratios.systolic_ratio``
+"""
 
 from __future__ import annotations
 
@@ -11,7 +30,13 @@ from viterbo.math.polytope import halfspaces_to_vertices, vertices_to_halfspaces
 
 
 def capacity_ehz_algorithm1(normals: torch.Tensor, offsets: torch.Tensor) -> torch.Tensor:
-    r"""Ekeland–Hofer–Zehnder capacity via the Artstein–Avidan–Ostrover program (2D placeholder)."""
+    r"""Ekeland–Hofer–Zehnder capacity from halfspaces.
+
+    - 2D: returns polygon area recovered from ``(normals, offsets)``.
+    - 4D: converts to vertices and forwards to ``capacity_ehz_algorithm2``.
+
+    Raises ``NotImplementedError`` outside supported dimensions.
+    """
     if normals.ndim != 2 or offsets.ndim != 1:
         raise ValueError("normals must be (F, d) and offsets must be (F,)")
     if normals.size(0) != offsets.size(0):
@@ -29,7 +54,12 @@ def capacity_ehz_algorithm1(normals: torch.Tensor, offsets: torch.Tensor) -> tor
 
 
 def capacity_ehz_algorithm2(vertices: torch.Tensor) -> torch.Tensor:
-    r"""EHZ capacity via discrete billiards on vertices (2D placeholder)."""
+    r"""EHZ capacity via discrete billiards on vertices.
+
+    - 2D: returns polygon area.
+    - 4D: attempts to split a Lagrangian product; when not possible, falls back
+      to the Chaidez–Hutchings oriented-edge spectrum implementation.
+    """
     if vertices.ndim != 2:
         raise ValueError("vertices must be a (M, d) tensor")
     d = vertices.size(1)
@@ -59,7 +89,11 @@ def capacity_ehz_algorithm2(vertices: torch.Tensor) -> torch.Tensor:
 def capacity_ehz_primal_dual(
     vertices: torch.Tensor, normals: torch.Tensor, offsets: torch.Tensor
 ) -> torch.Tensor:
-    r"""Hybrid primal–dual EHZ capacity solver (2D placeholder)."""
+    r"""Hybrid primal–dual EHZ capacity solver.
+
+    - 2D/4D: compares vertex and half-space entries where supported and enforces
+      consistency to catch mismatched inputs.
+    """
     if vertices.ndim != 2:
         raise ValueError("vertices must be a (M, d) tensor")
     if normals.ndim != 2 or offsets.ndim != 1:

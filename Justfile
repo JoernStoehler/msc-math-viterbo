@@ -94,6 +94,17 @@ sync:
     @echo "Syncing project dependencies via uv (dev + data extras)."
     $UV sync --extra dev --extra data
 
+# Execute Jupytext notebooks and render to docs/notebooks as Markdown.
+# Tip: View directly on GitHub or in the MkDocs site.
+notebooks-md PATTERN="*.py":
+    @echo "Rendering notebooks to Markdown under docs/notebooks (pattern={{PATTERN}})."
+    $UV run --extra dev python scripts/render_notebooks.py --to md --out docs/notebooks --pattern {{PATTERN}} --index docs/notebooks/index.md
+
+# Execute Jupytext notebooks and render single-file HTML under docs/notebooks/html.
+notebooks-html PATTERN="*.py":
+    @echo "Rendering notebooks to single-file HTML under docs/notebooks/html (pattern={{PATTERN}})."
+    $UV run --extra dev python scripts/render_notebooks.py --to html --out docs/notebooks/html --pattern {{PATTERN}}
+
 # Install the package with development dependencies, then refresh AGENTS.md sections.
 setup:
     @echo "Syncing project dependencies via uv (dev + data extras)."
@@ -153,6 +164,12 @@ test:
         echo "Tip: run 'just test-fast' or set JUST_USE_SELECTOR=1 to enable the selector."; \
         $UV run pytest -q {{PYTEST_SMOKE_FLAGS}} {{PYTEST_ARGS}}; \
     fi
+
+# Smoke-tier pytest without C++-marked tests.
+test-no-cpp:
+    just preflight
+    @echo "Running smoke-tier pytest without cpp-marked tests."
+    $UV run pytest -q -m 'smoke and not cpp' --durations=10 {{PYTEST_ARGS}}
 
 # Incremental smoke-tier run (selector opt-in). Alias: `JUST_USE_SELECTOR=1 just test`.
 test-fast:

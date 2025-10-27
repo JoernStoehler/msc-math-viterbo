@@ -1,7 +1,7 @@
 ---
 name: experiments-notebooks-artefacts
 description: Use for experiments, Jupytext-managed notebooks, and reproducible non-code artefacts.
-last-updated: 2025-10-17
+last-updated: 2025-10-27
 ---
 
 # Experiments, Notebooks, Artefacts
@@ -39,8 +39,19 @@ Applies when editing or creating files under `notebooks/`, including Jupytext-sy
 - Note in task updates whether a notebook requires reviewer attention and highlight key cells (by number or heading).
 - Avoid committing datasets unless explicitly whitelisted; reference external sources via links and describe preprocessing steps in markdown.
 
+## Publishing Notebooks (Golden Path)
+
+- Keep canonical notebooks as Jupytext `py:percent` Python files under `notebooks/`.
+- Render executed notebooks to the docs site via Markdown:
+  - Local preview: `just notebooks-md '*.py'` then `uv run mkdocs build --strict`.
+  - Hide code if needed: `uv run --extra dev python scripts/render_notebooks.py --to md --out docs/notebooks --pattern "*.py" --hide-input`.
+  - Long runs: set `VITERBO_CPU_LIMIT=0` to disable the default CPU cap.
+- CI renders notebooks before building Pages (`.github/workflows/docs.yml`); do not commit rendered outputs.
+- Outputs land under `docs/notebooks/` (Markdown + assets) and are ignored by Git, except `index.md` which anchors MkDocs nav.
+
 ## Related Skills
 
 - `repo-onboarding` — confirms early workflow steps before editing notebooks.
 - `collaboration-reporting` — guides how to document findings drawn from notebooks.
 - `performance-discipline` — use when profiling results from notebook explorations drive code changes.
+- `basic-environment` — golden commands including `just notebooks-md`/`notebooks-html`.

@@ -1,10 +1,27 @@
 """Geometry of a fixed convex polytope (representations and queries).
 
-This module focuses on per-body geometry:
-- H/V representations and conversions
-- basic queries (support, distances, bounding boxes, halfspace violations)
+Scope
+- Per‑body geometry for convex polytopes with Torch‑first helpers that preserve
+  dtype/device and perform no implicit device moves.
 
-All functions are pure and Torch-first (preserve dtype/device; no implicit moves).
+Queries
+- ``support(points, direction)`` and ``support_argmax(points, direction)``.
+- ``pairwise_squared_distances(points)``.
+- ``halfspace_violations(points, normals, offsets)``.
+- ``bounding_box(points)``.
+
+Representations
+- ``vertices_to_halfspaces(vertices)`` → ``(normals, offsets)`` for ``Bx <= c``.
+- ``halfspaces_to_vertices(normals, offsets)`` → vertices in lexicographic order.
+- ``facet_vertex_incidence(...)`` — stub placeholder.
+
+Notes:
+- Deterministic ordering of vertices relies on lexicographic sorting on CPU.
+- Tolerances scale with ``sqrt(eps)`` in the working dtype.
+
+See Also:
+- ``viterbo.math.constructions`` for canonical shapes and products
+- ``viterbo.math.volume.volume`` for volume/area/length from vertices
 """
 
 from __future__ import annotations

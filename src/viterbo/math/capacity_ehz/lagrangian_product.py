@@ -22,7 +22,28 @@ def minimal_action_cycle_lagrangian_product(
     *,
     max_bounces: int = 3,
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """Minimal-action Reeb orbit for K × T with planar factors (≤3 bounces)."""
+    """Minimal-action Reeb orbit for K × T with planar factors (≤3 bounces).
+
+    Outline (Rudolf 2022; discrete Minkowski billiards)
+    - Order ``vertices_q`` counter‑clockwise; recover ``vertices_p`` from
+      halfspaces.
+    - Two-bounce candidates: for all pairs ``(i, j)`` with ``i<j``, set
+      ``v = q_j - q_i`` and gather ``h_T(v)``, ``h_T(-v)`` and maximisers
+      ``p_f, p_b``. Accept iff vertex reflection checks hold at ``q_i`` and
+      ``q_j``; action ``= h_T(v) + h_T(-v)``.
+    - Three-bounce candidates: for triples ``(i, j, k)`` with non-degenerate
+      directions ``(q_j-q_i, q_k-q_j, q_i-q_k)``, gather support values and
+      maximisers and accept iff all three vertex reflection checks hold; action
+      is the sum of the three supports.
+    - Return the admissible candidate with minimal action, breaking ties
+      lexicographically on the flattened cycle for determinism.
+
+    See Also:
+    - ``viterbo.math.capacity_ehz.common.order_vertices_ccw``
+    - ``viterbo.math.polytope.support_argmax``
+    - ``viterbo.math.capacity_ehz.algorithms.capacity_ehz_algorithm2``
+    - ``viterbo.math.capacity_ehz.cycle.minimal_action_cycle``
+    """
     if max_bounces not in (2, 3):
         raise ValueError("max_bounces must be 2 or 3")
     validate_planar_vertices(vertices_q, "vertices_q")

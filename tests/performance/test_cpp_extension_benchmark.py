@@ -6,14 +6,13 @@ try:
 except ImportError:  # pragma: no cover
     pytestmark = pytest.mark.skip(reason="pytest-benchmark not installed")
 else:
-    pytestmark = [pytest.mark.smoke, pytest.mark.benchmark]
+    pytestmark = [pytest.mark.smoke, pytest.mark.benchmark, pytest.mark.cpp]
+    cpp = pytest.importorskip("viterbo._cpp")
 
 
 def test_affine_scale_shift_cpp_benchmark(benchmark):
-    """Benchmark the affine C++ path against the Torch fallback."""
-    from viterbo._cpp import affine_scale_shift, has_affine_extension
-
-    if not has_affine_extension():
+    """Benchmark the affine C++ path against the Torch baseline."""
+    if not cpp.has_affine_extension():
         pytest.skip("affine C++ extension unavailable")
 
     torch.manual_seed(0)
@@ -23,5 +22,5 @@ def test_affine_scale_shift_cpp_benchmark(benchmark):
 
     baseline = x * scale + shift
 
-    result = benchmark(lambda: affine_scale_shift(x, scale, shift))
+    result = benchmark(lambda: cpp.affine_scale_shift(x, scale, shift))
     torch.testing.assert_close(result, baseline)

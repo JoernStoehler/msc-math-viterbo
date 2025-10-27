@@ -318,7 +318,7 @@ if two_d:
     print(f"Max abs error (2D): {fmtf(max_err)} (tol={tol})")
 
 
-# Systolic ratio consistency: volume / capacity^n == systolic_ratio (when present)
+# Systolic ratio consistency: capacity^n / (n! * volume) == systolic_ratio (when present)
 with_cap = [r for r in rows if r.get("capacity_ehz") is not None]
 if with_cap:
     sr_rows: list[list[str]] = []
@@ -339,12 +339,13 @@ if with_cap:
             if sr is None
             else (float(sr) if not isinstance(sr, torch.Tensor) else float(sr.item()))
         )
-        expected = vol / (cap_val**n)
+        # Literature-normalized systolic ratio
+        expected = (cap_val**n) / (math.factorial(n) * vol)
         err = float("nan") if sr_val is None else abs(expected - sr_val)
         if not math.isnan(err):
             max_sr_err = max(max_sr_err, err)
         sr_rows.append([r["polytope_id"], str(dim), fmtf(expected), fmtf(sr_val), fmtf(err)])
-    print("\nSystolic ratio check (expected = volume / capacity^n)")
+    print("\nSystolic ratio check (expected = capacity^n / (n! * volume))")
     print_table(["polytope_id", "dim", "expected", "reported", "abs_error"], sr_rows)
     print(f"Max abs error (systolic ratio): {fmtf(max_sr_err)}")
 

@@ -165,5 +165,5 @@ def test_systolic_ratio_matches_counterexample_constant() -> None:
     volume_value = torch.tensor(1.0)
     capacity_value = torch.tensor(math.sqrt(2.0 * (math.sqrt(5.0) + 3.0) / 5.0))
     ratio = systolic_ratio(volume_value, capacity_value, 4)
-    expected = torch.tensor(5.0 / (2.0 * (math.sqrt(5.0) + 3.0)))
+    expected = torch.tensor((math.sqrt(5.0) + 3.0) / 5.0)
     torch.testing.assert_close(ratio, expected, rtol=1e-9, atol=1e-9)

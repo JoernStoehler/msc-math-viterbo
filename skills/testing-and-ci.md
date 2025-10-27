@@ -1,7 +1,7 @@
 ---
 name: testing-and-ci
 description: Use for detailed testing, static analysis, incremental selection, and CI parity/troubleshooting.
-last-updated: 2025-10-21
+last-updated: 2025-10-27
 ---
 
 # Testing & CI
@@ -42,6 +42,12 @@ last-updated: 2025-10-21
 
 - `just ci` mirrors the GitHub Actions workflow locally.
 - Record runtime and notable failures; attach log excerpts if parity reveals flakiness.
+
+### Docs Build and Notebooks
+
+- The Docs workflow renders Jupytext notebooks to Markdown before building MkDocs (`.github/workflows/docs.yml`).
+- Do not commit rendered outputs; CI produces them on every push. Locally, use `just notebooks-md` when previewing the site.
+- If a notebook takes longer than the default CPU cap, set `VITERBO_CPU_LIMIT=0` in the environment for rendering steps.
 
 ## Related Skills
 

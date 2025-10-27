@@ -22,6 +22,9 @@ env:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    env:
+      USE_NINJA: "1"
+      VITERBO_CPP_VERBOSE: "1"
     steps:
       - uses: actions/checkout@v4
 
@@ -47,6 +50,16 @@ jobs:
         with:
           path: ~/.cache/uv
           key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/torch_extensions
+          key: torch-extensions-${{ runner.os }}-${{ hashFiles('scripts/cpp_preflight.py', 'src/viterbo/_cpp/**/*.cpp', 'src/viterbo/_cpp/**/*.h') }}
+          restore-keys: |
+            torch-extensions-${{ runner.os }}-
+
+      - name: C++ Prebuild Gate
+        run: uv run python scripts/cpp_preflight.py
 
       - name: Run CI (CPU torch)
         run: just ci-cpu
@@ -60,6 +73,9 @@ jobs:
   longhaul-regression:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    env:
+      USE_NINJA: "1"
+      VITERBO_CPP_VERBOSE: "1"
     steps:
       - uses: actions/checkout@v4
 
@@ -85,6 +101,16 @@ jobs:
         with:
           path: ~/.cache/uv
           key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/torch_extensions
+          key: torch-extensions-${{ runner.os }}-${{ hashFiles('scripts/cpp_preflight.py', 'src/viterbo/_cpp/**/*.cpp', 'src/viterbo/_cpp/**/*.h') }}
+          restore-keys: |
+            torch-extensions-${{ runner.os }}-
+
+      - name: C++ Prebuild Gate
+        run: uv run python scripts/cpp_preflight.py
 
       - name: Run longhaul tests
         run: just test-longhaul

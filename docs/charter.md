@@ -43,7 +43,7 @@ Success Metrics (measurable)
   - “Atlas Tiny” immediate: demonstrable tomorrow (see Milestones) with benchmarks and computed properties.
   - Main dataset build (>1e5 polytopes): acceptable if it requires a one‑time batch run ≤ 24 core‑hours; status and commit hash recorded.
 
- Milestones & Timeline
+## Milestones & Timeline {#milestones-and-timeline}
 - Project start: 2025-10-01
 - Project end (hard): 2026-03-31
 - 2025-10-21 — Atlas Tiny demo (tomorrow): dataset preview with benchmarks and computed properties (all currently implemented algorithms; literature values where available).

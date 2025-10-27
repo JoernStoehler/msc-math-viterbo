@@ -66,4 +66,4 @@ def test_systolic_ratio_matches_ball_normalisation() -> None:
     volume_4d = (math.pi**2) * r**4 / 2.0
     capacity_4d = math.pi * r**2
     ratio_4d = systolic_ratio(torch.tensor(volume_4d), torch.tensor(capacity_4d), 4)
-    torch.testing.assert_close(ratio_4d, torch.tensor(0.5))
+    torch.testing.assert_close(ratio_4d, torch.tensor(1.0))

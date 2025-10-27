@@ -57,6 +57,7 @@ import numpy as np
 import torch
 
 from viterbo.math.constructions import lagrangian_product, rotated_regular_ngon2d
+from viterbo.math.capacity_ehz.ratios import systolic_ratio
 from viterbo.math.capacity_ehz.lagrangian_product import minimal_action_cycle_lagrangian_product
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -96,7 +97,8 @@ def counterexample_geometry() -> dict[str, torch.Tensor]:
     area_q = polygon_area(vertices_q)
     area_p = polygon_area(vertices_p)
     volume_4d = area_q * area_p
-    systolic_ratio_value = volume_4d / capacity.pow(2)
+    # Literature-normalized systolic ratio via core function (n=2 in 4D)
+    systolic_ratio_value = systolic_ratio(volume_4d, capacity, 4)
     return {
         "vertices_q": vertices_q,
         "normals_q": normals_q,
