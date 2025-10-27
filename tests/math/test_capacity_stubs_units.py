@@ -64,7 +64,9 @@ def test_nullspace_vectors_full_rank_and_rank_deficient() -> None:
     # One-dimensional nullspace
     assert ns_rd.shape == (3, 1)
     # Check that columns form a basis for solutions: A @ v = 0
-    assert torch.allclose(A_rd @ ns_rd, torch.zeros((2, 1), dtype=dtype, device=device), atol=1e-9, rtol=0.0)
+    assert torch.allclose(
+        A_rd @ ns_rd, torch.zeros((2, 1), dtype=dtype, device=device), atol=1e-9, rtol=0.0
+    )
     # Orthonormality (SVD basis): v^T v = 1
     v = ns_rd[:, 0]
     assert math.isclose(float(v.dot(v).item()), 1.0, rel_tol=0.0, abs_tol=1e-9)
@@ -90,7 +92,9 @@ def test_candidate_betas_null_dim_one_feasible_and_normalised() -> None:
     assert torch.all(beta >= -1e-12)
     assert float(torch.linalg.norm(beta).item()) > 0.0
     # Unit length because the ray was normalised inside (no negatives to zero)
-    assert torch.allclose(torch.linalg.norm(beta), torch.tensor(1.0, dtype=dtype), atol=1e-9, rtol=0.0)
+    assert torch.allclose(
+        torch.linalg.norm(beta), torch.tensor(1.0, dtype=dtype), atol=1e-9, rtol=0.0
+    )
     # Feasibility: A @ beta == 0
     assert torch.allclose(A @ beta, torch.zeros((1,), dtype=dtype), atol=1e-9, rtol=0.0)
 
@@ -132,8 +136,20 @@ def test_maximum_triangular_sum_small_k() -> None:
     device = torch.device("cpu")
 
     # k <= 1 => 0.0
-    assert _maximum_triangular_sum(torch.tensor([], dtype=dtype, device=device), torch.empty((0, 0), dtype=dtype, device=device)) == 0.0
-    assert _maximum_triangular_sum(torch.tensor([1.0], dtype=dtype, device=device), torch.zeros((1, 1), dtype=dtype, device=device)) == 0.0
+    assert (
+        _maximum_triangular_sum(
+            torch.tensor([], dtype=dtype, device=device),
+            torch.empty((0, 0), dtype=dtype, device=device),
+        )
+        == 0.0
+    )
+    assert (
+        _maximum_triangular_sum(
+            torch.tensor([1.0], dtype=dtype, device=device),
+            torch.zeros((1, 1), dtype=dtype, device=device),
+        )
+        == 0.0
+    )
 
     # k = 2 => |b1*b2*w|
     beta2 = torch.tensor([1.0, 1.0], dtype=dtype, device=device)

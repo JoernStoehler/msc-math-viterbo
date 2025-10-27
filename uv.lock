@@ -2779,18 +2779,16 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-data = [
-    { name = "datasets" },
-    { name = "orjson" },
-    { name = "pyarrow" },
-]
 dev = [
+    { name = "datasets" },
     { name = "ipykernel" },
     { name = "jupytext" },
     { name = "mkdocs" },
     { name = "mkdocs-material" },
     { name = "nbclient" },
     { name = "nbconvert" },
+    { name = "orjson" },
+    { name = "pyarrow" },
     { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-benchmark" },
@@ -2801,7 +2799,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "datasets", marker = "extra == 'data'", specifier = ">=2.19.0" },
+    { name = "datasets", marker = "extra == 'dev'", specifier = ">=2.19.0" },
     { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.29.5" },
     { name = "jupytext", marker = "extra == 'dev'", specifier = ">=1.16.3" },
     { name = "matplotlib", specifier = ">=3.9.2" },
@@ -2811,8 +2809,8 @@ requires-dist = [
     { name = "nbconvert", marker = "extra == 'dev'", specifier = ">=7.16.4" },
     { name = "ninja", specifier = ">=1.13.0" },
     { name = "numpy", specifier = ">=2.3.3" },
-    { name = "orjson", marker = "extra == 'data'", specifier = ">=3.10.0" },
-    { name = "pyarrow", marker = "extra == 'data'", specifier = ">=14" },
+    { name = "orjson", marker = "extra == 'dev'", specifier = ">=3.10.0" },
+    { name = "pyarrow", marker = "extra == 'dev'", specifier = ">=14" },
     { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1.406" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.2" },
     { name = "pytest-benchmark", marker = "extra == 'dev'", specifier = ">=5.1.0" },
@@ -2822,7 +2820,7 @@ requires-dist = [
     { name = "scipy", specifier = ">=1.15.2" },
     { name = "torch", specifier = ">=2.5.1,<2.6" },
 ]
-provides-extras = ["dev", "data"]
+provides-extras = ["dev"]
 
 [[package]]
 name = "watchdog"

@@ -8,4 +8,4 @@ Generated from notebooks under `notebooks/`.
 - [atlas tiny profile](atlas_tiny_profile.md)
 - [dummy generate](dummy_generate.md)
 - [dummy plot](dummy_plot.md)
-- [viterbo counterexample proposal](viterbo_counterexample_proposal.md)
+- [viterbo counterexample](viterbo_counterexample.md)

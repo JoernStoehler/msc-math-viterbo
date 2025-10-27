@@ -60,12 +60,12 @@ jobs:
         run: |
           uv run python notebooks/atlas_tiny_build.py
 
-      - name: Render notebooks to Markdown
+      - name: Render notebooks to Markdown (code hidden)
         env:
           VITERBO_CPU_LIMIT: "0"
         run: |
           uv run python scripts/render_notebooks.py \
-            --to md --out docs/notebooks --pattern "*.py" --index docs/notebooks/index.md || true
+            --to md --out docs/notebooks --pattern "*.py" --index docs/notebooks/index.md --hide-input || true
 
       - name: Build MkDocs (strict + link check)
         run: uv run mkdocs build --strict

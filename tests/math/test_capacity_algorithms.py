@@ -99,11 +99,15 @@ def test_algorithm2_2d_area_and_errors() -> None:
         capacity_ehz_algorithm2(odd)
 
 
-def test_algorithm2_4d_fallback_calls_oriented_edge_spectrum(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_algorithm2_4d_fallback_calls_oriented_edge_spectrum(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     vertices = _simplex_vertices_4d()
     called = {}
 
-    def fake_oriented(vertices_in: torch.Tensor, normals: torch.Tensor, offsets: torch.Tensor) -> torch.Tensor:
+    def fake_oriented(
+        vertices_in: torch.Tensor, normals: torch.Tensor, offsets: torch.Tensor
+    ) -> torch.Tensor:
         called["ok"] = (
             vertices_in.shape[1] == 4
             and normals.shape[1] == 4
@@ -137,7 +141,9 @@ def test_primal_dual_4d_consistent_and_inconsistent(monkeypatch: pytest.MonkeyPa
     normals4, offsets4 = _product_halfspaces_4d()
 
     # Consistent: monkeypatch both entries to agree
-    monkeypatch.setattr(algo, "capacity_ehz_algorithm2", lambda v: torch.tensor(3.21, dtype=v.dtype))
+    monkeypatch.setattr(
+        algo, "capacity_ehz_algorithm2", lambda v: torch.tensor(3.21, dtype=v.dtype)
+    )
     monkeypatch.setattr(
         algo,
         "capacity_ehz_algorithm1",
@@ -148,6 +154,8 @@ def test_primal_dual_4d_consistent_and_inconsistent(monkeypatch: pytest.MonkeyPa
 
     # Inconsistent: algorithm1 vs algorithm2 disagree
     monkeypatch.setattr(algo, "capacity_ehz_algorithm2", lambda v: torch.tensor(1.0, dtype=v.dtype))
-    monkeypatch.setattr(algo, "capacity_ehz_algorithm1", lambda n, c: torch.tensor(2.0, dtype=n.dtype))
+    monkeypatch.setattr(
+        algo, "capacity_ehz_algorithm1", lambda n, c: torch.tensor(2.0, dtype=n.dtype)
+    )
     with pytest.raises(ValueError):
         capacity_ehz_primal_dual(vertices4, normals4, offsets4)

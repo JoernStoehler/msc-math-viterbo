@@ -14,36 +14,19 @@
 # ---
 
 # %% [markdown]
-# # Proposal: Visualizing the 2024 Counterexample to Viterbo's Conjecture
+# # Viterbo Counterexample (Haim–Kislev–Ostrover, 2024) — Standard 4D Instance
 #
-# This notebook sketches the exploration tool we want once the geometry helpers in
-# `viterbo.math` land.  The goal is to interactively inspect the 4D polytope and
-# the piecewise linear Reeb trajectory underlying the 2024 counterexample.
+# This page presents the classical 4D counterexample to Viterbo’s volume–capacity
+# inequality using a Lagrangian product of regular pentagons (one rotated by 90°).
+# We report the Ekeland–Hofer–Zehnder capacity, the 4D volume, and the systolic
+# ratio (normalised so the Euclidean ball has value 1), together with the closed
+# characteristic (piecewise-linear Reeb orbit) and a clean two-panel figure of its
+# projections to the two planar factors.
 #
-# **Status:** proposal.  The data seeded below are placeholders that mimic the
-# structure we expect from the future APIs.
+# References
+# - P. Haim‑Kislev, Y. Ostrover (2024), “A Counterexample to Viterbo’s Conjecture”, arXiv:2405.16513.
+# - C. Viterbo (2000), “Metric and isoperimetric problems in symplectic geometry”, JAMS.
 
-# %% [markdown]
-# ## Planned library support
-#
-# To make this notebook production ready we will need:
-#
-# 1. `viterbo.math.polytopes` helpers capable of returning the counterexample
-#    polytope as
-#    - vertex list (``torch.Tensor`` of shape ``(V, 4)``),
-#    - facet normals (``(F, 4)``) and offsets (``(F,)``) so we can render and
-#      export the polytope,
-#    - symplectic splitting into ``p`` and ``q`` components.
-# 2. `viterbo.math.restricted_contact` (or similar) routines that produce the
-#    systolic data: volume, capacity, systolic ratio, and the closed characteristic
-#    sampled as an ordered list of 4D vertices.
-# 3. Convenience projectors ``split_pq(points: Tensor) -> tuple[Tensor, Tensor]``
-#    to avoid hand slicing in every notebook.
-# 4. Plotting utilities (matplotlib wrappers) that accept torch tensors and emit
-#    publication-ready 2D projections with consistent styling.
-#
-# Once these land we will replace the mock data section with live calls into the
-# library, e.g. ``polytope = counterexample_2024()``.
 
 # %%
 from __future__ import annotations
@@ -56,10 +39,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from viterbo.math.constructions import lagrangian_product, rotated_regular_ngon2d
-from viterbo.math.capacity_ehz.ratios import systolic_ratio
-from viterbo.math.capacity_ehz.lagrangian_product import minimal_action_cycle_lagrangian_product
-
 try:
     PROJECT_ROOT = Path(__file__).resolve().parents[1]
 except NameError:
@@ -68,8 +47,19 @@ SRC_PATH = PROJECT_ROOT / "src"
 if str(SRC_PATH) not in __import__("sys").path:
     __import__("sys").path.insert(0, str(SRC_PATH))
 
+from viterbo.math.constructions import lagrangian_product, rotated_regular_ngon2d
+from viterbo.math.capacity_ehz.ratios import systolic_ratio
+from viterbo.math.capacity_ehz.lagrangian_product import minimal_action_cycle_lagrangian_product
+
 # %% [markdown]
-# ## Counterexample geometry in torch
+# ## Construction and Normalisation
+#
+# - Domain: K × T ⊂ R^4, where K and T are regular pentagons in R^2 and T is
+#   obtained from K by a 90° rotation. We use unit-radius pentagons.
+# - Capacity: c = c_EHZ(K × T) from the minimal-action (≤3-bounce) Minkowski
+#   billiard on the product.
+# - Volume: Vol_4D(K × T) = Area(K) · Area(T).
+# - Systolic ratio (dimension 4): Sys = c^2 / (2 · Vol_4D).
 
 # %%
 torch.set_default_dtype(torch.float64)
@@ -92,7 +82,7 @@ def polygon_area(vertices: torch.Tensor) -> torch.Tensor:
 
 
 def counterexample_geometry() -> dict[str, torch.Tensor]:
-    """Construct the pentagon × rotated pentagon counterexample."""
+    """Pentagon × (90°-rotated) pentagon counterexample in R^4."""
     vertices_q, normals_q, offsets_q = rotated_regular_ngon2d(5, 0.0)
     vertices_p, normals_p, offsets_p = rotated_regular_ngon2d(5, -math.pi / 2)
     vertices_4d, normals_4d, offsets_4d = lagrangian_product(vertices_q, vertices_p)
@@ -124,35 +114,43 @@ def counterexample_geometry() -> dict[str, torch.Tensor]:
 GEOMETRY = counterexample_geometry()
 
 # %% [markdown]
-# ## Inspect the counterexample dataset
+# ## Results Summary (dimension 4)
 
 
 # %%
+def _fmt(x: torch.Tensor, digits: int = 12) -> str:
+    return f"{x.item():.{digits}f}"
+
+
 def print_cycle(path: torch.Tensor) -> None:
     for idx, vertex in enumerate(path):
         label = f"v{idx:02d}"
         coords = ", ".join(f"{value.item():+.3f}" for value in vertex)
         print(f"{label}: [{coords}]")
 
+def print_summary(data: dict[str, torch.Tensor]) -> None:
+    n = 2  # 4D = 2n with n=2
+    print("Definition: Sys = c^n / (n! · Vol_{2n}), here n=2 → Sys = c^2/(2·Vol).\n")
+    print("Results (K × T ⊂ R^4):")
+    print(f"  c_EHZ(K×T)     = {_fmt(data['capacity'])}")
+    print(f"  Vol_4D(K×T)    = {_fmt(data['volume_4d'])}")
+    print(f"  Area(K)        = {_fmt(data['area_q'])}")
+    print(f"  Area(T)        = {_fmt(data['area_p'])}")
+    print(f"  Sys(K×T)       = {_fmt(data['systolic_ratio'])}")
 
-print("Systolic ratio:", GEOMETRY["systolic_ratio"].item())
-print("Capacity:", GEOMETRY["capacity"].item())
-print("Volume:", GEOMETRY["volume_4d"].item())
-print("Area(K):", GEOMETRY["area_q"].item())
-print("Area(T):", GEOMETRY["area_p"].item())
-print("\nFacet normals and offsets:")
+
+print_summary(GEOMETRY)
+
+print("\nClosed characteristic (cycle vertices in R^4):")
+print_cycle(GEOMETRY["cycle"])
+
+print("\nFacet normals and offsets (H-representation of K×T):")
 for normal, offset in zip(GEOMETRY["normals_4d"], GEOMETRY["offsets_4d"]):
     normal_str = ", ".join(f"{value.item():+.2f}" for value in normal)
     print(f"  n = [{normal_str}], offset = {offset.item():+.2f}")
 
-print("\nVertices:")
-print_cycle(GEOMETRY["vertices_4d"])
-
-print("\nCycle path:")
-print_cycle(GEOMETRY["cycle"])
-
 # %% [markdown]
-# ## Visualization helper
+# ## Figure — Projections of the orbit to p- and q-planes
 
 
 # %%
@@ -176,6 +174,7 @@ def plot_counterexample(
     colors = cm.rainbow(np.linspace(0.0, 1.0, len(path_np) - 1))
 
     fig, (ax_p, ax_q) = plt.subplots(1, 2, figsize=(12, 6))
+    fig.suptitle("Closed characteristic on K×T — projections to p and q")
 
     def draw_panel(ax: plt.Axes, coords: np.ndarray, name: str) -> None:
         ax.set_title(f"{name}-projection")
@@ -266,11 +265,7 @@ plot_counterexample(
 )
 
 # %% [markdown]
-# ## Next steps
-#
-# - Swap the mock arrays for real tensors coming from the `viterbo.math`
-#   counterexample loader.
-# - Thread through metadata (facet adjacency, action values) once they are
-#   exposed.
-# - Consider exporting interactive visualizations (Plotly/pythreejs) for deeper
-#   inspection of the 4D structure.
+# ## Notes
+# - Normalisation: Sys(B^4) = 1 for the Euclidean ball in R^4.
+# - This instance (regular pentagons) violates Viterbo’s conjectured bound.
+# - All computations are Torch-based and deterministic (CPU, float64).

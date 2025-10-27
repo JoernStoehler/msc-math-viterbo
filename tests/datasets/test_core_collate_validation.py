@@ -154,4 +154,6 @@ def test_ragged_points_dataset_seed_none_and_shapes() -> None:
     assert isinstance(sample, Sample)
     assert sample.points.ndim == 2 and sample.points.size(1) == 3
     assert sample.direction.shape == (3,)
+
+
 pytestmark = pytest.mark.smoke
