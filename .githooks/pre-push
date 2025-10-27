@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Local guardrail: run the same gates as GitHub Actions (CI + Docs),
+# with CPU-only torch and identical tooling. Skip with SKIP_PREPUSH=1.
+
+if [[ "${SKIP_PREPUSH:-}" == "1" ]]; then
+  echo "[pre-push] SKIP_PREPUSH=1 — skipping local checks."
+  exit 0
+fi
+
+# Enforce CPU-only index (match Actions) so we don't pull CUDA wheels locally.
+export PIP_INDEX_URL="${PIP_INDEX_URL:-https://download.pytorch.org/whl/cpu}"
+export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL:-https://pypi.org/simple}"
+export UV_DEFAULT_INDEX="${UV_DEFAULT_INDEX:-https://download.pytorch.org/whl/cpu}"
+export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL:-https://pypi.org/simple}"
+export UV_TORCH_BACKEND="${UV_TORCH_BACKEND:-cpu}"
+
+have() { command -v "$1" >/dev/null 2>&1; }
+run() { echo "[pre-push] $*"; eval "$@"; }
+
+# 1) Fast gate: format → lint → type → smoke tests (matches Justfile precommit)
+if have just; then
+  run just precommit
+else
+  echo "[pre-push] 'just' not found — running equivalent steps via uv"
+  have uv || { echo "[pre-push] ERROR: 'uv' required" >&2; exit 2; }
+  run uv run ruff format --quiet .
+  run uv run ruff check .
+  run uv run pyright -p pyrightconfig.json
+  run uv run pytest -q -m smoke --durations=10
+fi
+
+# 2) C++ preflight: compile a tiny extension via torch's cpp_extension
+if have uv; then
+  run uv run python scripts/verify_cpu_torch.py
+  run uv run python scripts/cpp_preflight.py
+else
+  run python scripts/verify_cpu_torch.py
+  run python scripts/cpp_preflight.py
+fi
+
+# 3) Docs parity: build AtlasTiny, render notebooks (code hidden), mkdocs strict
+#    Render to repo path (like Actions), then build site, then restore workspace.
+cleanup() {
+  # Restore tracked notebooks docs and remove untracked generated artefacts
+  git checkout -- docs/notebooks 2>/dev/null || true
+  git clean -fd docs/notebooks 2>/dev/null || true
+}
+trap cleanup EXIT
+
+if have uv; then
+  run uv run python notebooks/atlas_tiny_build.py
+  run uv run python scripts/render_notebooks.py --to md --out docs/notebooks --pattern "*.py" --index docs/notebooks/index.md --hide-input || true
+  run uv run mkdocs build --strict
+else
+  run python notebooks/atlas_tiny_build.py
+  run python scripts/render_notebooks.py --to md --out docs/notebooks --pattern "*.py" --index docs/notebooks/index.md --hide-input || true
+  run mkdocs build --strict
+fi
+
+echo "[pre-push] OK — local gates passed (CI + Docs parity). Proceeding with push."
