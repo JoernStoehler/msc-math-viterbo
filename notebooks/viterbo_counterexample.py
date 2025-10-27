@@ -167,7 +167,7 @@ err_sys = f"{rel(sys_val, sys_analytic):.2e}"
 uq_q_n = int(uq_q.size(0))
 uq_p_n = int(uq_p.size(0))
 
-md = """
+md = r"""
 ### Statement
 
 - Conjecture (Viterbo, 2000; 4D normalisation): for a convex domain $X \subset \mathbb R^{4}$,
