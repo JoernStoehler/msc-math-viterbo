@@ -9,6 +9,8 @@ if [[ "${SKIP_PREPUSH:-}" == "1" ]]; then
   exit 0
 fi
 
+status_before=$(git status --porcelain --untracked-files=no)
+
 # Enforce CPU-only index (match Actions) so we don't pull CUDA wheels locally.
 export PIP_INDEX_URL="${PIP_INDEX_URL:-https://download.pytorch.org/whl/cpu}"
 export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL:-https://pypi.org/simple}"
@@ -57,6 +59,13 @@ else
   run python notebooks/atlas_tiny_build.py
   run python scripts/render_notebooks.py --to md --out docs/notebooks --pattern "*.py" --index docs/notebooks/index.md --hide-input || true
   run mkdocs build --strict
+fi
+
+status_after=$(git status --porcelain --untracked-files=no)
+if [[ "${status_after}" != "${status_before}" ]]; then
+  echo "[pre-push] ERROR: Hook changed tracked files; review and commit fixes before pushing."
+  git status --short --untracked-files=no
+  exit 1
 fi
 
 echo "[pre-push] OK — local gates passed (CI + Docs parity). Proceeding with push."

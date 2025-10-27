@@ -142,10 +142,12 @@ cycle = GEOMETRY["cycle"]
 q_cycle = cycle[:, :2]
 p_cycle = cycle[:, 2:]
 
+
 def _unique_rows(x: torch.Tensor) -> torch.Tensor:
     xr = torch.round(x * 1_000_000.0) / 1_000_000.0
     unique, _ = torch.unique(xr, dim=0, sorted=True, return_inverse=True)
     return unique
+
 
 uq_q = _unique_rows(q_cycle)
 uq_p = _unique_rows(p_cycle)
@@ -154,9 +156,11 @@ h_fwd = support_value(uq_p, v).item()
 h_bwd = support_value(uq_p, -v).item()
 action_two_bounce = h_fwd + h_bwd
 
+
 # Relative errors
 def rel(a: float, b: float) -> float:
     return 0.0 if b == 0 else abs(a - b) / abs(b)
+
 
 cap_ana = f"{capacity_analytic:.12f}"
 area_ana = f"{area_analytic:.12f}"
@@ -267,7 +271,7 @@ def plot_counterexample(
         # Round to 1e-6 to stabilise uniqueness under float output
         ar = np.round(a * 1_000_000.0) / 1_000_000.0
         # Structured view for uniqueness
-        b = np.ascontiguousarray(ar).view([('', ar.dtype)] * ar.shape[1])
+        b = np.ascontiguousarray(ar).view([("", ar.dtype)] * ar.shape[1])
         _, idx = np.unique(b, return_index=True)
         return ar[np.sort(idx)]
 
@@ -282,7 +286,11 @@ def plot_counterexample(
         ax.axvline(0.0, color="lightgray", linewidth=0.8)
         # Label only distinct vertices to avoid clutter: q1,q2 or p1,p2
         uniq = _unique_rows_np(coords)
-        labels = [f"{name}1", f"{name}2"] if len(uniq) == 2 else [f"{name}{i+1}" for i in range(len(uniq))]
+        labels = (
+            [f"{name}1", f"{name}2"]
+            if len(uniq) == 2
+            else [f"{name}{i + 1}" for i in range(len(uniq))]
+        )
         for lbl, pt in zip(labels, uniq, strict=False):
             ax.scatter(pt[0], pt[1], color="black", s=25, zorder=4)
             ax.text(

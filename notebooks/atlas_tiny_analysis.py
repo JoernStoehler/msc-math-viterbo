@@ -38,6 +38,7 @@ from typing import Any, Iterable
 
 import torch
 
+
 # Ensure project `src/` is on the path when run as a script or notebook.
 def _find_project_root(start: Path) -> Path:
     """Ascend from start to locate the repo root by pyproject.toml."""
@@ -46,6 +47,7 @@ def _find_project_root(start: Path) -> Path:
         if (p / "pyproject.toml").exists():
             return p
     return start
+
 
 try:
     PROJECT_ROOT = Path(__file__).resolve().parents[1]

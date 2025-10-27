@@ -38,6 +38,7 @@ from typing import Any, Iterable
 import matplotlib.pyplot as plt
 import torch
 
+
 # Ensure project `src/` is on the path for `viterbo.*` imports when run as a script/notebook.
 def _find_project_root(start: Path) -> Path:
     cur = start
@@ -45,6 +46,7 @@ def _find_project_root(start: Path) -> Path:
         if (p / "pyproject.toml").exists():
             return p
     return start
+
 
 try:
     PROJECT_ROOT = Path(__file__).resolve().parents[1]
