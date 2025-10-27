@@ -60,7 +60,10 @@ from viterbo.math.constructions import lagrangian_product, rotated_regular_ngon2
 from viterbo.math.capacity_ehz.ratios import systolic_ratio
 from viterbo.math.capacity_ehz.lagrangian_product import minimal_action_cycle_lagrangian_product
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+try:
+    PROJECT_ROOT = Path(__file__).resolve().parents[1]
+except NameError:
+    PROJECT_ROOT = Path.cwd().resolve().parents[1]
 SRC_PATH = PROJECT_ROOT / "src"
 if str(SRC_PATH) not in __import__("sys").path:
     __import__("sys").path.insert(0, str(SRC_PATH))

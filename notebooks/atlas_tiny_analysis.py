@@ -39,7 +39,12 @@ from typing import Any, Iterable
 import torch
 
 # Ensure project `src/` is on the path when run as a script.
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+try:
+    PROJECT_ROOT = Path(__file__).resolve().parents[1]
+except NameError:
+    # When executed as a notebook (__file__ undefined), use the execution CWD
+    # which render_notebooks.py sets to this file's parent.
+    PROJECT_ROOT = Path.cwd().resolve().parents[1]
 SRC_PATH = PROJECT_ROOT / "src"
 if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))
