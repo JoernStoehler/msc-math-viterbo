@@ -60,9 +60,44 @@ if ! command -v uv >/dev/null 2>&1; then
   exit 1
 fi
 
+pick_torch_index() {
+  # Allow explicit override
+  if [ -n "${TORCH_CUDA_CHANNEL:-}" ]; then
+    case "$TORCH_CUDA_CHANNEL" in
+      cu124) echo "https://download.pytorch.org/whl/cu124"; return;;
+      cu121) echo "https://download.pytorch.org/whl/cu121"; return;;
+      cpu)   echo "https://download.pytorch.org/whl/cpu"; return;;
+    esac
+  fi
+  # Auto-detect via nvidia-smi; fall back to CPU
+  if command -v nvidia-smi >/dev/null 2>&1; then
+    ver_line=$(nvidia-smi 2>/dev/null | grep -Eo 'CUDA Version: [0-9]+\.[0-9]+' || true)
+    if [ -n "$ver_line" ]; then
+      cuda_ver=${ver_line##*: } # e.g. 12.4
+      major=${cuda_ver%%.*}
+      minor=${cuda_ver##*.}
+      if [ "$major" = "12" ] && [ "$minor" -ge 4 ] 2>/dev/null; then
+        echo "https://download.pytorch.org/whl/cu124"; return
+      fi
+      if [ "$major" = "12" ] && [ "$minor" -ge 1 ] 2>/dev/null; then
+        echo "https://download.pytorch.org/whl/cu121"; return
+      fi
+    fi
+  fi
+  echo "https://download.pytorch.org/whl/cpu"
+}
+
 if [ -f "pyproject.toml" ]; then
-  echo "[post-create] uv sync (dev extras)."
-  uv sync --extra dev >/dev/null || true
+  TORCH_INDEX_URL=$(pick_torch_index)
+  echo "[post-create] Installing torch (index: ${TORCH_INDEX_URL}) and dev deps (idempotent)."
+  uv pip install --system \
+    --index-url "${TORCH_INDEX_URL}" \
+    --extra-index-url "https://pypi.org/simple" \
+    "torch==2.5.1" >/dev/null || true
+  uv pip install --system \
+    --index-url "${TORCH_INDEX_URL}" \
+    --extra-index-url "https://pypi.org/simple" \
+    -e ".[dev]" >/dev/null || true
 fi
 
 echo "[post-create] Environment ready."

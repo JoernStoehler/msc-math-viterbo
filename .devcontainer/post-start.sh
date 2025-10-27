@@ -62,9 +62,38 @@ for d in \
 done
 
 # Idempotent uv sync (fast when nothing changed)
+pick_torch_index() {
+  if [ -n "${TORCH_CUDA_CHANNEL:-}" ]; then
+    case "$TORCH_CUDA_CHANNEL" in
+      cu124) echo "https://download.pytorch.org/whl/cu124"; return;;
+      cu121) echo "https://download.pytorch.org/whl/cu121"; return;;
+      cpu)   echo "https://download.pytorch.org/whl/cpu"; return;;
+    esac
+  fi
+  if command -v nvidia-smi >/dev/null 2>&1; then
+    ver_line=$(nvidia-smi 2>/dev/null | grep -Eo 'CUDA Version: [0-9]+\.[0-9]+' || true)
+    if [ -n "$ver_line" ]; then
+      cuda_ver=${ver_line##*: }
+      major=${cuda_ver%%.*}
+      minor=${cuda_ver##*.}
+      if [ "$major" = "12" ] && [ "$minor" -ge 4 ] 2>/dev/null; then
+        echo "https://download.pytorch.org/whl/cu124"; return
+      fi
+      if [ "$major" = "12" ] && [ "$minor" -ge 1 ] 2>/dev/null; then
+        echo "https://download.pytorch.org/whl/cu121"; return
+      fi
+    fi
+  fi
+  echo "https://download.pytorch.org/whl/cpu"
+}
+
 if [ -f "pyproject.toml" ] && command -v uv >/dev/null 2>&1; then
-  echo "[post-start] uv sync (dev extras, idempotent)."
-  uv sync --extra dev >/dev/null || true
+  TORCH_INDEX_URL=$(pick_torch_index)
+  echo "[post-start] Ensure project deps installed (idempotent; index: ${TORCH_INDEX_URL})."
+  uv pip install --system \
+    --index-url "${TORCH_INDEX_URL}" \
+    --extra-index-url "https://pypi.org/simple" \
+    -e ".[dev]" >/dev/null || true
 fi
 
 # Diagnostics (non-fatal but actionable)

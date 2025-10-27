@@ -58,8 +58,15 @@ jobs:
           restore-keys: |
             torch-extensions-${{ runner.os }}-
 
-      - name: C++ Prebuild Gate
-        run: uv run python scripts/cpp_preflight.py
+      - name: Install CPU torch for preflight (system Python)
+        run: |
+          uv pip install --system \
+            --index-url "${PIP_INDEX_URL}" \
+            --extra-index-url "${PIP_EXTRA_INDEX_URL}" \
+            "torch==2.5.1+cpu" ninja
+
+      - name: C++ Prebuild Gate (system Python)
+        run: python scripts/cpp_preflight.py
 
       - name: Run CI (CPU torch)
         run: just ci-cpu
@@ -127,8 +134,8 @@ jobs:
           restore-keys: |
             torch-extensions-${{ runner.os }}-
 
-      - name: C++ Prebuild Gate
-        run: uv run python scripts/cpp_preflight.py
+      - name: C++ Prebuild Gate (system Python)
+        run: python scripts/cpp_preflight.py
 
       - name: Run longhaul tests
         run: just test-longhaul

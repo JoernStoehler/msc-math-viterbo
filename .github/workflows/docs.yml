@@ -37,19 +37,21 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v3
 
-      - name: Create project venv (uv)
-        run: uv venv
+      - name: Cache uv downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-
 
-      - name: Install CPU-only torch (avoid CUDA downloads)
+      - name: Install CPU-only torch and project (system Python)
         run: |
-          uv pip install --python .venv/bin/python \
+          uv pip install --system \
             --index-url "$PIP_INDEX_URL" \
             --extra-index-url "$PIP_EXTRA_INDEX_URL" \
             "torch==2.5.1+cpu"
-
-      - name: Install project (dev extras)
-        run: |
-          uv pip install --python .venv/bin/python \
+          uv pip install --system \
             --index-url "$PIP_INDEX_URL" \
             --extra-index-url "$PIP_EXTRA_INDEX_URL" \
             -e ".[dev]"
@@ -58,17 +60,18 @@ jobs:
         env:
           VITERBO_CPU_LIMIT: "0"
         run: |
-          uv run python notebooks/atlas_tiny_build.py
+          python notebooks/atlas_tiny_build.py
 
       - name: Render notebooks to Markdown (code hidden)
         env:
           VITERBO_CPU_LIMIT: "0"
         run: |
-          uv run python scripts/render_notebooks.py \
+          python scripts/render_notebooks.py \
+            --to md --out docs/notebooks --pattern "*.py" --index docs/notebooks/index.md --hide-input || true
             --to md --out docs/notebooks --pattern "*.py" --index docs/notebooks/index.md --hide-input || true
 
       - name: Build MkDocs (strict + link check)
-        run: uv run mkdocs build --strict
+        run: mkdocs build --strict
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
