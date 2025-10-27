@@ -7,6 +7,8 @@ import pytest
 
 from viterbo.runtime import TimeBudgetExceededError, _default_timeout, enforce_time_budget
 
+pytestmark = pytest.mark.smoke
+
 
 def test_signal_path_timeout_raises() -> None:
     if not (hasattr(signal, "setitimer") and hasattr(signal, "SIGALRM")):

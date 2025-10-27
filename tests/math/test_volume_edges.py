@@ -14,6 +14,8 @@ from viterbo.math.volume import (
 
 torch.set_default_dtype(torch.float64)
 
+pytestmark = pytest.mark.smoke
+
 
 def test_invalid_shapes_raise() -> None:
     with pytest.raises(ValueError):

@@ -10,6 +10,8 @@ from viterbo.math.capacity_ehz.algorithms import (
     capacity_ehz_primal_dual,
 )
 
+pytestmark = pytest.mark.smoke
+
 
 def _square_halfspaces_2d(dtype: torch.dtype = torch.float64) -> tuple[torch.Tensor, torch.Tensor]:
     normals = torch.tensor(
@@ -149,4 +151,3 @@ def test_primal_dual_4d_consistent_and_inconsistent(monkeypatch: pytest.MonkeyPa
     monkeypatch.setattr(algo, "capacity_ehz_algorithm1", lambda n, c: torch.tensor(2.0, dtype=n.dtype))
     with pytest.raises(ValueError):
         capacity_ehz_primal_dual(vertices4, normals4, offsets4)
-

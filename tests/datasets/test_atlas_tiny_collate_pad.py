@@ -7,6 +7,8 @@ from viterbo.datasets.atlas_tiny import (
     atlas_tiny_generate,
 )
 
+pytestmark = pytest.mark.smoke
+
 
 def _row_by_id(polytope_id: str):
     specs = atlas_tiny_generate()
