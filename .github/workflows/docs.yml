@@ -37,8 +37,22 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v3
 
-      - name: Sync dependencies (uv)
-        run: uv sync --extra dev
+      - name: Create project venv (uv)
+        run: uv venv
+
+      - name: Install CPU-only torch (avoid CUDA downloads)
+        run: |
+          uv pip install --python .venv/bin/python \
+            --index-url "$PIP_INDEX_URL" \
+            --extra-index-url "$PIP_EXTRA_INDEX_URL" \
+            "torch==2.5.1+cpu"
+
+      - name: Install project (dev extras)
+        run: |
+          uv pip install --python .venv/bin/python \
+            --index-url "$PIP_INDEX_URL" \
+            --extra-index-url "$PIP_EXTRA_INDEX_URL" \
+            -e ".[dev]"
 
       - name: Build AtlasTiny v1 artefact
         env:
@@ -50,7 +64,7 @@ jobs:
         env:
           VITERBO_CPU_LIMIT: "0"
         run: |
-          uv run --extra dev python scripts/render_notebooks.py \
+          uv run python scripts/render_notebooks.py \
             --to md --out docs/notebooks --pattern "*.py" --index docs/notebooks/index.md || true
 
       - name: Build MkDocs (strict + link check)

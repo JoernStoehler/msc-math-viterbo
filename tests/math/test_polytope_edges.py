@@ -3,8 +3,6 @@ from __future__ import annotations
 import pytest
 import torch
 
-import viterbo.math.polytope as P
-
 from viterbo.math.polytope import (
     bounding_box,
     facet_vertex_incidence,
@@ -14,6 +12,8 @@ from viterbo.math.polytope import (
     support_argmax,
     vertices_to_halfspaces,
 )
+
+import viterbo.math.polytope as P
 
 torch.set_default_dtype(torch.float64)
 
