@@ -339,6 +339,11 @@ ci-cpu:
     UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL:-https://pypi.org/simple}" \
     UV_TORCH_BACKEND="${UV_TORCH_BACKEND:-cpu}" \
         $UV pip install --system -e ".[dev]"
+    @echo "Building AtlasTiny artefact and rendering notebooks."
+    python notebooks/atlas_tiny_build.py
+    VITERBO_CPU_LIMIT="0" python scripts/render_notebooks.py \
+        --to md --out docs/notebooks --pattern "*.py" \
+        --index docs/notebooks/index.md --hide-input
     @echo "Validating torch build is CPU-only."
     python scripts/verify_cpu_torch.py
     @echo "Running lint/type/smoke tests with coverage and docs build (system Python)."
